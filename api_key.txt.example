@@ -1,4 +1,9 @@
-# Вставьте сюда ваш API ключ от Perplexity
-# Получить можно на https://www.perplexity.ai/
-# Пример: pplx-1234567890abcdef...
-pplx-your-api-key-here
+# API ключи для AI Challenge
+# Формат: название_api:ваш_ключ
+# Можно использовать переменные окружения вместо файла
+
+# Perplexity API - получить на https://www.perplexity.ai/
+perplexity:pplx-your-api-key-here
+
+# ChadGPT API - получить на https://ask.chadgpt.ru/
+chadgpt:chad-your-api-key-here
