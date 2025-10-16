@@ -128,7 +128,7 @@ class DedChatV2:
             
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
-                    'https://ask.chadgpt.ru/api/public/gpt-4o-mini',
+                    'https://ask.chadgpt.ru/api/public/gpt-5-mini',
                     json=request_json
                 )
                 
