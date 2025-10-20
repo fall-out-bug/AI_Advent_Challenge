@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Терминальный чат v4: поддержка управления температурой, интерактивного авто-переключения
-и мини-эксперимента, без изменений предыдущих дней.
+Терминальный чат v4: управление температурой, режим «объясняй»,
+интерактивные триггеры и режим «дай совет».
 
 Команды:
 - temp <value>      — установить дефолтную температуру (пример: temp 0.7)
-- temp=<value> ...  — разовый override для текущего сообщения (пример: temp=1.2 Привет)
-- объясняй          — включить режим пояснений (показывать температуру явно)
+- объясняй          — включить режим пояснений (показывать температуру и модель)
 - надоел            — выключить режим пояснений
-- experiment        — запустить эксперимент 0.0/0.7/1.2 для одного запроса
+- дай совет         — включить режим советчика
+- стоп совет        — выключить режим советчика
 - покеда            — завершить разговор
 """
 import asyncio
@@ -17,10 +17,12 @@ import os
 import unicodedata
 import shutil
 import textwrap
+import time
 import httpx
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import get_api_key, is_api_key_configured
+from day_04.advice_mode import AdviceMode
 from day_04.temperature_utils import resolve_effective_temperature, clamp_temperature
 
 
@@ -62,7 +64,7 @@ class DedChatV4:
 		self.explain_mode = False
 		self.current_api = None  # "chadgpt" or "perplexity"
 		self._system_prompt = "Ты пожилой человек, который ехидно подшучивает. Отвечай на русском, лаконично, без ссылок."
-		self._chat_history = []  # for ChadGPT: list of {role, content}
+		self.advice_mode: AdviceMode | None = None
 
 	async def __aenter__(self):
 		self.client = httpx.AsyncClient(timeout=30.0)
@@ -96,7 +98,7 @@ class DedChatV4:
 		Purpose: Print welcome and help.
 		"""
 		print("👴" + "=" * 60)
-		print("👴  ДЕДУШКА AI v4 — Температура, Поясняй и Эксперимент")
+		print("👴  ДЕДУШКА AI v4 — Температура, Поясняй и Советчик")
 		print("👴" + "=" * 60)
 		print("👣 Как общаться:")
 		print("  • Просто задавайте вопросы. Я отвечу ехидно и по делу.")
@@ -104,17 +106,17 @@ class DedChatV4:
 		print()
 		print("🔧 Команды:")
 		print("  • temp <value>         — установить температуру по умолчанию (0.0–1.5)")
-		print("  • temp=<value> <текст> — разовый override для этого сообщения")
 		print("  • объясняй             — включить режим пояснений (показывать T и модель)")
-		print("  • надоел               — выключить режим пояснений")
-		print("  • experiment           — эксперимент при T=0.0/0.7/1.2")
-		print("  • покеда/пока/exit     — завершить разговор")
+		print("  • надоел               — выключить пояснения и/или советчика")
+		print("  • дай совет            — включить режим советчика")
+		print("  • покеда               — завершить разговор")
+		print("  • api chadgpt|perplexity — переключить провайдера API")
 		print()
 		print("📦 Триггеры авто‑температуры (по тексту ответа):")
 		print("  • ‘не душни’ → T=0.0   • ‘потише’ → T=0.7   • ‘разгоняй’ → T=1.2")
 		print()
 
-	async def call_perplexity(self, message: str, temperature: float) -> str:
+	async def call_perplexity(self, message: str, temperature: float, system_prompt: str | None = None) -> str:
 		"""
 		Purpose: Call Perplexity chat completion with given temperature.
 		Args:
@@ -130,7 +132,7 @@ class DedChatV4:
 		payload = {
 			"model": MODEL,
 			"messages": [
-				{"role": "system", "content": "Ты пожилой человек, который ехидно подшучивает. Отвечай на русском, лаконично, без ссылок."},
+				{"role": "system", "content": (system_prompt or self._system_prompt)},
 				{"role": "user", "content": message}
 			],
 			"max_tokens": 800,
@@ -154,7 +156,7 @@ class DedChatV4:
 		except Exception as e:
 			return f"❌ Ошибка: {e}"
 
-	async def call_chadgpt(self, message: str, temperature: float) -> str:
+	async def call_chadgpt(self, message: str, temperature: float, system_prompt: str | None = None) -> str:
 		"""
 		Purpose: Call ChadGPT API. Temperature is not supported by API; retained for display.
 		Args:
@@ -163,14 +165,11 @@ class DedChatV4:
 		Returns:
 			str: Model reply
 		"""
-		# Build history with system + prior exchanges + current user
-		history = [{"role": "system", "content": self._system_prompt}] + list(self._chat_history) + [
-			{"role": "user", "content": message}
-		]
+		# Pass a composed prompt without history in normal conversation
+		prompt_text = f"{(system_prompt or self._system_prompt)}\n\nВопрос: {message}"
 		request_json = {
-			"message": message,
+			"message": prompt_text,
 			"api_key": self.api_key,
-			"history": history,
 			"temperature": float(f"{temperature:.2f}"),
 			"max_tokens": 800
 		}
@@ -182,25 +181,18 @@ class DedChatV4:
 				data = resp.json()
 				# Expected format from day_03 code: {'is_success': bool, 'response': str}
 				if data.get('is_success') and isinstance(data.get('response'), str):
-					answer = data['response'].strip()
-					# Save last exchange into history (truncate if needed)
-					self._chat_history.append({"role": "user", "content": message})
-					self._chat_history.append({"role": "assistant", "content": answer})
-					# keep last 10 messages to limit context size
-					if len(self._chat_history) > 20:
-						self._chat_history = self._chat_history[-20:]
-					return answer
+					return data['response'].strip()
 				return "❌ Неожиданный формат ответа от API"
 		except Exception as e:
 			return f"❌ Ошибка: {e}"
 
-	async def call_model(self, message: str, temperature: float) -> str:
+	async def call_model(self, message: str, temperature: float, system_prompt: str | None = None) -> str:
 		"""
 		Purpose: Route call to current API (chadgpt/perplexity).
 		"""
 		if self.current_api == "chadgpt":
-			return await self.call_chadgpt(message, temperature)
-		return await self.call_perplexity(message, temperature)
+			return await self.call_chadgpt(message, temperature, system_prompt)
+		return await self.call_perplexity(message, temperature, system_prompt)
 
 	def parse_temp_override(self, user_message: str):
 		"""
@@ -277,6 +269,38 @@ class DedChatV4:
 			return "chadgpt:gpt-5-mini"
 		return f"perplexity:{MODEL}"
 
+	def get_api_endpoint(self) -> str:
+		"""
+		Purpose: Return API endpoint URL for current provider.
+		"""
+		return CHAD_URL if self.current_api == "chadgpt" else API_URL
+
+	def print_debug_info(self, user_message: str, reply: str, eff_temp: float, sys_prompt: str | None, duration_ms: int) -> None:
+		"""
+		Purpose: Print extended debug info in explain mode.
+		"""
+		if not self.explain_mode:
+			return
+		width = shutil.get_terminal_size((100, 20)).columns
+		model_label = self.get_model_label()
+		endpoint = self.get_api_endpoint()
+		mode = "advice" if sys_prompt else "normal"
+		prompt_preview = (sys_prompt or self._system_prompt)[:120].replace("\n", " ")
+		lines = [
+			"🔍 Debug:",
+			f"  api: {self.current_api}",
+			f"  endpoint: {endpoint}",
+			f"  model: {model_label}",
+			f"  temperature: {eff_temp:.2f}",
+			f"  mode: {mode}",
+			f"  prompt(sys)≈: {prompt_preview}",
+			f"  req_len: {len(user_message)} chars",
+			f"  resp_len: {len(reply)} chars",
+			f"  time: {duration_ms} ms",
+		]
+		print(textwrap.fill("\n".join(lines), width=width))
+		print()
+
 	def get_user_input(self) -> str:
 		"""
 		Purpose: Read user input with temperature indicator.
@@ -302,6 +326,8 @@ class DedChatV4:
 		if not self.setup():
 			return
 		self.print_welcome()
+		# init advice mode helper (idle by default)
+		self.advice_mode = AdviceMode(self.api_key, self.current_api)
 		welcome = await self.call_model("Привет! Дай короткое ехидное приветствие.", self.default_temperature)
 		self.print_ded_message(welcome, self.default_temperature)
 		self.apply_interactive_temperature(welcome)
@@ -313,8 +339,8 @@ class DedChatV4:
 
 			low = user_message.lower()
 
-			# exit by substring
-			if _contains_any(low, ["покеда", "пока", "до свидания", "exit", "quit"]):
+			# exit by substring (only "покеда")
+			if _contains_any(low, ["покеда"]):
 				bye = await self.call_model("Скажи короткое ехидное прощание.", self.default_temperature)
 				self.print_ded_message(bye, self.default_temperature)
 				self.apply_interactive_temperature(bye)
@@ -325,24 +351,28 @@ class DedChatV4:
 				self.explain_mode = True
 				print("👴 Дедушка: Включил режим пояснений (температура будет показываться).")
 				print()
+				continue
 
 			if "надоел" in low:
+				# Only turns off explain mode (not advice)
 				self.explain_mode = False
 				print("👴 Дедушка: Выключил режим пояснений.")
 				print()
+				# do not continue; allow message to be processed below
 
 			# help by substring
 			if "помогай" in low:
 				print("🔧 Команды:")
 				print("  • temp <value>         — установить температуру по умолчанию (0.0–1.5)")
-				print("  • temp=<value> <текст> — разовый override для этого сообщения")
 				print("  • объясняй             — включить режим пояснений (показывать T и модель)")
 				print("  • надоел               — выключить режим пояснений")
-				print("  • покеда/пока/exit     — завершить разговор")
+				print("  • покеда               — завершить разговор")
+				print("  • api chadgpt|perplexity — переключить провайдера API")
 				print()
 				print("📦 Триггеры авто‑температуры (по тексту): ‘не душни’ → 0.0, ‘потише’ → 0.7, ‘разгоняй’ → 1.2")
 				print()
 				# continue but do not block sending the same message if it has content
+				continue
 
 			if low.startswith("temp "):
 				try:
@@ -358,13 +388,62 @@ class DedChatV4:
 
 			# Apply temperature triggers from USER message as well
 			self.apply_interactive_temperature(user_message)
+			# If user message contained any control words, do not forward it to API
+			if any(k in low for k in ["объясняй", "надоел", "помогай"]) or low.startswith("api ") or low.startswith("temp "):
+				continue
 
-			override, clean = self.parse_temp_override(user_message)
-			eff = resolve_effective_temperature(override, self.default_temperature)
+			# API switching: 'api chadgpt' or 'api perplexity'
+			if low.startswith("api "):
+				new_api = low.split()[1]
+				if new_api in ("chadgpt", "perplexity"):
+					if not is_api_key_configured(new_api):
+						print(f"❌ API '{new_api}' не настроен. Проверьте ключ.")
+						print()
+					else:
+						self.current_api = new_api
+						self.api_key = get_api_key(new_api)
+						# Re-init advice mode helper with new API
+						self.advice_mode = AdviceMode(self.api_key, self.current_api)
+						print(f"👴 Дедушка: Переключаюсь на {new_api}!")
+						print()
+				continue
+
+			# Advice mode triggers and routing (from day_03 behavior)
+			if "дай совет" in low:
+				print("👴 Дедушка: Включаю режим советчика...")
+				print()
+				# Prime advice mode with the user message
+				print("👴 Дедушка печатает...", end="", flush=True)
+				reply = await self.advice_mode.handle_advice_request(user_message)
+				print("\r" + " " * 30 + "\r", end="")
+				self.print_ded_message(rely := reply, self.default_temperature)
+				self.apply_interactive_temperature(rely)
+				continue
+
+
+			# unified "надоел" handled above
+
+			if self.advice_mode and self.advice_mode.is_advice_mode_active():
+				print("👴 Дедушка печатает...", end="", flush=True)
+				reply = await self.advice_mode.handle_advice_request(user_message)
+				print("\r" + " " * 30 + "\r", end="")
+				self.print_ded_message(rely2 := reply, self.default_temperature)
+				self.apply_interactive_temperature(rely2)
+				# If advice session ended internally after final advice, continue to next turn
+				if not self.advice_mode.is_advice_mode_active():
+					print()
+				continue
+
+			# per-message temp override removed; always use default_temperature
+			eff = self.default_temperature
 			print("👴 Дедушка печатает...", end="", flush=True)
-			reply = await self.call_model(clean, eff)
+			start_ts = time.time()
+			reply = await self.call_model(user_message, eff)
+			duration_ms = int((time.time() - start_ts) * 1000)
 			print("\r" + " " * 30 + "\r", end="")
 			self.print_ded_message(reply, eff)
+			# Debug info (explain mode only)
+			self.print_debug_info(user_message, reply, eff, None, duration_ms)
 			self.apply_interactive_temperature(reply)
 
 
