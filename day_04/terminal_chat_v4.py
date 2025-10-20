@@ -148,13 +148,16 @@ class DedChatV4:
 				json=payload
 			)
 			if r.status_code != 200:
-				return f"❌ Ошибка API: {r.status_code}"
+				# include snippet of error body for diagnostics
+				body = r.text
+				preview = body[:240].replace("\n", " ") if body else ""
+				return f"❌ Ошибка API Perplexity: {r.status_code} {preview}"
 			data = r.json()
 			if "choices" not in data or not data["choices"]:
-				return "❌ Неожиданный формат ответа от API"
+				return "❌ Неожиданный формат ответа от API Perplexity"
 			return data["choices"][0]["message"]["content"].strip()
 		except Exception as e:
-			return f"❌ Ошибка: {e}"
+			return f"❌ Ошибка Perplexity: {e}"
 
 	async def call_chadgpt(self, message: str, temperature: float, system_prompt: str | None = None) -> str:
 		"""
@@ -346,6 +349,22 @@ class DedChatV4:
 				self.apply_interactive_temperature(bye)
 				break
 
+			# API switching: 'api chadgpt' or 'api perplexity'
+			if low.startswith("api "):
+				new_api = low.split()[1]
+				if new_api in ("chadgpt", "perplexity"):
+					if not is_api_key_configured(new_api):
+						print(f"❌ API '{new_api}' не настроен. Проверьте ключ.")
+						print()
+					else:
+						self.current_api = new_api
+						self.api_key = get_api_key(new_api)
+						# Re-init advice mode helper with new API
+						self.advice_mode = AdviceMode(self.api_key, self.current_api)
+						print(f"👴 Дедушка: Переключаюсь на {new_api}!")
+						print()
+				continue
+
 			# explain mode on/off by substring
 			if "объясняй" in low:
 				self.explain_mode = True
@@ -389,23 +408,7 @@ class DedChatV4:
 			# Apply temperature triggers from USER message as well
 			self.apply_interactive_temperature(user_message)
 			# If user message contained any control words, do not forward it to API
-			if any(k in low for k in ["объясняй", "надоел", "помогай"]) or low.startswith("api ") or low.startswith("temp "):
-				continue
-
-			# API switching: 'api chadgpt' or 'api perplexity'
-			if low.startswith("api "):
-				new_api = low.split()[1]
-				if new_api in ("chadgpt", "perplexity"):
-					if not is_api_key_configured(new_api):
-						print(f"❌ API '{new_api}' не настроен. Проверьте ключ.")
-						print()
-					else:
-						self.current_api = new_api
-						self.api_key = get_api_key(new_api)
-						# Re-init advice mode helper with new API
-						self.advice_mode = AdviceMode(self.api_key, self.current_api)
-						print(f"👴 Дедушка: Переключаюсь на {new_api}!")
-						print()
+			if any(k in low for k in ["объясняй", "надоел", "помогай"]) or low.startswith("temp "):
 				continue
 
 			# Advice mode triggers and routing (from day_03 behavior)
