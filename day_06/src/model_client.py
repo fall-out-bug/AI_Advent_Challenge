@@ -47,15 +47,12 @@ class LocalModelClient:
         "tinyllama": 8002
     }
     
-    def __init__(self, timeout: float = 30.0):
+    def __init__(self):
         """
         Инициализация клиента.
-        
-        Args:
-            timeout: Таймаут для HTTP запросов в секундах
         """
-        self.timeout = timeout
-        self.client = httpx.AsyncClient(timeout=timeout)
+        # Увеличиваем таймаут для длинных ответов
+        self.client = httpx.AsyncClient(timeout=120.0)
     
     async def close(self):
         """Закрытие HTTP клиента."""
@@ -64,8 +61,7 @@ class LocalModelClient:
     async def _make_request(
         self, 
         model_name: str, 
-        prompt: str, 
-        max_tokens: int = 256
+        prompt: str
     ) -> ModelResponse:
         """
         Выполнение запроса к модели.
@@ -73,7 +69,6 @@ class LocalModelClient:
         Args:
             model_name: Имя модели (qwen, mistral, tinyllama)
             prompt: Текст промпта
-            max_tokens: Максимальное количество токенов в ответе
             
         Returns:
             ModelResponse: Ответ от модели
@@ -90,7 +85,7 @@ class LocalModelClient:
         
         payload = {
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": max_tokens,
+            "max_tokens": 10000,  # Очень большое значение
             "temperature": 0.7
         }
         
@@ -115,7 +110,11 @@ class LocalModelClient:
             )
             
         except httpx.HTTPError as e:
+            print(f"HTTP ошибка для {model_name}: {e}")
             raise httpx.HTTPError(f"Ошибка запроса к модели {model_name}: {e}")
+        except Exception as e:
+            print(f"Общая ошибка для {model_name}: {e}")
+            raise Exception(f"Ошибка при работе с моделью {model_name}: {e}")
     
     async def test_riddle(
         self, 

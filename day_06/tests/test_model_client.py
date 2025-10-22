@@ -17,7 +17,7 @@ class TestLocalModelClient:
     @pytest.fixture
     def client(self):
         """Фикстура для создания клиента."""
-        return LocalModelClient(timeout=5.0)
+        return LocalModelClient()
     
     @pytest.fixture
     def mock_response_data(self):
@@ -40,9 +40,9 @@ class TestLocalModelClient:
     
     def test_client_initialization(self):
         """Тест инициализации клиента."""
-        client = LocalModelClient(timeout=10.0)
-        assert client.timeout == 10.0
+        client = LocalModelClient()
         assert client.client is not None
+        assert isinstance(client.client, httpx.AsyncClient)
     
     @pytest.mark.asyncio
     async def test_close_client(self, client):
@@ -61,7 +61,7 @@ class TestLocalModelClient:
             mock_response.raise_for_status = Mock()
             mock_post.return_value = mock_response
             
-            result = await client._make_request("qwen", "Тестовый промпт", 100)
+            result = await client._make_request("qwen", "Тестовый промпт")
             
             assert isinstance(result, ModelResponse)
             assert result.response == "Тестовый ответ"
