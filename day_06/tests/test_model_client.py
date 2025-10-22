@@ -1,0 +1,149 @@
+"""
+Unit тесты для модуля model_client.
+
+Тестирует функциональность клиента для работы с локальными моделями.
+"""
+
+import pytest
+import httpx
+from unittest.mock import AsyncMock, patch, Mock
+
+from src.model_client import LocalModelClient, ModelResponse, ModelTestResult
+
+
+class TestLocalModelClient:
+    """Тесты для класса LocalModelClient."""
+    
+    @pytest.fixture
+    def client(self):
+        """Фикстура для создания клиента."""
+        return LocalModelClient(timeout=5.0)
+    
+    @pytest.fixture
+    def mock_response_data(self):
+        """Фикстура с данными ответа от модели."""
+        return {
+            "response": "Тестовый ответ",
+            "response_tokens": 5,
+            "input_tokens": 10,
+            "total_tokens": 15
+        }
+    
+    def test_model_ports_mapping(self):
+        """Тест маппинга моделей на порты."""
+        expected_ports = {
+            "qwen": 8000,
+            "mistral": 8001,
+            "tinyllama": 8002
+        }
+        assert LocalModelClient.MODEL_PORTS == expected_ports
+    
+    def test_client_initialization(self):
+        """Тест инициализации клиента."""
+        client = LocalModelClient(timeout=10.0)
+        assert client.timeout == 10.0
+        assert client.client is not None
+    
+    @pytest.mark.asyncio
+    async def test_close_client(self, client):
+        """Тест закрытия клиента."""
+        await client.close()
+        # Проверяем, что клиент закрыт (не можем напрямую проверить состояние)
+        assert True  # Если не выброшено исключение, тест прошел
+    
+    @pytest.mark.asyncio
+    async def test_make_request_success(self, client, mock_response_data):
+        """Тест успешного запроса к модели."""
+        with patch.object(client.client, 'post') as mock_post:
+            mock_response = Mock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = mock_response_data
+            mock_response.raise_for_status = Mock()
+            mock_post.return_value = mock_response
+            
+            result = await client._make_request("qwen", "Тестовый промпт", 100)
+            
+            assert isinstance(result, ModelResponse)
+            assert result.response == "Тестовый ответ"
+            assert result.response_tokens == 5
+            assert result.model_name == "qwen"
+            assert result.response_time > 0
+    
+    @pytest.mark.asyncio
+    async def test_make_request_unknown_model(self, client):
+        """Тест запроса к неизвестной модели."""
+        with pytest.raises(ValueError, match="Неизвестная модель"):
+            await client._make_request("unknown_model", "Тестовый промпт")
+    
+    @pytest.mark.asyncio
+    async def test_make_request_http_error(self, client):
+        """Тест обработки HTTP ошибки."""
+        with patch.object(client.client, 'post') as mock_post:
+            mock_post.side_effect = httpx.HTTPError("Connection error")
+            
+            with pytest.raises(httpx.HTTPError, match="Ошибка запроса к модели"):
+                await client._make_request("qwen", "Тестовый промпт")
+    
+    @pytest.mark.asyncio
+    async def test_test_riddle(self, client, mock_response_data):
+        """Тест тестирования загадки."""
+        with patch.object(client, '_make_request') as mock_request:
+            mock_request.side_effect = [
+                ModelResponse(
+                    response="Прямой ответ",
+                    response_tokens=3,
+                    input_tokens=5,
+                    total_tokens=8,
+                    model_name="qwen",
+                    response_time=1.0
+                ),
+                ModelResponse(
+                    response="Пошаговый ответ",
+                    response_tokens=5,
+                    input_tokens=5,
+                    total_tokens=10,
+                    model_name="qwen",
+                    response_time=2.0
+                )
+            ]
+            
+            result = await client.test_riddle("Тестовая загадка", "qwen")
+            
+            assert isinstance(result, ModelTestResult)
+            assert result.riddle == "Тестовая загадка"
+            assert result.model_name == "qwen"
+            assert result.direct_answer == "Прямой ответ"
+            assert result.stepwise_answer == "Пошаговый ответ"
+            assert result.direct_response_time == 1.0
+            assert result.stepwise_response_time == 2.0
+    
+    @pytest.mark.asyncio
+    async def test_check_model_availability(self, client):
+        """Тест проверки доступности моделей."""
+        with patch.object(client.client, 'post') as mock_post:
+            # Модель доступна
+            mock_response_available = AsyncMock()
+            mock_response_available.status_code = 200
+            mock_post.return_value = mock_response_available
+            
+            availability = await client.check_model_availability()
+            
+            assert isinstance(availability, dict)
+            assert "qwen" in availability
+            assert "mistral" in availability
+            assert "tinyllama" in availability
+            assert availability["qwen"] is True
+    
+    @pytest.mark.asyncio
+    async def test_check_model_availability_unavailable(self, client):
+        """Тест проверки недоступности моделей."""
+        with patch.object(client.client, 'post') as mock_post:
+            # Модель недоступна
+            mock_post.side_effect = httpx.HTTPError("Connection refused")
+            
+            availability = await client.check_model_availability()
+            
+            assert isinstance(availability, dict)
+            assert availability["qwen"] is False
+            assert availability["mistral"] is False
+            assert availability["tinyllama"] is False

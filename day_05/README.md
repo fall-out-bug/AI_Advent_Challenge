@@ -24,7 +24,7 @@
 ### 1. Запуск локальных моделей
 
 ```bash
-cd day_05/local_models
+cd ../local_models
 docker-compose up -d
 ```
 
@@ -167,7 +167,7 @@ python -m pytest tests/test_chat_v5.py -v
 - `terminal_chat_v5.py` — основной класс чата
 - `advice_mode_v5.py` — режим советчика с поддержкой локальных моделей
 - `LocalModelClient` — клиент для работы с локальными API
-- `local_models/` — Docker контейнеры с моделями
+- `../local_models/` — Docker контейнеры с моделями (общая папка)
 
 ### Структура файлов
 
@@ -177,7 +177,7 @@ day_05/
 ├── advice_mode_v5.py        # Режим советчика
 ├── tests/
 │   └── test_chat_v5.py      # Тесты
-├── local_models/
+├── ../local_models/         # Общая папка локальных моделей
 │   ├── chat_api.py          # FastAPI сервер
 │   ├── docker-compose.yml   # Конфигурация Docker
 │   └── Dockerfile           # Образ для моделей

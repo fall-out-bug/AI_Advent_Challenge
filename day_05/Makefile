@@ -11,10 +11,10 @@ test: ## Запустить тесты
 	python -m pytest tests/test_chat_v5.py -v
 
 run-models: ## Запустить локальные модели
-	cd local_models && docker-compose up -d
+	cd ../local_models && docker-compose up -d
 
 stop-models: ## Остановить локальные модели
-	cd local_models && docker-compose down
+	cd ../local_models && docker-compose down
 
 clean: ## Очистить кэш и временные файлы
 	find . -type d -name "__pycache__" -exec rm -rf {} +
@@ -31,7 +31,7 @@ check-models: ## Проверить статус локальных моделе
 	@curl -s http://localhost:8002/chat > /dev/null && echo "✅ TinyLlama (8002) - доступна" || echo "❌ TinyLlama (8002) - недоступна"
 
 logs: ## Показать логи локальных моделей
-	cd local_models && docker-compose logs -f
+	cd ../local_models && docker-compose logs -f
 
 demo-tokens: ## Показать демонстрацию работы с токенами
 	python demo_tokens.py
