@@ -1,0 +1,36 @@
+volumes:
+  hf-model-cache:
+
+services:
+  qwen-chat:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_NAME=Qwen/Qwen1.5-4B-Chat
+      - HF_TOKEN=${HF_TOKEN}
+    runtime: nvidia
+    volumes:
+      - hf-model-cache:/root/.cache/huggingface/hub
+
+  mistral-chat:
+    build: .
+    ports:
+      - "8001:8000"
+    environment:
+      - MODEL_NAME=mistralai/Mistral-7B-Instruct-v0.2
+      - HF_TOKEN=${HF_TOKEN}
+    runtime: nvidia
+    volumes:
+      - hf-model-cache:/root/.cache/huggingface/hub
+
+  tinyllama-chat:
+    build: .
+    ports:
+      - "8002:8000"
+    environment:
+      - MODEL_NAME=TinyLlama/TinyLlama-1.1B-Chat-v1.0
+      - HF_TOKEN=${HF_TOKEN}
+    runtime: nvidia
+    volumes:
+      - hf-model-cache:/root/.cache/huggingface/hub

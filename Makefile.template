@@ -1,0 +1,98 @@
+# Universal Makefile template for AI Challenge projects
+# This template provides common commands and can be customized per project
+
+.PHONY: help install test run clean setup
+
+# Detect Python executable and Poetry
+PYTHON := $(shell which python3 || which python)
+POETRY := $(shell which poetry 2>/dev/null)
+PIP := $(shell which pip3 || which pip)
+
+# Project-specific variables (override in project Makefile)
+PROJECT_NAME ?= ai-challenge-project
+MAIN_SCRIPT ?= main.py
+TEST_DIR ?= tests
+SRC_DIR ?= src
+REQUIREMENTS_FILE ?= requirements.txt
+
+# Colors for output
+GREEN := \033[32m
+YELLOW := \033[33m
+RED := \033[31m
+RESET := \033[0m
+
+help: ## Show this help message
+	@echo "$(GREEN)Available commands for $(PROJECT_NAME):$(RESET)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(YELLOW)%-15s$(RESET) %s\n", $$1, $$2}'
+
+install: ## Install dependencies
+	@echo "$(GREEN)Installing dependencies...$(RESET)"
+	@if [ -n "$(POETRY)" ] && [ -f "pyproject.toml" ]; then \
+		echo "$(YELLOW)Using Poetry...$(RESET)"; \
+		$(POETRY) install; \
+	elif [ -f "$(REQUIREMENTS_FILE)" ]; then \
+		echo "$(YELLOW)Using pip...$(RESET)"; \
+		$(PIP) install -r $(REQUIREMENTS_FILE); \
+	else \
+		echo "$(RED)No dependency file found (pyproject.toml or $(REQUIREMENTS_FILE))$(RESET)"; \
+		exit 1; \
+	fi
+
+test: ## Run tests
+	@echo "$(GREEN)Running tests...$(RESET)"
+	@if [ -n "$(POETRY)" ] && [ -f "pyproject.toml" ]; then \
+		$(POETRY) run pytest $(TEST_DIR)/ -v; \
+	else \
+		$(PYTHON) -m pytest $(TEST_DIR)/ -v; \
+	fi
+
+run: ## Run the main application
+	@echo "$(GREEN)Running $(PROJECT_NAME)...$(RESET)"
+	@if [ -n "$(POETRY)" ] && [ -f "pyproject.toml" ]; then \
+		$(POETRY) run $(PYTHON) $(MAIN_SCRIPT); \
+	else \
+		$(PYTHON) $(MAIN_SCRIPT); \
+	fi
+
+clean: ## Clean cache and temporary files
+	@echo "$(GREEN)Cleaning up...$(RESET)"
+	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	@find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	@find . -type f -name "*.pyo" -delete 2>/dev/null || true
+	@find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+	@find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
+	@rm -f .coverage 2>/dev/null || true
+
+setup: install ## Setup project (install dependencies)
+	@echo "$(GREEN)Project setup complete!$(RESET)"
+
+# Common utility commands
+check-python: ## Check Python version
+	@echo "$(GREEN)Python version:$(RESET)"
+	@$(PYTHON) --version
+
+check-deps: ## Check if dependencies are installed
+	@echo "$(GREEN)Checking dependencies...$(RESET)"
+	@if [ -n "$(POETRY)" ] && [ -f "pyproject.toml" ]; then \
+		$(POETRY) check; \
+	else \
+		echo "$(YELLOW)No Poetry configuration found$(RESET)"; \
+	fi
+
+lint: ## Run linting (if available)
+	@echo "$(GREEN)Running linting...$(RESET)"
+	@if command -v flake8 >/dev/null 2>&1; then \
+		flake8 $(SRC_DIR)/ $(TEST_DIR)/; \
+	elif command -v pylint >/dev/null 2>&1; then \
+		pylint $(SRC_DIR)/ $(TEST_DIR)/; \
+	else \
+		echo "$(YELLOW)No linter found (flake8 or pylint)$(RESET)"; \
+	fi
+
+format: ## Format code (if available)
+	@echo "$(GREEN)Formatting code...$(RESET)"
+	@if command -v black >/dev/null 2>&1; then \
+		black $(SRC_DIR)/ $(TEST_DIR)/; \
+	else \
+		echo "$(YELLOW)Black not found, skipping formatting$(RESET)"; \
+	fi
