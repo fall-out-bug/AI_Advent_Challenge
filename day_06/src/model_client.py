@@ -136,7 +136,7 @@ class LocalModelClient:
         """
         if verbose:
             print(f"\n🤖 Тестирование модели {model_name}")
-            print(f"📝 Загадка: {riddle[:100]}{'...' if len(riddle) > 100 else ''}")
+            print(f"📝 Загадка: {riddle}")
         
         # Прямой ответ
         direct_prompt = f"{riddle}\nОтвет:"
@@ -146,7 +146,7 @@ class LocalModelClient:
         
         if verbose:
             print(f"✅ Прямой ответ ({direct_response.response_time:.2f}s):")
-            print(f"   {direct_response.response[:200]}{'...' if len(direct_response.response) > 200 else ''}")
+            print(f"   {direct_response.response}")
         
         # Пошаговый ответ
         stepwise_prompt = f"{riddle}\nРешай пошагово и объясняй ход мыслей перед ответом."
@@ -156,7 +156,7 @@ class LocalModelClient:
         
         if verbose:
             print(f"✅ Пошаговый ответ ({stepwise_response.response_time:.2f}s):")
-            print(f"   {stepwise_response.response[:200]}{'...' if len(stepwise_response.response) > 200 else ''}")
+            print(f"   {stepwise_response.response}")
             print("-" * 60)
         
         return ModelTestResult(
