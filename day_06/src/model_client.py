@@ -1,32 +1,25 @@
 """
-Клиент для работы с локальными языковыми моделями.
+Client for working with local language models.
 
-Предоставляет единообразный интерфейс для взаимодействия с различными
-локальными моделями через HTTP API.
+Provides unified interface for interacting with various
+local models through HTTP API.
+Following Python Zen principles: "Explicit is better than implicit".
 """
 
 import asyncio
 import json
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 
 import httpx
 
-
-@dataclass
-class ModelResponse:
-    """Ответ от модели."""
-    response: str
-    response_tokens: int
-    input_tokens: int
-    total_tokens: int
-    model_name: str
-    response_time: float
+from .base_client import BaseModelClient, ModelResponse, ModelClientError, ModelConnectionError, ModelRequestError, ModelTimeoutError
+from .constants import MODEL_PORTS, DEFAULT_TIMEOUT, MAX_TOKENS, DEFAULT_TEMPERATURE, TEST_MAX_TOKENS, ModelName
 
 
 @dataclass
 class ModelTestResult:
-    """Результат тестирования модели на загадке."""
+    """Model test result on a riddle."""
     riddle: str
     model_name: str
     direct_answer: str
@@ -37,56 +30,54 @@ class ModelTestResult:
     stepwise_tokens: int
 
 
-class LocalModelClient:
-    """Клиент для работы с локальными моделями."""
+class LocalModelClient(BaseModelClient):
+    """
+    Client for working with local models.
     
-    # Маппинг моделей на порты согласно docker-compose.yml
-    MODEL_PORTS = {
-        "qwen": 8000,
-        "mistral": 8001,
-        "tinyllama": 8002
-    }
+    Following Python Zen: "Simple is better than complex"
+    and "Explicit is better than implicit".
+    """
     
-    def __init__(self):
+    def __init__(self, timeout: float = DEFAULT_TIMEOUT):
         """
-        Инициализация клиента.
-        """
-        # Увеличиваем таймаут для длинных ответов
-        self.client = httpx.AsyncClient(timeout=120.0)
-    
-    async def close(self):
-        """Закрытие HTTP клиента."""
-        await self.client.aclose()
-    
-    async def _make_request(
-        self, 
-        model_name: str, 
-        prompt: str
-    ) -> ModelResponse:
-        """
-        Выполнение запроса к модели.
+        Initialize client.
         
         Args:
-            model_name: Имя модели (qwen, mistral, tinyllama)
-            prompt: Текст промпта
+            timeout: HTTP client timeout in seconds
+        """
+        super().__init__(timeout)
+        self.client = httpx.AsyncClient(timeout=timeout)
+    
+    async def close(self):
+        """Close HTTP client."""
+        await self.client.aclose()
+    
+    async def make_request(self, model_name: str, prompt: str) -> ModelResponse:
+        """
+        Make request to model.
+        
+        Args:
+            model_name: Model name (qwen, mistral, tinyllama)
+            prompt: Prompt text
             
         Returns:
-            ModelResponse: Ответ от модели
+            ModelResponse: Model response
             
         Raises:
-            httpx.HTTPError: Ошибка HTTP запроса
-            ValueError: Неизвестная модель
+            ModelConnectionError: If connection fails
+            ModelRequestError: If request fails
+            ModelTimeoutError: If request times out
         """
-        if model_name not in self.MODEL_PORTS:
-            raise ValueError(f"Неизвестная модель: {model_name}")
+        if model_name not in MODEL_PORTS:
+            raise ModelRequestError(f"Unknown model: {model_name}")
         
-        port = self.MODEL_PORTS[model_name]
+        port = MODEL_PORTS[model_name]
         url = f"http://localhost:{port}/chat"
         
         payload = {
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 10000,  # Очень большое значение
-            "temperature": 0.7
+            "max_tokens": MAX_TOKENS,
+            "temperature": DEFAULT_TEMPERATURE
         }
         
         start_time = asyncio.get_event_loop().time()
@@ -109,12 +100,27 @@ class LocalModelClient:
                 response_time=response_time
             )
             
-        except httpx.HTTPError as e:
-            print(f"HTTP ошибка для {model_name}: {e}")
-            raise httpx.HTTPError(f"Ошибка запроса к модели {model_name}: {e}")
+        except httpx.ConnectError as e:
+            raise ModelConnectionError(f"Failed to connect to model {model_name}: {e}")
+        except httpx.TimeoutException as e:
+            raise ModelTimeoutError(f"Request to model {model_name} timed out: {e}")
+        except httpx.HTTPStatusError as e:
+            raise ModelRequestError(f"HTTP error for model {model_name}: {e}")
         except Exception as e:
-            print(f"Общая ошибка для {model_name}: {e}")
-            raise Exception(f"Ошибка при работе с моделью {model_name}: {e}")
+            raise ModelClientError(f"Unexpected error with model {model_name}: {e}")
+    
+    async def _make_request(self, model_name: str, prompt: str) -> ModelResponse:
+        """
+        Backward compatibility wrapper for make_request.
+        
+        Args:
+            model_name: Model name
+            prompt: Prompt text
+            
+        Returns:
+            ModelResponse: Model response
+        """
+        return await self.make_request(model_name, prompt)
     
     async def test_riddle(
         self, 
@@ -123,38 +129,38 @@ class LocalModelClient:
         verbose: bool = False
     ) -> ModelTestResult:
         """
-        Тестирование модели на загадке в двух режимах.
+        Test model on riddle in two modes.
         
         Args:
-            riddle: Текст загадки
-            model_name: Имя модели для тестирования
-            verbose: Выводить ли общение с моделью в консоль
+            riddle: Riddle text
+            model_name: Model name for testing
+            verbose: Whether to output model communication to console
             
         Returns:
-            ModelTestResult: Результат тестирования
+            ModelTestResult: Test result
         """
         if verbose:
-            print(f"\n🤖 Тестирование модели {model_name}")
-            print(f"📝 Загадка: {riddle}")
+            print(f"\n🤖 Testing model {model_name}")
+            print(f"📝 Riddle: {riddle}")
         
-        # Прямой ответ
-        direct_prompt = f"{riddle}\nОтвет:"
+        # Direct answer
+        direct_prompt = f"{riddle}\nAnswer:"
         if verbose:
-            print(f"\n💬 Прямой запрос к {model_name}...")
+            print(f"\n💬 Direct request to {model_name}...")
         direct_response = await self._make_request(model_name, direct_prompt)
         
         if verbose:
-            print(f"✅ Прямой ответ ({direct_response.response_time:.2f}s):")
+            print(f"✅ Direct answer ({direct_response.response_time:.2f}s):")
             print(f"   {direct_response.response}")
         
-        # Пошаговый ответ
-        stepwise_prompt = f"{riddle}\nРешай пошагово и объясняй ход мыслей перед ответом."
+        # Stepwise answer
+        stepwise_prompt = f"{riddle}\nSolve step by step and explain your reasoning before answering."
         if verbose:
-            print(f"\n🧠 Пошаговый запрос к {model_name}...")
+            print(f"\n🧠 Stepwise request to {model_name}...")
         stepwise_response = await self._make_request(model_name, stepwise_prompt)
         
         if verbose:
-            print(f"✅ Пошаговый ответ ({stepwise_response.response_time:.2f}s):")
+            print(f"✅ Stepwise answer ({stepwise_response.response_time:.2f}s):")
             print(f"   {stepwise_response.response}")
             print("-" * 60)
         
@@ -171,49 +177,65 @@ class LocalModelClient:
     
     async def test_all_models(self, riddles: List[str], verbose: bool = False) -> List[ModelTestResult]:
         """
-        Тестирование всех моделей на всех загадках.
+        Test all models on all riddles.
         
         Args:
-            riddles: Список загадок для тестирования
-            verbose: Выводить ли общение с моделями в консоль
+            riddles: List of riddles for testing
+            verbose: Whether to output model communication to console
             
         Returns:
-            List[ModelTestResult]: Список результатов тестирования
+            List[ModelTestResult]: List of test results
         """
         results = []
         
-        for model_name in self.MODEL_PORTS.keys():
+        for model_name in MODEL_PORTS.keys():
             for riddle in riddles:
                 try:
                     result = await self.test_riddle(riddle, model_name, verbose)
                     results.append(result)
                 except Exception as e:
-                    print(f"Ошибка при тестировании {model_name} на загадке: {e}")
+                    print(f"Error testing {model_name} on riddle: {e}")
                     continue
         
         return results
     
+    async def check_availability(self, model_name: str) -> bool:
+        """
+        Check if specific model is available.
+        
+        Args:
+            model_name: Name of the model to check
+            
+        Returns:
+            bool: True if model is available
+        """
+        if model_name not in MODEL_PORTS:
+            return False
+        
+        try:
+            port = MODEL_PORTS[model_name]
+            url = f"http://localhost:{port}/chat"
+            response = await self.client.post(
+                url, 
+                json={
+                    "messages": [{"role": "user", "content": "test"}],
+                    "max_tokens": TEST_MAX_TOKENS
+                }
+            )
+            return response.status_code == 200
+        except (httpx.HTTPError, httpx.ConnectError, httpx.TimeoutException):
+            return False
+    
     async def check_model_availability(self) -> Dict[str, bool]:
         """
-        Проверка доступности всех моделей.
+        Check availability of all models.
         
         Returns:
-            Dict[str, bool]: Статус доступности каждой модели
+            Dict[str, bool]: Availability status of each model
         """
         availability = {}
         
-        for model_name, port in self.MODEL_PORTS.items():
-            try:
-                url = f"http://localhost:{port}/chat"
-                response = await self.client.post(
-                    url, 
-                    json={
-                        "messages": [{"role": "user", "content": "test"}],
-                        "max_tokens": 1
-                    }
-                )
-                availability[model_name] = response.status_code == 200
-            except:
-                availability[model_name] = False
+        for model_name in MODEL_PORTS.keys():
+            availability[model_name] = await self.check_availability(model_name)
         
         return availability

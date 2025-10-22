@@ -1,42 +1,43 @@
 """
-Unit тесты для модуля riddles.
+Unit tests for riddles module.
 
-Тестирует функциональность коллекции загадок и анализатора ответов.
+Tests functionality of riddle collection and response analyzer.
 """
 
 import pytest
 
 from src.riddles import RiddleCollection, RiddleAnalyzer, Riddle
+from src.constants import LOGICAL_KEYWORDS
 
 
 class TestRiddleCollection:
-    """Тесты для класса RiddleCollection."""
+    """Tests for RiddleCollection class."""
     
     @pytest.fixture
     def collection(self):
-        """Фикстура для создания коллекции загадок."""
+        """Fixture for creating riddle collection."""
         return RiddleCollection()
     
     def test_collection_initialization(self, collection):
-        """Тест инициализации коллекции."""
+        """Test collection initialization."""
         assert collection.riddles is not None
         assert len(collection.riddles) == 5
     
     def test_get_riddles(self, collection):
-        """Тест получения всех загадок."""
+        """Test getting all riddles."""
         riddles = collection.get_riddles()
         assert len(riddles) == 5
         assert all(isinstance(riddle, Riddle) for riddle in riddles)
     
     def test_get_riddle_texts(self, collection):
-        """Тест получения текстов загадок."""
+        """Test getting riddle texts."""
         texts = collection.get_riddle_texts()
         assert len(texts) == 5
         assert all(isinstance(text, str) for text in texts)
         assert all(len(text) > 0 for text in texts)
     
     def test_get_riddle_by_difficulty(self, collection):
-        """Тест получения загадок по сложности."""
+        """Test getting riddles by difficulty."""
         easy_riddles = collection.get_riddle_by_difficulty(1)
         assert len(easy_riddles) == 1
         assert easy_riddles[0].difficulty == 1
@@ -46,7 +47,7 @@ class TestRiddleCollection:
         assert hard_riddles[0].difficulty == 5
     
     def test_riddle_structure(self, collection):
-        """Тест структуры загадок."""
+        """Test riddle structure."""
         riddles = collection.get_riddles()
         
         for riddle in riddles:
@@ -60,24 +61,24 @@ class TestRiddleCollection:
 
 
 class TestRiddleAnalyzer:
-    """Тесты для класса RiddleAnalyzer."""
+    """Tests for RiddleAnalyzer class."""
     
     @pytest.fixture
     def analyzer(self):
-        """Фикстура для создания анализатора."""
+        """Fixture for creating analyzer."""
         return RiddleAnalyzer()
     
     def test_analyzer_initialization(self, analyzer):
-        """Тест инициализации анализатора."""
-        assert analyzer.LOGICAL_KEYWORDS is not None
-        assert len(analyzer.LOGICAL_KEYWORDS) > 0
+        """Test analyzer initialization."""
+        assert LOGICAL_KEYWORDS is not None
+        assert len(LOGICAL_KEYWORDS) > 0
     
     def test_count_words(self, analyzer):
-        """Тест подсчета слов."""
+        """Test word counting."""
         assert analyzer._count_words("") == 0
-        assert analyzer._count_words("одно слово") == 2
-        assert analyzer._count_words("три слова здесь") == 3
-        assert analyzer._count_words("много    пробелов    между    словами") == 4
+        assert analyzer._count_words("one word") == 2
+        assert analyzer._count_words("three words here") == 3
+        assert analyzer._count_words("many    spaces    between    words") == 4
     
     def test_has_logical_keywords(self, analyzer):
         """Тест проверки наличия логических ключевых слов."""

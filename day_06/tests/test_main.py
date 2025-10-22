@@ -16,7 +16,9 @@ class TestModelTester:
     @pytest.fixture
     def tester(self):
         """Фикстура для создания тестера."""
-        return ModelTester()
+        from unittest.mock import AsyncMock
+        mock_client = AsyncMock()
+        return ModelTester(client=mock_client)
     
     def test_tester_initialization(self, tester):
         """Тест инициализации тестера."""
@@ -80,3 +82,11 @@ class TestModelTester:
         """Тест вывода сводки для пустых результатов."""
         tester._print_console_summary([])
         assert True  # Если дошли сюда, тест прошел
+    
+    @pytest.mark.asyncio
+    async def test_context_manager(self, tester):
+        """Test context manager functionality."""
+        async with tester as ctx_tester:
+            assert ctx_tester is tester
+            # Test that tester can be used in context
+            assert ctx_tester.client is not None

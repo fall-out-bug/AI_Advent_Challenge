@@ -1,7 +1,7 @@
 """
-Unit тесты для модуля report_generator.
+Unit tests for report_generator module.
 
-Тестирует функциональность генератора отчетов.
+Tests functionality of report generator.
 """
 
 import pytest
@@ -12,32 +12,32 @@ from src.model_client import ModelTestResult
 
 
 class TestReportGenerator:
-    """Тесты для класса ReportGenerator."""
+    """Tests for ReportGenerator class."""
     
     @pytest.fixture
     def generator(self):
-        """Фикстура для создания генератора отчетов."""
+        """Fixture for creating report generator."""
         return ReportGenerator()
     
     @pytest.fixture
     def sample_test_results(self):
-        """Фикстура с примерными результатами тестирования."""
+        """Fixture with sample test results."""
         return [
             ModelTestResult(
-                riddle="Тестовая загадка 1",
+                riddle="Test riddle 1",
                 model_name="qwen",
-                direct_answer="Прямой ответ",
-                stepwise_answer="Пошаговый ответ с рассуждениями",
+                direct_answer="Direct answer",
+                stepwise_answer="Stepwise answer with reasoning",
                 direct_response_time=1.0,
                 stepwise_response_time=2.0,
                 direct_tokens=5,
                 stepwise_tokens=10
             ),
             ModelTestResult(
-                riddle="Тестовая загадка 2",
+                riddle="Test riddle 2",
                 model_name="mistral",
-                direct_answer="Короткий ответ",
-                stepwise_answer="Длинный пошаговый ответ с логикой",
+                direct_answer="Short answer",
+                stepwise_answer="Long stepwise answer with logic",
                 direct_response_time=1.5,
                 stepwise_response_time=3.0,
                 direct_tokens=3,
@@ -47,15 +47,15 @@ class TestReportGenerator:
     
     @pytest.fixture
     def sample_riddle_titles(self):
-        """Фикстура с названиями загадок."""
-        return ["Загадка 1", "Загадка 2"]
+        """Fixture with riddle titles."""
+        return ["Riddle 1", "Riddle 2"]
     
     def test_generator_initialization(self, generator):
-        """Тест инициализации генератора."""
+        """Test generator initialization."""
         assert generator.analyzer is not None
     
     def test_generate_comparison_results(self, generator, sample_test_results, sample_riddle_titles):
-        """Тест генерации результатов сравнения."""
+        """Test comparison results generation."""
         with patch.object(generator.analyzer, 'analyze_response') as mock_analyze:
             mock_analyze.side_effect = [
                 {"word_count": 2, "logical_keywords_count": 0, "has_step_by_step": False},
@@ -64,49 +64,49 @@ class TestReportGenerator:
                 {"word_count": 8, "logical_keywords_count": 3, "has_step_by_step": True}
             ]
             
-            results = generator.generate_comparison_results(sample_test_results, sample_riddle_titles, ["Загадка 1", "Загадка 2"])
+            results = generator.generate_comparison_results(sample_test_results, sample_riddle_titles, ["Riddle 1", "Riddle 2"])
             
             assert len(results) == 2
             assert all(isinstance(result, ComparisonResult) for result in results)
             
-            # Проверяем первый результат
+            # Check first result
             first_result = results[0]
-            assert first_result.riddle_title == "Загадка 1"
+            assert first_result.riddle_title == "Riddle 1"
             assert first_result.model_name == "qwen"
-            assert first_result.direct_answer == "Прямой ответ"
-            assert first_result.stepwise_answer == "Пошаговый ответ с рассуждениями"
+            assert first_result.direct_answer == "Direct answer"
+            assert first_result.stepwise_answer == "Stepwise answer with reasoning"
             assert first_result.word_difference == 3  # 5 - 2
             assert first_result.direct_response_time == 1.0
             assert first_result.stepwise_response_time == 2.0
-            assert first_result.riddle_text == "Загадка 1"
+            assert first_result.riddle_text == "Riddle 1"
     
     def test_generate_markdown_report(self, generator):
-        """Тест генерации Markdown отчета."""
+        """Test Markdown report generation."""
         sample_results = [
             ComparisonResult(
-                riddle_title="Тестовая загадка",
+                riddle_title="Test riddle",
                 model_name="qwen",
-                direct_answer="Короткий ответ",
-                stepwise_answer="Длинный пошаговый ответ",
+                direct_answer="Short answer",
+                stepwise_answer="Long stepwise answer",
                 word_difference=5,
                 direct_analysis={"word_count": 2, "logical_keywords_count": 0, "has_step_by_step": False},
                 stepwise_analysis={"word_count": 7, "logical_keywords_count": 2, "has_step_by_step": True},
                 direct_response_time=1.0,
                 stepwise_response_time=2.0,
-                riddle_text="Тестовая загадка для проверки"
+                riddle_text="Test riddle for verification"
             )
         ]
         
         report = generator.generate_markdown_report(sample_results)
         
         assert isinstance(report, str)
-        assert "# Тест моделей на логических загадках" in report
-        assert "## Общая статистика" in report
-        assert "## Детальный анализ" in report
-        assert "## Статистика" in report
-        assert "Тестовая загадка" in report
+        assert "# Model Testing on Logical Riddles" in report
+        assert "## General Statistics" in report
+        assert "## Detailed Analysis" in report
+        assert "## Statistics" in report
+        assert "Test riddle" in report
         assert "qwen" in report
-        assert "Тестовая загадка для проверки" in report
+        assert "Test riddle for verification" in report
     
     def test_save_report(self, generator):
         """Тест сохранения отчета в файл."""
@@ -168,9 +168,9 @@ class TestReportGenerator:
         
         stats = generator._generate_statistics(sample_results)
         
-        assert "## Статистика" in stats
-        assert "Общее количество тестов:** 2" in stats
-        assert "Средняя разница в словах: 4.0" in stats
-        assert "Среднее время прямого ответа: 1.25s" in stats
-        assert "Среднее время пошагового ответа: 2.25s" in stats
-        assert "qwen:" in stats
+        assert "## Statistics" in stats
+        assert "**Total Tests:** 2" in stats
+        assert "**Average Word Difference:** 4.0" in stats
+        assert "**Average Direct Response Time:** 1.25s" in stats
+        assert "**Average Stepwise Response Time:** 2.25s" in stats
+        assert "**qwen:**" in stats

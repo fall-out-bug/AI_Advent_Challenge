@@ -1,43 +1,45 @@
 """
-Генератор отчетов для тестирования локальных моделей.
+Report generator for testing local models.
 
-Создает Markdown отчеты с результатами тестирования моделей на загадках.
+Creates Markdown reports with model testing results on riddles.
 """
 
-from typing import List, Dict
+from typing import List, Dict, Any
 from dataclasses import dataclass
 from datetime import datetime
 
-# Используем абсолютные импорты для работы как скрипт
+from .constants import REPORT_FILENAME_PREFIX, REPORT_TIMESTAMP_FORMAT, DISPLAY_TIMESTAMP_FORMAT
+
+# Use absolute imports for script execution
 try:
     from .model_client import ModelTestResult
     from .riddles import RiddleAnalyzer
 except ImportError:
-    # Если относительные импорты не работают, используем абсолютные
+    # If relative imports don't work, use absolute imports
     from model_client import ModelTestResult
     from riddles import RiddleAnalyzer
 
 
 @dataclass
 class ComparisonResult:
-    """Результат сравнения ответов модели."""
+    """Model response comparison result."""
     riddle_title: str
     model_name: str
     direct_answer: str
     stepwise_answer: str
     word_difference: int
-    direct_analysis: Dict
-    stepwise_analysis: Dict
+    direct_analysis: Dict[str, Any]
+    stepwise_analysis: Dict[str, Any]
     direct_response_time: float
     stepwise_response_time: float
     riddle_text: str = ""
 
 
 class ReportGenerator:
-    """Генератор отчетов о тестировании моделей."""
+    """Report generator for model testing."""
     
     def __init__(self):
-        """Инициализация генератора отчетов."""
+        """Initialize report generator."""
         self.analyzer = RiddleAnalyzer()
     
     def generate_comparison_results(
@@ -47,29 +49,29 @@ class ReportGenerator:
         riddle_texts: List[str] = None
     ) -> List[ComparisonResult]:
         """
-        Генерация результатов сравнения.
+        Generate comparison results.
         
         Args:
-            test_results: Результаты тестирования
-            riddle_titles: Названия загадок
-            riddle_texts: Тексты загадок (опционально)
+            test_results: Test results
+            riddle_titles: Riddle titles
+            riddle_texts: Riddle texts (optional)
             
         Returns:
-            List[ComparisonResult]: Результаты сравнения
+            List[ComparisonResult]: Comparison results
         """
         comparison_results = []
         
         for i, result in enumerate(test_results):
-            # Анализ прямого ответа
+            # Analyze direct answer
             direct_analysis = self.analyzer.analyze_response(result.direct_answer)
             
-            # Анализ пошагового ответа
+            # Analyze stepwise answer
             stepwise_analysis = self.analyzer.analyze_response(result.stepwise_answer)
             
-            # Вычисление разницы в словах
+            # Calculate word difference
             word_difference = stepwise_analysis["word_count"] - direct_analysis["word_count"]
             
-            # Получаем текст загадки, если доступен
+            # Get riddle text if available
             riddle_text = ""
             if riddle_texts and i < len(riddle_texts):
                 riddle_text = riddle_texts[i % len(riddle_texts)]
@@ -96,76 +98,114 @@ class ReportGenerator:
         comparison_results: List[ComparisonResult]
     ) -> str:
         """
-        Генерация Markdown отчета.
+        Generate Markdown report.
         
         Args:
-            comparison_results: Результаты сравнения
+            comparison_results: Comparison results
             
         Returns:
-            str: Markdown отчет
+            str: Markdown report
         """
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = datetime.now().strftime(DISPLAY_TIMESTAMP_FORMAT)
         
-        report = f"""# Тест моделей на логических загадках
+        report = f"""# Model Testing on Logical Riddles
 
-**Дата тестирования:** {timestamp}
+**Testing Date:** {timestamp}
 
-## Общая статистика
+## General Statistics
 
-- **Общее количество тестов:** {len(comparison_results)}
-- **Количество моделей:** {len(set(r.model_name for r in comparison_results))}
-- **Количество загадок:** {len(set(r.riddle_title for r in comparison_results))}
+- **Total Tests:** {len(comparison_results)}
+- **Number of Models:** {len(set(r.model_name for r in comparison_results))}
+- **Number of Riddles:** {len(set(r.riddle_title for r in comparison_results))}
 
 """
         
-        # Добавляем детальный анализ
+        # Add detailed analysis
         report += self._generate_detailed_analysis(comparison_results)
         
-        # Добавляем статистику
+        # Add statistics
         report += self._generate_statistics(comparison_results)
         
         return report
     
     def _generate_detailed_analysis(self, results: List[ComparisonResult]) -> str:
-        """Генерация детального анализа."""
-        analysis = "\n## Детальный анализ\n\n"
+        """
+        Generate detailed analysis.
+        
+        Following Python Zen: "Flat is better than nested"
+        and "Simple is better than complex".
+        """
+        analysis = "\n## Detailed Analysis\n\n"
         
         for result in results:
-            analysis += f"### {result.riddle_title} - {result.model_name}\n\n"
+            analysis += self._generate_single_result_analysis(result)
+        
+        return analysis
+    
+    def _generate_single_result_analysis(self, result: ComparisonResult) -> str:
+        """
+        Generate analysis for a single result.
+        
+        Args:
+            result: Comparison result to analyze
             
-            # Добавляем текст загадки, если доступен
-            if result.riddle_text:
-                analysis += f"**Загадка:**\n{result.riddle_text}\n\n"
-            
-            # Анализ прямого ответа
-            analysis += "**Прямой ответ:**\n"
-            analysis += f"- Количество слов: {result.direct_analysis['word_count']}\n"
-            analysis += f"- Логические ключевые слова: {result.direct_analysis['logical_keywords_count']}\n"
-            analysis += f"- Пошаговая структура: {'Да' if result.direct_analysis['has_step_by_step'] else 'Нет'}\n"
-            analysis += f"- Время ответа: {result.direct_response_time:.2f}s\n\n"
-            
-            # Анализ пошагового ответа
-            analysis += "**Пошаговый ответ:**\n"
-            analysis += f"- Количество слов: {result.stepwise_analysis['word_count']}\n"
-            analysis += f"- Логические ключевые слова: {result.stepwise_analysis['logical_keywords_count']}\n"
-            analysis += f"- Пошаговая структура: {'Да' if result.stepwise_analysis['has_step_by_step'] else 'Нет'}\n"
-            analysis += f"- Время ответа: {result.stepwise_response_time:.2f}s\n"
-            analysis += f"- Разница в словах: {result.word_difference:+d}\n\n"
-            
-            # Полные ответы
-            analysis += "**Полные ответы:**\n\n"
-            analysis += f"*Прямой:*\n```\n{result.direct_answer}\n```\n\n"
-            analysis += f"*Пошаговый:*\n```\n{result.stepwise_answer}\n```\n\n"
-            analysis += "---\n\n"
+        Returns:
+            str: Analysis text for the result
+        """
+        analysis = f"### {result.riddle_title} - {result.model_name}\n\n"
+        
+        analysis += self._add_riddle_text_if_available(result)
+        analysis += self._generate_direct_answer_analysis(result)
+        analysis += self._generate_stepwise_answer_analysis(result)
+        analysis += self._generate_full_answers_section(result)
+        
+        return analysis + "---\n\n"
+    
+    def _add_riddle_text_if_available(self, result: ComparisonResult) -> str:
+        """Add riddle text if available."""
+        if not result.riddle_text:
+            return ""
+        return f"**Riddle:**\n{result.riddle_text}\n\n"
+    
+    def _generate_direct_answer_analysis(self, result: ComparisonResult) -> str:
+        """Generate direct answer analysis section."""
+        analysis = "**Direct Answer:**\n"
+        analysis += f"- Word count: {result.direct_analysis['word_count']}\n"
+        analysis += f"- Logical keywords: {result.direct_analysis['logical_keywords_count']}\n"
+        
+        step_structure = 'Yes' if result.direct_analysis['has_step_by_step'] else 'No'
+        analysis += f"- Step-by-step structure: {step_structure}\n"
+        analysis += f"- Response time: {result.direct_response_time:.2f}s\n\n"
+        
+        return analysis
+    
+    def _generate_stepwise_answer_analysis(self, result: ComparisonResult) -> str:
+        """Generate stepwise answer analysis section."""
+        analysis = "**Stepwise Answer:**\n"
+        analysis += f"- Word count: {result.stepwise_analysis['word_count']}\n"
+        analysis += f"- Logical keywords: {result.stepwise_analysis['logical_keywords_count']}\n"
+        
+        step_structure = 'Yes' if result.stepwise_analysis['has_step_by_step'] else 'No'
+        analysis += f"- Step-by-step structure: {step_structure}\n"
+        analysis += f"- Response time: {result.stepwise_response_time:.2f}s\n"
+        analysis += f"- Word difference: {result.word_difference:+d}\n\n"
+        
+        return analysis
+    
+    def _generate_full_answers_section(self, result: ComparisonResult) -> str:
+        """Generate full answers section."""
+        analysis = "**Full Answers:**\n\n"
+        analysis += f"*Direct:*\n```\n{result.direct_answer}\n```\n\n"
+        analysis += f"*Stepwise:*\n```\n{result.stepwise_answer}\n```\n\n"
         
         return analysis
     
     def _generate_statistics(self, results: List[ComparisonResult]) -> str:
-        """Генерация статистики."""
+        """Generate statistics."""
         if not results:
             return ""
         
-        # Статистика по моделям
+        # Statistics by models
         models = set(result.model_name for result in results)
         model_stats = {}
         
@@ -182,44 +222,44 @@ class ReportGenerator:
                 "total_tests": len(model_results)
             }
         
-        stats = "## Статистика\n\n"
+        stats = "## Statistics\n\n"
         
-        # Общая статистика
+        # General statistics
         total_word_diff = sum(r.word_difference for r in results)
         avg_word_diff = total_word_diff / len(results)
         avg_direct_time = sum(r.direct_response_time for r in results) / len(results)
         avg_stepwise_time = sum(r.stepwise_response_time for r in results) / len(results)
         
-        stats += f"- **Общее количество тестов:** {len(results)}\n"
-        stats += f"- **Средняя разница в словах:** {avg_word_diff:.1f}\n"
-        stats += f"- **Среднее время прямого ответа:** {avg_direct_time:.2f}s\n"
-        stats += f"- **Среднее время пошагового ответа:** {avg_stepwise_time:.2f}s\n\n"
+        stats += f"- **Total Tests:** {len(results)}\n"
+        stats += f"- **Average Word Difference:** {avg_word_diff:.1f}\n"
+        stats += f"- **Average Direct Response Time:** {avg_direct_time:.2f}s\n"
+        stats += f"- **Average Stepwise Response Time:** {avg_stepwise_time:.2f}s\n\n"
         
-        # Статистика по моделям
-        stats += "### Статистика по моделям\n\n"
+        # Statistics by models
+        stats += "### Statistics by Models\n\n"
         for model, stat in model_stats.items():
             stats += f"**{model}:**\n"
-            stats += f"- Количество тестов: {stat['total_tests']}\n"
-            stats += f"- Средняя разница в словах: {stat['avg_word_diff']:.1f}\n"
-            stats += f"- Среднее время прямого ответа: {stat['avg_direct_time']:.2f}s\n"
-            stats += f"- Среднее время пошагового ответа: {stat['avg_stepwise_time']:.2f}s\n\n"
+            stats += f"- Number of tests: {stat['total_tests']}\n"
+            stats += f"- Average word difference: {stat['avg_word_diff']:.1f}\n"
+            stats += f"- Average direct response time: {stat['avg_direct_time']:.2f}s\n"
+            stats += f"- Average stepwise response time: {stat['avg_stepwise_time']:.2f}s\n\n"
         
         return stats
     
     def save_report(self, report: str, filename: str = None) -> str:
         """
-        Сохранение отчета в файл.
+        Save report to file.
         
         Args:
-            report: Текст отчета
-            filename: Имя файла (опционально)
+            report: Report text
+            filename: Filename (optional)
             
         Returns:
-            str: Путь к сохраненному файлу
+            str: Path to saved file
         """
         if filename is None:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"model_test_report_{timestamp}.md"
+            timestamp = datetime.now().strftime(REPORT_TIMESTAMP_FORMAT)
+            filename = f"{REPORT_FILENAME_PREFIX}{timestamp}.md"
         
         with open(filename, 'w', encoding='utf-8') as f:
             f.write(report)

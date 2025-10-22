@@ -1,45 +1,40 @@
 """
-Модуль с логическими загадками и логикой их анализа.
+Module with logical riddles and analysis logic.
 
-Содержит загадки из ТЗ и функции для анализа ответов моделей.
+Contains riddles from requirements and functions for analyzing model responses.
 """
 
-from typing import List, Dict, Tuple
+from typing import List, Dict, Any
 from dataclasses import dataclass
 import re
+
+from .constants import LOGICAL_KEYWORDS, STEP_PATTERNS, DIFFICULTY_LEVELS
 
 
 @dataclass
 class Riddle:
-    """Структура загадки."""
+    """Riddle structure."""
     title: str
     text: str
-    difficulty: int  # 1-5, где 5 - самая сложная
+    difficulty: int  # 1-5, where 5 is the most difficult
 
 
 class RiddleAnalyzer:
-    """Анализатор ответов на загадки."""
-    
-    # Ключевые слова для анализа логического рассуждения
-    LOGICAL_KEYWORDS = [
-        "если", "значит", "поэтому", "следовательно", "отсюда", 
-        "из этого", "получается", "вывод", "рассуждение", "логика",
-        "шаг", "этап", "сначала", "затем", "далее", "в итоге"
-    ]
+    """Analyzer for riddle responses."""
     
     def __init__(self):
-        """Инициализация анализатора."""
+        """Initialize analyzer."""
         pass
     
-    def analyze_response(self, response: str) -> Dict[str, any]:
+    def analyze_response(self, response: str) -> Dict[str, Any]:
         """
-        Анализ ответа модели.
+        Analyze model response.
         
         Args:
-            response: Текст ответа модели
+            response: Model response text
             
         Returns:
-            Dict: Результаты анализа
+            Dict: Analysis results
         """
         return {
             "word_count": self._count_words(response),
@@ -50,92 +45,81 @@ class RiddleAnalyzer:
         }
     
     def _count_words(self, text: str) -> int:
-        """Подсчет количества слов в тексте."""
+        """Count words in text."""
         return len(text.split())
     
     def _has_logical_keywords(self, text: str) -> bool:
-        """Проверка наличия логических ключевых слов."""
+        """Check for logical keywords."""
         text_lower = text.lower()
-        return any(keyword in text_lower for keyword in self.LOGICAL_KEYWORDS)
+        return any(keyword in text_lower for keyword in LOGICAL_KEYWORDS)
     
     def _count_logical_keywords(self, text: str) -> int:
-        """Подсчет количества логических ключевых слов."""
+        """Count logical keywords."""
         text_lower = text.lower()
         count = 0
-        for keyword in self.LOGICAL_KEYWORDS:
+        for keyword in LOGICAL_KEYWORDS:
             count += text_lower.count(keyword)
         return count
     
     def _has_step_by_step_structure(self, text: str) -> bool:
-        """Проверка наличия пошаговой структуры."""
-        # Ищем числовые маркеры или слова, указывающие на шаги
-        step_patterns = [
-            r'\d+[\.\)]\s',  # 1. или 1)
-            r'шаг\s*\d+',    # шаг 1
-            r'этап\s*\d+',   # этап 1
-            r'сначала',      # сначала
-            r'затем',        # затем
-            r'далее',        # далее
-            r'в итоге'       # в итоге
-        ]
-        
+        """Check for step-by-step structure."""
         text_lower = text.lower()
-        return any(re.search(pattern, text_lower) for pattern in step_patterns)
+        return any(re.search(pattern, text_lower) for pattern in STEP_PATTERNS)
 
 
 class RiddleCollection:
-    """Коллекция загадок из ТЗ."""
+    """Collection of riddles from requirements."""
     
     def __init__(self):
-        """Инициализация коллекции загадок."""
+        """Initialize riddle collection."""
         self.riddles = self._create_riddles()
     
     def _create_riddles(self) -> List[Riddle]:
-        """Создание списка загадок согласно ТЗ."""
+        """Create list of riddles according to requirements."""
         return [
             Riddle(
-                title="Про монету и котёнка",
-                text="Ты заходишь в комнату и видишь монету и котёнка. Ты берёшь монету и выходишь. Что остаётся в комнате?",
+                title="Coin and kitten riddle",
+                text="You enter a room and see a coin and a kitten. You take the coin and leave. What remains in the room?",
                 difficulty=1
             ),
             Riddle(
-                title="Классическая загадка о поезде",
-                text="Поезд выехал из точки А в 9 утра, а другой — из точки Б в то же время навстречу первому. Кто будет ближе к пункту А, когда они встретятся?",
+                title="Classic train riddle",
+                text="A train leaves point A at 9 AM, and another leaves point B at the same time towards the first. Who will be closer to point A when they meet?",
                 difficulty=2
             ),
             Riddle(
-                title="Загадка с тремя дверями",
-                text="Перед тобой три двери: за одной — приз, за другими — пусто. Ты выбираешь одну, ведущий открывает пустую из оставшихся и предлагает сменить выбор. Что выгоднее?",
+                title="Three doors riddle",
+                text="You have three doors: behind one is a prize, behind others is nothing. You choose one, the host opens an empty one from the remaining and offers to change your choice. What is more profitable?",
                 difficulty=3
             ),
             Riddle(
-                title="Парадокс двух конвертов",
-                text="В одном конверте сумма X, в другом — 2X. Ты выбираешь один. Стоит ли менять? Почему?",
+                title="Two envelopes paradox",
+                text="In one envelope there is amount X, in another - 2X. You choose one. Should you change? Why?",
                 difficulty=4
             ),
             Riddle(
-                title="Задача о мудрецах с цветными шапками",
-                text="Три мудреца видят головы друг друга, знают, что каждая шапка — белая или синяя, и слышат, что как минимум одна белая. Они по очереди говорят «не знаю». Что могут заключить?",
+                title="Wise men with colored hats",
+                text="Three wise men see each other's heads, know that each hat is white or blue, and hear that at least one is white. They say 'I don't know' in turn. What can they conclude?",
                 difficulty=5
             )
         ]
     
     def get_riddles(self) -> List[Riddle]:
-        """Получение списка всех загадок."""
+        """Get list of all riddles."""
         return self.riddles
     
     def get_riddle_texts(self) -> List[str]:
-        """Получение текстов всех загадок."""
+        """Get texts of all riddles."""
         return [riddle.text for riddle in self.riddles]
     
     def get_riddle_by_difficulty(self, difficulty: int) -> List[Riddle]:
         """
-        Получение загадок по уровню сложности.
+        Get riddles by difficulty level.
         
         Args:
-            difficulty: Уровень сложности (1-5)
+            difficulty: Difficulty level (1-5)
             
         Returns:
-            List[Riddle]: Загадки указанной сложности
+            List[Riddle]: Riddles of specified difficulty
         """
         return [riddle for riddle in self.riddles if riddle.difficulty == difficulty]

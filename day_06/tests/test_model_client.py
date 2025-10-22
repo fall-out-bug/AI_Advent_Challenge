@@ -1,7 +1,7 @@
 """
-Unit тесты для модуля model_client.
+Unit tests for model_client module.
 
-Тестирует функциональность клиента для работы с локальными моделями.
+Tests functionality of client for working with local models.
 """
 
 import pytest
@@ -9,51 +9,53 @@ import httpx
 from unittest.mock import AsyncMock, patch, Mock
 
 from src.model_client import LocalModelClient, ModelResponse, ModelTestResult
+from src.base_client import ModelClientError, ModelConnectionError, ModelRequestError, ModelTimeoutError
+from src.constants import MODEL_PORTS
 
 
 class TestLocalModelClient:
-    """Тесты для класса LocalModelClient."""
+    """Tests for LocalModelClient class."""
     
     @pytest.fixture
     def client(self):
-        """Фикстура для создания клиента."""
+        """Fixture for creating client."""
         return LocalModelClient()
     
     @pytest.fixture
     def mock_response_data(self):
-        """Фикстура с данными ответа от модели."""
+        """Fixture with model response data."""
         return {
-            "response": "Тестовый ответ",
+            "response": "Test response",
             "response_tokens": 5,
             "input_tokens": 10,
             "total_tokens": 15
         }
     
     def test_model_ports_mapping(self):
-        """Тест маппинга моделей на порты."""
+        """Test model to ports mapping."""
         expected_ports = {
             "qwen": 8000,
             "mistral": 8001,
             "tinyllama": 8002
         }
-        assert LocalModelClient.MODEL_PORTS == expected_ports
+        assert MODEL_PORTS == expected_ports
     
     def test_client_initialization(self):
-        """Тест инициализации клиента."""
+        """Test client initialization."""
         client = LocalModelClient()
         assert client.client is not None
         assert isinstance(client.client, httpx.AsyncClient)
     
     @pytest.mark.asyncio
     async def test_close_client(self, client):
-        """Тест закрытия клиента."""
+        """Test client closing."""
         await client.close()
-        # Проверяем, что клиент закрыт (не можем напрямую проверить состояние)
-        assert True  # Если не выброшено исключение, тест прошел
+        # Check that client is closed (can't directly check state)
+        assert True  # If no exception thrown, test passed
     
     @pytest.mark.asyncio
     async def test_make_request_success(self, client, mock_response_data):
-        """Тест успешного запроса к модели."""
+        """Test successful model request."""
         with patch.object(client.client, 'post') as mock_post:
             mock_response = Mock()
             mock_response.status_code = 200
@@ -61,28 +63,49 @@ class TestLocalModelClient:
             mock_response.raise_for_status = Mock()
             mock_post.return_value = mock_response
             
-            result = await client._make_request("qwen", "Тестовый промпт")
+            result = await client._make_request("qwen", "Test prompt")
             
             assert isinstance(result, ModelResponse)
-            assert result.response == "Тестовый ответ"
+            assert result.response == "Test response"
             assert result.response_tokens == 5
             assert result.model_name == "qwen"
             assert result.response_time > 0
     
     @pytest.mark.asyncio
     async def test_make_request_unknown_model(self, client):
-        """Тест запроса к неизвестной модели."""
-        with pytest.raises(ValueError, match="Неизвестная модель"):
-            await client._make_request("unknown_model", "Тестовый промпт")
+        """Test request to unknown model."""
+        with pytest.raises(ModelRequestError, match="Unknown model"):
+            await client._make_request("unknown_model", "Test prompt")
     
     @pytest.mark.asyncio
-    async def test_make_request_http_error(self, client):
-        """Тест обработки HTTP ошибки."""
+    async def test_make_request_connection_error(self, client):
+        """Test connection error handling."""
         with patch.object(client.client, 'post') as mock_post:
-            mock_post.side_effect = httpx.HTTPError("Connection error")
+            mock_post.side_effect = httpx.ConnectError("Connection error")
             
-            with pytest.raises(httpx.HTTPError, match="Ошибка запроса к модели"):
-                await client._make_request("qwen", "Тестовый промпт")
+            with pytest.raises(ModelConnectionError, match="Failed to connect to model"):
+                await client._make_request("qwen", "Test prompt")
+    
+    @pytest.mark.asyncio
+    async def test_make_request_timeout_error(self, client):
+        """Test timeout error handling."""
+        with patch.object(client.client, 'post') as mock_post:
+            mock_post.side_effect = httpx.TimeoutException("Timeout error")
+            
+            with pytest.raises(ModelTimeoutError, match="timed out"):
+                await client._make_request("qwen", "Test prompt")
+    
+    @pytest.mark.asyncio
+    async def test_make_request_http_status_error(self, client):
+        """Test HTTP status error handling."""
+        with patch.object(client.client, 'post') as mock_post:
+            mock_response = Mock()
+            mock_response.status_code = 500
+            mock_post.return_value = mock_response
+            mock_response.raise_for_status.side_effect = httpx.HTTPStatusError("Server error", request=None, response=mock_response)
+            
+            with pytest.raises(ModelRequestError, match="HTTP error"):
+                await client._make_request("qwen", "Test prompt")
     
     @pytest.mark.asyncio
     async def test_test_riddle(self, client, mock_response_data):
@@ -147,3 +170,11 @@ class TestLocalModelClient:
             assert availability["qwen"] is False
             assert availability["mistral"] is False
             assert availability["tinyllama"] is False
+    
+    @pytest.mark.asyncio
+    async def test_context_manager(self, client):
+        """Test context manager functionality."""
+        async with client as ctx_client:
+            assert ctx_client is client
+            # Test that client can be used in context
+            assert ctx_client.client is not None
