@@ -120,7 +120,8 @@ class LocalModelClient:
     async def test_riddle(
         self, 
         riddle: str, 
-        model_name: str
+        model_name: str,
+        verbose: bool = False
     ) -> ModelTestResult:
         """
         Тестирование модели на загадке в двух режимах.
@@ -128,17 +129,35 @@ class LocalModelClient:
         Args:
             riddle: Текст загадки
             model_name: Имя модели для тестирования
+            verbose: Выводить ли общение с моделью в консоль
             
         Returns:
-            TestResult: Результат тестирования
+            ModelTestResult: Результат тестирования
         """
+        if verbose:
+            print(f"\n🤖 Тестирование модели {model_name}")
+            print(f"📝 Загадка: {riddle[:100]}{'...' if len(riddle) > 100 else ''}")
+        
         # Прямой ответ
         direct_prompt = f"{riddle}\nОтвет:"
+        if verbose:
+            print(f"\n💬 Прямой запрос к {model_name}...")
         direct_response = await self._make_request(model_name, direct_prompt)
+        
+        if verbose:
+            print(f"✅ Прямой ответ ({direct_response.response_time:.2f}s):")
+            print(f"   {direct_response.response[:200]}{'...' if len(direct_response.response) > 200 else ''}")
         
         # Пошаговый ответ
         stepwise_prompt = f"{riddle}\nРешай пошагово и объясняй ход мыслей перед ответом."
+        if verbose:
+            print(f"\n🧠 Пошаговый запрос к {model_name}...")
         stepwise_response = await self._make_request(model_name, stepwise_prompt)
+        
+        if verbose:
+            print(f"✅ Пошаговый ответ ({stepwise_response.response_time:.2f}s):")
+            print(f"   {stepwise_response.response[:200]}{'...' if len(stepwise_response.response) > 200 else ''}")
+            print("-" * 60)
         
         return ModelTestResult(
             riddle=riddle,
@@ -151,12 +170,13 @@ class LocalModelClient:
             stepwise_tokens=stepwise_response.response_tokens
         )
     
-    async def test_all_models(self, riddles: List[str]) -> List[ModelTestResult]:
+    async def test_all_models(self, riddles: List[str], verbose: bool = False) -> List[ModelTestResult]:
         """
         Тестирование всех моделей на всех загадках.
         
         Args:
             riddles: Список загадок для тестирования
+            verbose: Выводить ли общение с моделями в консоль
             
         Returns:
             List[ModelTestResult]: Список результатов тестирования
@@ -166,7 +186,7 @@ class LocalModelClient:
         for model_name in self.MODEL_PORTS.keys():
             for riddle in riddles:
                 try:
-                    result = await self.test_riddle(riddle, model_name)
+                    result = await self.test_riddle(riddle, model_name, verbose)
                     results.append(result)
                 except Exception as e:
                     print(f"Ошибка при тестировании {model_name} на загадке: {e}")

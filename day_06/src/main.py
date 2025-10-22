@@ -7,6 +7,7 @@
 
 import asyncio
 import sys
+import argparse
 from typing import List
 
 # Используем абсолютные импорты для работы как скрипт
@@ -30,12 +31,15 @@ class ModelTester:
         self.riddle_collection = RiddleCollection()
         self.report_generator = ReportGenerator()
     
-    async def run_tests(self) -> None:
+    async def run_tests(self, verbose: bool = True) -> None:
         """
         Запуск полного цикла тестирования.
         
         Выполняет проверку доступности моделей, тестирование на загадках
         и генерацию отчета.
+        
+        Args:
+            verbose: Выводить ли общение с моделями в консоль
         """
         print("🧠 Тестирование локальных моделей на логических загадках")
         print("=" * 60)
@@ -55,7 +59,7 @@ class ModelTester:
             
             # Запуск тестов
             print(f"\n🚀 Запуск тестирования...")
-            test_results = await self.client.test_all_models(riddle_texts)
+            test_results = await self.client.test_all_models(riddle_texts, verbose=verbose)
             
             if not test_results:
                 print("❌ Не удалось получить результаты тестирования")
@@ -175,8 +179,14 @@ class ModelTester:
 
 async def main():
     """Главная функция для запуска тестирования."""
+    parser = argparse.ArgumentParser(description="Тестирование локальных моделей на логических загадках")
+    parser.add_argument("--quiet", "-q", action="store_true", 
+                       help="Отключить verbose вывод общения с моделями")
+    
+    args = parser.parse_args()
+    
     tester = ModelTester()
-    await tester.run_tests()
+    await tester.run_tests(verbose=not args.quiet)
 
 
 if __name__ == "__main__":

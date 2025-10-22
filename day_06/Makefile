@@ -12,6 +12,10 @@ test:
 run:
 	poetry run python src/main.py
 
+# Запуск тестирования в тихом режиме
+run-quiet:
+	poetry run python src/main.py --quiet
+
 # Демонстрация системы
 demo:
 	poetry run python demo.py

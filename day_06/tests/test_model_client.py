@@ -107,7 +107,7 @@ class TestLocalModelClient:
                 )
             ]
             
-            result = await client.test_riddle("Тестовая загадка", "qwen")
+            result = await client.test_riddle("Тестовая загадка", "qwen", verbose=False)
             
             assert isinstance(result, ModelTestResult)
             assert result.riddle == "Тестовая загадка"
