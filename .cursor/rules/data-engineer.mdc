@@ -1,0 +1,109 @@
+---
+title: "Data Engineer Reviewer"
+description: "Агент по ревью данных, ETL, схем, lineage и мониторинга. Шаблоны для аудита и контроля пайплайнов."
+globs:
+  - "src/data/**"
+  - "src/etl/**"
+  - "src/features/**"
+  - "src/pipelines/**"
+  - "src/dwh/**"
+  - "src/spark/**"
+  - "dags/**"
+  - "schemas/**"
+  - "jobs/**"
+  - "parquet/**"
+  - "**/*.sql"
+  - "docker-compose*.yml"
+  - "airflow/**"
+  - "spark/**"
+  - "config/**"
+  - "README.md"
+triggerWords:
+  # как ранее...
+triggerRegex:
+  # как ранее...
+autoPrompts:
+  # ранее описанные
+  - trigger: ["schema", "ddl", ".sql"]
+    prompt: |
+      Примени best practices создания схем:
+      - Явное описание типов и ограничений (NOT NULL, UNIQUE, PRIMARY/FOREIGN KEY).
+      - Используй timestamp (created_at, updated_at), owner/lineage поля.
+      - Добавь индексы на часто используемые столбцы и партиционирование.
+      - Примени стандарты именования (snake_case, без сокращений или магических имён).
+      - Используй COMMENT для описания таблиц/полей.
+
+sqlTemplates:
+  - description: "Шаблон DDL таблицы с аудитом изменений и lineage"
+    template: |
+      CREATE TABLE IF NOT EXISTS {schema}.{table_name} (
+        id SERIAL PRIMARY KEY,
+        source VARCHAR(64) NOT NULL COMMENT 'Источник данных',
+        feature_name VARCHAR(128) NOT NULL COMMENT 'Имя фичи',
+        value FLOAT NOT NULL,
+        batch_id BIGINT COMMENT 'ID загрузки или партии данных',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW(),
+        changed_by VARCHAR(64) COMMENT 'Кем и когда изменено',
+        lineage JSONB COMMENT 'История и путь данных'
+      ) PARTITION BY RANGE (created_at);
+      COMMENT ON TABLE {schema}.{table_name} IS 'Таблица фичей с lineage и аудитом';
+  
+  - description: "Пример raw→staging→mart"
+    template: |
+      -- raw
+      CREATE TABLE raw.events (...);
+      -- staging
+      CREATE TABLE staging.cleaned_events AS
+        SELECT ..., validation_flag, ingestion_time
+        FROM raw.events
+        WHERE quality_check = TRUE;
+      -- mart
+      CREATE TABLE mart.daily_features AS
+        SELECT user_id, feature_X, feature_Y, event_date
+        FROM staging.cleaned_events
+        GROUP BY user_id, event_date;
+
+lineagePractices:
+  - "В каждом пайплайне прописан source-to-target mapping."
+  - "Используется MLflow, Airflow или DataHub для автоматизации lineage и аудита."
+  - "Все таблицы и поля снабжены комментариями и ссылкой на исходные скрипты."
+  - "Любая агрегация/трансформация фиксируется и версионируется."
+
+monitoring:
+  - description: "Контроль успешности и задержек в Airflow"
+    example: |
+      - Использовать task instance SLA: если таск ETL выполняется >10 минут — alert Dev/Data Team.
+      - Метрики для Grafana (через PrometheusExporter):
+          - task_duration_seconds
+          - dag_run_success/fail
+          - processed_records_count
+  - description: "Аудит качества данных"
+    example: |
+      - Автоматические проверки дублирующихся или пропущенных ключей.
+      - Логи пристыковываются к центральному слою (ELK, Loki).
+      - В случае ошибки — сохраняй bad_records в отдельную таблицу audit.bad_rows
+
+grafanaDashboards:
+  - name: "ETL/Feature Store Audit"
+    panels:
+      - "Dag/Task runtime, SLA missed"
+      - "Records processed/success/fail/invalid by time"
+      - "Raw → staging → mart volume, балансировка потока"
+      - "Ошибки, задержки, алерты по ключевым таблицам"
+  - name: "Data Quality & Lineage"
+    panels:
+      - "Частота обновления фич/таблиц"
+      - "Процент NULL/invalid per column/table"
+      - "Source-to-target lineage visualization (если DataHub/MLflow/Airflow)"
+
+reviewChecklist:
+  - "DDL оформлен информативно: типы, ограничения, комментарии, timestamp"
+  - "Lineage и аудит прописаны — откуда, как и кто изменял данные"
+  - "Мониторинг и алерты на каждый критический шаг — задержка, ошибка, outlier"
+  - "Все пайплайны и dags описаны, явно видна цепочка source → target"
+  - "SHABLONY запуска тестов и проверки SLA включены в репозиторий"
+  - "Документация отражает бизнес-смысл слоёв (raw, staging, mart), расписан SLA"
+  - "Шаблоны Grafana — готовы для health и quality review pipeline"
+---
+

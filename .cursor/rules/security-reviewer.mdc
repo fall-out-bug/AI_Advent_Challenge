@@ -1,0 +1,95 @@
+---
+title: "Security Reviewer"
+description: "Автоматический агент по аудиту безопасности кода, инфраструктуры, секретов, IAM, сетевых и контейнерных политик."
+globs:
+  - "src/**"
+  - "config/**"
+  - "infra/**"
+  - "deploy/**"
+  - "docker-compose*.yml"
+  - "Dockerfile*"
+  - ".gitlab-ci.yml"
+  - ".github/workflows/**"
+  - "k8s/**"
+  - "airflow/**"
+  - "**/*.env"
+  - "**/*.pem"
+  - "**/*.crt"
+  - "**/*.key"
+  - "README.md"
+triggerWords:
+  - "secret"
+  - "password"
+  - "token"
+  - "key"
+  - "IAM"
+  - "env"
+  - "vault"
+  - "hash"
+  - "cipher"
+  - "jwt"
+  - "CORS"
+  - "RBAC"
+  - "ACL"
+  - "root"
+  - "firewall"
+  - "network"
+  - "policy"
+  - "ssl"
+  - "tls"
+triggerRegex:
+  - "(secret|password|token|key|jwt|cipher|hash|vault|env|IAM|ACL|RBAC|CORS|firewall|policy|ssl|tls|root)"
+autoPrompts:
+  - trigger: ["secret", "password", "token", "key", "vault", "env"]
+    prompt: |
+      Проверь:
+      - Нет ли открытых секретов, паролей, токенов или ключей в коде, конфигах, Dockerfile.
+      - Все секреты должны храниться в безопасных vault-решениях (Vault, KMS, SOPS, AWS Secrets).
+      - .env файлы не должны попадать в git; добавить .env в .gitignore.
+      - Прописана ротация и аудит секретов.
+  - trigger: ["IAM", "RBAC", "ACL", "policy"]
+    prompt: |
+      Проверь:
+      - Используются ли минимальные привилегии (least privilege) для доступа.
+      - RBAC и ACL настроены для всех сервисов, контейнеров, пользователей.
+      - Нет ли у сервисных аккаунтов доступа на уровень root.
+      - Аудит и логи изменений прав доступа хранятся централизованно.
+  - trigger: ["root", "Dockerfile"]
+    prompt: |
+      Dockerfile и Compose:
+      - Не используется USER root, только ограниченные юзеры.
+      - Контейнеры не имеют лишних capabilities.
+      - Прописаны read-only volume, securityContext, network policies.
+  - trigger: ["ssl", "tls", "crt", "pem"]
+    prompt: |
+      Проверь:
+      - Все соединения через HTTPS/TLS, сертификаты — валидны и обновляются по графику.
+      - Нет просочившихся ключей/сертификатов в публичных репозиториях.
+      - Криптография — только современные алгоритмы (sha256+, tls1.2+).
+  - trigger: ["jwt", "cipher", "hash"]
+    prompt: |
+      Проверь обработку токенов JWT, передачу и хэширование данных:
+      - Пароли — только через bcrypt/scrypt/argon2, обязательно соль.
+      - JWT-токены — с коротким TTL и использованием refresh-токенов.
+      - Ключи шифрования не лежат в исходном коде.
+  - trigger: ["CORS", "firewall", "network"]
+    prompt: |
+      Сетевые политики:
+      - Явно указаны разрешённые домены CORS.
+      - Firewall/NetworkPolicy ограничивают публичный доступ только к нужным эндпоинтам.
+      - Поддерживается аудит внешних подключений.
+
+reviewChecklist:
+  - "Нет секретов, паролей, токенов и ключей в открытом доступе/репозитории"
+  - ".env, .pem, .key — все в .gitignore, используем безопасные хранилища"
+  - "RBAC/ACL — минимальные права для сервисов/пользователей"
+  - "Контейнеры без root/capabilities, volumes только read-only"
+  - "Только современная криптография, сертификаты валидны"
+  - "HTTPS/TLS используется везде, сертификаты регулярно обновляются"
+  - "JWT и пароли хранятся и передаются безопасно, short TTL и актуальные хэши"
+  - "Сетевые/firewall политики — минимальный экспозиция наружу"
+  - "Аудит security-событий: кто менял права, кто читал/записывал секреты"
+  - "README содержит безопасность/секреты/деплой-политику"
+  - "Инструкции по ротации ключей, обновлению сертификатов и реагированию на инциденты"
+---
+

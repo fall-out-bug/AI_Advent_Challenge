@@ -1,0 +1,86 @@
+---
+title: "Python Code Reviewer"
+description: "Эксперт по качеству python-кода: стиль, архитектура, тесты, инфраструктура"
+globs:
+  - "**/*.py"
+triggerWords:
+  - "import numpy"
+  - "import pandas"
+  - "import requests"
+  - "import typer"
+  - "import click"
+  - "import pydantic"
+  - "import fastapi"
+  - "import flask"
+  - "import pytest"
+  - "import logging"
+  - "from typing import"
+  - "import asyncio"
+triggerRegex:
+  - "import\\s+(numpy|pandas|requests|fastapi|flask|pytest|pydantic|typer|click|logging|asyncio|dataclasses|torch|sklearn|optuna)"
+autoPrompts:
+  - trigger: ["import numpy", "import pandas"]
+    prompt: |
+      Модуль использует numpy/pandas. Проверь:
+      - соответствие типов данных при преобразованиях
+      - обработку NA/NaN и выбросы
+      - использование vectorized операций vs циклы
+      - читаемость и безопасность файловых операций
+  - trigger: ["import requests"]
+    prompt: |
+      Проверь обработку HTTP-ошибок, таймаутов, безопасность headers.
+      Рекомендуй session reuse и экспорт данных через response hooks.
+  - trigger: ["import typer", "import click"]
+    prompt: |
+      CLI-модуль на typer/click.
+      - Проверь argparse совместимость, обработку ошибок
+      - Документируй help и параметры CLI
+      - Убедись в тестируемости CLI с pytest
+  - trigger: ["import fastapi", "import flask"]
+    prompt: |
+      Web API на FastAPI/Flask.
+      - Проверь схемы pydantic/dataclasses, параметры валидации
+      - Контроль ошибок и статус-коды
+      - Покрытие тестами эндпоинтов
+      - Логирование входов/выходов
+  - trigger: ["import pytest"]
+    prompt: |
+      Проверить:
+      - Покрытие edge кейсов, генерируемых фикстур
+      - Используются ли parametrized-тесты, mock, patch
+      - Чистота teardown/setup
+      - Метки @slow, @integration для долгих тестов
+  - trigger: ["import logging"]
+    prompt: |
+      Проанализируй:
+      - Стандартизацию уровней (info, warning, error)
+      - Форматеры и ротацию логов
+      - Логирование ошибок и исключений
+      - Соответствие best practices logging config
+  - trigger: ["from typing import", "import pydantic", "import dataclasses"]
+    prompt: |
+      Проверь:
+      - Полную типизацию входных/выходных данных и моделей
+      - Использование pydantic/dataclasses для структур обьектов
+      - Валидацию всех критичных данных
+  - trigger: ["import asyncio"]
+    prompt: |
+      Проверь корректную работу с event loop, await, exception handlers.
+      Оцени обработку конкуренции, таймауты, cancellation.
+
+reviewChecklist:
+  - "PEP8 + Google Python Style Guide"
+  - "Везде type hints, для сложных структур — pydantic/dataclasses"
+  - "Функции и классы имеют docstring (Google-стиль); в коммитах описания на английском"
+  - "Линтинг (flake8, black, isort, mypy) и pre-commit всегда проходят"
+  - "Тесты — pytest, покрытие ≥80%; есть edge-фикстуры, параметризация"
+  - "Логирование через модуль logging, структурированные сообщения"
+  - "Вся работа с IO безопасна: context manager, таймауты, проверка пути"
+  - "Web/API — валидация через pydantic/dataclasses, обработка ошибок"
+  - "CLI — help, input validation, exit code"
+  - "Асинхронный код — только с exception handlers, coverage тестами"
+  - "Docker и requirements.txt — актуальны, воспроизводимы"
+  - "README содержит usage примеры, зависимости, схему запуска"
+  - "Код не содержит “магических” констант, всё вынесено в конфиги"
+---
+

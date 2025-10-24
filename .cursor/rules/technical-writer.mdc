@@ -1,0 +1,124 @@
+---
+title: "Technical Writer"
+description: "Автоматический агент по документации, docstring, user-guide, changelog. Автогенерация шаблонов для ML, prod, API."
+globs:
+  - "README.md"
+  - "docs/**"
+  - "CHANGELOG.md"
+  - "CONTRIBUTING.md"
+  - "src/**"
+  - "config/**"
+  - "**/*.py"
+  - "**/*.sh"
+  - "**/*.js"
+  - "**/*.sql"
+autoPrompts:
+  - trigger: ["docstring"]
+    prompt: |
+      Для функций и классов авто‑генерируй docstring в Google‑стиле:
+
+      ```
+      def train_model(config: dict, data_path: str) -> Model:
+          """
+          Trains the ML model with specified configuration and data.
+
+          Args:
+              config (dict): Training configuration, parameters & hyperparameters.
+              data_path (str): Path to the training dataset.
+
+          Returns:
+              Model: Trained ML model instance.
+
+          Raises:
+              ValueError: If config is invalid or data is missing.
+
+          Example:
+              model = train_model(my_config, "/data/train.parquet")
+          """
+      ```
+      Документируй входные/выходные параметры, исключения, пример работы.
+
+  - trigger: ["README.md", "ml", "inference", "train", "predict"]
+    prompt: |
+      Авто‑шаблон для README ML/Prod проекта:
+
+      ```
+      # Project: <PROJECT_NAME>
+
+      ## Описание и задачи
+      Краткое описание ML/DS/prod‑проекта, ключевые экономические/бизнес‑цели.
+
+      ## Быстрый старт
+
+      ### Установка зависимостей
+      ```bash
+      pip install -r requirements.txt
+      ```
+
+      ### Обучение модели
+      ```bash
+      python src/train.py --config configs/config_prod.yaml --output models/model_latest.pkl
+      ```
+
+      ### Инференс
+      ```bash
+      python src/predict.py --input samples/input.json --model models/model_latest.pkl --output output.json
+      ```
+
+      ## Структура репозитория
+      - src/    — ML код, тренировка, инференс
+      - configs/ — YAML/JSON конфиги моделей
+      - models/  — артефакты моделей
+      - data/    — примеры датасетов, схема
+
+      ## Документация и примеры
+      - Подключение API, скриптов запуска
+      - Сценарии запуска: end‑to‑end, ML pipeline, мониторинг качества
+
+      ## Мониторинг и деплой
+      - Инструкции по деплою, запуску в Docker/k8s
+      - Метрики, алерты, описание Grafana dashboard
+
+      ## Контакты и Contributing
+
+      ## Лицензия
+      ```
+
+  - trigger: ["API", "openapi", "endpoint"]
+    prompt: |
+      User guide для API:
+      - Описание всех endpoint, входных/выходных данных
+      - Примеры curl/requests/postman для тестирования
+      - Документация ошибок, коды ответа, graceful degradation
+      - Схема OpenAPI/swagger (если есть)
+
+  - trigger: ["changelog", "CONTRIBUTING.md"]
+    prompt: |
+      Шаблон CHANGELOG (semver):
+      ```
+      ## [2.1.3] — 2025‑10‑23
+      ### Added
+      - Новый pipeline для MLflow
+      ### Changed
+      - Оптимизация инференса, минимизация latency
+      ### Fixed
+      - Исправлен баг в обработке missing values
+      ### Security
+      - Обновление зависимостей, улучшена проверка токенов
+      ```
+
+      CONTRIBUTING.md:
+      - Шаблоны коммитов (conventional commits)
+      - Issue/PR templates
+      - Инструкции по запуску тестов/локальной среды
+      - Глобальные гайды по docstring/README стилю
+
+reviewChecklist:
+  - "Docstring для всех функций/классов по Google‑стилю с примерами"
+  - "README.md содержит описание, быстрый старт, инструкции для ML/Prod"
+  - "API/endpoint‑документация — понятная, актуальная, с примерами"
+  - "CHANGELOG ведется по семантическому версионированию с реальными изменениями"
+  - "CONTRIBUTING — onboarding, шаблоны, лучшие практики, связи с docstring гайдлайном"
+  - "Вся справка — на хорошем английском/русском, без опечаток, с живыми примерами"
+---
+

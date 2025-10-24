@@ -1,0 +1,66 @@
+---
+title: "ML Engineer Reviewer"
+description: "Экспертный автоматический агент для ревью ML/AI кода, метрик и инфраструктуры"
+globs:
+  - "src/ml/**"
+  - "src/ai/**"
+  - "train*.py"
+  - "finetune*.py"
+  - "metrics.py"
+  - "*.ipynb"
+  - "*.py"
+triggerWords:
+  - "import torch"
+  - "import tensorflow"
+  - "import sklearn"
+  - "import xgboost"
+  - "import transformers"
+  - "import pytorch_lightning"
+  - "import mlflow"
+  - "import optuna"
+  - "import dvc"
+  - "import hydra"
+triggerRegex:
+  - "import\\s+(torch|tensorflow|sklearn|xgboost|transformers|pytorch_lightning|mlflow|optuna|dvc|hydra)"
+autoPrompts:
+  - trigger: ["import torch", "import pytorch_lightning"]
+    prompt: |
+      Модуль использует PyTorch/PyTorch Lightning. Проверь:
+      - reproducibility (random seed во всех компонентах)
+      - логику checkpoint и раннего останова
+      - корректность мониторинга learning rate и метрик (accuracy, F1, ROC-AUC)
+      - сохранение моделей и весов с версионированием
+      - интеграцию с MLflow или аналогичными инструментами
+      - возможность легкого рестарта обучения из checkpoints
+  - trigger: ["import tensorflow"]
+    prompt: |
+      Модуль использует TensorFlow. Сфокусируйся на:
+      - определении архитектуры модели через config
+      - отслеживании кастомных и встроенных метрик
+      - reproducibility через seed и tf.random
+      - сохранении модели через SavedModel/TFRecord
+      - работе с TPU/GPU, выводе логов
+  - trigger: ["import sklearn", "import xgboost"]
+    prompt: |
+      Используются scikit-learn или XGBoost. Проверь:
+      - стратификацию split, корректность выбора метрик
+      - анализ балансировки классов, работу с выбросами
+      - использование GridSearch/Optuna для тюнинга гиперпараметров
+      - feature importance — правильная визуализация, сохранение
+  - trigger: ["import transformers"]
+    prompt: |
+      HuggingFace Transformers. Проверь:
+      - логику токенизации, обработку ошибок генерации
+      - корректность дообучения, presence of callbacks/early stopping
+      - трекинг метрик BLEU, ROUGE (NLP-примеры)
+      - мониторинг инференса (batch/stream)
+  - trigger: ["import mlflow"]
+    prompt: |
+      Используется MLflow. Проверь:
+      - логирование моделей, метрик, параметров, артефактов
+      - интеграцию с MinIO/S3 для хранения артефактов
+      - reproducibility: сохранение config-файла, seed, данных
+      - экспорт метрик и артефактов в MLflow dashboard
+  - trigger: ["import optuna"]
+    prompt: |
+      Используется Optuna для оптимизации.

@@ -1,0 +1,126 @@
+---
+title: "DevOps Engineer"
+description: "Агент по ревью DevOps: CI/CD, мониторинг, алерты, облако, безопасность."
+globs:
+  - ".github/workflows/**"
+  - ".gitlab-ci.yml"
+  - "docker-compose*.yml"
+  - "Dockerfile*"
+  - "Makefile"
+  - "infra/**"
+  - "deploy/**"
+  - "helm/**"
+  - "k8s/**"
+  - "grafana/**"
+  - "prometheus/**"
+  - "src/**"
+triggerWords:
+  - "FROM"
+  - "RUN"
+  - "ENTRYPOINT"
+  - "EXPOSE"
+  - "CMD"
+  - "ENV"
+  - "secrets"
+  - "volumes"
+  - "pipeline"
+  - "deploy"
+  - "monitor"
+  - "alert"
+  - "security"
+  - "cloud"
+  - "helm"
+  - "k8s"
+  - "namespace"
+  - "chart"
+triggerRegex:
+  - "(FROM|RUN|ENTRYPOINT|EXPOSE|CMD|ENV)"
+  - "(pipeline|deploy|helm|k8s|namespace|chart)"
+  - "(monitor|grafana|prometheus|alert)"
+  - "(secrets|token|password|key)"
+autoPrompts:
+  # Предыдущие промпты...
+  - trigger: ["monitor", "grafana", "prometheus", "alert"]
+    prompt: |
+      Проверь:
+      - Есть ли в проекте метрики сервисов (CPU, mem, HTTP ошибок, latency, uptime)?
+      - Настроены ли алерты по критическим событиям (отказ сервиса, задержка, 5xx)?
+      - Есть шаблоны алертов и оповещений: Slack, email, Telegram, PagerDuty?
+      - Приведи пример dashboard для Grafana по сервису.
+      - Для ML-сервисов: мониторинг latency, drift-метрики, alert на снижение качества модели.
+
+alertTemplates:
+  - alert: "Service Down"
+    description: "Алёрт при недоступности основного backend/frontend"
+    prometheus_rule: |
+      - alert: ServiceDown
+        expr: up{job="web"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Web-сервис недоступен дольше 2 минут"
+          description: "Проверь экземпляры сервиса web. Возможен сбой или деплойка."
+  - alert: "High Error Rate"
+    description: "Больше 5% 5xx ошибок за последние 5 минут"
+    prometheus_rule: |
+      - alert: HighErrorRate
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) BY (service) / sum(rate(http_requests_total[5m])) BY (service) > 0.05
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Высокий уровень ошибок 5xx"
+          description: "Ошибка превышает норму на сервисе {{ $labels.service }}"
+  - alert: "High Response Latency"
+    description: "Среднее время ответа превышает 2500 ms"
+    prometheus_rule: |
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) BY (le, service)) > 2.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Высокая задержка ответов"
+          description: "95-процентиль latency превышает стандарт на сервисе {{ $labels.service }}"
+  - alert: "ML Model Drift"
+    description: "Латентность, изменения в распределениях, просадка метрик качества"
+    prometheus_rule: |
+      - alert: MLModelDrift
+        expr: abs_changes(metric='f1_score', window='1h') > 0.07
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Наблюдается drift метрик ML-модели"
+          description: "Рекоммендуется запуск retrain/investigation pipeline"
+
+grafanaDashboards:
+  - name: "App Health"
+    panels:
+      - "CPU/Memory Usage, restarts per pod/service"
+      - "HTTP 2xx/4xx/5xx, latency (P50, P95)"
+      - "Uptime, SLA, deploy status"
+      - "Message queue length (Kafka/Redis)"
+  - name: "ML Service Metrics"
+    panels:
+      - "Model latency (input → output, P95)"
+      - "Prediction volume (per minute/hour)"
+      - "Error/exception rates"
+      - "Drift and quality metrics (F1, accuracy, recall, ROC-AUC)"
+      - "Version, hash и timestamp развернутой модели"
+      - "Retrain pipeline status"
+
+reviewChecklist:
+  - "Dockerfile минимальный, root не используется, секьюрно"
+  - "docker-compose/isolate структуры, переменные в ENV-файлах"
+  - "CI/CD pipeline (GitHub Actions/Gitlab CI) автоматизирует build, lint, test, scan, deploy"
+  - "Secrets только через secret-менеджеры, .env не в git"
+  - "Мониторинг — Prometheus, алерты с шаблонами стандартных инцидентов"
+  - "Графаны — минимальный дашборд по сервису, latency, error, SLA"
+  - "Для ML — дополнительные alerты и панели drift/quality/control"
+  - "README содержит секции: деплой/мониторинг/алерты/графаны"
+  - "Логи централизованы, понятен ретеншин, поиск по инцидентам"
+  - "Инструкции по быстрому старту мониторинга и деплойменту проверены"
+---
+

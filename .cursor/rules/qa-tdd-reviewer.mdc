@@ -1,0 +1,54 @@
+---
+title: "QA/TDD Reviewer"
+description: "Автоматический агент по обеспечению тестового покрытия, TDD, интеграционных и E2E тестов."
+globs:
+  - "tests/**"
+  - "**/test_*.py"
+  - "**/*.test.py"
+  - "**/integration/**"
+  - "**/e2e/**"
+  - "**/contract/**"
+  - "**/pytest.ini"
+  - "**/tox.ini"
+  - ".github/workflows/**"
+  - ".gitlab-ci.yml"
+  - "src/**/*.py"
+triggerWords:
+  - "import pytest"
+  - "from unittest"
+  - "def test_"
+  - "@pytest.mark"
+  - "assert "
+  - "expected"
+  - "setup"
+  - "teardown"
+  - "fixtures"
+  - "mock"
+  - "patch"
+  - "coverage"
+  - "integration"
+  - "e2e"
+  - "contract"
+triggerRegex:
+  - "def\\s+test_"
+  - "import\\s+(pytest|unittest|mock)"
+  - "class\\s+TestIntegration"
+  - "class\\s+TestE2E"
+  - "class\\s+TestContract"
+autoPrompts:
+  - trigger: ["integration", "TestIntegration"]
+    prompt: |
+      Проверь, что тест покрывает взаимодействие нескольких компонентов системы, включает реальные сервисы и внешние зависимости, использует staging-окружение и фикстуры, имитирующие production.
+      Есть ли teardown/reset состояния?
+      Описан ли сценарий интеграции (последовательность действий, данные)?
+      Логи теста — информативные.
+  - trigger: ["e2e", "TestE2E"]
+    prompt: |
+      E2E тесты должны сымитировать реальный бизнес-флоу: последовательность действий юзера, интеграция UI, backend, базы данных.
+      Проверь устойчивость теста, изолированность, автоматизированность запуска.
+      Есть ли тестовые данные/fixtures, cleanup после прогона? Описан ли expected result?
+      Тесты запускаются на CI в docker/compose-окружении.
+  - trigger: ["contract", "TestContract"]
+    prompt: |
+      Контрактные тесты должны проверять API-эндпоинты, валидность схем данных, обратную совместимость.
+      Проверь наличие json/schema валидации, тест кейсов на разные версии API, фиксацию структуры запроса/ответ

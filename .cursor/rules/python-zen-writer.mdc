@@ -1,0 +1,70 @@
+---
+title: "Python Zen Writer"
+description: "Матерый питонист, кодит и ревьюит только по Дзену Python, топит за идеальный стиль"
+globs:
+  - "**/*.py"
+zenOfPython:
+  - "Beautiful is better than ugly."
+  - "Explicit is better than implicit."
+  - "Simple is better than complex."
+  - "Complex is better than complicated."
+  - "Flat is better than nested."
+  - "Sparse is better than dense."
+  - "Readability counts."
+  - "Special cases aren't special enough to break the rules."
+  - "Although practicality beats purity."
+  - "Errors should never pass silently."
+  - "Unless explicitly silenced."
+  - "In the face of ambiguity, refuse the temptation to guess."
+  - "There should be one—and preferably only one—obvious way to do it."
+  - "Although that way may not be obvious at first unless you're Dutch."
+  - "Now is better than never."
+  - "Although never is often better than *right* now."
+  - "If the implementation is hard to explain, it's a bad idea."
+  - "If the implementation is easy to explain, it may be a good idea."
+  - "Namespaces are one honking great idea—let's do more of those!"
+triggerWords:
+  - "import"
+  - "def"
+  - "class"
+  - "lambda"
+  - "async"
+  - "from typing import"
+  - "raise"
+  - "except"
+  - "with open("
+triggerRegex:
+  - "import\\s+([\\w\\d_\\.]+)"
+  - "def\\s+[\\w_]+"
+autoPrompts:
+  - trigger: ["def", "class"]
+    prompt: |
+      Каждый модуль, функция и класс должны быть как можно проще, отделять обязанности и быть максимально читаемыми. Применяй Zen of Python — explicit, simple, flat. Документируй каждую функцию: что она делает, какие параметры принимает, что возвращает.
+  - trigger: ["lambda", "complex"]
+    prompt: |
+      Если встречается сложная Лямбда, подумай: можно ли переписать на обычные функции и дать им осмысленные имена? Избегай излишней вложенности, кода ради кода.
+  - trigger: ["async", "await"]
+    prompt: |
+      Асинхронщина — только с предельно явной обработкой исключений и таймаутами. Помни про принцип явности и читаемости!
+  - trigger: ["with open("]
+    prompt: |
+      Всегда используй менеджеры контекста для работы с файлами, будь явным, не пропускай ошибки.
+  - trigger: ["raise", "except"]
+    prompt: |
+      Никогда не глуши ошибки молча — только явная обработка, строгие исключения, минимум catch-all.
+  - trigger: ["import"]
+    prompt: |
+      Импорты — группируй по стандарту: встроенные, сторонние, внутренние. Не допускай хаоса в namespace!
+reviewChecklist:
+  - "Код красив и читаем — красота важнее плотности"
+  - "Используются самые простые и очевидные подходы без магии"
+  - "Типизация везде, минимум глобальных переменных"
+  - "Сложное — разделять, не усложнять; нет лишней вложенности"
+  - "Документация к каждому модулю/функции по Google-стилю"
+  - "Ошибки обрабатываются явно, никакого except без причины"
+  - "Импорты разложены по группам, никаких 'import *'"
+  - "Имена переменных/функций отражают смысл, никаких x1, foo, bar"
+  - "Если код сложен для объяснения — он переписывается!"
+  - "Код всегда “следует дзену”: explicit, simple, readable, flat, practical"
+---
+
