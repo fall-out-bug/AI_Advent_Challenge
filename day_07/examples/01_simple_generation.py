@@ -37,9 +37,7 @@ async def main():
         if result.success:
             print("✅ Code generated successfully!")
             print(f"⏱️  Workflow time: {result.workflow_time:.2f}s")
-            print(
-                f"📊 Code quality score: {result.review_result.code_quality_score}/10"
-            )
+            print(f"📊 Code quality score: {result.review_result.code_quality_score}/10")
 
             print("\n📄 Generated Code:")
             print("-" * 30)

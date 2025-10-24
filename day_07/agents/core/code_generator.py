@@ -11,10 +11,7 @@ from communication.message_schema import (
     CodeGenerationResponse,
     TaskMetadata,
 )
-from constants import (
-    GENERATOR_MAX_TOKENS,
-    GENERATOR_TEMPERATURE,
-)
+from constants import GENERATOR_MAX_TOKENS, GENERATOR_TEMPERATURE
 from exceptions import CodeGenerationError, ValidationError
 from prompts.generator_prompts import GeneratorPrompts
 
@@ -207,21 +204,41 @@ class CodeGeneratorAgent(BaseAgent):
         return f'''import pytest
 
 def test_{func_name}():
-    """Test {func_name} function."""
-    # TODO: Add proper test cases
-    # Example test structure:
+    """Test {func_name} function with basic functionality."""
+    # Test basic functionality
     # result = {func_name}(test_input)
     # assert result == expected_output
+    # 
+    # Example for a function that returns a value:
+    # assert {func_name}(1) == expected_result
+    # 
+    # Example for a function that modifies data:
+    # data = [1, 2, 3]
+    # {func_name}(data)
+    # assert data == expected_state
     pass
 
 def test_{func_name}_edge_cases():
-    """Test {func_name} with edge cases."""
-    # TODO: Add edge case tests
+    """Test {func_name} with edge cases and boundary conditions."""
+    # Test edge cases like empty inputs, None values, extreme values
+    # 
+    # Example edge cases:
+    # - Empty lists/strings: {func_name}([])
+    # - None values: {func_name}(None)
+    # - Zero values: {func_name}(0)
+    # - Large values: {func_name}(999999)
     pass
 
 def test_{func_name}_error_conditions():
-    """Test {func_name} error handling."""
-    # TODO: Add error condition tests
+    """Test {func_name} error handling and invalid inputs."""
+    # Test error conditions and exception handling
+    # 
+    # Example error tests:
+    # with pytest.raises(ValueError):
+    #     {func_name}(invalid_input)
+    # 
+    # with pytest.raises(TypeError):
+    #     {func_name}(wrong_type_input)
     pass'''
 
     async def refine_code(self, code: str, feedback: str) -> str:

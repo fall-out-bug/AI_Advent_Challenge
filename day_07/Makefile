@@ -2,6 +2,9 @@
 
 .PHONY: help install test lint format clean build start stop demo status logs test-models start-bridge stop-bridge restart-bridge start-traefik stop-traefik restart-traefik logs-traefik status-traefik demo-chadgpt chadgpt-models chadgpt-recommend chadgpt-status setup-chadgpt
 
+# Set PYTHONPATH for proper imports
+export PYTHONPATH := $(PWD):$(PYTHONPATH)
+
 # Default target
 help:
 	@echo "🌟 Multi-Model Multi-Agent System"

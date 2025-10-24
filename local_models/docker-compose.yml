@@ -40,7 +40,7 @@ services:
     ports:
       - "8003:8000"
     environment:
-      - MODEL_NAME=TechxGenus/starcoder2-7b-instruct-GPTQ
+      - MODEL_NAME=TechxGenus/starcoder2-7b-instruct
       - HF_TOKEN=${HF_TOKEN}
     runtime: nvidia
     volumes:

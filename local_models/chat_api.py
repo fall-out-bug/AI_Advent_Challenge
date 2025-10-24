@@ -15,62 +15,31 @@ HF_TOKEN = os.environ.get("HF_TOKEN")
 logger.info(f"Starting model loading for: {MODEL_NAME}")
 logger.info(f"HF_TOKEN available: {'Yes' if HF_TOKEN else 'No'}")
 
-# Check if this is StarCoder2 to use GPTQ optimization
-is_starcoder2 = "starcoder2" in MODEL_NAME.lower() and "instruct" in MODEL_NAME.lower()
+# Use 4-bit quantization for all models
+quant_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_compute_dtype="float16",
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_quant_type="nf4"
+)
 
-if is_starcoder2:
-    # Use GPTQ variant for StarCoder2
-    gptq_model_name = "TechxGenus/starcoder2-7b-instruct-GPTQ"
-    logger.info(f"Using GPTQ optimized model: {gptq_model_name}")
+try:
+    logger.info(f"Loading tokenizer for model: {MODEL_NAME}")
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, token=HF_TOKEN)
+    logger.info("Tokenizer loaded successfully")
     
-    try:
-        logger.info(f"Loading tokenizer for GPTQ model: {gptq_model_name}")
-        tokenizer = AutoTokenizer.from_pretrained(gptq_model_name, token=HF_TOKEN)
-        logger.info("Tokenizer loaded successfully")
-        
-        logger.info(f"Loading GPTQ model: {gptq_model_name}...")
-        model = AutoModelForCausalLM.from_pretrained(
-            gptq_model_name,
-            device_map="auto",
-            torch_dtype=torch.bfloat16,
-            token=HF_TOKEN,
-            trust_remote_code=True
-        )
-        logger.info("GPTQ model loaded successfully!")
-        
-    except Exception as e:
-        logger.error(f"Failed to load GPTQ model {gptq_model_name}: {str(e)}")
-        logger.info("Falling back to regular model with 4-bit quantization...")
-        # Fallback to regular model with quantization
-        MODEL_NAME = "TechxGenus/starcoder2-7b-instruct"
-        is_starcoder2 = False
-
-if not is_starcoder2:
-    # Use 4-bit quantization for other models
-    quant_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_compute_dtype="float16",
-        bnb_4bit_use_double_quant=True,
-        bnb_4bit_quant_type="nf4"
+    logger.info(f"Loading model: {MODEL_NAME} with quantization...")
+    model = AutoModelForCausalLM.from_pretrained(
+        MODEL_NAME,
+        quantization_config=quant_config,
+        device_map="auto",
+        token=HF_TOKEN
     )
+    logger.info("Model loaded successfully!")
     
-    try:
-        logger.info(f"Loading tokenizer for model: {MODEL_NAME}")
-        tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, token=HF_TOKEN)
-        logger.info("Tokenizer loaded successfully")
-        
-        logger.info(f"Loading model: {MODEL_NAME} with quantization...")
-        model = AutoModelForCausalLM.from_pretrained(
-            MODEL_NAME,
-            quantization_config=quant_config,
-            device_map="auto",
-            token=HF_TOKEN
-        )
-        logger.info("Model loaded successfully!")
-        
-    except Exception as e:
-        logger.error(f"Failed to load model {MODEL_NAME}: {str(e)}")
-        raise
+except Exception as e:
+    logger.error(f"Failed to load model {MODEL_NAME}: {str(e)}")
+    raise
 
 
 def build_prompt(messages, model_name):

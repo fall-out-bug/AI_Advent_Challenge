@@ -11,7 +11,9 @@ class TestGeneratorPrompts:
 
     def test_get_code_generation_prompt_basic(self):
         """Test basic code generation prompt."""
-        prompt = GeneratorPrompts.get_code_generation_prompt("Create a fibonacci function")
+        prompt = GeneratorPrompts.get_code_generation_prompt(
+            "Create a fibonacci function"
+        )
         assert "Create a fibonacci function" in prompt
         assert "REQUIREMENTS" in prompt
         assert "OUTPUT FORMAT" in prompt
@@ -20,7 +22,7 @@ class TestGeneratorPrompts:
         """Test code generation prompt with requirements."""
         prompt = GeneratorPrompts.get_code_generation_prompt(
             "Create a sorting algorithm",
-            requirements=["Use quicksort", "Handle duplicates"]
+            requirements=["Use quicksort", "Handle duplicates"],
         )
         assert "Create a sorting algorithm" in prompt
         assert "- Use quicksort" in prompt
@@ -30,7 +32,9 @@ class TestGeneratorPrompts:
         """Test test generation prompt."""
         function_code = "def add(a, b): return a + b"
         task_description = "Create an addition function"
-        prompt = GeneratorPrompts.get_test_generation_prompt(function_code, task_description)
+        prompt = GeneratorPrompts.get_test_generation_prompt(
+            function_code, task_description
+        )
         assert function_code in prompt
         assert task_description in prompt
         assert "pytest unit tests" in prompt
@@ -53,7 +57,9 @@ class TestReviewerPrompts:
         code = "def func(): pass"
         tests = "def test_func(): pass"
         metadata = {"complexity": "low", "lines_of_code": 1}
-        prompt = ReviewerPrompts.get_code_review_prompt("Test task", code, tests, metadata)
+        prompt = ReviewerPrompts.get_code_review_prompt(
+            "Test task", code, tests, metadata
+        )
         assert code in prompt
         assert tests in prompt
         assert "expert Python code reviewer" in prompt

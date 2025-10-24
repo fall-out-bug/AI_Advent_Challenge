@@ -1,9 +1,11 @@
 """Tests for API endpoints."""
 
+from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, Mock
-from fastapi.testclient import TestClient
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from agents.api.generator_api import app as generator_app
 from agents.api.reviewer_api import app as reviewer_app
@@ -14,7 +16,6 @@ from communication.message_schema import (
     CodeReviewResponse,
     TaskMetadata,
 )
-from datetime import datetime
 
 
 class TestGeneratorAPI:
@@ -47,21 +48,19 @@ class TestGeneratorAPI:
         # Mock agent initialization
         mock_agent = AsyncMock()
         mock_agent_class.return_value = mock_agent
-        
+
         # Mock the agent instance in the module
-        with patch("agents.api.generator_api.agent", mock_agent):
+        with patch("agents.api.generator_api.generator_agent", mock_agent):
             # Mock response
             mock_response = CodeGenerationResponse(
                 task_description="Test task",
                 generated_code="def test(): pass",
                 tests="def test_test(): pass",
                 metadata=TaskMetadata(
-                    complexity="low",
-                    lines_of_code=2,
-                    dependencies=[]
+                    complexity="low", lines_of_code=2, dependencies=[]
                 ),
                 generation_time=datetime.now(),
-                tokens_used=100
+                tokens_used=100,
             )
             mock_agent.process.return_value = mock_response
 
@@ -71,7 +70,7 @@ class TestGeneratorAPI:
                 "language": "python",
                 "requirements": ["Include type hints"],
                 "max_tokens": 1000,
-                "model_name": "starcoder"
+                "model_name": "starcoder",
             }
 
             response = self.client.post("/generate", json=request_data)
@@ -97,14 +96,15 @@ class TestGeneratorAPI:
         mock_agent_class.return_value = mock_agent
         mock_agent.process.side_effect = Exception("Agent error")
 
-        request_data = {
-            "task_description": "Create a test function",
-        }
+        with patch("agents.api.generator_api.generator_agent", mock_agent):
+            request_data = {
+                "task_description": "Create a test function",
+            }
 
-        response = self.client.post("/generate", json=request_data)
-        assert response.status_code == 500
-        data = response.json()
-        assert "error" in data
+            response = self.client.post("/generate", json=request_data)
+            assert response.status_code == 500
+            data = response.json()
+            assert "error" in data
 
 
 class TestReviewerAPI:
@@ -140,6 +140,7 @@ class TestReviewerAPI:
 
         # Mock response
         from communication.message_schema import CodeQualityMetrics
+
         mock_response = CodeReviewResponse(
             code_quality_score=8.5,
             metrics=CodeQualityMetrics(
@@ -148,33 +149,29 @@ class TestReviewerAPI:
                 has_docstrings=True,
                 has_type_hints=True,
                 complexity_score=3.0,
-                test_coverage="high"
+                test_coverage="high",
             ),
-            suggestions=["Add more comments"],
-            recommendations=["Consider using dataclasses"],
             issues=["Minor formatting issue"],
+            recommendations=["Consider using dataclasses"],
             review_time=datetime.now(),
-            tokens_used=150
+            tokens_used=150,
         )
         mock_agent.process.return_value = mock_response
 
-        # Test request
-        request_data = {
-            "task_description": "Test task",
-            "generated_code": "def test(): pass",
-            "tests": "def test_test(): pass",
-            "metadata": {
-                "complexity": "low",
-                "lines_of_code": 2,
-                "dependencies": []
+        with patch("agents.api.reviewer_api.reviewer_agent", mock_agent):
+            # Test request
+            request_data = {
+                "task_description": "Test task",
+                "generated_code": "def test(): pass",
+                "tests": "def test_test(): pass",
+                "metadata": {"complexity": "low", "lines_of_code": 2, "dependencies": []},
             }
-        }
 
-        response = self.client.post("/review", json=request_data)
-        assert response.status_code == 200
-        data = response.json()
-        assert data["code_quality_score"] == 8.5
-        assert data["metrics"]["pep8_compliance"] is True
+            response = self.client.post("/review", json=request_data)
+            assert response.status_code == 200
+            data = response.json()
+            assert data["code_quality_score"] == 8.5
+            assert data["metrics"]["pep8_compliance"] is True
 
     def test_review_code_invalid_request(self):
         """Test code review with invalid request."""
@@ -194,18 +191,15 @@ class TestReviewerAPI:
         mock_agent_class.return_value = mock_agent
         mock_agent.process.side_effect = Exception("Agent error")
 
-        request_data = {
-            "task_description": "Test task",
-            "generated_code": "def test(): pass",
-            "tests": "def test_test(): pass",
-            "metadata": {
-                "complexity": "low",
-                "lines_of_code": 2,
-                "dependencies": []
+        with patch("agents.api.reviewer_api.reviewer_agent", mock_agent):
+            request_data = {
+                "task_description": "Test task",
+                "generated_code": "def test(): pass",
+                "tests": "def test_test(): pass",
+                "metadata": {"complexity": "low", "lines_of_code": 2, "dependencies": []},
             }
-        }
 
-        response = self.client.post("/review", json=request_data)
-        assert response.status_code == 500
-        data = response.json()
-        assert "error" in data
+            response = self.client.post("/review", json=request_data)
+            assert response.status_code == 500
+            data = response.json()
+            assert "error" in data

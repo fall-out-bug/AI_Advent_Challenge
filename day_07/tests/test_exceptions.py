@@ -7,14 +7,14 @@ import pytest
 import pytest
 
 from exceptions import (
-    MultiAgentError,
+    AgentCommunicationError,
     CodeGenerationError,
     CodeReviewError,
-    ValidationError,
-    StarCoderError,
-    AgentCommunicationError,
     ConfigurationError,
+    MultiAgentError,
     RateLimitError,
+    StarCoderError,
+    ValidationError,
 )
 
 
@@ -81,7 +81,7 @@ class TestExceptions:
             ConfigurationError,
             RateLimitError,
         ]
-        
+
         for exc_class in exceptions:
             error = exc_class("Test error")
             assert isinstance(error, MultiAgentError)

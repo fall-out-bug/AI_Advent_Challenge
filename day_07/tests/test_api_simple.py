@@ -38,7 +38,7 @@ class TestGeneratorAPI:
             "language": "python",
             "requirements": ["Include type hints"],
             "max_tokens": 1000,
-            "model_name": "starcoder"
+            "model_name": "starcoder",
         }
 
         response = self.client.post("/generate", json=request_data)
@@ -88,11 +88,7 @@ class TestReviewerAPI:
             "task_description": "Test task",
             "generated_code": "def test(): pass",
             "tests": "def test_test(): pass",
-            "metadata": {
-                "complexity": "low",
-                "lines_of_code": 2,
-                "dependencies": []
-            }
+            "metadata": {"complexity": "low", "lines_of_code": 2, "dependencies": []},
         }
 
         response = self.client.post("/review", json=request_data)

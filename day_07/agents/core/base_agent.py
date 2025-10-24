@@ -7,9 +7,9 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from agents.core.smart_model_selector import get_smart_selector, ModelRecommendation
-from agents.core.unified_model_adapter import UnifiedModelAdapter
 from agents.core.external_api_config import get_config
+from agents.core.smart_model_selector import ModelRecommendation, get_smart_selector
+from agents.core.unified_model_adapter import UnifiedModelAdapter
 from communication.message_schema import TaskMetadata
 from constants import (
     CODE_BLOCK_PATTERN,
@@ -53,13 +53,12 @@ class BaseAgent(ABC):
         self.max_tokens = max_tokens
         self.temperature = temperature
         self.external_provider = external_provider
-        
+
         # Initialize unified model adapter
         self.model_adapter = UnifiedModelAdapter(
-            model_name=model_name,
-            external_provider=external_provider
+            model_name=model_name, external_provider=external_provider
         )
-        
+
         self.start_time = datetime.now()
         self.stats = {
             "total_requests": 0,
@@ -270,25 +269,24 @@ class BaseAgent(ABC):
         try:
             # Create new adapter with external provider
             new_adapter = UnifiedModelAdapter(
-                model_name=self.model_name,
-                external_provider=provider_name
+                model_name=self.model_name, external_provider=provider_name
             )
-            
+
             # Check if provider is available
             if await new_adapter.check_availability():
                 # Close old adapter
                 await self.model_adapter.close()
-                
+
                 # Switch to new adapter
                 self.model_adapter = new_adapter
                 self.external_provider = provider_name
-                
+
                 logger.info(f"Switched to external provider: {provider_name}")
                 return True
             else:
                 logger.warning(f"External provider {provider_name} is not available")
                 return False
-                
+
         except Exception as e:
             logger.error(f"Failed to switch to external provider {provider_name}: {e}")
             return False
@@ -304,30 +302,29 @@ class BaseAgent(ABC):
         """
         try:
             target_model = model_name or self.model_name
-            
+
             # Create new adapter for local model
             new_adapter = UnifiedModelAdapter(
-                model_name=target_model,
-                external_provider=None
+                model_name=target_model, external_provider=None
             )
-            
+
             # Check if local model is available
             if await new_adapter.check_availability():
                 # Close old adapter
                 await self.model_adapter.close()
-                
+
                 # Switch to new adapter
                 self.model_adapter = new_adapter
                 self.external_provider = None
                 if model_name:
                     self.model_name = model_name
-                
+
                 logger.info(f"Switched to local model: {target_model}")
                 return True
             else:
                 logger.warning(f"Local model {target_model} is not available")
                 return False
-                
+
         except Exception as e:
             logger.error(f"Failed to switch to local model {target_model}: {e}")
             return False
@@ -349,11 +346,11 @@ class BaseAgent(ABC):
         return await self.model_adapter.check_availability()
 
     def get_smart_model_recommendation(
-        self, 
-        task_description: str, 
+        self,
+        task_description: str,
         language: str = "python",
         prefer_speed: bool = False,
-        prefer_quality: bool = False
+        prefer_quality: bool = False,
     ) -> ModelRecommendation:
         """Get smart model recommendation for a task.
 
@@ -372,9 +369,7 @@ class BaseAgent(ABC):
         )
 
     def get_all_model_recommendations(
-        self, 
-        task_description: str, 
-        language: str = "python"
+        self, task_description: str, language: str = "python"
     ) -> list[ModelRecommendation]:
         """Get recommendations for all available models.
 
@@ -389,11 +384,11 @@ class BaseAgent(ABC):
         return selector.get_all_recommendations(task_description, language)
 
     async def switch_to_smart_model(
-        self, 
-        task_description: str, 
+        self,
+        task_description: str,
         language: str = "python",
         prefer_speed: bool = False,
-        prefer_quality: bool = False
+        prefer_quality: bool = False,
     ) -> bool:
         """Switch to the best model for a specific task.
 
@@ -409,19 +404,24 @@ class BaseAgent(ABC):
         recommendation = self.get_smart_model_recommendation(
             task_description, language, prefer_speed, prefer_quality
         )
-        
+
         logger.info(f"Smart recommendation: {recommendation.reasoning}")
-        
+
         # Try to switch to recommended model
-        if recommendation.model.startswith("gpt-") or recommendation.model.startswith("claude-"):
+        if recommendation.model.startswith("gpt-") or recommendation.model.startswith(
+            "claude-"
+        ):
             # This is a ChadGPT model - find the correct provider name
             config_manager = get_config()
             chadgpt_providers = [
-                name for name, config in config_manager.providers.items()
+                name
+                for name, config in config_manager.providers.items()
                 if config.provider_type.value == "chadgpt"
             ]
             if chadgpt_providers:
-                provider_name = chadgpt_providers[0]  # Use first available ChadGPT provider
+                provider_name = chadgpt_providers[
+                    0
+                ]  # Use first available ChadGPT provider
                 return await self.switch_to_external_provider(provider_name)
             else:
                 logger.warning("No ChadGPT provider found in configuration")
@@ -438,7 +438,7 @@ class BaseAgent(ABC):
         """
         selector = get_smart_selector()
         return {
-            model: selector.get_model_info(model) 
+            model: selector.get_model_info(model)
             for model in selector.model_capabilities.keys()
         }
 

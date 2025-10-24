@@ -1,0 +1,120 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+*tz.md
+model_test_*.md
+
+# Auto-generated reports (all in reports/ folder)
+reports/
+*_REVIEWER_FINAL.md
+*_ANALYSIS_REPORT.md
+*_TECHNICAL_ANALYSIS.md
+*_ZEN_*.md
+*_CLEANUP_REPORT.md
+*_FINAL_ANALYSIS_REPORT.md
+*_PYTHON_ZEN_*.md
+*_ZEN_TESTING_*.md
+*_ZEN_REFACTORING.md
+*_TASKS_COMPLETED.md
+*_MASTER_COMPLETED.md
+*_UPDATE_REPORT.md
+*_FINAL.md
+*_FINAL_*.md
+*PROJECT_*.md
+*_SOLVED_REPORT.md
+
+# Virtual environments
+.env
+.venv/
+**/.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# API Keys and secrets
+api_key.txt
+.env
+*.key
+*.pem
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Poetry
+poetry.lock
+
+# FastAPI/Uvicorn
+*.pid

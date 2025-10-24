@@ -201,10 +201,13 @@ def test_fibonacci():
 
             # Mock health responses
             from types import SimpleNamespace
-            mock_client.check_health = AsyncMock(side_effect=[
-                SimpleNamespace(status="healthy", uptime=100.0),
-                SimpleNamespace(status="healthy", uptime=200.0),
-            ])
+
+            mock_client.check_health = AsyncMock(
+                side_effect=[
+                    SimpleNamespace(status="healthy", uptime=100.0),
+                    SimpleNamespace(status="healthy", uptime=200.0),
+                ]
+            )
 
             status = await orchestrator.get_agent_status()
 
@@ -222,22 +225,29 @@ def test_fibonacci():
 
             # Mock stats responses
             from types import SimpleNamespace
-            mock_client.get_stats = AsyncMock(side_effect=[
-                SimpleNamespace(model_dump=lambda: {
-                    "total_requests": 10,
-                    "successful_requests": 9,
-                    "failed_requests": 1,
-                    "average_response_time": 2.5,
-                    "total_tokens_used": 5000,
-                }),
-                SimpleNamespace(model_dump=lambda: {
-                    "total_requests": 8,
-                    "successful_requests": 8,
-                    "failed_requests": 0,
-                    "average_response_time": 1.8,
-                    "total_tokens_used": 3000,
-                }),
-            ])
+
+            mock_client.get_stats = AsyncMock(
+                side_effect=[
+                    SimpleNamespace(
+                        model_dump=lambda: {
+                            "total_requests": 10,
+                            "successful_requests": 9,
+                            "failed_requests": 1,
+                            "average_response_time": 2.5,
+                            "total_tokens_used": 5000,
+                        }
+                    ),
+                    SimpleNamespace(
+                        model_dump=lambda: {
+                            "total_requests": 8,
+                            "successful_requests": 8,
+                            "failed_requests": 0,
+                            "average_response_time": 1.8,
+                            "total_tokens_used": 3000,
+                        }
+                    ),
+                ]
+            )
 
             stats = await orchestrator.get_agent_stats()
 
@@ -297,8 +307,9 @@ class TestAgentCommunication:
     @pytest.mark.asyncio
     async def test_agent_client_make_request(self):
         """Test agent client request making."""
-        from communication.agent_client import AgentClient
         from unittest.mock import Mock
+
+        from communication.agent_client import AgentClient
 
         async with AgentClient() as client:
             # Mock httpx client
@@ -321,10 +332,14 @@ class TestAgentCommunication:
         from communication.agent_client import AgentClient
 
         async with AgentClient() as client:
-            with patch.object(client, "check_health", new_callable=AsyncMock) as mock_health:
+            with patch.object(
+                client, "check_health", new_callable=AsyncMock
+            ) as mock_health:
                 # First call fails, second succeeds
-                import httpx
                 from types import SimpleNamespace
+
+                import httpx
+
                 mock_health.side_effect = [
                     httpx.HTTPError("Not ready"),
                     SimpleNamespace(status="healthy"),
@@ -343,8 +358,11 @@ class TestAgentCommunication:
         from communication.agent_client import AgentClient
 
         async with AgentClient() as client:
-            with patch.object(client, "check_health", new_callable=AsyncMock) as mock_health:
+            with patch.object(
+                client, "check_health", new_callable=AsyncMock
+            ) as mock_health:
                 import httpx
+
                 mock_health.side_effect = httpx.HTTPError("Not ready")
 
                 result = await client.wait_for_agent(

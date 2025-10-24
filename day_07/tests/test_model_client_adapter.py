@@ -1,7 +1,8 @@
 """Tests for model client adapter."""
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
 
 from agents.core.model_client_adapter import ModelClientAdapter
 
@@ -32,19 +33,17 @@ class TestModelClientAdapter:
         mock_response.input_tokens = 50
         mock_response.response_tokens = 100
         mock_response.total_tokens = 150
-        
+
         # Mock client
         mock_client = AsyncMock()
         mock_client.make_request.return_value = mock_response
         mock_client_class.return_value = mock_client
-        
+
         adapter = ModelClientAdapter()
         adapter.client = mock_client
 
         result = await adapter.make_request(
-            prompt="Create a test function",
-            max_tokens=1000,
-            temperature=0.7
+            prompt="Create a test function", max_tokens=1000, temperature=0.7
         )
 
         assert result["response"] == "def test(): pass"
@@ -56,60 +55,54 @@ class TestModelClientAdapter:
     async def test_make_request_connection_error(self, mock_client_class):
         """Test model request with connection error."""
         from shared_package.exceptions.model_errors import ModelConnectionError
-        
+
         # Mock client
         mock_client = AsyncMock()
         mock_client.make_request.side_effect = ModelConnectionError("Connection failed")
         mock_client_class.return_value = mock_client
-        
+
         adapter = ModelClientAdapter()
         adapter.client = mock_client
 
         with pytest.raises(Exception, match="Model request failed: Connection failed"):
             await adapter.make_request(
-                prompt="Create a test function",
-                max_tokens=1000,
-                temperature=0.7
+                prompt="Create a test function", max_tokens=1000, temperature=0.7
             )
 
     @patch("agents.core.model_client_adapter.UnifiedModelClient")
     async def test_make_request_timeout_error(self, mock_client_class):
         """Test model request with timeout error."""
         from shared_package.exceptions.model_errors import ModelTimeoutError
-        
+
         # Mock client
         mock_client = AsyncMock()
         mock_client.make_request.side_effect = ModelTimeoutError("Request timeout")
         mock_client_class.return_value = mock_client
-        
+
         adapter = ModelClientAdapter()
         adapter.client = mock_client
 
         with pytest.raises(Exception, match="Model request failed: Request timeout"):
             await adapter.make_request(
-                prompt="Create a test function",
-                max_tokens=1000,
-                temperature=0.7
+                prompt="Create a test function", max_tokens=1000, temperature=0.7
             )
 
     @patch("agents.core.model_client_adapter.UnifiedModelClient")
     async def test_make_request_request_error(self, mock_client_class):
         """Test model request with request error."""
         from shared_package.exceptions.model_errors import ModelRequestError
-        
+
         # Mock client
         mock_client = AsyncMock()
         mock_client.make_request.side_effect = ModelRequestError("Invalid request")
         mock_client_class.return_value = mock_client
-        
+
         adapter = ModelClientAdapter()
         adapter.client = mock_client
 
         with pytest.raises(Exception, match="Model request failed: Invalid request"):
             await adapter.make_request(
-                prompt="Create a test function",
-                max_tokens=1000,
-                temperature=0.7
+                prompt="Create a test function", max_tokens=1000, temperature=0.7
             )
 
     @patch("agents.core.model_client_adapter.UnifiedModelClient")
@@ -119,7 +112,7 @@ class TestModelClientAdapter:
         mock_client = AsyncMock()
         mock_client.check_availability.return_value = True
         mock_client_class.return_value = mock_client
-        
+
         adapter = ModelClientAdapter()
         adapter.client = mock_client
 
@@ -133,7 +126,7 @@ class TestModelClientAdapter:
         mock_client = AsyncMock()
         mock_client.check_availability.return_value = False
         mock_client_class.return_value = mock_client
-        
+
         adapter = ModelClientAdapter()
         adapter.client = mock_client
 
@@ -146,7 +139,7 @@ class TestModelClientAdapter:
         # Mock client
         mock_client = AsyncMock()
         mock_client_class.return_value = mock_client
-        
+
         adapter = ModelClientAdapter()
         adapter.client = mock_client
 

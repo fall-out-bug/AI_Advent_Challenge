@@ -7,6 +7,106 @@ import sys
 from pathlib import Path
 
 
+def run_unit_tests():
+    """Run unit tests for the multi-agent system."""
+    print("🧪 Running Unit Tests")
+    print("=" * 30)
+
+    # Change to the day_07 directory
+    test_dir = Path(__file__).parent
+    os.chdir(test_dir)
+
+    # Run unit tests
+    unit_test_files = ["tests/test_generator.py", "tests/test_reviewer.py"]
+
+    for test_file in unit_test_files:
+        if Path(test_file).exists():
+            print(f"\n🔍 Running {test_file}...")
+            result = subprocess.run(
+                [sys.executable, "-m", "pytest", test_file, "-v", "--tb=short"],
+                capture_output=True,
+                text=True,
+            )
+
+            if result.returncode == 0:
+                print(f"✅ {test_file} passed")
+            else:
+                print(f"❌ {test_file} failed")
+                print("STDOUT:", result.stdout)
+                print("STDERR:", result.stderr)
+        else:
+            print(f"⚠️  {test_file} not found")
+
+    return True
+
+
+def run_integration_tests():
+    """Run integration tests for the multi-agent system."""
+    print("🧪 Running Integration Tests")
+    print("=" * 30)
+
+    # Change to the day_07 directory
+    test_dir = Path(__file__).parent
+    os.chdir(test_dir)
+
+    # Run integration tests
+    integration_test_file = "tests/test_orchestrator.py"
+    if Path(integration_test_file).exists():
+        print(f"\n🔍 Running {integration_test_file}...")
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", integration_test_file, "-v", "--tb=short"],
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode == 0:
+            print(f"✅ {integration_test_file} passed")
+        else:
+            print(f"❌ {integration_test_file} failed")
+            print("STDOUT:", result.stdout)
+            print("STDERR:", result.stderr)
+    else:
+        print(f"⚠️  {integration_test_file} not found")
+
+    return True
+
+
+def run_coverage_tests():
+    """Run tests with coverage analysis."""
+    print("🧪 Running Coverage Tests")
+    print("=" * 30)
+
+    # Change to the day_07 directory
+    test_dir = Path(__file__).parent
+    os.chdir(test_dir)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "tests/",
+            "--cov=.",
+            "--cov-report=html",
+            "--cov-report=term",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode == 0:
+        print("✅ Coverage analysis completed!")
+        print("\n📊 Coverage Report:")
+        print(result.stdout)
+        print("\n💡 HTML report generated in htmlcov/")
+    else:
+        print("❌ Coverage analysis failed!")
+        print("STDOUT:", result.stdout)
+        print("STDERR:", result.stderr)
+
+    return result.returncode == 0
+
+
 def run_tests():
     """Run all tests for the multi-agent system."""
     print("🧪 Running Multi-Agent System Tests")
@@ -160,6 +260,20 @@ def lint_code():
     return True
 
 
+def parse_arguments():
+    """Parse command line arguments."""
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Multi-Agent System Test Runner")
+    parser.add_argument("--unit", action="store_true", help="Run unit tests only")
+    parser.add_argument("--integration", action="store_true", help="Run integration tests only")
+    parser.add_argument("--coverage", action="store_true", help="Run coverage tests only")
+    parser.add_argument("--lint", action="store_true", help="Run linting only")
+    parser.add_argument("--all", action="store_true", help="Run all tests and checks")
+    
+    return parser.parse_args()
+
+
 def main():
     """Main test runner function."""
     import os
@@ -173,18 +287,52 @@ def main():
         print("Please run this script from the day_07 directory")
         return False
 
-    # Run tests
-    tests_passed = run_tests()
+    # Parse arguments
+    args = parse_arguments()
 
-    # Run coverage if tests passed
-    if tests_passed:
-        coverage_passed = run_coverage()
+    # Run tests based on arguments
+    if args.unit:
+        tests_passed = run_unit_tests()
+        coverage_passed = True  # Skip coverage for unit-only runs
+        lint_passed = True  # Skip linting for unit-only runs
+    elif args.integration:
+        tests_passed = run_integration_tests()
+        coverage_passed = True  # Skip coverage for integration-only runs
+        lint_passed = True  # Skip linting for integration-only runs
+    elif args.coverage:
+        tests_passed = True  # Skip tests for coverage-only runs
+        coverage_passed = run_coverage_tests()
+        lint_passed = True  # Skip linting for coverage-only runs
+    elif args.lint:
+        tests_passed = True  # Skip tests for lint-only runs
+        coverage_passed = True  # Skip coverage for lint-only runs
+        lint_passed = lint_code()
+    elif args.all:
+        # Run all tests
+        tests_passed = run_tests()
+
+        # Run coverage if tests passed
+        if tests_passed:
+            coverage_passed = run_coverage()
+        else:
+            print("\n⚠️  Skipping coverage analysis due to test failures")
+            coverage_passed = False
+
+        # Run linting
+        lint_passed = lint_code()
     else:
-        print("\n⚠️  Skipping coverage analysis due to test failures")
-        coverage_passed = False
+        # Default: run all tests
+        tests_passed = run_tests()
 
-    # Run linting
-    lint_passed = lint_code()
+        # Run coverage if tests passed
+        if tests_passed:
+            coverage_passed = run_coverage()
+        else:
+            print("\n⚠️  Skipping coverage analysis due to test failures")
+            coverage_passed = False
+
+        # Run linting
+        lint_passed = lint_code()
 
     # Summary
     print("\n" + "=" * 60)

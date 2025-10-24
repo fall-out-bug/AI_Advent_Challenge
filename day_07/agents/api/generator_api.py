@@ -48,7 +48,9 @@ async def lifespan(app: FastAPI):
     # Validate required environment variables
     hf_token = os.getenv(HF_TOKEN_ENV_VAR)
     if not hf_token:
-        logger.warning(f"{HF_TOKEN_ENV_VAR} environment variable is not set. Using local model without token.")
+        logger.warning(
+            f"{HF_TOKEN_ENV_VAR} environment variable is not set. Using local model without token."
+        )
 
     generator_agent = CodeGeneratorAgent(model_name=model_name)
 
@@ -64,9 +66,7 @@ async def lifespan(app: FastAPI):
     for attempt in range(MAX_STARTUP_RETRIES):
         try:
             # Test model connection
-            await generator_agent._call_model(
-                prompt="Test connection", max_tokens=10
-            )
+            await generator_agent._call_model(prompt="Test connection", max_tokens=10)
             logger.info(f"{model_name} is available!")
             break
         except Exception as e:

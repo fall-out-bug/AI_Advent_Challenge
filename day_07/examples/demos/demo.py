@@ -6,9 +6,6 @@ import os
 import sys
 from pathlib import Path
 
-# Add the current directory to Python path
-sys.path.insert(0, str(Path(__file__).parent))
-
 from communication.message_schema import OrchestratorRequest
 from orchestrator import MultiAgentOrchestrator, process_simple_task
 
@@ -19,14 +16,15 @@ DEMO_REVIEWER_URL = os.getenv("REVIEWER_URL", "http://reviewer.localhost")
 
 async def wait_for_services():
     """Wait for services to be ready."""
-    import aiohttp
     import asyncio
-    
+
+    import aiohttp
+
     print("⏳ Waiting for services to be ready...")
-    
+
     max_attempts = 30
     attempt = 0
-    
+
     while attempt < max_attempts:
         try:
             async with aiohttp.ClientSession() as session:
@@ -34,15 +32,15 @@ async def wait_for_services():
                 async with session.get(f"{DEMO_GENERATOR_URL}/health") as resp:
                     if resp.status != 200:
                         raise Exception(f"Generator service not ready: {resp.status}")
-                
+
                 # Check reviewer service
                 async with session.get(f"{DEMO_REVIEWER_URL}/health") as resp:
                     if resp.status != 200:
                         raise Exception(f"Reviewer service not ready: {resp.status}")
-                        
+
             print("✅ Services are ready!")
             return True
-            
+
         except Exception as e:
             attempt += 1
             print(f"⏳ Attempt {attempt}/{max_attempts}: {str(e)}")
@@ -77,9 +75,7 @@ async def demo_simple_task():
         if result.success:
             print(f"✅ Task completed successfully!")
             print(f"⏱️  Workflow time: {result.workflow_time:.2f}s")
-            print(
-                f"📊 Code quality score: {result.review_result.code_quality_score}/10"
-            )
+            print(f"📊 Code quality score: {result.review_result.code_quality_score}/10")
             print(f"🔍 Issues found: {len(result.review_result.issues)}")
             print(f"💡 Recommendations: {len(result.review_result.recommendations)}")
 

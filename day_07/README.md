@@ -48,6 +48,66 @@ A sophisticated multi-agent system with support for multiple language models (St
 - Poetry (for dependency management)
 - Hugging Face token (for downloading StarCoder model)
 
+### Project Structure
+
+```
+day_07/
+├── agents/                 # Core agent implementations
+│   ├── api/               # FastAPI services
+│   └── core/              # Agent logic
+├── communication/         # Inter-agent communication
+├── prompts/              # Prompt templates
+├── examples/             # Usage examples
+│   └── demos/            # Demo scripts
+├── tests/                # Test suite
+├── docs/                 # Documentation
+├── config/               # Configuration files
+├── results/              # Workflow results (gitignored)
+├── main.py               # CLI entry point
+├── orchestrator.py       # Workflow orchestrator
+└── pyproject.toml        # Dependencies
+```
+
+### Getting Started
+
+1. **Install dependencies:**
+   ```bash
+   poetry install
+   ```
+
+2. **Run demos:**
+   ```bash
+   # Basic demo
+   python examples/demos/demo.py
+   
+   # Interactive demo
+   python examples/demos/interactive_demo.py
+   
+   # External API demo
+   python examples/demos/demo_external_api.py
+   ```
+
+3. **Use CLI:**
+   ```bash
+   # Simple task
+   python main.py --task "Create a fibonacci function"
+   
+   # With requirements
+   python main.py --task "Create a REST API client" \\
+     --requirements "Use httpx" "Add retry logic"
+   ```
+
+4. **Start services:**
+   ```bash
+   # Start StarCoder
+   cd ../local_models
+   docker-compose up -d starcoder-chat
+   
+   # Start agents
+   cd ../day_07
+   make start-bridge
+   ```
+
 ### Environment Variables
 
 Before starting the services, you need to configure environment variables:

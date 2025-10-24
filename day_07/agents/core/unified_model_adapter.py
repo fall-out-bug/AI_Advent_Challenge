@@ -1,17 +1,17 @@
 """Unified adapter for both local and external API providers."""
 
 import logging
-from typing import Any, Dict, Optional, Union
 from datetime import datetime
+from typing import Any, Dict, Optional, Union
 
-from agents.core.model_client_adapter import ModelClientAdapter
+from agents.core.external_api_config import ProviderType, get_config
 from agents.core.external_api_provider import (
-    ExternalAPIProvider, 
-    ChatGPTProvider, 
-    ChadGPTProvider
+    ChadGPTProvider,
+    ChatGPTProvider,
+    ExternalAPIProvider,
 )
-from agents.core.external_api_config import get_config, ProviderType
-from agents.core.smart_model_selector import get_smart_selector, ModelRecommendation
+from agents.core.model_client_adapter import ModelClientAdapter
+from agents.core.smart_model_selector import ModelRecommendation, get_smart_selector
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -20,16 +20,16 @@ logger = logging.getLogger(__name__)
 class UnifiedModelAdapter:
     """
     Unified adapter that can work with both local models and external APIs.
-    
+
     This adapter follows the Strategy pattern, allowing seamless switching
     between different model providers without changing the agent code.
     """
 
     def __init__(
-        self, 
+        self,
         model_name: str = "starcoder",
         external_provider: Optional[str] = None,
-        timeout: float = 600.0
+        timeout: float = 600.0,
     ):
         """Initialize the unified model adapter.
 
@@ -41,11 +41,11 @@ class UnifiedModelAdapter:
         self.model_name = model_name
         self.external_provider = external_provider
         self.timeout = timeout
-        
+
         # Initialize adapters
         self.local_adapter: Optional[ModelClientAdapter] = None
         self.external_adapter: Optional[ExternalAPIProvider] = None
-        
+
         # Determine which adapter to use
         self._initialize_adapter()
 
@@ -55,44 +55,46 @@ class UnifiedModelAdapter:
             # Use external API provider
             config_manager = get_config()
             provider_config = config_manager.get_provider(self.external_provider)
-            
+
             if not provider_config:
-                raise ValueError(f"External provider '{self.external_provider}' not found")
-            
+                raise ValueError(
+                    f"External provider '{self.external_provider}' not found"
+                )
+
             if not provider_config.enabled:
-                raise ValueError(f"External provider '{self.external_provider}' is disabled")
-            
+                raise ValueError(
+                    f"External provider '{self.external_provider}' is disabled"
+                )
+
             # Create external provider based on type
             if provider_config.provider_type == ProviderType.CHATGPT:
                 self.external_adapter = ChatGPTProvider(
                     api_key=provider_config.api_key,
                     model=provider_config.model,
-                    timeout=provider_config.timeout
+                    timeout=provider_config.timeout,
                 )
             elif provider_config.provider_type == ProviderType.CHADGPT:
                 self.external_adapter = ChadGPTProvider(
                     api_key=provider_config.api_key,
                     model=provider_config.model,
-                    timeout=provider_config.timeout
+                    timeout=provider_config.timeout,
                 )
             else:
-                raise ValueError(f"Unsupported provider type: {provider_config.provider_type}")
-            
+                raise ValueError(
+                    f"Unsupported provider type: {provider_config.provider_type}"
+                )
+
             logger.info(f"Initialized external adapter: {self.external_provider}")
-            
+
         else:
             # Use local model adapter
             self.local_adapter = ModelClientAdapter(
-                model_name=self.model_name,
-                timeout=self.timeout
+                model_name=self.model_name, timeout=self.timeout
             )
             logger.info(f"Initialized local adapter: {self.model_name}")
 
     async def make_request(
-        self, 
-        prompt: str, 
-        max_tokens: int, 
-        temperature: float
+        self, prompt: str, max_tokens: int, temperature: float
     ) -> Dict[str, Any]:
         """Make request to model through appropriate adapter.
 
@@ -115,7 +117,9 @@ class UnifiedModelAdapter:
             # Use local model
             if not self.local_adapter:
                 raise RuntimeError("Local adapter not initialized")
-            return await self.local_adapter.make_request(prompt, max_tokens, temperature)
+            return await self.local_adapter.make_request(
+                prompt, max_tokens, temperature
+            )
 
     async def check_availability(self) -> bool:
         """Check if model is available.
@@ -148,22 +152,26 @@ class UnifiedModelAdapter:
         if self.external_adapter:
             config_manager = get_config()
             provider_config = config_manager.get_provider(self.external_provider)
-            
+
             info = {
                 "type": "external",
                 "provider": self.external_provider,
-                "provider_type": provider_config.provider_type.value if provider_config else "unknown",
+                "provider_type": provider_config.provider_type.value
+                if provider_config
+                else "unknown",
                 "model": provider_config.model if provider_config else "unknown",
                 "timeout": provider_config.timeout if provider_config else self.timeout,
             }
-            
+
             # Add smart model info for ChadGPT
-            if (provider_config and 
-                provider_config.provider_type.value == "chadgpt" and 
-                hasattr(self.external_adapter, 'get_supported_models')):
+            if (
+                provider_config
+                and provider_config.provider_type.value == "chadgpt"
+                and hasattr(self.external_adapter, "get_supported_models")
+            ):
                 info["supported_models"] = self.external_adapter.get_supported_models()
                 info["current_model_info"] = self.external_adapter._get_model_info()
-            
+
             return info
         else:
             return {
@@ -196,8 +204,7 @@ class ModelProviderFactory:
 
     @staticmethod
     def create_local_adapter(
-        model_name: str = "starcoder",
-        timeout: float = 600.0
+        model_name: str = "starcoder", timeout: float = 600.0
     ) -> UnifiedModelAdapter:
         """Create adapter for local model.
 
@@ -209,15 +216,12 @@ class ModelProviderFactory:
             Unified model adapter configured for local model
         """
         return UnifiedModelAdapter(
-            model_name=model_name,
-            external_provider=None,
-            timeout=timeout
+            model_name=model_name, external_provider=None, timeout=timeout
         )
 
     @staticmethod
     def create_external_adapter(
-        provider_name: str,
-        timeout: float = 600.0
+        provider_name: str, timeout: float = 600.0
     ) -> UnifiedModelAdapter:
         """Create adapter for external API provider.
 
@@ -233,24 +237,24 @@ class ModelProviderFactory:
         """
         config_manager = get_config()
         provider_config = config_manager.get_provider(provider_name)
-        
+
         if not provider_config:
             raise ValueError(f"Provider '{provider_name}' not found")
-        
+
         if not provider_config.enabled:
             raise ValueError(f"Provider '{provider_name}' is disabled")
-        
+
         return UnifiedModelAdapter(
             model_name=provider_config.model,
             external_provider=provider_name,
-            timeout=timeout
+            timeout=timeout,
         )
 
     @staticmethod
     def create_auto_adapter(
         preferred_provider: Optional[str] = None,
         fallback_to_local: bool = True,
-        timeout: float = 600.0
+        timeout: float = 600.0,
     ) -> UnifiedModelAdapter:
         """Create adapter with automatic provider selection.
 
@@ -266,7 +270,7 @@ class ModelProviderFactory:
             RuntimeError: If no suitable provider found
         """
         config_manager = get_config()
-        
+
         # Try preferred provider first
         if preferred_provider:
             provider_config = config_manager.get_provider(preferred_provider)
@@ -278,8 +282,10 @@ class ModelProviderFactory:
                     logger.info(f"Using preferred provider: {preferred_provider}")
                     return adapter
                 except Exception as e:
-                    logger.warning(f"Preferred provider {preferred_provider} failed: {e}")
-        
+                    logger.warning(
+                        f"Preferred provider {preferred_provider} failed: {e}"
+                    )
+
         # Try default external provider
         default_provider = config_manager.default_provider
         if default_provider:
@@ -293,7 +299,7 @@ class ModelProviderFactory:
                     return adapter
                 except Exception as e:
                     logger.warning(f"Default provider {default_provider} failed: {e}")
-        
+
         # Try any enabled external provider
         enabled_providers = config_manager.get_enabled_providers()
         for provider_name in enabled_providers:
@@ -305,12 +311,12 @@ class ModelProviderFactory:
                 return adapter
             except Exception as e:
                 logger.warning(f"Provider {provider_name} failed: {e}")
-        
+
         # Fallback to local model
         if fallback_to_local:
             logger.info("Falling back to local model")
             return ModelProviderFactory.create_local_adapter(timeout=timeout)
-        
+
         raise RuntimeError("No suitable model provider found")
 
 
@@ -318,7 +324,7 @@ class ModelProviderFactory:
 async def create_model_adapter(
     model_name: Optional[str] = None,
     external_provider: Optional[str] = None,
-    timeout: float = 600.0
+    timeout: float = 600.0,
 ) -> UnifiedModelAdapter:
     """Create a model adapter with specified configuration.
 
@@ -335,14 +341,13 @@ async def create_model_adapter(
     """
     if external_provider and model_name:
         raise ValueError("Cannot specify both external_provider and model_name")
-    
+
     if external_provider:
         return ModelProviderFactory.create_external_adapter(external_provider, timeout)
     else:
         return ModelProviderFactory.create_local_adapter(
             model_name or "starcoder", timeout
         )
-
 
     async def get_available_providers() -> Dict[str, Any]:
         """Get information about all available providers.
@@ -352,18 +357,20 @@ async def create_model_adapter(
         """
         config_manager = get_config()
         providers_info = {}
-        
+
         # Check local models (this would need to be implemented based on your local setup)
         providers_info["local"] = {
             "available": True,  # Assuming local models are always available
             "models": ["starcoder", "mistral", "qwen", "tinyllama"],
         }
-        
+
         # Check external providers
         for provider_name, provider_config in config_manager.providers.items():
             if provider_config.enabled:
                 try:
-                    adapter = ModelProviderFactory.create_external_adapter(provider_name)
+                    adapter = ModelProviderFactory.create_external_adapter(
+                        provider_name
+                    )
                     is_available = await adapter.check_availability()
                     providers_info[provider_name] = {
                         "available": is_available,
@@ -371,18 +378,19 @@ async def create_model_adapter(
                         "model": provider_config.model,
                         "timeout": provider_config.timeout,
                     }
-                    
+
                     # Add smart model info for ChadGPT
-                    if (provider_config.provider_type.value == "chadgpt" and 
-                        hasattr(adapter.external_adapter, 'get_supported_models')):
-                        providers_info[provider_name]["supported_models"] = (
-                            adapter.external_adapter.get_supported_models()
-                        )
-                        
+                    if provider_config.provider_type.value == "chadgpt" and hasattr(
+                        adapter.external_adapter, "get_supported_models"
+                    ):
+                        providers_info[provider_name][
+                            "supported_models"
+                        ] = adapter.external_adapter.get_supported_models()
+
                 except Exception as e:
                     providers_info[provider_name] = {
                         "available": False,
                         "error": str(e),
                     }
-        
+
         return providers_info

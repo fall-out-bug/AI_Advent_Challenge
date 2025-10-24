@@ -1,6 +1,7 @@
 """FastAPI service for code reviewer agent."""
 
 import asyncio
+import logging
 import os
 from contextlib import asynccontextmanager
 from typing import Any, Dict
@@ -16,6 +17,9 @@ from communication.message_schema import (
     CodeReviewRequest,
     CodeReviewResponse,
 )
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # Global agent instance
 reviewer_agent: CodeReviewerAgent = None
@@ -33,30 +37,28 @@ async def lifespan(app: FastAPI):
     # Check model availability
     is_available = await reviewer_agent.model_client.check_availability()
     if is_available:
-        print(f"✅ {model_name} model is available")
+        logger.info(f"✅ {model_name} model is available")
     else:
-        print(f"⚠️  Warning: {model_name} model may not be available")
+        logger.warning(f"⚠️  Warning: {model_name} model may not be available")
 
     # Wait for model to be available
-    print(f"Waiting for {model_name} to be available...")
+    logger.info(f"Waiting for {model_name} to be available...")
     max_retries = 30
     for attempt in range(max_retries):
         try:
             # Test model connection
-            await reviewer_agent._call_model(
-                prompt="Test connection", max_tokens=10
-            )
-            print(f"{model_name} is available!")
+            await reviewer_agent._call_model(prompt="Test connection", max_tokens=10)
+            logger.info(f"{model_name} is available!")
             break
         except Exception as e:
             if attempt < max_retries - 1:
-                print(
+                logger.warning(
                     f"{model_name} not ready, retrying in 2 seconds... "
                     f"(attempt {attempt + 1}/{max_retries})"
                 )
                 await asyncio.sleep(2)
             else:
-                print(
+                logger.error(
                     f"Failed to connect to {model_name} after {max_retries} attempts: {e}"
                 )
                 raise RuntimeError(f"{model_name} service unavailable")
@@ -64,7 +66,7 @@ async def lifespan(app: FastAPI):
     yield
 
     # Shutdown
-    print("Shutting down reviewer agent...")
+    logger.info("Shutting down reviewer agent...")
 
 
 app = FastAPI(
