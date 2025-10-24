@@ -5,7 +5,7 @@ Following Python Zen: "Explicit is better than implicit".
 """
 
 # HTTP client configuration
-DEFAULT_TIMEOUT = 120.0
+DEFAULT_TIMEOUT = 600.0  # 10 minutes for local models (StarCoder2-7B needs more time)
 QUICK_TIMEOUT = 5.0
 TEST_TIMEOUT = 30.0
 

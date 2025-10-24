@@ -1,517 +1,763 @@
-# 🎯 AI Advent Challenge
+# AI Advent Challenge
 
-Что ни день - то новая хрень!
+[English](README.md) | [Русский](README.ru.md)
 
-## 🤖 Быстрое понимание для AI-агентов
+> Daily AI-powered projects exploring language models and multi-agent systems
 
-**Структура репозитория:**
-- `local_models/` - 🏠 **Базовая инфраструктура** локальных языковых моделей (общий модуль)
-- `shared/` - 🛠️ **SDK** для унифицированной работы с моделями (общий модуль)
-- `day_01/` - `day_04/` - **Игровые проекты** для изучения основ
-- `day_05/`, `day_06/` - **Продуктивные проекты** с использованием SDK
-- Каждый `day_XX/` - **самостоятельный проект** с собственными зависимостями и тестами
+## 🤖 Quick Start for AI Agents
 
-**Ключевые компоненты:**
-- **Локальные модели**: FastAPI серверы в `local_models/` (порты 8000-8002)
-- **SDK**: Унифицированный интерфейс для работы с моделями в `shared/`
-- **Чат-боты**: Терминальные приложения с ехидным AI-дедушкой
-- **Режим советчика**: Структурированный диалог с ограничениями модели
-- **Единообразное API**: Команда `api <provider>` для всех моделей
+**Repository Structure:**
+- `local_models/` - Local language model infrastructure (shared module)
+- `shared/` - SDK for unified model interaction (shared module)
+- `day_01/` to `day_04/` - Learning projects exploring basics
+- `day_05/`, `day_06/` - Production projects using SDK
+- `day_07/` - Multi-Agent System for code generation and review
+- Each `day_XX/` is a standalone project with its own dependencies and tests
 
-**Быстрый старт для агентов:**
-1. Изучить `local_models/README.md` - архитектура локальных моделей
-2. Выбрать проект `day_XX/` по сложности
-3. Запустить `make install && make run` в выбранном проекте
+**Key Components:**
+- **Local Models**: FastAPI servers in `local_models/` (ports 8000-8002)
+- **SDK**: Unified interface for model interaction in `shared/`
+- **Chat Bots**: Terminal applications with AI-powered interactions
+- **Advisor Mode**: Structured dialogue with model constraints
+- **Unified API**: `api <provider>` command for all models
+- **Multi-Agent System**: Specialized agents for code generation and review
 
-## 📁 Структура проекта
+**Quick Start for Agents:**
+1. Study `local_models/README.md` - local model architecture
+2. Choose project `day_XX/` by complexity
+3. Run `make install && make run` in selected project
+
+## 📁 Project Structure
 
 ```
 AI_Advent_Challenge/
-├── .gitignore              # Игнорируемые файлы
-├── config.py              # Конфигурация API ключей (общая)
-├── api_key.txt.example    # Шаблон для API ключей
-├── Makefile              # Команды для настройки проекта
-├── README.md             # Этот файл
-├── local_models/         # 🏠 Базовая инфраструктура локальных моделей
-│   ├── chat_api.py       # FastAPI сервер для локальных моделей
-│   ├── docker-compose.yml # Конфигурация Docker Compose
-│   ├── Dockerfile        # Образ для запуска моделей
-│   ├── download_model.py # Скрипт для предварительной загрузки
-│   └── README.md         # Документация локальных моделей
-├── shared/               # 🛠️ SDK для унифицированной работы с моделями
-│   ├── config/          # Конфигурация моделей и константы
-│   ├── clients/         # Клиенты для работы с моделями
-│   ├── exceptions/      # Стандартизированные исключения
-│   ├── tests/           # Тесты SDK (покрытие 98.59%)
-│   ├── pyproject.toml   # Зависимости SDK
-│   └── README.md        # Документация SDK
-├── day_01/               # День 1 - Терминальный чат с дедушкой
-│   ├── terminal_chat.py  # Основное приложение
-│   ├── pyproject.toml    # Зависимости Poetry
-│   ├── .venv/           # Виртуальное окружение Poetry
-│   ├── Makefile         # Команды для разработки
-│   └── README.md        # Документация проекта
-├── day_02/               # День 2 - Улучшенный чат с JSON-ответами
-│   ├── terminal_chat_v2.py # Улучшенное приложение
-│   ├── pyproject.toml    # Зависимости Poetry
-│   ├── .venv/           # Виртуальное окружение Poetry
-│   ├── Makefile         # Команды для разработки
-│   └── README.md        # Документация проекта
-├── day_03/               # День 3 - Режим советчика с ограничениями модели
-|   ├── terminal_chat_v3.py # Чат с режимом советчика
-|   ├── advice_session.py   # Управление состоянием сессии
-|   ├── advice_mode.py      # Логика режима советчика
-|   ├── tests/             # Тесты для всех компонентов
-|   ├── pyproject.toml     # Зависимости Poetry
-|   ├── Makefile          # Команды для разработки
-|   └── README.md         # Документация проекта
-├── day_04/               # День 4 - Улучшенный режим советчика с температурой
-|   ├── terminal_chat_v4.py # Чат с улучшенным режимом советчика
-|   ├── advice_mode.py      # Логика режима советчика
-|   ├── advice_session.py   # Управление состоянием сессии
-|   ├── temperature_utils.py # Утилиты для работы с температурой
-|   ├── experiment_temperature.py # Эксперименты с температурой
-|   ├── tests/             # Тесты для всех компонентов
-|   ├── pyproject.toml     # Зависимости Poetry
-|   ├── Makefile          # Команды для разработки
-|   └── README.md         # Документация проекта
-└── day_05/               # День 5 - Локальные модели и история сообщений
-    ├── terminal_chat_v5.py # Чат с поддержкой локальных моделей
-    ├── advice_mode_v5.py   # Режим советчика для локальных моделей
-    ├── advice_session.py   # Управление состоянием сессии
-    ├── temperature_utils.py # Утилиты для работы с температурой
-    ├── check_models.py     # Проверка доступности локальных моделей
-    ├── demo_*.py          # Демонстрационные скрипты
-    ├── tests/             # Тесты для всех компонентов
-    ├── requirements.txt   # Зависимости проекта
-    ├── Makefile          # Команды для разработки
-    └── README.md         # Документация проекта
-└── day_06/               # День 6 - Тестирование локальных моделей на логических загадках
-    ├── src/              # Исходный код системы тестирования
-    │   ├── main.py       # Основной модуль тестирования
-    │   ├── model_client.py # Клиент для работы с локальными моделями
-    │   ├── riddles.py    # Коллекция логических загадок
-    │   ├── report_generator.py # Генератор отчетов
-    │   └── __init__.py   # Инициализация пакета
-    ├── tests/           # Тесты для всех компонентов
-    ├── pyproject.toml   # Зависимости Poetry
-    ├── Makefile         # Команды для разработки
-    └── README.md        # Документация проекта
+├── .gitignore              # Ignored files
+├── config.py              # API key configuration (shared)
+├── api_key.txt.example    # Template for API keys
+├── Makefile              # Project setup commands
+├── README.md             # This file (English)
+├── README.ru.md          # Russian version
+├── AGENTS.md             # AI agents documentation (English)
+├── AGENTS.ru.md          # AI agents documentation (Russian)
+├── AGENTS_QUICK_REFERENCE.md # Quick reference (English)
+├── AGENTS_QUICK_REFERENCE.ru.md # Quick reference (Russian)
+├── local_models/         # 🏠 Local language model infrastructure
+│   ├── chat_api.py       # FastAPI server for local models
+│   ├── docker-compose.yml # Docker Compose configuration
+│   ├── Dockerfile        # Image for running models
+│   ├── download_model.py # Script for pre-downloading models
+│   └── README.md         # Local models documentation
+├── shared/               # 🛠️ SDK for unified model interaction
+│   ├── config/          # Model configuration and constants
+│   ├── clients/         # Model clients
+│   ├── exceptions/      # Standardized exceptions
+│   ├── tests/           # SDK tests (98.59% coverage)
+│   ├── pyproject.toml   # SDK dependencies
+│   └── README.md        # SDK documentation
+├── day_01/               # Day 1 - Terminal chat with AI
+│   ├── terminal_chat.py  # Main application
+│   ├── pyproject.toml    # Poetry dependencies
+│   ├── .venv/           # Poetry virtual environment
+│   ├── Makefile         # Development commands
+│   └── README.md        # Project documentation
+├── day_02/               # Day 2 - Improved chat with JSON responses
+│   ├── terminal_chat_v2.py # Improved application
+│   ├── pyproject.toml    # Poetry dependencies
+│   ├── .venv/           # Poetry virtual environment
+│   ├── Makefile         # Development commands
+│   └── README.md        # Project documentation
+├── day_03/               # Day 3 - Advisor mode with model constraints
+│   ├── terminal_chat_v3.py # Chat with advisor mode
+│   ├── advice_session.py   # Session state management
+│   ├── advice_mode.py      # Advisor mode logic
+│   ├── tests/             # Tests for all components
+│   ├── pyproject.toml     # Poetry dependencies
+│   ├── Makefile          # Development commands
+│   └── README.md         # Project documentation
+├── day_04/               # Day 4 - Improved advisor mode with temperature
+│   ├── terminal_chat_v4.py # Chat with improved advisor mode
+│   ├── advice_mode.py      # Advisor mode logic
+│   ├── advice_session.py   # Session state management
+│   ├── temperature_utils.py # Temperature utilities
+│   ├── experiment_temperature.py # Temperature experiments
+│   ├── tests/             # Tests for all components
+│   ├── pyproject.toml     # Poetry dependencies
+│   ├── Makefile          # Development commands
+│   └── README.md         # Project documentation
+├── day_05/               # Day 5 - Local models and message history
+│   ├── terminal_chat_v5.py # Chat with local model support
+│   ├── advice_mode_v5.py   # Advisor mode for local models
+│   ├── advice_session.py   # Session state management
+│   ├── temperature_utils.py # Temperature utilities
+│   ├── check_models.py     # Local model availability check
+│   ├── demo_*.py          # Demo scripts
+│   ├── tests/             # Tests for all components
+│   ├── requirements.txt   # Project dependencies
+│   ├── Makefile          # Development commands
+│   └── README.md         # Project documentation
+├── day_06/               # Day 6 - Testing local models on logical puzzles
+│   ├── src/              # Testing system source code
+│   │   ├── main.py       # Main testing module
+│   │   ├── model_client.py # Local model client
+│   │   ├── riddles.py    # Collection of logical puzzles
+│   │   ├── report_generator.py # Report generator
+│   │   └── __init__.py   # Package initialization
+│   ├── tests/           # Tests for all components
+│   ├── pyproject.toml   # Poetry dependencies
+│   ├── Makefile         # Development commands
+│   └── README.md        # Project documentation
+└── day_07/               # Day 7 - Multi-Agent System for Code Generation and Review
+    ├── agents/          # System agents
+    │   ├── api/        # FastAPI services for agents
+    │   │   ├── generator_api.py # Generator agent API
+    │   │   └── reviewer_api.py  # Reviewer agent API
+    │   └── core/       # Agent core (generator, reviewer)
+    │       ├── base_agent.py # Base agent class
+    │       ├── code_generator.py # Code generator agent
+    │       ├── code_reviewer.py # Code reviewer agent
+    │       └── model_client_adapter.py # Model integration
+    ├── communication/   # Communication layer between agents
+    │   ├── agent_client.py # HTTP client with retry logic
+    │   └── message_schema.py # Request/response models
+    ├── prompts/        # Prompt templates for models
+    │   ├── generator_prompts.py # Generation prompts
+    │   └── reviewer_prompts.py  # Review prompts
+    ├── tests/          # System tests
+    │   ├── test_generator.py
+    │   ├── test_reviewer.py
+    │   └── test_orchestrator.py
+    ├── examples/       # Usage examples
+    ├── orchestrator.py # Workflow orchestrator
+    ├── main.py         # CLI interface
+    ├── demo.py         # Demo examples
+    ├── Dockerfile      # Multi-stage Docker image
+    ├── docker-compose*.yml # Deployment configurations
+    ├── README.md       # Project documentation (EN)
+    ├── README.ru.md    # Project documentation (RU)
+    ├── DEVELOPER_GUIDE.md # Developer guide (EN)
+    ├── DEVELOPER_GUIDE.ru.md # Developer guide (RU)
+    ├── ARCHITECTURE.md # System architecture (EN)
+    ├── ARCHITECTURE.ru.md # System architecture (RU)
+    ├── DEPLOYMENT.md   # Deployment guide (EN)
+    ├── DEPLOYMENT.ru.md # Deployment guide (RU)
+    ├── TROUBLESHOOTING.md # Troubleshooting guide (EN)
+    ├── TROUBLESHOOTING.ru.md # Troubleshooting guide (RU)
+    ├── pyproject.toml  # Poetry dependencies
+    ├── Makefile        # Development commands
+    └── constants.py    # Configuration constants
 ```
 
-### Проекты:
-- `local_models/` - 🏠 Базовая инфраструктура локальных языковых моделей
-- `shared/` - 🛠️ SDK для унифицированной работы с моделями
-- `day_01/` - `day_04/` - Игровые проекты для изучения основ
-- `day_05/` - Локальные модели и история сообщений с единообразным API (использует SDK)
-- `day_06/` - Тестирование локальных моделей на логических загадках (использует SDK)
+## 🚀 Quick Start
 
-## 🚀 Быстрый старт
+### 1. Setup API Keys
 
-1. **Настройте API ключи**:
 ```bash
-make setup  # Создаст api_key.txt из шаблона
-# Добавьте ваши API ключи в файл api_key.txt:
-# perplexity:ваш_ключ_perplexity
-# chadgpt:ваш_ключ_chadgpt
+make setup  # Creates api_key.txt from template
+# Add your API keys to api_key.txt:
+# perplexity:your_perplexity_key
+# chadgpt:your_chadgpt_key
 ```
 
-2. **Запустите локальные модели** (опционально):
+### 2. Start Local Models (Optional)
+
 ```bash
-# Запуск всех локальных моделей
+# Start all local models
 cd local_models
 docker-compose up -d
 
-# Проверка доступности
+# Check availability
 curl http://localhost:8000/chat  # Qwen
 curl http://localhost:8001/chat  # Mistral
 curl http://localhost:8002/chat  # TinyLlama
 ```
 
-3. **Выберите проект**:
+### 3. Choose a Project
+
 ```bash
-# День 1 - простой чат
+# Day 1 - Simple chat
 cd day_01
 make install
 make chat
 
-# День 2 - улучшенный чат с JSON-ответами
+# Day 2 - Improved chat with JSON responses
 cd ../day_02
 make install
 make chat
 
-# День 3 - режим советчика с ограничениями модели
+# Day 3 - Advisor mode with model constraints
 cd ../day_03
 make install
 make run
 
-# День 4 - улучшенный режим советчика с температурой
+# Day 4 - Improved advisor mode with temperature
 cd ../day_04
 make install
 make run
 
-# День 5 - локальные модели и история сообщений
+# Day 5 - Local models and message history
 cd ../day_05
 make install
 make run
 
-# День 6 - тестирование локальных моделей на логических загадках
+# Day 6 - Testing local models on logical puzzles
 cd ../day_06
 make install
 make run
+
+# Day 7 - Multi-Agent System for Code Generation and Review
+cd ../day_07
+
+# Start StarCoder (required)
+cd ../local_models
+docker-compose up -d starcoder-chat
+
+# Start agents via Docker Compose
+cd ../day_07
+make start-bridge  # Simple startup
+# or
+make start-traefik # With Traefik reverse proxy
+
+# CLI usage
+make demo          # Run demo
+make run-simple    # Simple code generation
 ```
 
-## 📚 Описание проектов
+## 📊 Project Comparison
 
-### Local Models - Базовая инфраструктура локальных моделей
+| Project | Complexity | Technologies | Models | Features |
+|---------|-----------|--------------|--------|----------|
+| day_01 | ⭐ | Python, API | Perplexity | Simple chat |
+| day_02 | ⭐⭐ | Python, JSON | Perplexity | JSON responses |
+| day_03 | ⭐⭐ | Python, State | Perplexity | Advisor mode |
+| day_04 | ⭐⭐⭐ | Python, Temperature | Perplexity | Temperature experiments |
+| day_05 | ⭐⭐⭐ | Python, SDK, Docker | Local | SDK integration |
+| day_06 | ⭐⭐⭐⭐ | Python, SDK, Testing | Local | Model testing |
+| day_07 | ⭐⭐⭐⭐⭐ | FastAPI, Docker, Traefik | 4 models | Multi-Agent System |
 
-🏠 **Общий модуль** для работы с локальными языковыми моделями. Предоставляет единообразный API для различных моделей и может использоваться любыми проектами в репозитории.
+## 📚 Project Descriptions
 
-**Технологии:**
-- FastAPI (API сервер)
-- Docker Compose (оркестрация)
+### Local Models - Local Language Model Infrastructure
+
+🏠 **Shared module** for working with local language models. Provides a unified API for various models and can be used by any project in the repository.
+
+**Technologies:**
+- FastAPI (API server)
+- Docker Compose (orchestration)
 - HuggingFace Transformers
-- NVIDIA CUDA (GPU ускорение)
-- 4-bit квантизация (экономия памяти)
+- NVIDIA CUDA (GPU acceleration)
+- 4-bit quantization (memory efficiency)
 
-**Поддерживаемые модели:**
-- **Qwen-4B** (порт 8000) - Быстрые ответы, ~8GB RAM
-- **Mistral-7B** (порт 8001) - Высокое качество, ~14GB RAM  
-- **TinyLlama-1.1B** (порт 8002) - Компактная, ~4GB RAM
+**Supported Models:**
+- **Qwen-4B** (port 8000) - Fast responses, ~8GB RAM
+- **Mistral-7B** (port 8001) - High quality, ~14GB RAM  
+- **TinyLlama-1.1B** (port 8002) - Compact, ~4GB RAM
 
-**Ключевые особенности:**
-- 🔄 **Единообразный API**: Стандартный OpenAI-совместимый интерфейс
-- 🐳 **Docker-оркестрация**: Автоматическое управление контейнерами
-- 🎯 **Автоформатирование**: Поддержка разных форматов промптов
-- ⚡ **GPU ускорение**: Автоматическое использование NVIDIA GPU
-- 🔒 **Приватность**: Данные не покидают локальную машину
-- 💰 **Экономия**: Нет расходов на внешние API
+**Key Features:**
+- 🔄 **Unified API**: Standard OpenAI-compatible interface
+- 🐳 **Docker Orchestration**: Automatic container management
+- 🎯 **Auto-formatting**: Support for different prompt formats
+- ⚡ **GPU Acceleration**: Automatic NVIDIA GPU usage
+- 🔒 **Privacy**: Data never leaves local machine
+- 💰 **Cost Savings**: No external API costs
 
-**Быстрый старт:**
+**Quick Start:**
 ```bash
 cd local_models
 docker-compose up -d
-curl http://localhost:8000/chat  # Тест Qwen
+curl http://localhost:8000/chat  # Test Qwen
 ```
 
-**Интеграция:**
-Используется в `day_05/` и может быть легко подключен к любым будущим проектам.
+**Integration:**
+Used in `day_05/` and can be easily connected to any future projects.
 
-### Shared SDK - Унифицированный интерфейс для работы с моделями
+### Shared SDK - Unified Model Interaction
 
-🛠️ **Общий модуль** для унифицированной работы с локальными и внешними языковыми моделями. Устраняет дублирование кода между проектами и предоставляет единый API для всех операций с моделями.
+🛠️ **Unified SDK** for working with various language models. Provides a consistent interface regardless of the model provider (Perplexity, ChatGPT, or local models).
 
-**Технологии:**
+**Key Features:**
+- 🔄 **Unified Interface**: Same API for all models
+- 🎯 **Provider Abstraction**: Easy switching between providers
+- 📊 **Usage Statistics**: Token counting and cost tracking
+- 🔧 **Configuration Management**: Centralized settings
+- 🛡️ **Error Handling**: Standardized exception handling
+- 📈 **Performance Monitoring**: Response time tracking
+
+**Supported Providers:**
+- **Perplexity**: High-quality responses
+- **ChatGPT**: OpenAI's flagship model
+- **Local Models**: Qwen, Mistral, TinyLlama
+
+**Usage:**
+```python
+from shared.clients.model_client import ModelClient
+
+client = ModelClient(provider="perplexity")
+response = await client.chat("Hello, world!")
+```
+
+**Integration:**
+Used in `day_05/` and `day_06/` for model interaction.
+
+### Day 01 - Terminal Chat with AI
+
+**Purpose**: Introduction to AI-powered terminal chat
+
+**Features:**
+- Simple terminal interface
+- Real-time chat with AI
+- Basic error handling
+- Clean exit functionality
+
+**Technologies:**
 - Python 3.10+
-- Poetry (управление зависимостями)
-- httpx (HTTP клиент)
-- pytest + pytest-asyncio (тестирование)
-- pytest-cov (покрытие кода)
-- Type hints (типизация)
+- Perplexity API
+- Terminal interface
 
-**Ключевые возможности:**
-- 🔄 **Унифицированный клиент**: Единый интерфейс для всех типов моделей
-- 📊 **Централизованная конфигурация**: Все настройки моделей в одном месте
-- 🛡️ **Стандартизированные исключения**: Консистентная обработка ошибок
-- 🎯 **Type Safety**: Полная типизация для надежности
-- ⚡ **Async Support**: Встроенная поддержка async/await
-- 🔧 **Расширяемость**: Легкое добавление новых моделей и функций
-
-**Архитектура:**
-- `UnifiedModelClient` - основной клиент для работы с моделями
-- `BaseModelClient` - абстрактный базовый класс
-- `ModelResponse` - стандартизированный ответ модели
-- `MODEL_CONFIGS` - централизованная конфигурация моделей
-- Стандартизированные исключения для всех типов ошибок
-
-**Поддерживаемые модели:**
-- **Локальные**: Qwen-4B, Mistral-7B, TinyLlama-1.1B
-- **Внешние**: Perplexity AI, ChadGPT
-
-**Преимущества:**
-- 🚫 **DRY принцип**: Устранение дублирования кода
-- 🔒 **Надежность**: Централизованная обработка ошибок
-- 🎯 **Консистентность**: Единый API для всех проектов
-- 📈 **Масштабируемость**: Легкое добавление новых моделей
-- 🧪 **Тестируемость**: Покрытие тестами 98.59%
-
-**Интеграция:**
-Используется в `day_05/` и `day_06/` для унифицированной работы с моделями. Легко интегрируется в любые новые проекты.
-
-### Day 01 - Терминальный чат с дедушкой AI
-
-Простое терминальное приложение для общения с ехидным AI-персонажем, который отвечает саркастичными комментариями с народной мудростью и матерными пословицами.
-
-**Технологии:**
-- Python 3.10+
-- Poetry (управление зависимостями)
-- Perplexity AI API
-- httpx (HTTP клиент)
-
-**Особенности:**
-- 💻 Терминальный интерфейс
-- 👴 Ехидный AI-персонаж
-- 🎭 Саркастичные ответы с народной мудростью
-- ⚡ Быстрые ответы через API
-
-### Day 02 - Улучшенный чат с JSON-ответами
-
-Расширенная версия терминального чата с поддержкой JSON-ответов, переключения между API (Perplexity/ChadGPT) и детальными пояснениями эмоций персонажа.
-
-**Технологии:**
-- Python 3.10+
-- Poetry (управление зависимостями)
-- Perplexity AI API + ChadGPT API
-- httpx + requests (HTTP клиенты)
-- JSON парсинг и отображение
-
-**Новые возможности:**
-- 📊 JSON-ответы с эмоциями и пояснениями
-- 🔄 Переключение между API в реальном времени
-- 🎭 Детальный анализ эмоций персонажа
-- 💭 Объяснения выбора стиля ответа
-
-### Day 03 - Режим советчика с ограничениями модели
-
-Продвинутая версия чата с инновационным режимом советчика, который демонстрирует работу с ограничениями модели и структурированным диалогом. Дедушка может переключаться в специальный режим консультирования с четкими этапами сбора информации.
-
-**Технологии:**
-- Python 3.14+
-- Poetry (управление зависимостями)
-- Perplexity AI API + ChadGPT API
-- httpx (HTTP клиент)
-- pytest (тестирование)
-- Структурированные промпты с ограничениями
-
-**Ключевые особенности:**
-- 🎯 **Ограничения модели**: Четкие инструкции "ОСТАНОВИСЬ" в промптах
-- 🗣️ **Режим советчика**: Активация фразой "дай совет"
-- 📝 **Структурированный диалог**: До 5 уточняющих вопросов
-- 🧠 **Управление состоянием**: AdviceSession для отслеживания прогресса
-- 🎭 **Сохранение характера**: Ехидный дедушка остается собой
-- ❤️ **Теплота в советах**: Финальный ответ с заботой настоящего дедушки
-- 🧪 **Полное тестирование**: 9 тестов для всех компонентов
-
-**Архитектура:**
-- `AdviceSession` - управление состоянием диалога
-- `AdviceMode` - логика режима советчика
-- Структурированные промпты для каждого этапа
-- Интеграция с существующими API
-
-**Пример работы:**
-1. Пользователь: "дай совет по работе"
-2. Дедушка: "Что именно тебя беспокоит?"
-3. Пользователь: "Не нравится начальник"
-4. Дедушка: "А что конкретно не нравится?"
-5. ... (до 5 вопросов)
-6. Дедушка: "Слушай, внучок, вот что скажу..." (финальный совет)
-
-### Day 04 - Улучшенный режим советчика с температурой
-
-Продвинутая версия чата с улучшенным режимом советчика, включающая эксперименты с температурой и более гибкое управление параметрами генерации.
-
-**Технологии:**
-- Python 3.10+
-- Poetry (управление зависимостями)
-- Perplexity AI API + ChadGPT API
-- httpx (HTTP клиент)
-- pytest (тестирование)
-- Эксперименты с температурой генерации
-
-**Ключевые улучшения:**
-- 🌡️ **Эксперименты с температурой**: Демонстрация влияния температуры на качество ответов
-- 🎯 **Улучшенные промпты**: Более точные инструкции для режима советчика
-- 📊 **Анализ качества**: Сравнение ответов при разных температурах
-- 🔧 **Гибкие настройки**: Возможность настройки параметров генерации
-- 🧪 **Расширенное тестирование**: Тесты для всех новых компонентов
-
-**Новые возможности:**
-- `experiment_temperature.py` - скрипт для экспериментов с температурой
-- Улучшенная обработка ошибок API
-- Более детальная диагностика режима советчика
-- Оптимизированные промпты для лучшего качества ответов
-
-### Day 05 - Локальные модели и история сообщений
-
-Революционная версия чата с поддержкой локальных языковых моделей (Qwen, Mistral, TinyLlama) и продвинутым управлением историей сообщений.
-
-**Технологии:**
-- Python 3.10+
-- httpx (HTTP клиент)
-- FastAPI (локальные модели)
-- pytest (тестирование)
-- Docker Compose (оркестрация локальных моделей)
-- Локальные языковые модели (Qwen-4B, Mistral-7B, TinyLlama)
-
-**Революционные возможности:**
-- 🏠 **Локальные модели**: Полная независимость от внешних API
-- 🔄 **Единообразное API**: Единая команда `api <provider>` для всех моделей
-- 📚 **История сообщений**: Управление контекстом диалога
-- 📊 **Отслеживание токенов**: Детальная статистика использования
-- ⚡ **Без таймаутов**: Неограниченное время генерации для локальных моделей
-- 🎯 **Оптимальные настройки**: Mistral по умолчанию, температура 0.5
-
-**Архитектура локальных моделей:**
-- `LocalModelClient` - клиент для работы с локальными API
-- Интеграция с общим модулем `../local_models/`
-- Поддержка ролей: `system`, `user`, `assistant`
-- Полная совместимость с OpenAI API форматом
-
-**Команды управления:**
-- `api local-mistral` - переключение на локальную модель Mistral
-- `api local-qwen` - переключение на локальную модель Qwen
-- `api local-tinyllama` - переключение на локальную модель TinyLlama
-- `история вкл/выкл` - управление историей сообщений
-- `очисти историю` - очистка истории диалога
-
-**Демонстрационные скрипты:**
-- `demo_tokens.py` - демонстрация отслеживания токенов
-- `demo_api_switching.py` - демонстрация переключения API
-- `demo_history.py` - демонстрация работы с историей
-- `check_models.py` - проверка доступности локальных моделей
-
-**Преимущества локальных моделей:**
-- 🔒 **Приватность**: Данные не покидают локальную машину
-- 💰 **Экономия**: Нет расходов на внешние API
-- 🚀 **Скорость**: Быстрые ответы без сетевых задержек
-- 🎛️ **Контроль**: Полный контроль над параметрами генерации
-- 🔧 **Кастомизация**: Возможность настройки под конкретные задачи
-
-## 🧪 Тестирование
-
-Все проекты включают тесты для проверки функциональности:
-
+**Quick Start:**
 ```bash
-# Тестирование day_03 (режим советчика)
+cd day_01
+make install
+make chat
+```
+
+### Day 02 - Improved Chat with JSON Responses
+
+**Purpose**: Enhanced chat with structured JSON responses
+
+**Features:**
+- JSON-formatted responses
+- Better error handling
+- Improved user experience
+- Response validation
+
+**Technologies:**
+- Python 3.10+
+- Perplexity API
+- JSON processing
+- Pydantic validation
+
+**Quick Start:**
+```bash
+cd day_02
+make install
+make chat
+```
+
+### Day 03 - Advisor Mode with Model Constraints
+
+**Purpose**: Structured dialogue with AI advisor mode
+
+**Features:**
+- Advisor mode with constraints
+- Session state management
+- Context preservation
+- Structured responses
+
+**Technologies:**
+- Python 3.10+
+- Perplexity API
+- State management
+- Context handling
+
+**Quick Start:**
+```bash
 cd day_03
-make test
-# Результат: 9 тестов AdviceSession проходят успешно
+make install
+make run
+```
 
-# Тестирование day_04 (улучшенный режим советчика)
+### Day 04 - Improved Advisor Mode with Temperature
+
+**Purpose**: Enhanced advisor mode with temperature control
+
+**Features:**
+- Temperature-based response variation
+- Advanced advisor mode
+- Experimentation tools
+- Performance metrics
+
+**Technologies:**
+- Python 3.10+
+- Perplexity API
+- Temperature utilities
+- Experimentation framework
+
+**Quick Start:**
+```bash
 cd day_04
-make test
-# Результат: Расширенные тесты для всех компонентов
+make install
+make run
+```
 
-# Тестирование day_05 (локальные модели)
+### Day 05 - Local Models and Message History
+
+**Purpose**: Integration with local models and message history
+
+**Features:**
+- Local model support
+- Message history
+- Unified API
+- SDK integration
+
+**Technologies:**
+- Python 3.10+
+- Shared SDK
+- Local models
+- Docker integration
+
+**Quick Start:**
+```bash
 cd day_05
-make test
-# Результат: 28 тестов для всех компонентов проходят успешно
+make install
+make run
+```
 
-# Тестирование day_06 (тестирование моделей на загадках)
+### Day 06 - Testing Local Models on Logical Puzzles
+
+**Purpose**: Comprehensive testing of local models on logical puzzles
+
+**Features:**
+- Logical puzzle testing
+- Model comparison
+- Report generation
+- Performance analysis
+
+**Technologies:**
+- Python 3.10+
+- Shared SDK
+- Testing framework
+- Report generation
+
+**Quick Start:**
+```bash
 cd day_06
+make install
+make run
+```
+
+### Day 07 - Multi-Agent System for Code Generation and Review
+
+🤖 **Professional system** for automated Python code generation and review using specialized AI agents. Supports multiple language models (StarCoder, Mistral, Qwen, TinyLlama).
+
+#### Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Orchestrator  │    │  Code Generator │    │  Code Reviewer  │
+│                 │    │     Agent       │    │     Agent       │
+│  - Coordinates  │◄──►│  - Generates    │◄──►│  - Reviews      │
+│  - Manages      │    │  - Creates      │    │  - Analyzes     │
+│  - Saves        │    │  - Validates    │    │  - Scores       │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │  Shared SDK     │
+                    │  - StarCoder    │
+                    │  - Mistral      │
+                    │  - Qwen         │
+                    │  - TinyLlama    │
+                    └─────────────────┘
+```
+
+#### Technologies
+- FastAPI (REST API for agents)
+- Docker Compose (service orchestration)
+- Traefik (reverse proxy and load balancer)
+- Poetry (dependency management)
+- Shared SDK (unified model interaction)
+- Pydantic (data validation)
+- pytest (testing)
+
+#### Supported Models
+- **StarCoder-7B** (default) - Specialized for code generation
+- **Mistral-7B** - High quality, general-purpose model
+- **Qwen-4B** - Fast responses, good quality
+- **TinyLlama-1.1B** - Compact and fast
+
+#### Key Components
+
+**1. Code Generator Agent (port 9001)**
+- Generates Python functions from descriptions
+- Creates comprehensive tests
+- Validates generated code
+- Supports code refinement
+- API endpoints: /generate, /refine, /validate
+
+**2. Code Reviewer Agent (port 9002)**
+- Analyzes code quality
+- Checks PEP8 compliance
+- Evaluates test coverage
+- Calculates code complexity
+- API endpoints: /review, /analyze-pep8, /calculate-complexity
+
+**3. Orchestrator**
+- Coordinates workflow between agents
+- Manages task processing
+- Saves results
+- Collects statistics
+- Handles errors with retry logic
+
+**4. Communication Layer**
+- HTTP client with retry logic
+- Exponential backoff for resilience
+- Pydantic models for validation
+- Structured requests/responses
+
+#### Key Features
+
+- ✨ **Multi-Model Support**: Choice of 4 language models
+- 🤖 **Specialized Agents**: Separate agents for generation and review
+- 🔄 **Workflow Orchestration**: Automatic agent coordination
+- 📊 **Quality Metrics**: PEP8, test coverage, complexity
+- 🐳 **Docker Deployment**: Multiple deployment options
+- 🔍 **Health Monitoring**: Endpoints for status checks
+- 📈 **Statistics**: Detailed agent performance metrics
+- 🛡️ **Error Handling**: Retry logic with exponential backoff
+- 📝 **Comprehensive Docs**: 5 documents including architecture and deployment
+- 🔒 **Security**: Multi-stage Docker builds, non-root users
+
+#### Deployment Options
+
+**Bridge Network (simple)**:
+```bash
+make start-bridge
+```
+- Generator: http://localhost:9001
+- Reviewer: http://localhost:9002
+
+**Traefik Reverse Proxy (production)**:
+```bash
+make start-traefik
+```
+- Generator: http://generator.localhost
+- Reviewer: http://reviewer.localhost
+- Traefik Dashboard: http://localhost:8080
+
+#### Usage Examples
+
+**CLI Generation**:
+```bash
+python main.py "Create a function to calculate fibonacci numbers"
+```
+
+**Python API**:
+```python
+from orchestrator import MultiAgentOrchestrator
+from communication.message_schema import OrchestratorRequest
+
+orchestrator = MultiAgentOrchestrator()
+
+# Simple generation
+request = OrchestratorRequest(
+    task_description="Create a REST API endpoint",
+    model_name="starcoder"
+)
+result = await orchestrator.process_task(request)
+
+# Different models for generation and review
+request = OrchestratorRequest(
+    task_description="Create a data processing pipeline",
+    model_name="starcoder",
+    reviewer_model_name="mistral"
+)
+result = await orchestrator.process_task(request)
+```
+
+## Performance Optimization
+
+### StarCoder2 GPTQ Optimization (Recommended for RTX 3070 Ti)
+
+The system uses optimized StarCoder2-7B-GPTQ variant with:
+- 4-bit GPTQ quantization (~6-7GB VRAM)
+- FlashAttention for 2-3x faster inference
+- BFloat16 precision
+- Optimized generation parameters
+
+**Expected Performance**:
+- VRAM usage: 6-7GB (down from 14GB)
+- Inference speed: 2-3x faster
+- Quality: ~95% of full precision model
+
+**Dependencies**:
+- `auto-gptq`: GPTQ model loading
+- `flash-attn`: Optimized attention mechanism
+- `optimum`: Hugging Face optimizations
+
+**Installation Notes**:
+```bash
+# flash-attn requires CUDA toolkit and may take 5-10 minutes to compile
+pip install flash-attn --no-build-isolation
+```
+
+#### Workflow Process
+
+1. **Task Submission**: User submits task description
+2. **Code Generation**: Generator Agent creates code and tests
+3. **Code Review**: Reviewer Agent analyzes quality
+4. **Results Aggregation**: Orchestrator collects results
+5. **Persistence**: Results saved to JSON
+6. **Statistics Update**: Performance metrics updated
+
+#### API Endpoints
+
+**Generator Agent (9001)**:
+- POST /generate - code generation
+- POST /refine - code improvement
+- POST /validate - code validation
+- GET /health - health check
+- GET /stats - performance statistics
+
+**Reviewer Agent (9002)**:
+- POST /review - full code review
+- POST /analyze-pep8 - PEP8 analysis
+- POST /analyze-test-coverage - coverage analysis
+- POST /calculate-complexity - complexity calculation
+- GET /health - health check
+- GET /stats - performance statistics
+
+#### Testing
+
+```bash
+# All tests
 make test
-# Результат: 33 теста для всех компонентов проходят успешно, покрытие 81.66%
+
+# With coverage
+make test-coverage
+
+# Unit tests only
+make test-unit
+
+# Integration tests only
+make test-integration
 ```
 
-## 🎯 Прогресс проекта
+#### Documentation
 
-- ✅ **Local Models**: Базовая инфраструктура локальных языковых моделей
-- ✅ **Day 01**: Базовый терминальный чат
-- ✅ **Day 02**: JSON-ответы и переключение API  
-- ✅ **Day 03**: Режим советчика с ограничениями модели
-- ✅ **Day 04**: Улучшенный режим советчика с температурой
-- ✅ **Day 05**: Локальные модели и история сообщений
-- ✅ **Day 06**: Тестирование локальных моделей на логических загадках
+The project includes a complete documentation set:
 
-## 🚀 Следующие шаги
+- **README.md** - Main documentation and quick start
+- **DEVELOPER_GUIDE.md** - Developer guide
+- **ARCHITECTURE.md** - Detailed system architecture
+- **DEPLOYMENT.md** - Deployment guide
+- **TROUBLESHOOTING.md** - Troubleshooting guide
+- **API.md** - API endpoint documentation
 
-**TBA**
+#### SDK Integration
 
+Uses `shared/` SDK for unified model interaction:
+- Unified interface for all models
+- Automatic configuration
+- Error handling
+- Retry logic
 
-## 🛠️ Технические требования
+#### Performance
 
-### Для Day 05 (Локальные модели)
+**Typical generation time**:
+- StarCoder: 5-10 seconds
+- Mistral: 6-12 seconds
+- Qwen: 3-8 seconds
+- TinyLlama: 2-5 seconds
 
-**Минимальные требования:**
-- Python 3.10+
-- 8GB RAM (рекомендуется 16GB+)
-- 20GB свободного места на диске
-- Docker и Docker Compose
+**Resource requirements**:
+- CPU: 4+ cores (recommended)
+- RAM: 16GB+ (32GB for StarCoder)
+- GPU: NVIDIA with 12GB+ VRAM (for StarCoder)
+- Disk: 20GB+ (for models)
 
-**Локальные модели:**
-- **Qwen-4B**: ~8GB RAM, быстрые ответы
-- **Mistral-7B**: ~14GB RAM, высокое качество
-- **TinyLlama**: ~4GB RAM, компактная модель
+#### Scaling
 
-**Запуск локальных моделей:**
+Supports horizontal scaling:
 ```bash
-cd local_models
-docker-compose up -d  # Запуск всех локальных моделей
-cd ../day_05
-make check            # Проверка доступности моделей
+docker-compose up -d --scale generator-agent=3 --scale reviewer-agent=2
 ```
 
-**Демонстрации:**
-```bash
-make demo-tokens    # Демонстрация отслеживания токенов
-make demo-api       # Демонстрация переключения API
-make demo-history   # Демонстрация работы с историей
-```
+#### Security
 
-### Day 06 - Тестирование локальных моделей на логических загадках
+- Multi-stage Docker builds for minimal size
+- Non-root users in containers
+- Health checks for monitoring
+- Resource limits for all services
+- Traefik for secure routing
 
-Продвинутая система тестирования локальных языковых моделей на логических загадках с детальным анализом качества рассуждений и генерацией отчетов.
+#### Monitoring
 
-**Технологии:**
-- Python 3.10+
-- Poetry (управление зависимостями)
-- httpx (HTTP клиент для локальных моделей)
-- pytest + pytest-asyncio (тестирование)
-- pytest-cov (покрытие кода)
-- Markdown генерация отчетов
-- Docker Compose (локальные модели)
+- Health endpoints for status checks
+- Agent performance statistics
+- All workflow results saved
+- Comprehensive logging
 
-**Ключевые возможности:**
-- 🧠 **Тестирование на загадках**: 5 логических загадок разной сложности
-- 🔄 **Два режима ответов**: Прямые и пошаговые ответы для сравнения
-- 📊 **Детальный анализ**: Подсчет слов, логических ключевых слов, структуры
-- 📈 **Статистика**: Время ответов, разница в длине, качество рассуждений
-- 📄 **Markdown отчеты**: Детальные отчеты с полными ответами моделей
-- 🎯 **Verbose режим**: Полный вывод общения с моделями в консоль
-- ⚡ **Без ограничений**: Неограниченные токены и время генерации
+#### Production Ready
 
-**Архитектура:**
-- `ModelTester` - основной класс для координации тестирования
-- `LocalModelClient` - клиент для работы с локальными моделями
-- `RiddleCollection` - коллекция логических загадок
-- `RiddleAnalyzer` - анализ качества ответов
-- `ReportGenerator` - генерация детальных отчетов
+- ✅ Comprehensive documentation
+- ✅ Unit and integration tests
+- ✅ Error handling with retries
+- ✅ Health monitoring
+- ✅ Docker multi-stage builds
+- ✅ Resource management
+- ✅ Security best practices
+- ✅ Logging and metrics
 
-**Поддерживаемые модели:**
-- **Qwen-4B** (порт 8000) - Быстрые ответы, хорошее качество
-- **Mistral-7B** (порт 8001) - Высокое качество, детальные рассуждения
-- **TinyLlama-1.1B** (порт 8002) - Компактная, быстрая
+#### Next Steps
 
-**Команды:**
-```bash
-make install    # Установка зависимостей
-make test       # Запуск тестов (33 теста, покрытие 81.66%)
-make run        # Полное тестирование с verbose выводом
-make run-quiet  # Тестирование в тихом режиме
-make demo       # Демонстрация системы
-```
+1. Study documentation in `day_07/DEVELOPER_GUIDE.md`
+2. Run demo to understand workflow
+3. Experiment with different models
+4. Integrate into your own projects
+5. Extend functionality with new agents
 
-**Примеры загадок:**
-1. **Простая**: "Ты заходишь в комнату и видишь монету и котёнка..."
-2. **Средняя**: "Поезд выехал из точки А в 9 утра..."
-3. **Сложная**: "Три мудреца видят головы друг друга..."
+## 🛠️ Technologies and Dependencies
 
-**Анализ качества:**
-- Подсчет логических ключевых слов ("поэтому", "следовательно", "значит")
-- Определение пошаговой структуры (нумерация, списки)
-- Сравнение длины прямых и пошаговых ответов
-- Измерение времени генерации
+### Core Technologies
+- **Python 3.10+**: Main programming language
+- **Poetry**: Dependency management
+- **Docker**: Containerization
+- **Docker Compose**: Service orchestration
+- **FastAPI**: Web framework for APIs
+- **Pydantic**: Data validation
+- **pytest**: Testing framework
 
-**Преимущества:**
-- 🔬 **Научный подход**: Систематическое тестирование на логических задачах
-- 📊 **Объективная оценка**: Количественные метрики качества рассуждений
-- 🔍 **Детальный анализ**: Полные ответы моделей в отчетах
-- 🎯 **Сравнение моделей**: Прямое сравнение возможностей разных моделей
-- 📈 **Отслеживание прогресса**: Возможность отслеживать улучшения моделей
+### AI/ML Technologies
+- **HuggingFace Transformers**: Model integration
+- **NVIDIA CUDA**: GPU acceleration
+- **4-bit Quantization**: Memory optimization
+- **Local Models**: Qwen, Mistral, TinyLlama, StarCoder
 
-**Интеграция:**
-Использует общий модуль `../local_models/` для работы с локальными моделями и может быть легко расширен новыми загадками и метриками анализа.
+### Infrastructure Technologies
+- **Traefik**: Reverse proxy and load balancer
+- **NVIDIA Container Toolkit**: GPU support
+- **Multi-stage Docker builds**: Security and optimization
+
+## 🤝 Contributing
+
+We welcome contributions! Please see individual project README files for specific contribution guidelines.
+
+### General Guidelines
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+### Code Standards
+- Follow PEP 8 for Python code
+- Use type hints
+- Write comprehensive tests
+- Document your changes
+- Follow existing patterns
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- HuggingFace for model hosting and transformers library
+- OpenAI for API inspiration
+- The open-source community for tools and libraries
+- Contributors and users of this project
 
 ---
 
-**Приятного изучения AI!** 🤖✨
+**Note**: This is a learning project exploring AI and language models. Use responsibly and in accordance with applicable terms of service.

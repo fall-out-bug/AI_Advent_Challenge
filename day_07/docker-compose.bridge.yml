@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  generator-agent:
+    build:
+      context: ..
+      dockerfile: day_07/Dockerfile
+    ports:
+      - "9001:9001"
+    environment:
+      - MODEL_NAME=${MODEL_NAME:-starcoder}
+      - STARCODER_URL=http://host.docker.internal:8003
+      - MISTRAL_URL=http://host.docker.internal:8001
+      - QWEN_URL=http://host.docker.internal:8000
+      - TINYLLAMA_URL=http://host.docker.internal:8002
+      - AGENT_TYPE=generator
+      - PORT=9001
+      - HF_TOKEN=${HF_TOKEN}
+    command: ["python", "-m", "uvicorn", "agents.api.generator_api:app", "--host", "0.0.0.0", "--port", "9001"]
+    restart: unless-stopped
+    volumes:
+      - ./results:/app/results
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  reviewer-agent:
+    build:
+      context: ..
+      dockerfile: day_07/Dockerfile
+    ports:
+      - "9002:9002"
+    environment:
+      - MODEL_NAME=${REVIEWER_MODEL_NAME:-${MODEL_NAME:-starcoder}}
+      - STARCODER_URL=http://host.docker.internal:8003
+      - MISTRAL_URL=http://host.docker.internal:8001
+      - QWEN_URL=http://host.docker.internal:8000
+      - TINYLLAMA_URL=http://host.docker.internal:8002
+      - AGENT_TYPE=reviewer
+      - PORT=9002
+      - HF_TOKEN=${HF_TOKEN}
+    command: ["python", "-m", "uvicorn", "agents.api.reviewer_api:app", "--host", "0.0.0.0", "--port", "9002"]
+    restart: unless-stopped
+    volumes:
+      - ./results:/app/results
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

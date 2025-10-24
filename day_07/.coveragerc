@@ -1,0 +1,35 @@
+[run]
+source = .
+omit = 
+    tests/*
+    */migrations/*
+    */venv/*
+    */env/*
+    */__pycache__/*
+    */site-packages/*
+    setup.py
+    */conftest.py
+
+[report]
+fail_under = 80
+precision = 2
+show_missing = True
+skip_covered = False
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod
+
+[html]
+directory = htmlcov
+title = StarCoder Multi-Agent System Coverage Report
+
+[xml]
+output = coverage.xml

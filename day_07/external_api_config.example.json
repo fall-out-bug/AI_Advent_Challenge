@@ -1,0 +1,32 @@
+{
+  "providers": {
+    "chadgpt": {
+      "provider_type": "chadgpt",
+      "api_key": "your-chadgpt-api-key-here",
+      "model": "gpt-5-mini",
+      "timeout": 60.0,
+      "enabled": true,
+      "max_tokens": 4000,
+      "temperature": 0.7
+    },
+    "chatgpt": {
+      "provider_type": "chatgpt",
+      "api_key": "your-openai-api-key-here",
+      "model": "gpt-3.5-turbo",
+      "timeout": 60.0,
+      "enabled": true,
+      "max_tokens": 4000,
+      "temperature": 0.7
+    },
+    "claude": {
+      "provider_type": "claude",
+      "api_key": "your-anthropic-api-key-here",
+      "model": "claude-3-sonnet-20240229",
+      "timeout": 60.0,
+      "enabled": true,
+      "max_tokens": 4000,
+      "temperature": 0.7
+    }
+  },
+  "default_provider": "chadgpt"
+}

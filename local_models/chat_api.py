@@ -2,31 +2,97 @@ from fastapi import FastAPI, Request
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 import torch, os
 import re
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 MODEL_NAME = os.environ.get("MODEL_NAME", "TinyLlama/TinyLlama-1.1B-Chat-v1.0")
+HF_TOKEN = os.environ.get("HF_TOKEN")
 
-quant_config = BitsAndBytesConfig(
-    load_in_4bit=True,
-    bnb_4bit_compute_dtype="float16",
-    bnb_4bit_use_double_quant=True,
-    bnb_4bit_quant_type="nf4"
-)
+logger.info(f"Starting model loading for: {MODEL_NAME}")
+logger.info(f"HF_TOKEN available: {'Yes' if HF_TOKEN else 'No'}")
 
-print(f"Loading model: {MODEL_NAME} ...")
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-model = AutoModelForCausalLM.from_pretrained(
-    MODEL_NAME,
-    quantization_config=quant_config,
-    device_map="auto"
-)
-print("Model loaded!")
+# Check if this is StarCoder2 to use GPTQ optimization
+is_starcoder2 = "starcoder2" in MODEL_NAME.lower() and "instruct" in MODEL_NAME.lower()
+
+if is_starcoder2:
+    # Use GPTQ variant for StarCoder2
+    gptq_model_name = "TechxGenus/starcoder2-7b-instruct-GPTQ"
+    logger.info(f"Using GPTQ optimized model: {gptq_model_name}")
+    
+    try:
+        logger.info(f"Loading tokenizer for GPTQ model: {gptq_model_name}")
+        tokenizer = AutoTokenizer.from_pretrained(gptq_model_name, token=HF_TOKEN)
+        logger.info("Tokenizer loaded successfully")
+        
+        logger.info(f"Loading GPTQ model: {gptq_model_name}...")
+        model = AutoModelForCausalLM.from_pretrained(
+            gptq_model_name,
+            device_map="auto",
+            torch_dtype=torch.bfloat16,
+            token=HF_TOKEN,
+            trust_remote_code=True
+        )
+        logger.info("GPTQ model loaded successfully!")
+        
+    except Exception as e:
+        logger.error(f"Failed to load GPTQ model {gptq_model_name}: {str(e)}")
+        logger.info("Falling back to regular model with 4-bit quantization...")
+        # Fallback to regular model with quantization
+        MODEL_NAME = "TechxGenus/starcoder2-7b-instruct"
+        is_starcoder2 = False
+
+if not is_starcoder2:
+    # Use 4-bit quantization for other models
+    quant_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_compute_dtype="float16",
+        bnb_4bit_use_double_quant=True,
+        bnb_4bit_quant_type="nf4"
+    )
+    
+    try:
+        logger.info(f"Loading tokenizer for model: {MODEL_NAME}")
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, token=HF_TOKEN)
+        logger.info("Tokenizer loaded successfully")
+        
+        logger.info(f"Loading model: {MODEL_NAME} with quantization...")
+        model = AutoModelForCausalLM.from_pretrained(
+            MODEL_NAME,
+            quantization_config=quant_config,
+            device_map="auto",
+            token=HF_TOKEN
+        )
+        logger.info("Model loaded successfully!")
+        
+    except Exception as e:
+        logger.error(f"Failed to load model {MODEL_NAME}: {str(e)}")
+        raise
 
 
 def build_prompt(messages, model_name):
     model_lower = model_name.lower()
+    # ======= TechxGenus/starcoder2-7b-instruct format =======
+    if "techxgenus" in model_lower or "starcoder2-7b-instruct" in model_lower:
+        system_msg = ""
+        user_msg = ""
+        for msg in messages:
+            if msg["role"] == "system":
+                system_msg = msg["content"]
+            elif msg["role"] == "user":
+                user_msg = msg["content"]
+        
+        if system_msg and user_msg:
+            return f"### Instruction\n{system_msg}\n\n{user_msg}\n### Response\n"
+        elif user_msg:
+            return f"### Instruction\n{user_msg}\n### Response\n"
+        else:
+            return f"### Instruction\n{messages[-1]['content'] if messages else ''}\n### Response\n"
     # ======= Mistral-format (INSTRUCT) =======
-    if "mistral" in model_lower or "openhermes" in model_lower or "mixtral" in model_lower:
+    elif "mistral" in model_lower or "openhermes" in model_lower or "mixtral" in model_lower:
         system_msg = ""
         user_msgs = []
         for msg in messages:
@@ -75,8 +141,14 @@ def build_prompt(messages, model_name):
 
 def clean_response(response, model_name):
     model_lower = model_name.lower()
+    # Для TechxGenus/starcoder2-7b-instruct — ищем ### Response
+    if "techxgenus" in model_lower or "starcoder2-7b-instruct" in model_lower:
+        match = re.search(r"### Response\s*\n(.*)", response, re.DOTALL)
+        if match:
+            return match.group(1).strip()
+        return response.strip()
     # Для Qwen и ChatML — ищем <|im_start|>assistant\n или "assistant "
-    if "qwen" in model_lower:
+    elif "qwen" in model_lower:
         # Ищем строго блок от <|im_start|>assistant
         match = re.search(r"<\|im_start\|>assistant\n(.*?)(?:<\|im_end\|>|\Z)", response, re.DOTALL)
         if match:
@@ -106,12 +178,19 @@ def clean_response(response, model_name):
             return match.group(1).strip()
         return response.strip()
 
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "model": MODEL_NAME}
+
 @app.post("/chat")
 async def chat(req: Request):
     body = await req.json()
     messages = body.get("messages", [])
-    max_tokens = body.get("max_tokens", 800)
-    temperature = body.get("temperature", 0.7)
+    # Optimized defaults for better performance
+    max_tokens = body.get("max_tokens", 512)
+    temperature = body.get("temperature", 0.2)
+    top_k = body.get("top_k", 40)
+    top_p = body.get("top_p", 0.9)
 
     prompt = build_prompt(messages, MODEL_NAME)
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
@@ -120,9 +199,14 @@ async def chat(req: Request):
         max_new_tokens=max_tokens,
         do_sample=True,
         temperature=temperature,
+        top_k=top_k,
+        top_p=top_p,
         pad_token_id=tokenizer.eos_token_id,
         return_dict_in_generate=True,
-        output_scores=True
+        output_scores=True,
+        use_cache=True,
+        num_beams=1,
+        early_stopping=True
     )
     raw_response = tokenizer.decode(outputs.sequences[0], skip_special_tokens=True)
     answer = clean_response(raw_response, MODEL_NAME)

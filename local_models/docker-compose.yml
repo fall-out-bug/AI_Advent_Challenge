@@ -11,7 +11,7 @@ services:
       - HF_TOKEN=${HF_TOKEN}
     runtime: nvidia
     volumes:
-      - hf-model-cache:/root/.cache/huggingface/hub
+      - hf-model-cache:/home/appuser/.cache/huggingface/hub
 
   mistral-chat:
     build: .
@@ -22,7 +22,7 @@ services:
       - HF_TOKEN=${HF_TOKEN}
     runtime: nvidia
     volumes:
-      - hf-model-cache:/root/.cache/huggingface/hub
+      - hf-model-cache:/home/appuser/.cache/huggingface/hub
 
   tinyllama-chat:
     build: .
@@ -33,4 +33,15 @@ services:
       - HF_TOKEN=${HF_TOKEN}
     runtime: nvidia
     volumes:
-      - hf-model-cache:/root/.cache/huggingface/hub
+      - hf-model-cache:/home/appuser/.cache/huggingface/hub
+
+  starcoder-chat:
+    build: .
+    ports:
+      - "8003:8000"
+    environment:
+      - MODEL_NAME=TechxGenus/starcoder2-7b-instruct-GPTQ
+      - HF_TOKEN=${HF_TOKEN}
+    runtime: nvidia
+    volumes:
+      - hf-model-cache:/home/appuser/.cache/huggingface/hub

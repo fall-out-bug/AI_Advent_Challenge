@@ -1,0 +1,96 @@
+[tool.poetry]
+name = "starcoder-multi-agent-system"
+version = "0.1.0"
+description = "A sophisticated multi-agent system built on StarCoder-7B for automated Python code generation and review"
+authors = ["AI Challenge Team <ai-challenge@example.com>"]
+readme = "README.md"
+packages = [{include = "agents"}, {include = "communication"}, {include = "prompts"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+shared-sdk = {path = "/shared", develop = true}
+fastapi = "^0.104.0"
+uvicorn = {extras = ["standard"], version = "^0.24.0"}
+httpx = "^0.25.0"
+pydantic = "^2.5.0"
+python-dotenv = "^1.0.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.11.0"
+flake8 = "^6.1.0"
+isort = "^5.12.0"
+mypy = "^1.7.0"
+pytest = "^7.4.0"
+pytest-asyncio = "^0.21.0"
+pytest-cov = "^4.1.0"
+pytest-mock = "^3.12.0"
+httpx = "^0.25.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=agents",
+    "--cov=communication",
+    "--cov=orchestrator",
+    "--cov-report=term-missing",
+    "--cov-report=html:reports/coverage_html",
+    "--cov-report=xml:reports/coverage.xml",
+    "--cov-fail-under=80"
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests"
+]
+asyncio_mode = "auto"

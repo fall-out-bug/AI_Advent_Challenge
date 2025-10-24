@@ -1,0 +1,42 @@
+{
+  "timestamp": "20251024_034035",
+  "task_description": "Create a fibonacci function",
+  "workflow_time": 0.007062,
+  "success": true,
+  "error_message": null,
+  "generation_result": {
+    "task_description": "Create a function to calculate fibonacci",
+    "generated_code": "\ndef fibonacci(n: int) -> int:\n    \"\"\"Calculate fibonacci number.\n    \n    Args:\n        n: Position in fibonacci sequence\n        \n    Returns:\n        Fibonacci number at position n\n    \"\"\"\n    if n <= 1:\n        return n\n    return fibonacci(n - 1) + fibonacci(n - 2)\n",
+    "tests": "\nimport pytest\n\ndef test_fibonacci():\n    \"\"\"Test fibonacci function.\"\"\"\n    assert fibonacci(0) == 0\n    assert fibonacci(1) == 1\n    assert fibonacci(5) == 5\n    assert fibonacci(10) == 55\n",
+    "metadata": {
+      "complexity": "medium",
+      "lines_of_code": 15,
+      "estimated_time": null,
+      "dependencies": [
+        "typing"
+      ]
+    },
+    "generation_time": "2025-10-24 03:40:35.582754",
+    "tokens_used": 300
+  },
+  "review_result": {
+    "code_quality_score": 8.5,
+    "metrics": {
+      "pep8_compliance": true,
+      "pep8_score": 9.0,
+      "has_docstrings": true,
+      "has_type_hints": true,
+      "test_coverage": "good",
+      "complexity_score": 7.0
+    },
+    "issues": [
+      "Consider memoization for better performance"
+    ],
+    "recommendations": [
+      "Add memoization",
+      "Consider iterative approach"
+    ],
+    "review_time": "2025-10-24 03:40:35.582968",
+    "tokens_used": 200
+  }
+}

@@ -5,6 +5,7 @@ Following Python Zen: "Explicit is better than implicit"
 and "Simple is better than complex".
 """
 
+import os
 from enum import Enum
 from typing import Dict, Any
 
@@ -20,6 +21,7 @@ class ModelName(Enum):
     QWEN = "qwen"
     MISTRAL = "mistral"
     TINYLLAMA = "tinyllama"
+    STARCODER = "starcoder"
     PERPLEXITY = "perplexity"
     CHADGPT = "chadgpt"
 
@@ -29,6 +31,7 @@ class ModelPort(Enum):
     QWEN = 8000
     MISTRAL = 8001
     TINYLLAMA = 8002
+    STARCODER = 8003
 
 
 # Unified model configuration
@@ -54,6 +57,13 @@ MODEL_CONFIGS: Dict[str, Dict[str, Any]] = {
         "display_name": "TinyLlama-1.1B",
         "description": "Компактная, быстрая"
     },
+    ModelName.STARCODER.value: {
+        "type": ModelType.LOCAL.value,
+        "port": ModelPort.STARCODER.value,
+        "url": f"http://localhost:{ModelPort.STARCODER.value}",
+        "display_name": "TechxGenus/StarCoder2-7B-Instruct",
+        "description": "Code generation specialist with instruction tuning"
+    },
     ModelName.PERPLEXITY.value: {
         "type": ModelType.EXTERNAL.value,
         "url": "https://api.perplexity.ai/chat/completions",
@@ -72,13 +82,15 @@ MODEL_CONFIGS: Dict[str, Dict[str, Any]] = {
 MODEL_PORTS = {
     ModelName.QWEN.value: ModelPort.QWEN.value,
     ModelName.MISTRAL.value: ModelPort.MISTRAL.value,
-    ModelName.TINYLLAMA.value: ModelPort.TINYLLAMA.value
+    ModelName.TINYLLAMA.value: ModelPort.TINYLLAMA.value,
+    ModelName.STARCODER.value: ModelPort.STARCODER.value
 }
 
 LOCAL_MODELS = {
     ModelName.QWEN.value: MODEL_CONFIGS[ModelName.QWEN.value]["url"],
     ModelName.MISTRAL.value: MODEL_CONFIGS[ModelName.MISTRAL.value]["url"],
-    ModelName.TINYLLAMA.value: MODEL_CONFIGS[ModelName.TINYLLAMA.value]["url"]
+    ModelName.TINYLLAMA.value: MODEL_CONFIGS[ModelName.TINYLLAMA.value]["url"],
+    ModelName.STARCODER.value: MODEL_CONFIGS[ModelName.STARCODER.value]["url"]
 }
 
 
@@ -97,7 +109,16 @@ def get_model_config(model_name: str) -> Dict[str, Any]:
     """
     if model_name not in MODEL_CONFIGS:
         raise KeyError(f"Unknown model: {model_name}")
-    return MODEL_CONFIGS[model_name]
+    
+    config = MODEL_CONFIGS[model_name].copy()
+    
+    # Override URL if environment variable is set (for Docker containers)
+    env_var_name = f"{model_name.upper()}_URL"
+    env_url = os.getenv(env_var_name)
+    if env_url:
+        config["url"] = env_url
+    
+    return config
 
 
 def get_local_models() -> Dict[str, str]:

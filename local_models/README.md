@@ -1,24 +1,75 @@
-# 🏠 Local Models - Базовая инфраструктура локальных языковых моделей
+# 🏠 Local Models - TechxGenus/StarCoder2-7B-Instruct Service Infrastructure
 
-Этот модуль содержит базовую инфраструктуру для работы с локальными языковыми моделями. Он предоставляет единообразный API для различных моделей и может использоваться любыми проектами в репозитории.
+This module provides the infrastructure for running TechxGenus/StarCoder2-7B-Instruct model locally with Docker. It's designed to serve as the backend for the multi-agent system in day_07.
 
-## 🎯 Назначение
+## 🎯 Purpose
 
-- **Единообразный API**: Стандартизированный интерфейс для всех локальных моделей
-- **Docker-оркестрация**: Автоматическое управление контейнерами с моделями
-- **Масштабируемость**: Легкое добавление новых моделей
-- **Изоляция**: Независимость от внешних API и интернета
+- **TechxGenus/StarCoder2-7B-Instruct Service**: Local hosting of instruction-tuned StarCoder model for code generation
+- **Docker Orchestration**: Automated container management with security best practices
+- **API Compatibility**: OpenAI-compatible chat API interface
+- **Security**: Non-root user, optimized layers, health checks
 
-## 📁 Структура
+## 📁 Structure
 
 ```
 local_models/
-├── chat_api.py          # FastAPI сервер для локальных моделей
-├── docker-compose.yml   # Конфигурация Docker Compose
-├── Dockerfile          # Образ для запуска моделей
-├── download_model.py   # Скрипт для предварительной загрузки моделей
-└── README.md           # Этот файл
+├── chat_api.py          # FastAPI server for StarCoder model
+├── docker-compose.yml   # Docker Compose configuration
+├── Dockerfile          # Optimized Docker image with security
+├── download_model.py   # Script for model pre-downloading
+├── .env.example        # Environment variables template
+├── .env               # Environment variables (create from example)
+└── README.md          # This file
 ```
+
+## 🚀 Quick Start
+
+### 1. Environment Setup
+
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit .env file with your Hugging Face token
+HF_TOKEN=your_huggingface_token_here
+```
+
+### 2. Start StarCoder Service
+
+```bash
+# Build and start StarCoder
+docker-compose build starcoder-chat
+docker-compose up -d starcoder-chat
+```
+
+### 3. Verify Service
+
+```bash
+# Check health endpoint
+curl http://localhost:8003/health
+
+# Test chat endpoint
+curl -X POST http://localhost:8003/chat \
+  -H "Content-Type: application/json" \
+  -d '{"messages":[{"role":"user","content":"Hello"}],"max_tokens":50}'
+```
+
+## 🔒 Docker Security Features
+
+The Dockerfile implements security best practices:
+
+- **Non-root user**: Runs as `appuser` instead of root
+- **Optimized layers**: Combined RUN commands to reduce image size
+- **Health checks**: Built-in health monitoring
+- **Minimal base**: Uses NVIDIA CUDA runtime with minimal dependencies
+- **Proper ownership**: Files and directories have correct permissions
+
+## 📊 Resource Requirements
+
+- **GPU**: NVIDIA GPU with CUDA support
+- **RAM**: 8-16GB recommended for StarCoder-7B
+- **Storage**: ~15GB for model cache
+- **Port**: 8003 (configurable in docker-compose.yml)
 
 ## 🚀 Быстрый старт
 

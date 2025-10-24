@@ -55,7 +55,7 @@ def get_api_key(api_type: str = "perplexity") -> Optional[str]:
     # Fallback to environment variables
     env_var_map = {
         "perplexity": "PERPLEXITY_API_KEY",
-        "chadgpt": "CHAD_API_KEY"
+        "chadgpt": "CHADGPT_API_KEY"
     }
     
     env_var = env_var_map.get(api_type)

@@ -1,0 +1,153 @@
+networks:
+  ai-challenge:
+    driver: bridge
+
+volumes:
+  hf-model-cache:
+    external: true
+    name: local_models_hf-model-cache
+
+services:
+  # Traefik reverse proxy
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=ai-challenge"
+      - "--entrypoints.web.address=:80"
+      - "--log.level=INFO"
+    ports:
+      - "80:80"      # HTTP entrypoint
+      - "8080:8080"  # Traefik Dashboard (fixed from 8082)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - ai-challenge
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    labels:
+      - "traefik.enable=false"
+
+  # Local models - only StarCoder for day_07 project
+  starcoder:
+    build:
+      context: ../local_models
+      dockerfile: Dockerfile
+    container_name: starcoder
+    environment:
+      - MODEL_NAME=TechxGenus/starcoder2-7b-instruct-GPTQ
+      - HF_TOKEN=${HF_TOKEN}
+    runtime: nvidia
+    volumes:
+      - hf-model-cache:/home/appuser/.cache/huggingface/hub
+    networks:
+      - ai-challenge
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 12G
+        reservations:
+          cpus: '2'
+          memory: 6G
+    labels:
+      - "traefik.enable=false"
+
+  # Generator Agent
+  generator-agent:
+    build:
+      context: ..
+      dockerfile: day_07/Dockerfile
+    container_name: generator-agent
+    environment:
+      - MODEL_NAME=${MODEL_NAME:-starcoder}
+      - STARCODER_URL=http://starcoder:8000
+      - MISTRAL_URL=http://mistral:8000
+      - QWEN_URL=http://qwen:8000
+      - TINYLLAMA_URL=http://tinyllama:8000
+      - AGENT_TYPE=generator
+      - PORT=9001
+      - HF_TOKEN=${HF_TOKEN}
+    command: ["python", "-m", "uvicorn", "agents.api.generator_api:app", "--host", "0.0.0.0", "--port", "9001"]
+    volumes:
+      - ./results:/app/results
+    networks:
+      - ai-challenge
+    restart: unless-stopped
+    depends_on:
+      - traefik
+      - starcoder
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.generator.rule=Host(`generator.localhost`)"
+      - "traefik.http.routers.generator.entrypoints=web"
+      - "traefik.http.services.generator.loadbalancer.server.port=9001"
+
+  # Reviewer Agent
+  reviewer-agent:
+    build:
+      context: ..
+      dockerfile: day_07/Dockerfile
+    container_name: reviewer-agent
+    environment:
+      - MODEL_NAME=${REVIEWER_MODEL_NAME:-${MODEL_NAME:-starcoder}}
+      - STARCODER_URL=http://starcoder:8000
+      - MISTRAL_URL=http://mistral:8000
+      - QWEN_URL=http://qwen:8000
+      - TINYLLAMA_URL=http://tinyllama:8000
+      - AGENT_TYPE=reviewer
+      - PORT=9002
+      - HF_TOKEN=${HF_TOKEN}
+    command: ["python", "-m", "uvicorn", "agents.api.reviewer_api:app", "--host", "0.0.0.0", "--port", "9002"]
+    volumes:
+      - ./results:/app/results
+    networks:
+      - ai-challenge
+    restart: unless-stopped
+    depends_on:
+      - traefik
+      - starcoder
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.reviewer.rule=Host(`reviewer.localhost`)"
+      - "traefik.http.routers.reviewer.entrypoints=web"
+      - "traefik.http.services.reviewer.loadbalancer.server.port=9002"
