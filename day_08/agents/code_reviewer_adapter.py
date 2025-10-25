@@ -24,9 +24,8 @@ try:
         CodeReviewResponse,
         TaskMetadata
     )
-except ImportError as e:
+except ImportError:
     # Fallback for when day_07 agents are not available
-    print(f"Warning: Could not import day_07 CodeReviewerAgent: {e}")
     CodeReviewerAgent = None
     CodeReviewRequest = None
     CodeReviewResponse = None

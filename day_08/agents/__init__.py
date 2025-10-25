@@ -16,6 +16,16 @@ from typing import Any, Dict, List, Optional
 day_07_path = Path(__file__).parent.parent.parent / "day_07"
 sys.path.insert(0, str(day_07_path))
 
+# Try to import day_07 agents with silent fallback
+_DAY_07_AVAILABLE = False
+CodeGeneratorAgent = None
+CodeReviewerAgent = None
+CodeGenerationRequest = None
+CodeGenerationResponse = None
+CodeReviewRequest = None
+CodeReviewResponse = None
+TaskMetadata = None
+
 try:
     from agents.core.code_generator import CodeGeneratorAgent
     from agents.core.code_reviewer import CodeReviewerAgent
@@ -26,16 +36,11 @@ try:
         CodeReviewResponse,
         TaskMetadata
     )
-except ImportError as e:
-    # Fallback for when day_07 agents are not available
-    print(f"Warning: Could not import day_07 agents: {e}")
-    CodeGeneratorAgent = None
-    CodeReviewerAgent = None
-    CodeGenerationRequest = None
-    CodeGenerationResponse = None
-    CodeReviewRequest = None
-    CodeReviewResponse = None
-    TaskMetadata = None
+    _DAY_07_AVAILABLE = True
+except ImportError:
+    # Day_07 agents not available - this is expected in some environments
+    # The adapters will use fallback methods instead
+    pass
 
 from core.ml_client import TokenAnalysisClient
 from core.token_analyzer import SimpleTokenCounter
