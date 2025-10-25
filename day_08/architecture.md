@@ -22,38 +22,76 @@ The Enhanced Token Analysis System is a modular, extensible platform for token c
 - **Template Method**: Common algorithm structure
 - **Circuit Breaker**: Fault tolerance
 - **Facade Pattern**: Simplified interfaces
+- **Repository Pattern**: Data access abstraction
+- **Domain Services**: Complex business logic encapsulation
 
-### 3. Quality Attributes
+### 3. Clean Architecture Principles
 
-- **Maintainability**: Clean code, comprehensive tests
-- **Extensibility**: Plugin architecture, strategy pattern
-- **Reliability**: Error handling, circuit breaker
-- **Performance**: Efficient algorithms, caching
-- **Testability**: Dependency injection, mocking
+- **Dependency Rule**: Dependencies point inward toward the domain
+- **Layer Separation**: Clear boundaries between layers
+- **Independence**: Business logic independent of frameworks and databases
+- **Testability**: Easy to test business logic in isolation
+- **Flexibility**: Easy to change external concerns without affecting core logic
+
+### 4. Domain-Driven Design (DDD)
+
+- **Entities**: Objects with identity and lifecycle
+- **Value Objects**: Immutable objects without identity
+- **Aggregates**: Consistency boundaries for entities
+- **Repositories**: Data access abstraction
+- **Domain Services**: Complex business logic
+- **Ubiquitous Language**: Common vocabulary between developers and domain experts
 
 ## System Architecture
 
-### High-Level Architecture
+### Clean Architecture Layers
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
+│                        Presentation Layer                       │
+├─────────────────────────────────────────────────────────────────┤
+│  CLI Interface  │  API Endpoints  │  Web Interface  │  Reports  │
+├─────────────────────────────────────────────────────────────────┤
 │                        Application Layer                        │
 ├─────────────────────────────────────────────────────────────────┤
-│  Experiments  │  Console Reporter  │  Model Comparison  │ Demo │
+│  Use Cases  │  Application Services  │  DTOs  │  Interfaces     │
 ├─────────────────────────────────────────────────────────────────┤
-│                           Core Layer                            │
+│                          Domain Layer                           │
 ├─────────────────────────────────────────────────────────────────┤
-│ Token Analyzer │ Text Compressor │ ML Client │ Validators │ ... │
+│ Entities │ Value Objects │ Repositories │ Domain Services │ Rules │
 ├─────────────────────────────────────────────────────────────────┤
-│                        Infrastructure Layer                     │
+│                      Infrastructure Layer                       │
 ├─────────────────────────────────────────────────────────────────┤
-│   Config      │   Logging    │   Retry     │   Statistics   │   │
-├─────────────────────────────────────────────────────────────────┤
-│                        Data Layer                               │
-├─────────────────────────────────────────────────────────────────┤
-│  Data Models  │  Protocols   │  Interfaces │  Enums        │   │
+│  Database  │  External APIs  │  File System  │  Configuration  │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+### Layer Responsibilities
+
+#### Domain Layer (Innermost)
+- **Entities**: Core business objects with identity (`TokenAnalysisDomain`, `CompressionJob`)
+- **Value Objects**: Immutable domain concepts (`TokenCount`, `CompressionRatio`)
+- **Repositories**: Abstract data access interfaces
+- **Domain Services**: Complex business logic that doesn't belong to entities
+- **Business Rules**: Domain invariants and validation rules
+
+#### Application Layer
+- **Use Cases**: Application-specific business rules
+- **Application Services**: Orchestrate domain objects and external services
+- **DTOs**: Data transfer objects for layer communication
+- **Interfaces**: Contracts for external dependencies
+
+#### Infrastructure Layer
+- **Repository Implementations**: Concrete data access
+- **External Service Clients**: ML services, databases, file systems
+- **Configuration**: Environment-specific settings
+- **Frameworks**: Third-party library integrations
+
+#### Presentation Layer (Outermost)
+- **CLI Interface**: Command-line user interface
+- **API Endpoints**: REST/GraphQL interfaces
+- **Web Interface**: Browser-based user interface
+- **Reports**: Output formatting and presentation
 
 ### Component Dependencies
 
@@ -74,6 +112,140 @@ The Enhanced Token Analysis System is a modular, extensible platform for token c
         ┌───────▼───┐   ┌───▼───┐
         │   Config  │   │ Utils │
         └───────────┘   └───────┘
+```
+
+## SOLID Compliance
+
+### Single Responsibility Principle (SRP)
+
+Each class has a single, well-defined responsibility:
+
+- **`TokenCalculator`**: Only calculates token counts
+- **`LimitChecker`**: Only checks model limits
+- **`ModelConfigProvider`**: Only provides model configuration
+- **`MetricsCollector`**: Only collects performance metrics
+- **`DriftDetector`**: Only detects performance drift
+
+### Open/Closed Principle (OCP)
+
+Classes are open for extension but closed for modification:
+
+- **Compression Strategies**: New strategies can be added without modifying existing code
+- **Token Counters**: New counting methods can be added via inheritance
+- **ML Components**: New evaluation metrics can be added without changing core logic
+
+### Liskov Substitution Principle (LSP)
+
+Derived classes are substitutable for their base classes:
+
+- **`TokenCounterProtocol`**: All implementations are interchangeable
+- **`CompressorProtocol`**: All compression strategies can be used uniformly
+- **`Repository`**: Different implementations can be swapped without affecting clients
+
+### Interface Segregation Principle (ISP)
+
+Clients depend only on interfaces they use:
+
+- **`TokenCounterProtocol`**: Focused interface for token counting
+- **`CompressorProtocol`**: Focused interface for compression
+- **`ConfigurationProtocol`**: Focused interface for configuration
+
+### Dependency Inversion Principle (DIP)
+
+High-level modules don't depend on low-level modules:
+
+- **Domain Layer**: Depends on abstractions, not concrete implementations
+- **Application Services**: Use repository interfaces, not concrete repositories
+- **Components**: Depend on configuration protocols, not concrete configurations
+
+## ML Engineering Architecture
+
+### Model Evaluation Framework
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   ModelEvaluator│    │  Ground Truth   │    │   Metrics       │
+│                 │    │   Data Loader   │    │   Calculator    │
+│ • Accuracy      │    │                 │    │                 │
+│ • Performance   │    │ • Test Data     │    │ • MAE           │
+│ • Quality       │    │ • Validation    │    │ • RMSE          │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │ EvaluationResult│
+                    │                 │
+                    │ • Metrics       │
+                    │ • Quality Score │
+                    │ • Timestamp     │
+                    └─────────────────┘
+```
+
+### Performance Monitoring System
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ MetricsCollector│    │  DriftDetector  │    │  AlertManager   │
+│                 │    │                 │    │                 │
+│ • Predictions   │    │ • Statistical   │    │ • Thresholds    │
+│ • Latency       │    │   Analysis      │    │ • Notifications │
+│ • Throughput    │    │ • Trend         │    │ • Escalation    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │ PerformanceReport│
+                    │                 │
+                    │ • Metrics       │
+                    │ • Drift Status  │
+                    │ • Alerts        │
+                    └─────────────────┘
+```
+
+### Experiment Tracking System
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ExperimentTracker│    │  Hyperparameters│    │   Artifacts     │
+│                 │    │   Manager       │    │   Manager       │
+│ • Lifecycle     │    │                 │    │                 │
+│ • Comparison    │    │ • Parameters    │    │ • Models        │
+│ • Best Run      │    │ • Configs       │    │ • Data          │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │ ExperimentRun   │
+                    │                 │
+                    │ • ID            │
+                    │ • Metrics       │
+                    │ • Status        │
+                    └─────────────────┘
+```
+
+### Model Registry Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ ModelRegistry   │    │  VersionManager │    │  LifecycleMgr   │
+│                 │    │                 │    │                 │
+│ • Registration  │    │ • Versioning    │    │ • Promotion     │
+│ • Discovery     │    │ • Metadata      │    │ • Rollback      │
+│ • Validation    │    │ • Dependencies  │    │ • Deprecation   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │   ModelVersion  │
+                    │                 │
+                    │ • Version       │
+                    │ • Metadata      │
+                    │ • Status        │
+                    └─────────────────┘
 ```
 
 ## Core Components

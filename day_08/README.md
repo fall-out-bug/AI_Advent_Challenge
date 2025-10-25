@@ -4,18 +4,37 @@ A comprehensive token analysis and compression system for AI models, featuring a
 
 ## 🚀 Features
 
+### Core Functionality
 - **Accurate Token Counting**: Multiple strategies (simple estimation, ML-based, hybrid)
 - **Advanced Compression**: Strategy pattern with truncation, keywords, extractive, semantic, and summarization
 - **Robust ML Integration**: Retry logic, circuit breaker, and request validation
 - **Comprehensive Experiments**: Builder pattern for experiment results with structured logging
-- **Modern Architecture**: SOLID principles, design patterns, dependency injection
+- **Model Switching Demo**: Complete workflow for testing multiple models with compression and quality evaluation
+
+### Architecture & Design
+- **Clean Architecture**: Domain, Application, Infrastructure, and Presentation layers
+- **Domain-Driven Design**: Entities, value objects, repositories, and domain services
+- **SOLID Principles**: Single responsibility, dependency injection, interface segregation
+- **Design Patterns**: Strategy, Factory, Builder, Template Method, Circuit Breaker, Facade
+
+### ML Engineering Framework
+- **Model Evaluation**: Comprehensive evaluation with MAE, RMSE, compression quality metrics
+- **Performance Monitoring**: Drift detection, alerting, and performance analytics
+- **Experiment Tracking**: Hyperparameters, metrics, artifacts, and metadata tracking
+- **Model Registry**: Versioning, production promotion, and lifecycle management
+
+### Quality & Reliability
 - **High Test Coverage**: 74% coverage with 282 passing tests
+- **Type Safety**: 100% type hints coverage in core modules
+- **Error Handling**: Comprehensive exception hierarchy and structured error management
 - **Quality Assurance**: Strict linting, pre-commit hooks, security scanning
 
 ## 📋 Table of Contents
 
 - [Quick Start](#quick-start)
 - [Architecture](#architecture)
+- [Domain Layer](#domain-layer)
+- [ML Engineering](#ml-engineering)
 - [API Reference](#api-reference)
 - [Configuration](#configuration)
 - [Examples](#examples)
@@ -70,6 +89,78 @@ compression_result = text_compressor.compress_text(
 print(f"Compression ratio: {compression_result.compression_ratio}")
 ```
 
+### Model Switching Demo
+
+The Model Switching Demo provides a comprehensive workflow for testing multiple AI models with different token limits, compression strategies, and quality evaluation.
+
+```python
+from demo_model_switching import ModelSwitchingDemo
+
+# Initialize and run complete demo
+demo = ModelSwitchingDemo()
+results = await demo.run_complete_demo()
+
+# Generate comprehensive report
+report_path = await demo.generate_report(results)
+print(f"Report saved to: {report_path}")
+```
+
+**Demo Features:**
+- **Three-Stage Testing**: Short/medium/long queries adapted to model capabilities
+- **Compression Evaluation**: Tests all 5 compression algorithms on heavy queries
+- **Quality Assessment**: Comprehensive quality metrics using day_07 agent patterns
+- **Model Comparison**: Side-by-side comparison of StarCoder vs Mistral
+- **Automated Reporting**: Detailed markdown reports with recommendations
+
+**Expected Output:**
+```
+🚀 Starting Model Switching Demo
+==================================================
+
+🔍 Checking model availability...
+✅ starcoder is available
+✅ mistral is available
+📊 Will test 2 models: ['starcoder', 'mistral']
+
+============================================================
+🧪 Testing starcoder
+============================================================
+✅ Switched to starcoder
+
+📊 Running three-stage token limit tests...
+✅ Three-stage test completed
+   Short query: 85 tokens
+   Medium query: 450 tokens
+   Long query: 1200 tokens
+   Queries exceeding limit: 0
+
+============================================================
+🧪 Testing mistral
+============================================================
+✅ Switched to mistral
+
+📊 Running three-stage token limit tests...
+✅ Three-stage test completed
+   Short query: 75 tokens
+   Medium query: 380 tokens
+   Long query: 1100 tokens
+   Queries exceeding limit: 0
+
+============================================================
+📊 DEMO SUMMARY
+============================================================
+Models tested: 2
+Total experiments: 6
+Successful experiments: 6
+Success rate: 100.0%
+Best performing model: starcoder
+Best compression strategy: N/A
+Completed at: 2024-01-15T10:30:45
+
+🎉 Demo completed successfully!
+📄 Report saved to: reports/model_switching_demo_20240115_103045.md
+```
+
 ## 🏗️ Architecture
 
 ### System Overview
@@ -80,18 +171,74 @@ print(f"Compression ratio: {compression_result.compression_ratio}")
 │                 │    │                 │    │                 │
 │ • Simple        │    │ • Strategy      │    │ • Retry Logic   │
 │ • Accurate      │    │ • Template      │    │ • Circuit       │
-│ • Hybrid        │    │ • Factory       │    │   Breaker       │
+│ • Hybrid        │    │ • Factory       │    │ • Breaker       │
+│                 │    │                 │    │                 │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          └───────────────────────┼───────────────────────┘
                                  │
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Model Switcher  │    │ Token Limit     │    │ Compression     │
+│ Orchestrator    │    │ Tester          │    │ Evaluator       │
+│                 │    │                 │    │                 │
+│ • Availability  │    │ • Three-Stage   │    │ • All Algorithms│
+│ • Statistics    │    │ • Dynamic       │    │ • Quality       │
+│ • Workflow      │    │ • Model-Specific│    │ • Performance   │
+│                 │    │                 │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Quality         │    │ Agent Adapters  │    │ Report          │
+│ Analyzer        │    │                 │    │ Generator       │
+│                 │    │                 │    │                 │
+│ • Performance   │    │ • Generator     │    │ • Markdown      │
+│ • Code Quality  │    │ • Reviewer      │    │ • Tables        │
+│ • Completeness  │    │ • Day_07        │    │ • Recommendations│
+│                 │    │   Integration   │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
                     ┌─────────────────┐
                     │   Experiments   │
                     │                 │
                     │ • Builder       │
                     │ • Dataclasses   │
                     │ • Logging       │
+                    │                 │
                     └─────────────────┘
+```
+
+### Model Switching Demo Architecture
+
+The Model Switching Demo extends the core system with additional components:
+
+- **ModelSwitcherOrchestrator**: Coordinates model switching and workflow execution
+- **TokenLimitTester**: Generates and tests queries at three complexity levels
+- **CompressionEvaluator**: Tests all compression algorithms and evaluates quality
+- **QualityAnalyzer**: Measures response quality using day_07 agent patterns
+- **Agent Adapters**: Integrate day_07 CodeGenerator and CodeReviewer agents
+- **ReportGenerator**: Creates comprehensive markdown reports with recommendations
+
+### Clean Architecture Layers
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Presentation Layer                       │
+├─────────────────────────────────────────────────────────────────┤
+│  CLI Interface  │  API Endpoints  │  Web Interface  │  Reports  │
+├─────────────────────────────────────────────────────────────────┤
+│                        Application Layer                        │
+├─────────────────────────────────────────────────────────────────┤
+│  Use Cases  │  Application Services  │  DTOs  │  Interfaces     │
+├─────────────────────────────────────────────────────────────────┤
+│                          Domain Layer                           │
+├─────────────────────────────────────────────────────────────────┤
+│ Entities │ Value Objects │ Repositories │ Domain Services │ Rules │
+├─────────────────────────────────────────────────────────────────┤
+│                      Infrastructure Layer                       │
+├─────────────────────────────────────────────────────────────────┤
+│  Database  │  External APIs  │  File System  │  Configuration  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ### Design Patterns
@@ -102,6 +249,8 @@ print(f"Compression ratio: {compression_result.compression_ratio}")
 - **Template Method**: Base compressor with common logic
 - **Circuit Breaker**: ML client resilience
 - **Facade Pattern**: Simple interfaces for complex subsystems
+- **Repository Pattern**: Data access abstraction
+- **Domain Services**: Complex business logic encapsulation
 
 ### Core Components
 
@@ -175,6 +324,214 @@ class TokenLimitExperiments:
         auto_swap: bool = True
     ) -> List[ExperimentResult]:
         """Compare multiple models."""
+```
+
+## 🏛️ Domain Layer
+
+The domain layer encapsulates the core business logic using Domain-Driven Design principles, ensuring clean separation of concerns and maintainable code.
+
+### Domain Entities
+
+#### TokenAnalysisDomain
+```python
+@dataclass
+class TokenAnalysisDomain:
+    """Core domain entity representing a token analysis operation."""
+    
+    analysis_id: str
+    input_text: str
+    model_name: str
+    token_count: Optional[int] = None
+    status: str = "pending"  # pending, processing, completed, failed
+    
+    def start_processing(self) -> None:
+        """Mark analysis as processing."""
+        
+    def complete_analysis(self, token_count: int, compression_ratio: float) -> None:
+        """Complete the analysis with results."""
+```
+
+#### CompressionJob
+```python
+@dataclass
+class CompressionJob:
+    """Domain entity for compression operations."""
+    
+    job_id: str
+    original_text: str
+    target_tokens: int
+    strategy: str
+    compressed_text: Optional[str] = None
+    compression_ratio: Optional[float] = None
+```
+
+### Value Objects
+
+#### TokenCount
+```python
+class TokenCount:
+    """Immutable value object representing token count."""
+    
+    def __init__(self, count: int):
+        if count < 0:
+            raise ValueError("Token count cannot be negative")
+        self._count = count
+    
+    def add(self, other: 'TokenCount') -> 'TokenCount':
+        """Add another token count."""
+        return TokenCount(self._count + other._count)
+```
+
+#### CompressionRatio
+```python
+class CompressionRatio:
+    """Immutable value object representing compression ratio."""
+    
+    def __init__(self, ratio: float):
+        if not 0 <= ratio <= 1:
+            raise ValueError("Compression ratio must be between 0 and 1")
+        self._ratio = ratio
+    
+    @property
+    def ratio(self) -> float:
+        return self._ratio
+```
+
+### Domain Services
+
+```python
+class TokenAnalysisService:
+    """Domain service for complex token analysis operations."""
+    
+    def analyze_with_compression(
+        self, 
+        text: str, 
+        model_name: str, 
+        max_tokens: int
+    ) -> TokenAnalysisDomain:
+        """Perform complete analysis with compression if needed."""
+```
+
+### Repository Interfaces
+
+```python
+class TokenAnalysisRepository(ABC):
+    """Abstract repository for token analysis data access."""
+    
+    @abstractmethod
+    async def save(self, analysis: TokenAnalysisDomain) -> None:
+        """Save token analysis."""
+    
+    @abstractmethod
+    async def find_by_id(self, analysis_id: str) -> Optional[TokenAnalysisDomain]:
+        """Find analysis by ID."""
+```
+
+## 🤖 ML Engineering
+
+The ML Engineering framework provides comprehensive tools for model evaluation, monitoring, experiment tracking, and registry management.
+
+### Model Evaluation
+
+#### ModelEvaluator
+```python
+class ModelEvaluator:
+    """Comprehensive model evaluation framework."""
+    
+    def evaluate_token_counting_accuracy(
+        self, 
+        model_name: str, 
+        test_data: List[Tuple[str, int]]
+    ) -> EvaluationResult:
+        """Evaluate token counting accuracy against ground truth."""
+        
+    def calculate_metrics(
+        self, 
+        predictions: List[int], 
+        ground_truth: List[int]
+    ) -> Dict[str, float]:
+        """Calculate MAE, RMSE, and other metrics."""
+```
+
+### Performance Monitoring
+
+#### PerformanceMonitor
+```python
+class PerformanceMonitor:
+    """Performance monitoring with drift detection."""
+    
+    def track_prediction(
+        self, 
+        model_name: str, 
+        prediction: Any, 
+        latency: float
+    ) -> None:
+        """Track model prediction performance."""
+        
+    def detect_drift(
+        self, 
+        model_name: str, 
+        window_size: int = 100
+    ) -> DriftReport:
+        """Detect performance drift."""
+```
+
+### Experiment Tracking
+
+#### ExperimentTracker
+```python
+class ExperimentTracker:
+    """Comprehensive experiment tracking system."""
+    
+    def start_experiment(
+        self, 
+        name: str, 
+        hyperparameters: Dict[str, Any]
+    ) -> str:
+        """Start a new experiment."""
+        
+    def log_metrics(
+        self, 
+        experiment_id: str, 
+        metrics: Dict[str, float]
+    ) -> None:
+        """Log experiment metrics."""
+        
+    def compare_experiments(
+        self, 
+        experiment_ids: List[str]
+    ) -> ComparisonReport:
+        """Compare multiple experiments."""
+```
+
+### Model Registry
+
+#### ModelRegistry
+```python
+class ModelRegistry:
+    """Model registry with versioning and lifecycle management."""
+    
+    def register_model(
+        self, 
+        model_name: str, 
+        version: str, 
+        metadata: Dict[str, Any]
+    ) -> str:
+        """Register a new model version."""
+        
+    def promote_to_production(
+        self, 
+        model_name: str, 
+        version: str
+    ) -> None:
+        """Promote model version to production."""
+        
+    def rollback_model(
+        self, 
+        model_name: str, 
+        target_version: str
+    ) -> None:
+        """Rollback to previous model version."""
 ```
 
 ## 📚 API Reference

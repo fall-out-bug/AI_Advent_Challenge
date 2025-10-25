@@ -6,13 +6,13 @@ Strategy pattern and Template Method pattern.
 """
 
 from .base import BaseCompressor
-from .truncation import TruncationCompressor
 from .keywords import KeywordsCompressor
 from .strategy import CompressionStrategy, CompressionStrategyFactory
+from .truncation import TruncationCompressor
 
 __all__ = [
     "BaseCompressor",
-    "TruncationCompressor", 
+    "TruncationCompressor",
     "KeywordsCompressor",
     "CompressionStrategy",
     "CompressionStrategyFactory",

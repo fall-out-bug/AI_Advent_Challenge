@@ -7,7 +7,7 @@ token counting, limit checking, and model configuration.
 
 import pytest
 
-from core.token_analyzer import SimpleTokenCounter, LimitProfile
+from core.token_analyzer import LimitProfile, SimpleTokenCounter
 from models.data_models import ModelLimits, TokenInfo
 from tests.mocks import MockConfiguration
 

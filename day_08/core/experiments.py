@@ -41,9 +41,14 @@ import time
 from datetime import datetime
 from typing import List, Optional
 
-from models.data_models import CompressionResult, ExperimentResult
-from models.experiment_models import QueryInfo, ResponseInfo, ExperimentContext, ExperimentMetrics
 from core.builders import ExperimentResultBuilder
+from models.data_models import CompressionResult, ExperimentResult
+from models.experiment_models import (
+    ExperimentContext,
+    ExperimentMetrics,
+    QueryInfo,
+    ResponseInfo,
+)
 from utils.logging import LoggerFactory
 
 
@@ -67,20 +72,20 @@ class TokenLimitExperiments:
         from core.token_analyzer import SimpleTokenCounter
         from core.text_compressor import SimpleTextCompressor
         from models.data_models import ExperimentResult
-        
+
         # Initialize components
         ml_client = TokenAnalysisClient()
         token_counter = SimpleTokenCounter()
         text_compressor = SimpleTextCompressor(token_counter)
-        
+
         # Create experiments instance
         experiments = TokenLimitExperiments(ml_client, token_counter, text_compressor)
-        
+
         # Run different types of experiments
         limit_results = experiments.run_limit_exceeded_experiment("starcoder")
         comparison_results = experiments.run_model_comparison_experiment()
         compression_results = experiments.run_advanced_compression_experiment()
-        
+
         # Process results
         for result in limit_results:
             print(f"Query: {result.original_query[:50]}...")
@@ -104,12 +109,12 @@ class TokenLimitExperiments:
             from core.ml_client import TokenAnalysisClient
             from core.token_analyzer import SimpleTokenCounter
             from core.text_compressor import SimpleTextCompressor
-            
+
             # Initialize components
             ml_client = TokenAnalysisClient()
             token_counter = SimpleTokenCounter()
             text_compressor = SimpleTextCompressor(token_counter)
-            
+
             # Create experiments instance
             experiments = TokenLimitExperiments(ml_client, token_counter, text_compressor)
             ```
@@ -222,12 +227,12 @@ class TokenLimitExperiments:
             ```python
             from core.experiments import TokenLimitExperiments
             from models.data_models import ExperimentResult
-            
+
             experiments = TokenLimitExperiments(ml_client, token_counter, text_compressor)
-            
+
             # Run limit exceeded experiments
             results = await experiments.run_limit_exceeded_experiment("starcoder")
-            
+
             # Analyze results
             for i, result in enumerate(results):
                 strategy = ["no_compression", "truncation", "keywords"][i]
@@ -236,34 +241,36 @@ class TokenLimitExperiments:
             ```
         """
         context = self._prepare_experiment_context(model_name)
-        
+
         no_comp_result = await self._run_no_compression_test(context)
         trunc_result = await self._run_truncation_test(context)
         keywords_result = await self._run_keywords_test(context)
-        
+
         return self._collect_results([no_comp_result, trunc_result, keywords_result])
 
     def _prepare_experiment_context(self, model_name: str) -> ExperimentContext:
         """Prepare experiment context with long query."""
         long_query = self._create_long_query()
-        
-        self.logger.info("experiment_prepared", 
-                        model=model_name, 
-                        query_length=len(long_query))
-        
+
+        self.logger.info(
+            "experiment_prepared", model=model_name, query_length=len(long_query)
+        )
+
         return ExperimentContext(
             model_name=model_name,
             query=long_query,
             experiment_name="limit_exceeded",
-            compress=False
+            compress=False,
         )
 
-    async def _run_no_compression_test(self, context: ExperimentContext) -> ExperimentResult:
+    async def _run_no_compression_test(
+        self, context: ExperimentContext
+    ) -> ExperimentResult:
         """Run experiment without compression."""
-        self.logger.info("experiment_started", 
-                        experiment="no_compression", 
-                        model=context.model_name)
-        
+        self.logger.info(
+            "experiment_started", experiment="no_compression", model=context.model_name
+        )
+
         try:
             result = await self._run_single_experiment(
                 model_name=context.model_name,
@@ -274,17 +281,21 @@ class TokenLimitExperiments:
             self.logger.info("experiment_completed", experiment="no_compression")
             return result
         except Exception as e:
-            self.logger.error("experiment_failed", 
-                            experiment="no_compression", 
-                            error=str(e))
+            self.logger.error(
+                "experiment_failed", experiment="no_compression", error=str(e)
+            )
             raise
 
-    async def _run_truncation_test(self, context: ExperimentContext) -> ExperimentResult:
+    async def _run_truncation_test(
+        self, context: ExperimentContext
+    ) -> ExperimentResult:
         """Run experiment with truncation compression."""
-        self.logger.info("experiment_started", 
-                        experiment="truncation_compression", 
-                        model=context.model_name)
-        
+        self.logger.info(
+            "experiment_started",
+            experiment="truncation_compression",
+            model=context.model_name,
+        )
+
         try:
             result = await self._run_single_experiment(
                 model_name=context.model_name,
@@ -293,20 +304,24 @@ class TokenLimitExperiments:
                 compress=True,
                 compression_strategy="truncation",
             )
-            self.logger.info("experiment_completed", experiment="truncation_compression")
+            self.logger.info(
+                "experiment_completed", experiment="truncation_compression"
+            )
             return result
         except Exception as e:
-            self.logger.error("experiment_failed", 
-                            experiment="truncation_compression", 
-                            error=str(e))
+            self.logger.error(
+                "experiment_failed", experiment="truncation_compression", error=str(e)
+            )
             raise
 
     async def _run_keywords_test(self, context: ExperimentContext) -> ExperimentResult:
         """Run experiment with keywords compression."""
-        self.logger.info("experiment_started", 
-                        experiment="keywords_compression", 
-                        model=context.model_name)
-        
+        self.logger.info(
+            "experiment_started",
+            experiment="keywords_compression",
+            model=context.model_name,
+        )
+
         try:
             result = await self._run_single_experiment(
                 model_name=context.model_name,
@@ -318,19 +333,23 @@ class TokenLimitExperiments:
             self.logger.info("experiment_completed", experiment="keywords_compression")
             return result
         except Exception as e:
-            self.logger.error("experiment_failed", 
-                            experiment="keywords_compression", 
-                            error=str(e))
+            self.logger.error(
+                "experiment_failed", experiment="keywords_compression", error=str(e)
+            )
             raise
 
-    def _collect_results(self, results: List[ExperimentResult]) -> List[ExperimentResult]:
+    def _collect_results(
+        self, results: List[ExperimentResult]
+    ) -> List[ExperimentResult]:
         """Collect and validate experiment results."""
         valid_results = [r for r in results if r is not None]
-        
-        self.logger.info("experiments_summary", 
-                        total_experiments=len(results),
-                        successful_experiments=len(valid_results))
-        
+
+        self.logger.info(
+            "experiments_summary",
+            total_experiments=len(results),
+            successful_experiments=len(valid_results),
+        )
+
         return valid_results
 
     async def run_model_comparison_experiment(
@@ -359,10 +378,9 @@ class TokenLimitExperiments:
                 auto_swap = False
 
         for i, model in enumerate(models):
-            self.logger.info("model_testing", 
-                            model=model, 
-                            index=i+1, 
-                            total=len(models))
+            self.logger.info(
+                "model_testing", model=model, index=i + 1, total=len(models)
+            )
 
             if auto_swap and i > 0:
                 # Stop previous, start current
@@ -464,67 +482,71 @@ class TokenLimitExperiments:
             ExperimentResult: Result of the experiment
         """
         start_time = time.time()
-        
-        query_info = self._prepare_query(model_name, query, compress, compression_strategy)
+
+        query_info = self._prepare_query(
+            model_name, query, compress, compression_strategy
+        )
         response_info = await self._execute_model_request(model_name, query_info)
-        
+
         return self._build_experiment_result(
             experiment_name, model_name, query_info, response_info, start_time
         )
 
     def _prepare_query(
-        self, 
-        model_name: str, 
-        query: str, 
-        compress: bool, 
-        compression_strategy: str
+        self, model_name: str, query: str, compress: bool, compression_strategy: str
     ) -> QueryInfo:
         """Prepare query with optional compression."""
         original_tokens = self._count_query_tokens(query, model_name)
-        
+
         if self._should_compress(compress, original_tokens, model_name):
-            return self._compress_query(query, model_name, compression_strategy, original_tokens)
-        
+            return self._compress_query(
+                query, model_name, compression_strategy, original_tokens
+            )
+
         return self._no_compression_query_info(query, original_tokens)
 
     def _count_query_tokens(self, query: str, model_name: str) -> int:
         """Count tokens in query."""
         return self.token_counter.count_tokens(query, model_name).count
 
-    def _should_compress(self, compress: bool, original_tokens: int, model_name: str) -> bool:
+    def _should_compress(
+        self, compress: bool, original_tokens: int, model_name: str
+    ) -> bool:
         """Check if compression should be applied."""
         if not compress:
             return False
-        
+
         model_limits = self.token_counter.get_model_limits(model_name)
         return original_tokens > model_limits.max_input_tokens
 
     def _compress_query(
-        self, 
-        query: str, 
-        model_name: str, 
-        compression_strategy: str, 
-        original_tokens: int
+        self,
+        query: str,
+        model_name: str,
+        compression_strategy: str,
+        original_tokens: int,
     ) -> QueryInfo:
         """Compress query using specified strategy."""
         model_limits = self.token_counter.get_model_limits(model_name)
-        
+
         compression_result = self.text_compressor.compress_text(
             text=query,
             max_tokens=model_limits.max_input_tokens,
             model_name=model_name,
             strategy=compression_strategy,
         )
-        
-        processed_tokens = self._count_query_tokens(compression_result.compressed_text, model_name)
-        
+
+        processed_tokens = self._count_query_tokens(
+            compression_result.compressed_text, model_name
+        )
+
         return QueryInfo(
             original_text=query,
             processed_text=compression_result.compressed_text,
             original_tokens=original_tokens,
             processed_tokens=processed_tokens,
             compression_applied=True,
-            compression_result=compression_result
+            compression_result=compression_result,
         )
 
     def _no_compression_query_info(self, query: str, original_tokens: int) -> QueryInfo:
@@ -535,13 +557,11 @@ class TokenLimitExperiments:
             original_tokens=original_tokens,
             processed_tokens=original_tokens,
             compression_applied=False,
-            compression_result=None
+            compression_result=None,
         )
 
     async def _execute_model_request(
-        self, 
-        model_name: str, 
-        query_info: QueryInfo
+        self, model_name: str, query_info: QueryInfo
     ) -> ResponseInfo:
         """Execute model request and return response info."""
         try:
@@ -551,23 +571,19 @@ class TokenLimitExperiments:
                 max_tokens=1000,
                 temperature=0.7,
             )
-            
+
             output_tokens = self._count_query_tokens(response.response, model_name)
-            
+
             return ResponseInfo(
                 text=response.response,
                 tokens=output_tokens,
                 duration=0.0,  # Will be set by caller
                 success=True,
-                error=None
+                error=None,
             )
         except Exception as e:
             return ResponseInfo(
-                text="",
-                tokens=0,
-                duration=0.0,
-                success=False,
-                error=str(e)
+                text="", tokens=0, duration=0.0, success=False, error=str(e)
             )
 
     def _build_experiment_result(
@@ -576,28 +592,34 @@ class TokenLimitExperiments:
         model_name: str,
         query_info: QueryInfo,
         response_info: ResponseInfo,
-        start_time: float
+        start_time: float,
     ) -> ExperimentResult:
         """Build ExperimentResult using builder pattern."""
         end_time = time.time()
         response_time = end_time - start_time
-        
+
         # Update response info with actual duration
         response_info.duration = response_time
-        
+
         builder = ExperimentResultBuilder()
-        
-        return (builder
-                .with_experiment_name(experiment_name)
-                .with_model(model_name)
-                .with_query(query_info.original_text, query_info.processed_text)
-                .with_response(response_info.text)
-                .with_tokens(query_info.processed_tokens, response_info.tokens, 
-                           query_info.processed_tokens + response_info.tokens)
-                .with_timing(response_time)
-                .with_compression(query_info.compression_applied, query_info.compression_result)
-                .with_timestamp()
-                .build())
+
+        return (
+            builder.with_experiment_name(experiment_name)
+            .with_model(model_name)
+            .with_query(query_info.original_text, query_info.processed_text)
+            .with_response(response_info.text)
+            .with_tokens(
+                query_info.processed_tokens,
+                response_info.tokens,
+                query_info.processed_tokens + response_info.tokens,
+            )
+            .with_timing(response_time)
+            .with_compression(
+                query_info.compression_applied, query_info.compression_result
+            )
+            .with_timestamp()
+            .build()
+        )
 
     async def run_short_query_experiment(
         self, model_name: str = "starcoder"
@@ -621,14 +643,16 @@ class TokenLimitExperiments:
 
         results = []
 
-        self.logger.info("short_query_experiment_started", 
-                        model=model_name, 
-                        query_count=len(short_queries))
+        self.logger.info(
+            "short_query_experiment_started",
+            model=model_name,
+            query_count=len(short_queries),
+        )
 
         for i, query in enumerate(short_queries, 1):
-            self.logger.info("short_query_testing", 
-                            query_index=i, 
-                            query_preview=query[:50])
+            self.logger.info(
+                "short_query_testing", query_index=i, query_preview=query[:50]
+            )
 
             try:
                 result = await self._run_single_experiment(
@@ -640,9 +664,7 @@ class TokenLimitExperiments:
                 results.append(result)
                 self.logger.info("short_query_completed", query_index=i)
             except Exception as e:
-                self.logger.error("short_query_failed", 
-                                query_index=i, 
-                                error=str(e))
+                self.logger.error("short_query_failed", query_index=i, error=str(e))
 
         return results
 

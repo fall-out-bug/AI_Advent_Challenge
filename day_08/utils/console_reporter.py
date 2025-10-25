@@ -24,7 +24,7 @@ class ConsoleReporter:
 
     Provides methods to format and display experiment results
     in a clear, readable format in the console.
-    
+
     This class now acts as a facade, delegating to specialized
     components for better separation of concerns while maintaining
     backward compatibility.

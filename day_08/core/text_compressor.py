@@ -34,7 +34,6 @@ Example:
     ```
 """
 
-import re
 from typing import Optional
 
 from core.advanced_compressor import (
@@ -52,7 +51,7 @@ class SimpleTextCompressor:
 
     Provides methods to compress text while attempting to preserve
     the most important information for model processing.
-    
+
     This class acts as a facade for the new compression strategies
     while maintaining backward compatibility.
 
@@ -65,20 +64,20 @@ class SimpleTextCompressor:
         from core.text_compressor import SimpleTextCompressor
         from core.token_analyzer import SimpleTokenCounter
         from models.data_models import CompressionResult
-        
+
         # Initialize compressor
         token_counter = SimpleTokenCounter()
         compressor = SimpleTextCompressor(token_counter)
-        
+
         # Compress text using different strategies
         text = "This is a very long text that needs compression..."
-        
+
         # Truncation strategy
         result = compressor.compress_by_truncation(text, max_tokens=100)
-        
-        # Keywords strategy  
+
+        # Keywords strategy
         result = compressor.compress_by_keywords(text, max_tokens=100)
-        
+
         # General compression
         result = compressor.compress_text(text, max_tokens=100, strategy="truncation")
         ```
@@ -95,7 +94,7 @@ class SimpleTextCompressor:
             ```python
             from core.text_compressor import SimpleTextCompressor
             from core.token_analyzer import SimpleTokenCounter
-            
+
             token_counter = SimpleTokenCounter()
             compressor = SimpleTextCompressor(token_counter)
             ```
@@ -125,19 +124,21 @@ class SimpleTextCompressor:
             ```python
             from core.text_compressor import SimpleTextCompressor
             from core.token_analyzer import SimpleTokenCounter
-            
+
             token_counter = SimpleTokenCounter()
             compressor = SimpleTextCompressor(token_counter)
-            
+
             text = "This is a very long text that needs compression..."
             result = compressor.compress_by_truncation(text, max_tokens=100)
-            
+
             print(f"Original tokens: {result.original_tokens}")
             print(f"Compressed tokens: {result.compressed_tokens}")
             print(f"Compression ratio: {result.compression_ratio}")
             ```
         """
-        compressor = self.factory.create(CompressionStrategy.TRUNCATION, self.token_counter)
+        compressor = self.factory.create(
+            CompressionStrategy.TRUNCATION, self.token_counter
+        )
         return compressor.compress(text, max_tokens, model_name)
 
     def compress_by_keywords(
@@ -162,18 +163,20 @@ class SimpleTextCompressor:
             ```python
             from core.text_compressor import SimpleTextCompressor
             from core.token_analyzer import SimpleTokenCounter
-            
+
             token_counter = SimpleTokenCounter()
             compressor = SimpleTextCompressor(token_counter)
-            
+
             text = "Machine learning is a subset of artificial intelligence..."
             result = compressor.compress_by_keywords(text, max_tokens=50)
-            
+
             print(f"Compressed text: {result.compressed_text}")
             print(f"Compression ratio: {result.compression_ratio}")
             ```
         """
-        compressor = self.factory.create(CompressionStrategy.KEYWORDS, self.token_counter)
+        compressor = self.factory.create(
+            CompressionStrategy.KEYWORDS, self.token_counter
+        )
         return compressor.compress(text, max_tokens, model_name)
 
     def compress_text(
@@ -206,24 +209,26 @@ class SimpleTextCompressor:
             ```python
             from core.text_compressor import SimpleTextCompressor
             from core.token_analyzer import SimpleTokenCounter
-            
+
             token_counter = SimpleTokenCounter()
             compressor = SimpleTextCompressor(token_counter)
-            
+
             text = "This is a very long text that needs compression..."
-            
+
             # Use different strategies
             result1 = compressor.compress_text(text, max_tokens=100, strategy="truncation")
             result2 = compressor.compress_text(text, max_tokens=100, strategy="keywords")
-            
+
             print(f"Truncation ratio: {result1.compression_ratio}")
             print(f"Keywords ratio: {result2.compression_ratio}")
             ```
         """
         if not self.factory.is_strategy_supported(strategy):
             available = self.factory.get_available_strategies()
-            raise ValueError(f"Unsupported compression strategy: {strategy}. Available: {available}")
-        
+            raise ValueError(
+                f"Unsupported compression strategy: {strategy}. Available: {available}"
+            )
+
         compression_strategy = CompressionStrategy(strategy)
         compressor = self.factory.create(compression_strategy, self.token_counter)
         return compressor.compress(text, max_tokens, model_name)

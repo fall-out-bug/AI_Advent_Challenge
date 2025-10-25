@@ -28,24 +28,24 @@ Example:
 """
 
 from enum import Enum
-from typing import Dict, Optional
+from typing import Optional
 
 from core.accurate_token_counter import AccurateTokenCounter
-from core.interfaces.protocols import TokenCounterProtocol, ConfigurationProtocol
+from core.interfaces.protocols import ConfigurationProtocol
 from models.data_models import ModelLimits, TokenInfo
 
 
 class LimitProfile(Enum):
     """Limit profile types for model token limits.
-    
+
     Attributes:
         THEORETICAL: Maximum architecture supports (e.g., 8192 for StarCoder)
         PRACTICAL: Real hardware limits (e.g., 2048 for RTX 3070 Ti 8GB)
-    
+
     Example:
         ```python
         from core.token_analyzer import LimitProfile
-        
+
         # Use practical limits for real hardware
         profile = LimitProfile.PRACTICAL
         print(profile.value)  # "practical"
@@ -72,15 +72,15 @@ class SimpleTokenCounter:
         ```python
         from core.token_analyzer import SimpleTokenCounter, LimitProfile
         from models.data_models import TokenInfo
-        
+
         # Initialize with practical limits
         counter = SimpleTokenCounter(LimitProfile.PRACTICAL)
-        
+
         # Count tokens in text
         text = "Hello world! This is a test."
         token_info = counter.count_tokens(text)
         print(f"Estimated tokens: {token_info.count}")
-        
+
         # Check if text exceeds model limit
         exceeds = counter.check_limit_exceeded(text, "starcoder")
         print(f"Exceeds limit: {exceeds}")
@@ -88,9 +88,9 @@ class SimpleTokenCounter:
     """
 
     def __init__(
-        self, 
+        self,
         limit_profile: LimitProfile = LimitProfile.PRACTICAL,
-        config: Optional[ConfigurationProtocol] = None
+        config: Optional[ConfigurationProtocol] = None,
     ):
         """
         Initialize with limit profile and configuration.
@@ -102,13 +102,13 @@ class SimpleTokenCounter:
         Example:
             ```python
             from core.token_analyzer import SimpleTokenCounter, LimitProfile
-            
+
             # Basic initialization
             counter = SimpleTokenCounter()
-            
+
             # With specific profile
             counter = SimpleTokenCounter(LimitProfile.THEORETICAL)
-            
+
             # With custom configuration
             counter = SimpleTokenCounter(config=my_config)
             ```
@@ -134,10 +134,10 @@ class SimpleTokenCounter:
             ```python
             from core.token_analyzer import SimpleTokenCounter
             from models.data_models import TokenInfo
-            
+
             counter = SimpleTokenCounter()
             text = "Hello world! This is a test."
-            
+
             token_info = counter.count_tokens(text, "starcoder")
             print(f"Token count: {token_info.count}")
             print(f"Model: {token_info.model}")
@@ -145,23 +145,23 @@ class SimpleTokenCounter:
         """
         if not self._validate_input(text):
             return self._empty_token_info(model_name)
-        
+
         token_count = self._estimate_tokens(text)
         return self._build_token_info(token_count, model_name)
-    
+
     def _validate_input(self, text: str) -> bool:
         """Validate input text."""
         return bool(text)
-    
+
     def _estimate_tokens(self, text: str) -> int:
         """Estimate token count using word-based calculation."""
         word_count = len(text.split())
         return int(word_count * 1.3)
-    
+
     def _empty_token_info(self, model_name: str) -> TokenInfo:
         """Create empty token info for invalid input."""
         return TokenInfo(count=0, estimated_cost=0.0, model_name=model_name)
-    
+
     def _build_token_info(self, token_count: int, model_name: str) -> TokenInfo:
         """Build TokenInfo object."""
         return TokenInfo(
@@ -189,7 +189,7 @@ class SimpleTokenCounter:
         Example:
             ```python
             from core.token_analyzer import SimpleTokenCounter, LimitProfile
-            
+
             counter = SimpleTokenCounter(LimitProfile.PRACTICAL)
             limits = counter.get_model_limits("starcoder")
             print(f"Max tokens: {limits.max_tokens}")
@@ -198,7 +198,7 @@ class SimpleTokenCounter:
         """
         if self.config:
             return self.config.get_model_limits(model_name, self.limit_profile.value)
-        
+
         # Fallback to default starcoder limits if no config
         return ModelLimits(
             max_input_tokens=4096,
@@ -224,10 +224,10 @@ class SimpleTokenCounter:
         Example:
             ```python
             from core.token_analyzer import SimpleTokenCounter, LimitProfile
-            
+
             counter = SimpleTokenCounter(LimitProfile.PRACTICAL)
             long_text = "This is a very long text..." * 100
-            
+
             exceeds = counter.check_limit_exceeded(long_text, "starcoder")
             if exceeds:
                 print("Text exceeds model limit!")
@@ -238,7 +238,7 @@ class SimpleTokenCounter:
         token_info = self.count_tokens(text, model_name)
         limits = self.get_model_limits(model_name)
         return self._compare_with_limit(token_info.count, limits.max_input_tokens)
-    
+
     def _compare_with_limit(self, token_count: int, max_tokens: int) -> bool:
         """Compare token count with limit."""
         return token_count > max_tokens
@@ -252,7 +252,7 @@ class SimpleTokenCounter:
         """
         if self.config:
             return self.config.get_available_models()
-        
+
         # Fallback to default models if no config
         return ["starcoder", "mistral", "qwen", "tinyllama"]
 
@@ -272,7 +272,7 @@ class SimpleTokenCounter:
         """
         limits = self.get_model_limits(model_name)
         return self._calculate_target_tokens(limits.max_input_tokens, safety_margin)
-    
+
     def _calculate_target_tokens(self, max_tokens: int, safety_margin: float) -> int:
         """Calculate target tokens with safety margin."""
         return int(max_tokens * safety_margin)
@@ -302,24 +302,24 @@ class TokenCounter:
     Example:
         ```python
         from core.token_analyzer import TokenCounter, LimitProfile
-        
+
         # Simple estimation mode
         simple_counter = TokenCounter("simple", LimitProfile.PRACTICAL)
         simple_info = simple_counter.count_tokens("Hello world!")
-        
+
         # Accurate counting mode
         accurate_counter = TokenCounter("accurate", LimitProfile.THEORETICAL)
         accurate_info = accurate_counter.count_tokens("Hello world!", "starcoder")
-        
+
         print(f"Simple: {simple_info.count}, Accurate: {accurate_info.count}")
         ```
     """
 
     def __init__(
-        self, 
-        mode: str = "simple", 
+        self,
+        mode: str = "simple",
         limit_profile: LimitProfile = LimitProfile.PRACTICAL,
-        config: Optional[ConfigurationProtocol] = None
+        config: Optional[ConfigurationProtocol] = None,
     ):
         """
         Initialize token counter with specified mode.
@@ -335,13 +335,13 @@ class TokenCounter:
         Example:
             ```python
             from core.token_analyzer import TokenCounter, LimitProfile
-            
+
             # Initialize simple counter
             counter = TokenCounter("simple", LimitProfile.PRACTICAL)
-            
+
             # Initialize accurate counter
             accurate_counter = TokenCounter("accurate", LimitProfile.THEORETICAL)
-            
+
             # With custom configuration
             counter = TokenCounter("simple", config=my_config)
             ```
@@ -387,7 +387,7 @@ class TokenCounter:
         Example:
             ```python
             from core.token_analyzer import SimpleTokenCounter, LimitProfile
-            
+
             counter = SimpleTokenCounter(LimitProfile.PRACTICAL)
             limits = counter.get_model_limits("starcoder")
             print(f"Max tokens: {limits.max_tokens}")
@@ -398,7 +398,7 @@ class TokenCounter:
             return self._get_limits_for_accurate_mode(model_name)
         else:
             return self._counter.get_model_limits(model_name)
-    
+
     def _get_limits_for_accurate_mode(self, model_name: str) -> ModelLimits:
         """Get limits for accurate mode using SimpleTokenCounter."""
         simple_counter = SimpleTokenCounter(self._limit_profile, self._config)
@@ -418,7 +418,7 @@ class TokenCounter:
         token_info = self.count_tokens(text, model_name)
         limits = self.get_model_limits(model_name)
         return self._compare_with_limit(token_info.count, limits.max_input_tokens)
-    
+
     def _compare_with_limit(self, token_count: int, max_tokens: int) -> bool:
         """Compare token count with limit."""
         return token_count > max_tokens
@@ -448,7 +448,7 @@ class TokenCounter:
         """
         limits = self.get_model_limits(model_name)
         return self._calculate_target_tokens(limits.max_input_tokens, safety_margin)
-    
+
     def _calculate_target_tokens(self, max_tokens: int, safety_margin: float) -> int:
         """Calculate target tokens with safety margin."""
         return int(max_tokens * safety_margin)

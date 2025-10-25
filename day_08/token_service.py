@@ -11,13 +11,14 @@ Refactored to use TokenServiceHandler for separation of concerns.
 """
 
 import uvicorn
+
 from api.handlers.token_handler import TokenServiceHandler
 
 
 def create_app():
     """
     Create and configure FastAPI application.
-    
+
     Returns:
         Configured FastAPI application
     """

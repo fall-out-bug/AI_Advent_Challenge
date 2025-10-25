@@ -45,18 +45,17 @@ class ModelDockerManager:
             List[str]: List of running model names
         """
         try:
-            containers = self.client.containers.list(
-                filters={"label": f"com.docker.compose.project={self.compose_project}"}
-            )
+            # Get all running containers and filter by name pattern
+            containers = self.client.containers.list(filters={"status": "running"})
 
             running_models = []
             for container in containers:
-                # Extract model name from container name
-                # Format: local_models-{model}-chat-1
-                name_parts = container.name.split("-")
-                if len(name_parts) >= 3:
-                    model_name = name_parts[1]  # Extract model name
-                    running_models.append(model_name)
+                # Check if container matches our pattern: local_models-{model}-chat-1
+                if container.name.startswith(f"{self.compose_project}-") and container.name.endswith("-chat-1"):
+                    name_parts = container.name.split("-")
+                    if len(name_parts) >= 3:
+                        model_name = name_parts[1]  # Extract model name
+                        running_models.append(model_name)
 
             logger.info(f"Running models: {running_models}")
             return running_models

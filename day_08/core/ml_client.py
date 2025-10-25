@@ -38,10 +38,10 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 
-from models.data_models import CompressionResult, TokenInfo
-from utils.retry import ResilientClient, RetryConfig, CircuitBreakerConfig
 from core.validators import RequestValidator
+from models.data_models import CompressionResult, TokenInfo
 from utils.logging import LoggerFactory
+from utils.retry import CircuitBreakerConfig, ResilientClient, RetryConfig
 
 
 class TokenAnalysisClient:
@@ -50,7 +50,7 @@ class TokenAnalysisClient:
 
     Provides methods to interact with the ML service running in Docker
     for accurate token counting and advanced compression strategies.
-    
+
     Features:
     - Retry logic with exponential backoff
     - Circuit breaker pattern for resilience
@@ -67,20 +67,20 @@ class TokenAnalysisClient:
         ```python
         from core.ml_client import TokenAnalysisClient
         from models.data_models import TokenInfo, CompressionResult
-        
+
         # Initialize client
         client = TokenAnalysisClient("http://localhost:8004")
-        
+
         # Count tokens
         token_info = await client.count_tokens("Hello world!", "starcoder")
-        
+
         # Compress text
         result = await client.compress_text(
             text="Very long text...",
             max_tokens=100,
             strategy="extractive"
         )
-        
+
         # Batch operations
         texts = ["Text 1", "Text 2", "Text 3"]
         batch_result = await client.batch_count_tokens(texts, "starcoder")
@@ -100,10 +100,10 @@ class TokenAnalysisClient:
         Example:
             ```python
             from core.ml_client import TokenAnalysisClient
-            
+
             # Default local service
             client = TokenAnalysisClient()
-            
+
             # Custom service URL
             client = TokenAnalysisClient("http://ml-service:8004")
             ```
@@ -111,7 +111,7 @@ class TokenAnalysisClient:
         self.base_url = base_url.rstrip("/")
         self.client = httpx.AsyncClient(timeout=30.0)
         self.logger = LoggerFactory.create_logger(__name__)
-        
+
         # Configure retry and circuit breaker
         retry_config = RetryConfig(max_attempts=3, base_delay=1.0)
         cb_config = CircuitBreakerConfig(failure_threshold=5, recovery_timeout=60.0)
@@ -120,12 +120,12 @@ class TokenAnalysisClient:
     async def _execute_with_resilience(self, func, *args, **kwargs):
         """
         Execute HTTP call with retry and circuit breaker.
-        
+
         Args:
             func: Function to execute
             *args: Function arguments
             **kwargs: Function keyword arguments
-            
+
         Returns:
             Function result
         """
@@ -134,10 +134,10 @@ class TokenAnalysisClient:
     async def _make_get_request(self, endpoint: str) -> Dict[str, Any]:
         """
         Make GET request to ML service.
-        
+
         Args:
             endpoint: API endpoint
-            
+
         Returns:
             Response data
         """
@@ -145,14 +145,16 @@ class TokenAnalysisClient:
         response.raise_for_status()
         return response.json()
 
-    async def _make_post_request(self, endpoint: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _make_post_request(
+        self, endpoint: str, data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Make POST request to ML service.
-        
+
         Args:
             endpoint: API endpoint
             data: Request data
-            
+
         Returns:
             Response data
         """
@@ -168,7 +170,9 @@ class TokenAnalysisClient:
             Dict with health status and available models
         """
         try:
-            return await self._execute_with_resilience(self._make_get_request, "/health")
+            return await self._execute_with_resilience(
+                self._make_get_request, "/health"
+            )
         except Exception as e:
             self.logger.error("health_check_failed", error=str(e))
             raise ConnectionError(f"Cannot connect to ML service: {e}")
@@ -192,13 +196,13 @@ class TokenAnalysisClient:
             ```python
             from core.ml_client import TokenAnalysisClient
             from models.data_models import TokenInfo
-            
+
             client = TokenAnalysisClient()
-            
+
             # Count tokens accurately
             text = "Hello world! This is a test."
             token_info = await client.count_tokens(text, "starcoder")
-            
+
             print(f"Accurate token count: {token_info.count}")
             print(f"Model: {token_info.model}")
             print(f"Cost: {token_info.estimated_cost}")
@@ -213,7 +217,9 @@ class TokenAnalysisClient:
         RequestValidator.validate_text(text)
         RequestValidator.validate_model_name(model_name)
 
-    async def _execute_count_request(self, text: str, model_name: str) -> Dict[str, Any]:
+    async def _execute_count_request(
+        self, text: str, model_name: str
+    ) -> Dict[str, Any]:
         """Execute count tokens request."""
         data = {"text": text, "model_name": model_name}
         return await self._execute_with_resilience(
@@ -250,7 +256,9 @@ class TokenAnalysisClient:
         RequestValidator.validate_texts_list(texts)
         RequestValidator.validate_model_name(model_name)
 
-    async def _execute_batch_request(self, texts: List[str], model_name: str) -> Dict[str, Any]:
+    async def _execute_batch_request(
+        self, texts: List[str], model_name: str
+    ) -> Dict[str, Any]:
         """Execute batch count tokens request."""
         data = {"texts": texts, "model_name": model_name}
         return await self._execute_with_resilience(
@@ -296,9 +304,9 @@ class TokenAnalysisClient:
             ```python
             from core.ml_client import TokenAnalysisClient
             from models.data_models import CompressionResult
-            
+
             client = TokenAnalysisClient()
-            
+
             # Compress using extractive strategy
             text = "This is a very long text that needs compression..."
             result = await client.compress_text(
@@ -307,7 +315,7 @@ class TokenAnalysisClient:
                 model_name="starcoder",
                 strategy="extractive"
             )
-            
+
             print(f"Original tokens: {result.original_tokens}")
             print(f"Compressed tokens: {result.compressed_tokens}")
             print(f"Compression ratio: {result.compression_ratio}")
@@ -315,10 +323,14 @@ class TokenAnalysisClient:
             ```
         """
         self._validate_compression_input(text, max_tokens, model_name, strategy)
-        response_data = await self._execute_compression_request(text, max_tokens, model_name, strategy)
+        response_data = await self._execute_compression_request(
+            text, max_tokens, model_name, strategy
+        )
         return self._parse_compression_result(response_data)
 
-    def _validate_compression_input(self, text: str, max_tokens: int, model_name: str, strategy: str) -> None:
+    def _validate_compression_input(
+        self, text: str, max_tokens: int, model_name: str, strategy: str
+    ) -> None:
         """Validate input for compression."""
         RequestValidator.validate_text(text)
         RequestValidator.validate_max_tokens(max_tokens)
@@ -367,14 +379,14 @@ class TokenAnalysisClient:
         RequestValidator.validate_text(text)
         RequestValidator.validate_max_tokens(max_tokens)
         RequestValidator.validate_model_name(model_name)
-        
+
         data = {
             "text": text,
             "max_tokens": max_tokens,
             "model_name": model_name,
             "strategy": "extractive",  # Not used in preview
         }
-        
+
         try:
             return await self._execute_with_resilience(
                 self._make_post_request, "/preview-compression", data
@@ -414,6 +426,82 @@ class TokenAnalysisClient:
         except Exception as e:
             self.logger.error("get_available_strategies_failed", error=str(e))
             raise ConnectionError(f"Error getting available strategies: {e}")
+    
+    async def make_request(
+        self,
+        model_name: str,
+        prompt: str,
+        max_tokens: int = 1000,
+        temperature: float = 0.7
+    ) -> "ModelResponse":
+        """
+        Make inference request to model via UnifiedModelClient.
+        
+        Args:
+            model_name: Name of the model to use
+            prompt: Input prompt text
+            max_tokens: Maximum tokens to generate
+            temperature: Sampling temperature
+            
+        Returns:
+            ModelResponse with response text, tokens, and timing
+            
+        Example:
+            ```python
+            from core.ml_client import TokenAnalysisClient
+            
+            client = TokenAnalysisClient()
+            
+            response = await client.make_request(
+                model_name="starcoder",
+                prompt="Write a Python function to sort a list",
+                max_tokens=500,
+                temperature=0.7
+            )
+            
+            print(f"Response: {response.response}")
+            print(f"Tokens used: {response.total_tokens}")
+            ```
+        """
+        import asyncio
+        from models.data_models import ModelResponse
+        
+        try:
+            start_time = asyncio.get_event_loop().time()
+            
+            # Use UnifiedModelClient for model inference
+            import sys
+            from pathlib import Path
+            shared_path = Path(__file__).parent.parent.parent / "shared"
+            sys.path.insert(0, str(shared_path))
+            from shared_package.clients.unified_client import UnifiedModelClient
+            
+            unified_client = UnifiedModelClient()
+            
+            # Make the actual model request
+            result = await unified_client.generate(
+                model_name=model_name,
+                prompt=prompt,
+                max_tokens=max_tokens,
+                temperature=temperature
+            )
+            
+            response_time = asyncio.get_event_loop().time() - start_time
+            
+            # Count tokens in response
+            response_text = result.get("response", "")
+            token_count = len(response_text.split()) * 1.3  # Rough estimate
+            
+            return ModelResponse(
+                response=response_text,
+                total_tokens=int(token_count),
+                response_time=response_time,
+                model_name=model_name
+            )
+            
+        except Exception as e:
+            self.logger.error(f"make_request failed for {model_name}: {e}")
+            raise ConnectionError(f"Error making request to model {model_name}: {e}")
 
     async def close(self):
         """Close the HTTP client."""
@@ -473,7 +561,9 @@ class HybridTokenCounter:
             try:
                 return await self.ml_client.count_tokens(text, model_name)
             except Exception as e:
-                self.logger.warning("ml_service_error", error=str(e), operation="count_tokens")
+                self.logger.warning(
+                    "ml_service_error", error=str(e), operation="count_tokens"
+                )
 
         # Fallback to simple estimation
         if self.fallback_counter is None:
@@ -506,7 +596,9 @@ class HybridTokenCounter:
                     text, max_tokens, model_name, strategy
                 )
             except Exception as e:
-                self.logger.warning("ml_service_error", error=str(e), operation="compress_text")
+                self.logger.warning(
+                    "ml_service_error", error=str(e), operation="compress_text"
+                )
 
         # Fallback to basic compression
         if self.fallback_counter is None:

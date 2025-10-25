@@ -40,7 +40,11 @@ help:
 	@echo "🚀 Experiments:"
 	@echo "  run           Run main experiments"
 	@echo "  run-enhanced  Run enhanced experiments with ML service"
-	@echo "  demo          Run demo script"
+	@echo "  demo          Run basic demo script"
+	@echo "  demo-switching Run advanced model switching demo with Docker"
+	@echo "  demo-quick     Run quick model switching demo (fast, with timeouts)"
+	@echo "  demo-working   Run working model switching demo (tests direct connections)"
+	@echo "  demo-enhanced  Run comprehensive demo with large queries and all compressions"
 	@echo "  compare-models Run model comparison"
 	@echo ""
 	@echo "🐳 Docker Management:"
@@ -72,6 +76,7 @@ help:
 	@echo ""
 	@echo "💡 Quick Start:"
 	@echo "  make setup && make check && make demo"
+	@echo "  make demo-switching  # For advanced Docker-integrated demo"
 
 # Installation targets
 install:
@@ -84,7 +89,7 @@ install-ml:
 	poetry install --with ml
 
 # Quick workflow targets
-check: lint test
+check: lint-basic test
 	@echo "✅ Quick check completed!"
 
 setup: install-dev install-ml env-example
@@ -109,12 +114,12 @@ test-integration:
 	@echo "Running integration tests..."
 	poetry run pytest tests/ -k "integration" -v
 
-# Code quality targets
-lint:
+# Code quality targets (basic versions)
+lint-basic:
 	poetry run flake8 core/ utils/ tests/ --max-line-length=88 --extend-ignore=E203,W503
 	poetry run mypy core/ utils/ --ignore-missing-imports
 
-format:
+format-basic:
 	poetry run black core/ utils/ tests/ --line-length=88
 	poetry run isort core/ utils/ tests/ --profile=black --line-length=88
 
@@ -184,6 +189,47 @@ demo:
 	fi
 	poetry run python demo.py
 
+demo-switching:
+	@echo "Running advanced model switching demo..."
+	@if [ ! -f "demo_model_switching.py" ]; then \
+		echo "❌ demo_model_switching.py not found!"; \
+		exit 1; \
+	fi
+	@echo "🚀 Starting Model Switching Demo with Docker Integration"
+	@echo "This demo will automatically manage Docker containers"
+	poetry run python demo_model_switching.py
+
+demo-quick:
+	@echo "Running quick model switching demo..."
+	@if [ ! -f "demo_quick.py" ]; then \
+		echo "❌ demo_quick.py not found!"; \
+		exit 1; \
+	fi
+	@echo "⚡ Quick Demo - Fast Docker Integration Test"
+	@echo "This demo runs quickly with timeouts"
+	poetry run python demo_quick.py
+
+demo-working:
+	@echo "Running working model switching demo..."
+	@if [ ! -f "demo_working.py" ]; then \
+		echo "❌ demo_working.py not found!"; \
+		exit 1; \
+	fi
+	@echo "✅ Working Demo - Docker Integration with Direct Testing"
+	@echo "This demo tests direct model connections"
+	poetry run python demo_working.py
+
+demo-enhanced:
+	@echo "Running enhanced comprehensive demo..."
+	@if [ ! -f "demo_enhanced.py" ]; then \
+		echo "❌ demo_enhanced.py not found!"; \
+		exit 1; \
+	fi
+	@echo "🚀 Enhanced Demo - Comprehensive Testing with Large Queries"
+	@echo "This demo tests all models with queries exceeding limits"
+	@echo "Tests all compression strategies with detailed output"
+	poetry run python demo_enhanced.py
+
 compare-models:
 	@echo "Running model comparison..."
 	@echo "Configuration: AUTO_SWAP_MODELS=$(AUTO_SWAP_MODELS)"
@@ -248,7 +294,7 @@ dev-setup: install-dev install-ml
 	@echo "Development environment setup complete!"
 	@echo "Run 'make test' to verify installation"
 
-full-test: lint test test-cov
+full-test: lint-basic test test-cov
 	@echo "Full test suite completed!"
 
 # Quick development cycle
@@ -381,7 +427,7 @@ pre-commit:
 	@echo "✅ Pre-commit hooks installed!"
 
 # Combined quality checks
-quality-check: format lint security
+quality-check: format-basic lint-basic security
 	@echo "✅ All quality checks completed!"
 
 full-quality-check: format lint-strict security test-cov

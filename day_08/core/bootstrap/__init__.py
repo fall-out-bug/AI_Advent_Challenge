@@ -7,4 +7,4 @@ the application with all required dependencies.
 
 from .application_bootstrapper import ApplicationBootstrapper, BootstrapError
 
-__all__ = ['ApplicationBootstrapper', 'BootstrapError']
+__all__ = ["ApplicationBootstrapper", "BootstrapError"]

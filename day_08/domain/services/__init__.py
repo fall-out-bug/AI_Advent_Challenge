@@ -3,11 +3,11 @@ Domain services for the token analysis system.
 """
 
 from .token_analysis_services import (
-    TokenAnalysisService,
     CompressionService,
     ExperimentService,
     ModelEvaluationService,
-    QualityAssessmentService
+    QualityAssessmentService,
+    TokenAnalysisService,
 )
 
 __all__ = [

@@ -2,7 +2,11 @@
 Domain entities for the token analysis system.
 """
 
-from .token_analysis_entities import TokenAnalysisDomain, CompressionJob, ExperimentSession
+from .token_analysis_entities import (
+    CompressionJob,
+    ExperimentSession,
+    TokenAnalysisDomain,
+)
 
 __all__ = [
     "TokenAnalysisDomain",

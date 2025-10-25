@@ -6,14 +6,15 @@ for testing token analyzer functionality.
 """
 
 from typing import List
+
 from core.interfaces.protocols import ConfigurationProtocol
-from models.data_models import ModelLimits
 from core.token_analyzer import LimitProfile
+from models.data_models import ModelLimits
 
 
 class MockConfiguration(ConfigurationProtocol):
     """Mock configuration for testing."""
-    
+
     def __init__(self):
         """Initialize mock configuration with test data."""
         self._model_limits = {
@@ -68,23 +69,23 @@ class MockConfiguration(ConfigurationProtocol):
                 ),
             },
         }
-    
+
     def get_model_limits(self, model_name: str, profile: str) -> ModelLimits:
         """Get model limits for specific model and profile."""
         if model_name not in self._model_limits:
             # Default to starcoder practical limits
             return self._model_limits["starcoder"]["practical"]
-        
+
         return self._model_limits[model_name][profile]
-    
+
     def get_available_models(self) -> List[str]:
         """Get list of available models."""
         return list(self._model_limits.keys())
-    
+
     def get_available_profiles(self) -> List[str]:
         """Get list of available profiles."""
         return ["theoretical", "practical"]
-    
+
     def reload(self) -> None:
         """Reload configuration."""
         pass

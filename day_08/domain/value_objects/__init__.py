@@ -3,11 +3,11 @@ Domain value objects for the token analysis system.
 """
 
 from .token_analysis_values import (
-    TokenCount,
     CompressionRatio,
     ModelSpecification,
     ProcessingTime,
-    QualityScore
+    QualityScore,
+    TokenCount,
 )
 
 __all__ = [

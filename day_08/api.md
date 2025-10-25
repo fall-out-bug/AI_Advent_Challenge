@@ -821,6 +821,676 @@ class StrategyValidationError(ValidationError):
     pass
 ```
 
+## Domain Layer APIs
+
+### Domain Entities
+
+#### TokenAnalysisDomain
+
+```python
+@dataclass
+class TokenAnalysisDomain:
+    """Core domain entity representing a token analysis operation."""
+    
+    analysis_id: str
+    created_at: datetime = field(default_factory=datetime.now)
+    input_text: str
+    model_name: str
+    model_version: str
+    token_count: Optional[int] = None
+    compression_ratio: Optional[float] = None
+    processing_time: Optional[float] = None
+    confidence_score: Optional[float] = None
+    status: str = "pending"  # pending, processing, completed, failed
+    error_message: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def start_processing(self) -> None:
+        """
+        Mark analysis as processing.
+        
+        Raises:
+            ValueError: If not in pending status
+        """
+    
+    def complete_analysis(
+        self,
+        token_count: int,
+        compression_ratio: float,
+        processing_time: float,
+        confidence_score: float
+    ) -> None:
+        """
+        Complete the analysis with results.
+        
+        Args:
+            token_count: Number of tokens in the input
+            compression_ratio: Compression ratio achieved
+            processing_time: Time taken for processing
+            confidence_score: Confidence in the analysis
+            
+        Raises:
+            ValueError: If not in processing status
+        """
+    
+    def fail_analysis(self, error_message: str) -> None:
+        """
+        Mark analysis as failed.
+        
+        Args:
+            error_message: Error message describing the failure
+        """
+    
+    def is_completed(self) -> bool:
+        """Check if analysis is completed."""
+        return self.status == "completed"
+    
+    def is_failed(self) -> bool:
+        """Check if analysis failed."""
+        return self.status == "failed"
+```
+
+#### CompressionJob
+
+```python
+@dataclass
+class CompressionJob:
+    """Domain entity for compression operations."""
+    
+    job_id: str
+    created_at: datetime = field(default_factory=datetime.now)
+    original_text: str
+    target_tokens: int
+    strategy: str
+    model_name: str
+    compressed_text: Optional[str] = None
+    compression_ratio: Optional[float] = None
+    processing_time: Optional[float] = None
+    status: str = "pending"  # pending, processing, completed, failed
+    error_message: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def start_compression(self) -> None:
+        """Mark job as processing."""
+        if self.status != "pending":
+            raise ValueError(f"Cannot start compression from status: {self.status}")
+        self.status = "processing"
+    
+    def complete_compression(
+        self,
+        compressed_text: str,
+        compression_ratio: float,
+        processing_time: float
+    ) -> None:
+        """
+        Complete compression with results.
+        
+        Args:
+            compressed_text: The compressed text
+            compression_ratio: Achieved compression ratio
+            processing_time: Time taken for compression
+        """
+    
+    def fail_compression(self, error_message: str) -> None:
+        """Mark compression as failed."""
+        self.status = "failed"
+        self.error_message = error_message
+```
+
+### Value Objects
+
+#### TokenCount
+
+```python
+class TokenCount:
+    """Immutable value object representing a token count."""
+    
+    def __init__(self, count: int):
+        """
+        Initialize token count.
+        
+        Args:
+            count: Number of tokens (must be non-negative)
+            
+        Raises:
+            ValueError: If count is negative
+        """
+    
+    @property
+    def count(self) -> int:
+        """Get the token count."""
+    
+    def add(self, other: 'TokenCount') -> 'TokenCount':
+        """
+        Add another token count.
+        
+        Args:
+            other: Another token count to add
+            
+        Returns:
+            TokenCount: New token count with sum
+        """
+    
+    def subtract(self, other: 'TokenCount') -> 'TokenCount':
+        """
+        Subtract another token count.
+        
+        Args:
+            other: Another token count to subtract
+            
+        Returns:
+            TokenCount: New token count with difference
+            
+        Raises:
+            ValueError: If result would be negative
+        """
+    
+    def multiply(self, factor: float) -> 'TokenCount':
+        """
+        Multiply token count by factor.
+        
+        Args:
+            factor: Multiplication factor
+            
+        Returns:
+            TokenCount: New token count
+        """
+    
+    def __eq__(self, other) -> bool:
+        """Check equality with another TokenCount."""
+    
+    def __hash__(self) -> int:
+        """Get hash of the token count."""
+    
+    def __str__(self) -> str:
+        """String representation."""
+    
+    def __repr__(self) -> str:
+        """Representation."""
+```
+
+#### CompressionRatio
+
+```python
+class CompressionRatio:
+    """Immutable value object representing compression ratio."""
+    
+    def __init__(self, ratio: float):
+        """
+        Initialize compression ratio.
+        
+        Args:
+            ratio: Compression ratio (0.0 to 1.0)
+            
+        Raises:
+            ValueError: If ratio is not between 0 and 1
+        """
+    
+    @property
+    def ratio(self) -> float:
+        """Get the compression ratio."""
+    
+    def is_effective(self, threshold: float = 0.5) -> bool:
+        """
+        Check if compression is effective.
+        
+        Args:
+            threshold: Effectiveness threshold
+            
+        Returns:
+            bool: True if compression is effective
+        """
+    
+    def compression_percentage(self) -> float:
+        """Get compression as percentage."""
+        return (1.0 - self._ratio) * 100.0
+    
+    def __eq__(self, other) -> bool:
+        """Check equality with another CompressionRatio."""
+    
+    def __hash__(self) -> int:
+        """Get hash of the compression ratio."""
+    
+    def __str__(self) -> str:
+        """String representation."""
+```
+
+### Domain Services
+
+#### TokenAnalysisService
+
+```python
+class TokenAnalysisService:
+    """Domain service for complex token analysis operations."""
+    
+    def __init__(
+        self,
+        token_counter: TokenCounterProtocol,
+        compressor: CompressorProtocol,
+        repository: TokenAnalysisRepository
+    ):
+        """
+        Initialize token analysis service.
+        
+        Args:
+            token_counter: Token counter implementation
+            compressor: Text compressor implementation
+            repository: Token analysis repository
+        """
+    
+    async def analyze_with_compression(
+        self,
+        text: str,
+        model_spec: ModelSpecification,
+        max_tokens: int
+    ) -> TokenAnalysisDomain:
+        """
+        Perform complete analysis with compression if needed.
+        
+        Args:
+            text: Text to analyze
+            model_spec: Model specification
+            max_tokens: Maximum allowed tokens
+            
+        Returns:
+            TokenAnalysisDomain: Analysis result
+        """
+    
+    async def batch_analyze(
+        self,
+        texts: List[str],
+        model_spec: ModelSpecification
+    ) -> List[TokenAnalysisDomain]:
+        """
+        Analyze multiple texts in batch.
+        
+        Args:
+            texts: List of texts to analyze
+            model_spec: Model specification
+            
+        Returns:
+            List[TokenAnalysisDomain]: Analysis results
+        """
+```
+
+### Repository Interfaces
+
+#### TokenAnalysisRepository
+
+```python
+class TokenAnalysisRepository(ABC):
+    """Abstract repository for token analysis data access."""
+    
+    @abstractmethod
+    async def save(self, analysis: TokenAnalysisDomain) -> None:
+        """
+        Save token analysis.
+        
+        Args:
+            analysis: Token analysis to save
+        """
+    
+    @abstractmethod
+    async def find_by_id(self, analysis_id: str) -> Optional[TokenAnalysisDomain]:
+        """
+        Find analysis by ID.
+        
+        Args:
+            analysis_id: Analysis ID
+            
+        Returns:
+            Optional[TokenAnalysisDomain]: Found analysis or None
+        """
+    
+    @abstractmethod
+    async def find_by_model(
+        self, 
+        model_name: str, 
+        limit: int = 100
+    ) -> List[TokenAnalysisDomain]:
+        """
+        Find analyses by model name.
+        
+        Args:
+            model_name: Model name
+            limit: Maximum number of results
+            
+        Returns:
+            List[TokenAnalysisDomain]: Found analyses
+        """
+```
+
+## ML Engineering APIs
+
+### Model Evaluation
+
+#### ModelEvaluator
+
+```python
+class ModelEvaluator:
+    """Comprehensive model evaluation framework."""
+    
+    def __init__(self, ground_truth_loader: GroundTruthLoader):
+        """
+        Initialize model evaluator.
+        
+        Args:
+            ground_truth_loader: Loader for ground truth data
+        """
+    
+    def evaluate_token_counting_accuracy(
+        self, 
+        model_name: str, 
+        test_data: List[Tuple[str, int]]
+    ) -> EvaluationResult:
+        """
+        Evaluate token counting accuracy against ground truth.
+        
+        Args:
+            model_name: Name of the model to evaluate
+            test_data: List of (text, expected_token_count) tuples
+            
+        Returns:
+            EvaluationResult: Comprehensive evaluation results
+        """
+    
+    def calculate_metrics(
+        self, 
+        predictions: List[int], 
+        ground_truth: List[int]
+    ) -> Dict[str, float]:
+        """
+        Calculate evaluation metrics.
+        
+        Args:
+            predictions: Predicted token counts
+            ground_truth: Actual token counts
+            
+        Returns:
+            Dict[str, float]: Metrics including MAE, RMSE, R²
+        """
+    
+    def evaluate_compression_quality(
+        self,
+        original_texts: List[str],
+        compressed_texts: List[str],
+        compression_ratios: List[float]
+    ) -> CompressionQualityReport:
+        """
+        Evaluate compression quality.
+        
+        Args:
+            original_texts: Original texts
+            compressed_texts: Compressed texts
+            compression_ratios: Achieved compression ratios
+            
+        Returns:
+            CompressionQualityReport: Quality assessment
+        """
+```
+
+### Performance Monitoring
+
+#### PerformanceMonitor
+
+```python
+class PerformanceMonitor:
+    """Performance monitoring with drift detection."""
+    
+    def __init__(self, storage: MetricsStorage):
+        """
+        Initialize performance monitor.
+        
+        Args:
+            storage: Metrics storage implementation
+        """
+    
+    def track_prediction(
+        self, 
+        model_name: str, 
+        prediction: Any, 
+        latency: float,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """
+        Track model prediction performance.
+        
+        Args:
+            model_name: Name of the model
+            prediction: Model prediction
+            latency: Prediction latency in seconds
+            metadata: Additional metadata
+        """
+    
+    def detect_drift(
+        self, 
+        model_name: str, 
+        window_size: int = 100,
+        threshold: float = 0.05
+    ) -> DriftReport:
+        """
+        Detect performance drift.
+        
+        Args:
+            model_name: Name of the model
+            window_size: Size of the analysis window
+            threshold: Drift detection threshold
+            
+        Returns:
+            DriftReport: Drift analysis results
+        """
+    
+    def get_performance_report(
+        self,
+        model_name: str,
+        time_range: Optional[Tuple[datetime, datetime]] = None
+    ) -> PerformanceReport:
+        """
+        Get performance report for model.
+        
+        Args:
+            model_name: Name of the model
+            time_range: Time range for report
+            
+        Returns:
+            PerformanceReport: Performance metrics and trends
+        """
+```
+
+### Experiment Tracking
+
+#### ExperimentTracker
+
+```python
+class ExperimentTracker:
+    """Comprehensive experiment tracking system."""
+    
+    def __init__(self, storage: ExperimentStorage):
+        """
+        Initialize experiment tracker.
+        
+        Args:
+            storage: Experiment storage implementation
+        """
+    
+    def start_experiment(
+        self, 
+        name: str, 
+        hyperparameters: Dict[str, Any],
+        description: Optional[str] = None
+    ) -> str:
+        """
+        Start a new experiment.
+        
+        Args:
+            name: Experiment name
+            hyperparameters: Experiment hyperparameters
+            description: Optional experiment description
+            
+        Returns:
+            str: Experiment ID
+        """
+    
+    def log_metrics(
+        self, 
+        experiment_id: str, 
+        metrics: Dict[str, float],
+        step: Optional[int] = None
+    ) -> None:
+        """
+        Log experiment metrics.
+        
+        Args:
+            experiment_id: ID of the experiment
+            metrics: Metrics to log
+            step: Optional step number
+        """
+    
+    def log_artifacts(
+        self,
+        experiment_id: str,
+        artifacts: Dict[str, Any]
+    ) -> None:
+        """
+        Log experiment artifacts.
+        
+        Args:
+            experiment_id: ID of the experiment
+            artifacts: Artifacts to log (models, data, etc.)
+        """
+    
+    def compare_experiments(
+        self, 
+        experiment_ids: List[str]
+    ) -> ComparisonReport:
+        """
+        Compare multiple experiments.
+        
+        Args:
+            experiment_ids: List of experiment IDs to compare
+            
+        Returns:
+            ComparisonReport: Detailed comparison results
+        """
+    
+    def get_best_run(
+        self,
+        experiment_id: str,
+        metric: str,
+        mode: str = "min"
+    ) -> Optional[ExperimentRun]:
+        """
+        Get the best run for an experiment.
+        
+        Args:
+            experiment_id: ID of the experiment
+            metric: Metric to optimize
+            mode: Optimization mode ("min" or "max")
+            
+        Returns:
+            Optional[ExperimentRun]: Best run or None
+        """
+```
+
+### Model Registry
+
+#### ModelRegistry
+
+```python
+class ModelRegistry:
+    """Model registry with versioning and lifecycle management."""
+    
+    def __init__(self, storage: ModelStorage):
+        """
+        Initialize model registry.
+        
+        Args:
+            storage: Model storage implementation
+        """
+    
+    def register_model(
+        self, 
+        model_name: str, 
+        version: str, 
+        metadata: Dict[str, Any],
+        model_path: Optional[str] = None
+    ) -> str:
+        """
+        Register a new model version.
+        
+        Args:
+            model_name: Name of the model
+            version: Model version
+            metadata: Model metadata
+            model_path: Optional path to model file
+            
+        Returns:
+            str: Model registration ID
+        """
+    
+    def promote_to_production(
+        self, 
+        model_name: str, 
+        version: str
+    ) -> None:
+        """
+        Promote model version to production.
+        
+        Args:
+            model_name: Name of the model
+            version: Version to promote
+            
+        Raises:
+            ValueError: If model version not found
+        """
+    
+    def rollback_model(
+        self, 
+        model_name: str, 
+        target_version: str
+    ) -> None:
+        """
+        Rollback to previous model version.
+        
+        Args:
+            model_name: Name of the model
+            target_version: Version to rollback to
+            
+        Raises:
+            ValueError: If target version not found
+        """
+    
+    def get_model_info(
+        self,
+        model_name: str,
+        version: Optional[str] = None
+    ) -> ModelInfo:
+        """
+        Get model information.
+        
+        Args:
+            model_name: Name of the model
+            version: Optional specific version
+            
+        Returns:
+            ModelInfo: Model information
+        """
+    
+    def list_models(
+        self,
+        status: Optional[str] = None
+    ) -> List[ModelInfo]:
+        """
+        List all models.
+        
+        Args:
+            status: Optional status filter
+            
+        Returns:
+            List[ModelInfo]: List of model information
+        """
+```
+
 ## Usage Examples
 
 ### Basic Token Counting
