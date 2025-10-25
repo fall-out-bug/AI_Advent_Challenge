@@ -118,3 +118,55 @@ class RequestValidator:
                 RequestValidator.validate_text(text)
             except ValueError as e:
                 raise ValueError(f"Invalid text at index {i}: {e}")
+    
+    @staticmethod
+    def validate_token_count_request(text: str, model_name: str) -> None:
+        """
+        Validate token count request.
+        
+        Args:
+            text: Text to count tokens for
+            model_name: Model name to use
+            
+        Raises:
+            ValueError: If request is invalid
+        """
+        RequestValidator.validate_text(text)
+        RequestValidator.validate_model_name(model_name)
+    
+    @staticmethod
+    def validate_batch_token_count_request(texts: List[str], model_name: str) -> None:
+        """
+        Validate batch token count request.
+        
+        Args:
+            texts: List of texts to count tokens for
+            model_name: Model name to use
+            
+        Raises:
+            ValueError: If request is invalid
+        """
+        RequestValidator.validate_texts_list(texts)
+        RequestValidator.validate_model_name(model_name)
+    
+    @staticmethod
+    def validate_compression_request(text: str, max_tokens: int, model_name: str, strategy: str) -> None:
+        """
+        Validate compression request.
+        
+        Args:
+            text: Text to compress
+            max_tokens: Maximum tokens allowed
+            model_name: Model name to use
+            strategy: Compression strategy
+            
+        Raises:
+            ValueError: If request is invalid
+        """
+        RequestValidator.validate_text(text)
+        RequestValidator.validate_max_tokens(max_tokens)
+        RequestValidator.validate_model_name(model_name)
+        
+        # For preview requests, strategy validation is bypassed
+        if strategy != "preview":
+            RequestValidator.validate_strategy(strategy)

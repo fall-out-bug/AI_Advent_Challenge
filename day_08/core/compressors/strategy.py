@@ -18,9 +18,9 @@ class CompressionStrategy(Enum):
     
     TRUNCATION = "truncation"
     KEYWORDS = "keywords"
+    EXTRACTIVE = "extractive"
+    SEMANTIC = "semantic"
     # Future strategies can be added here
-    # EXTRACTIVE = "extractive"
-    # SEMANTIC = "semantic"
     # SUMMARIZATION = "summarization"
 
 
