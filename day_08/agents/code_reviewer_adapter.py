@@ -160,9 +160,12 @@ class CodeReviewerAdapter:
         try:
             self.logger.info("Reviewing code quality...")
             
+            # Set the correct model for the SDK agent
+            self.reviewer_agent.set_model(model_name)
+            
             # Use SDK agent for code review
             quality_metrics = await self._review_with_sdk_agent(
-                generated_code, task_description, tests
+                generated_code, task_description, tests, model_name
             )
             
             return quality_metrics
@@ -190,7 +193,8 @@ class CodeReviewerAdapter:
         self,
         generated_code: str,
         task_description: str,
-        tests: Optional[str]
+        tests: Optional[str],
+        model_name: str
     ) -> CodeQualityMetrics:
         """Review code using SDK CodeReviewerAgent."""
         try:
@@ -200,13 +204,13 @@ class CodeReviewerAdapter:
                 context={
                     "generated_code": generated_code,
                     "tests": tests or "",
-                    "model_name": "starcoder"  # Default model
+                    "model_name": model_name
                 },
                 metadata=TaskMetadata(
                     task_id=f"rev_{hash(generated_code)}",
                     task_type="code_review",
                     timestamp=asyncio.get_event_loop().time(),
-                    model_name="starcoder"
+                    model_name=model_name
                 )
             )
             

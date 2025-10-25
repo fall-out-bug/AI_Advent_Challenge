@@ -102,7 +102,7 @@ class DemoReportGenerator:
         return f"""# Token Analysis Demo Report
 
 **Generated:** {timestamp}
-**Models Tested:** {', '.join(summary.get('models_tested', []))}
+**Models Tested:** {summary.get('models_tested', 0)}
 **Success Rate:** {summary.get('success_rate', 0.0) * 100:.1f}%
 
 ---

@@ -140,13 +140,10 @@ class EnhancedModelSwitchingDemo(ModelSwitchingDemo):
             # Keep only the requested model
             self.config["models"] = [requested_model]
         else:
-            # Test all available models
-            if not available_models:
-                print("⚠️  No models are currently running. Will start models sequentially during testing.")
-                available_models = self.config["models"]
-            
-            # Update config to include available or configured models
-            self.config["models"] = available_models
+            # Test all configured models regardless of current availability
+            print("🎯 Testing all configured models (will attempt to start unavailable models)")
+            # Keep all configured models - don't filter by availability
+            # self.config["models"] remains unchanged
         
         print(f"📊 Will test {len(self.config['models'])} models: {self.config['models']}")
 
@@ -199,11 +196,27 @@ class EnhancedModelSwitchingDemo(ModelSwitchingDemo):
         
         print(f"✅ Successfully switched to {model_name}")
         
-        # Run three-stage tests with detailed output
-        await self._run_three_stage_detailed(model_name)
-        
-        # Test compression on ALL queries
-        await self._test_all_compressions_detailed(model_name)
+        try:
+            # Run three-stage tests with detailed output
+            await self._run_three_stage_detailed(model_name)
+            
+            # Test compression on ALL queries
+            await self._test_all_compressions_detailed(model_name)
+            
+        finally:
+            # Always stop the current model container after testing
+            if self.orchestrator.use_container_management and self.orchestrator.docker_manager:
+                if model_name in self.orchestrator.running_containers:
+                    print(f"\n🛑 Stopping {model_name} container...")
+                    stop_success = await self.orchestrator.docker_manager.stop_model(model_name, timeout=30)
+                    if stop_success:
+                        self.orchestrator.running_containers.discard(model_name)
+                        print(f"✅ Successfully stopped {model_name}")
+                    else:
+                        print(f"⚠️  Failed to stop {model_name}, continuing anyway")
+            
+            # Clear current model
+            self.orchestrator.current_model = None
     
     async def _run_three_stage_detailed(self, model_name: str) -> None:
         """

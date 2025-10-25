@@ -174,6 +174,9 @@ class CodeGeneratorAdapter:
         try:
             self.logger.info(f"Generating code for: {task_description[:50]}...")
             
+            # Set the correct model for the SDK agent
+            self.generator_agent.set_model(model_name)
+            
             # Check if task exceeds token limits
             model_limits = self.token_counter.get_model_limits(model_name)
             task_tokens = self.token_counter.count_tokens(task_description, model_name).count

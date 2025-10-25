@@ -9,7 +9,7 @@ from typing import Dict, List, Any
 
 # Demo configuration
 DEMO_CONFIG = {
-    # Models to test (all available models)
+    # Models to test (each model uses itself for all operations)
     "models": ["starcoder", "mistral", "qwen", "tinyllama"],
     
     # Supported compression algorithms (only truncation and keywords are implemented)
