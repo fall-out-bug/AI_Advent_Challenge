@@ -3,6 +3,28 @@ Factory for creating token counter instances.
 
 Provides factory methods for creating different types of token counters
 with proper configuration injection.
+
+Example:
+    Creating different types of token counters:
+    
+    ```python
+    from core.factories.token_counter_factory import TokenCounterFactory
+    from core.token_analyzer import LimitProfile
+    from core.interfaces.protocols import ConfigurationProtocol
+    
+    # Create simple token counter
+    simple_counter = TokenCounterFactory.create_simple()
+    
+    # Create accurate token counter
+    accurate_counter = TokenCounterFactory.create_accurate()
+    
+    # Create hybrid token counter
+    hybrid_counter = TokenCounterFactory.create_hybrid()
+    
+    # Create from configuration
+    config = MyConfiguration()
+    counter = TokenCounterFactory.create_from_config(config, "simple")
+    ```
 """
 
 from typing import Optional
@@ -12,7 +34,31 @@ from core.accurate_token_counter import AccurateTokenCounter
 
 
 class TokenCounterFactory:
-    """Factory for creating token counter instances."""
+    """
+    Factory for creating token counter instances.
+    
+    Implements the Factory pattern to create different types of token counters
+    with proper configuration injection. Provides a centralized way to create
+    token counter instances with consistent configuration.
+
+    Example:
+        ```python
+        from core.factories.token_counter_factory import TokenCounterFactory
+        from core.token_analyzer import LimitProfile
+        from models.data_models import TokenInfo
+        
+        # Create different types of counters
+        simple_counter = TokenCounterFactory.create_simple()
+        accurate_counter = TokenCounterFactory.create_accurate()
+        
+        # Use the counters
+        text = "Hello world!"
+        simple_info = simple_counter.count_tokens(text)
+        accurate_info = accurate_counter.count_tokens(text, "starcoder")
+        
+        print(f"Simple: {simple_info.count}, Accurate: {accurate_info.count}")
+        ```
+    """
     
     @staticmethod
     def create_simple(

@@ -3,6 +3,33 @@ Builder pattern for ExperimentResult construction.
 
 Provides a fluent interface for building ExperimentResult
 objects with proper validation and defaults.
+
+Example:
+    Building experiment results:
+    
+    ```python
+    from core.builders.experiment_builder import ExperimentResultBuilder
+    from models.data_models import ExperimentResult, CompressionResult
+    
+    # Build a successful experiment result
+    result = (ExperimentResultBuilder()
+             .with_experiment_name("token_limit_test")
+             .with_model_name("starcoder")
+             .with_original_query("Very long query...")
+             .with_processed_query("Compressed query...")
+             .with_response("Model response...")
+             .with_compression_result(compression_result)
+             .with_metrics(metrics)
+             .build())
+    
+    # Build a failed experiment result
+    failed_result = (ExperimentResultBuilder()
+                    .with_experiment_name("failed_test")
+                    .with_model_name("starcoder")
+                    .with_original_query("Query that fails...")
+                    .with_error("Token limit exceeded")
+                    .build())
+    ```
 """
 
 from typing import Optional
@@ -16,6 +43,29 @@ class ExperimentResultBuilder:
     
     Provides a fluent interface for constructing ExperimentResult
     objects with proper validation and defaults.
+    
+    This class implements the Builder pattern to create complex
+    ExperimentResult objects step by step, ensuring all required
+    fields are properly set.
+
+    Example:
+        ```python
+        from core.builders.experiment_builder import ExperimentResultBuilder
+        from models.data_models import ExperimentResult
+        
+        # Build experiment result step by step
+        builder = ExperimentResultBuilder()
+        result = (builder
+                 .with_experiment_name("compression_test")
+                 .with_model_name("starcoder")
+                 .with_original_query("Original long query...")
+                 .with_processed_query("Compressed query...")
+                 .with_response("Model response...")
+                 .build())
+        
+        print(f"Experiment: {result.experiment_name}")
+        print(f"Success: {bool(result.response)}")
+        ```
     """
     
     def __init__(self):

@@ -2,12 +2,14 @@
 Application bootstrapper for dependency initialization.
 
 This module provides the ApplicationBootstrapper class that handles
-the initialization of all application components and their dependencies.
+the initialization of all application components and their dependencies
+using the DI container.
 """
 
 import os
 from typing import Optional, Dict, Any
 
+from core.container import ApplicationContainer, configure_container, get_container
 from core.experiments import TokenLimitExperiments
 from core.interfaces.protocols import TokenCounterProtocol
 from core.ml_client import TokenAnalysisClient
@@ -19,10 +21,11 @@ from utils.logging import LoggerFactory
 
 class ApplicationBootstrapper:
     """
-    Bootstrap application with all dependencies.
+    Bootstrap application with all dependencies using DI container.
     
     This class handles the initialization of all application components,
-    their dependencies, and creates the ApplicationContext for runtime execution.
+    their dependencies, and creates the ApplicationContext for runtime execution
+    using the dependency injection container.
     """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
@@ -34,12 +37,13 @@ class ApplicationBootstrapper:
         """
         self.config = config or {}
         self.logger = LoggerFactory.create_logger(__name__)
+        self.container: Optional[ApplicationContainer] = None
 
     def bootstrap(self) -> ApplicationContext:
         """
-        Bootstrap application with all dependencies.
+        Bootstrap application with all dependencies using DI container.
         
-        Creates and initializes all required components,
+        Creates and initializes all required components using the DI container,
         then returns the ApplicationContext.
         
         Returns:
@@ -48,26 +52,14 @@ class ApplicationBootstrapper:
         Raises:
             BootstrapError: If component initialization fails
         """
-        self.logger.info("Starting application bootstrap")
+        self.logger.info("Starting application bootstrap with DI container")
         
         try:
-            # Initialize core components
-            token_counter = self._create_token_counter()
-            text_compressor = self._create_text_compressor(token_counter)
-            ml_client = self._create_ml_client()
-            experiments = self._create_experiments(ml_client, token_counter, text_compressor)
-            reporter = self._create_reporter()
+            # Configure and initialize DI container
+            self.container = configure_container(self.config)
             
-            # Create application context
-            context = ApplicationContext(
-                token_counter=token_counter,
-                text_compressor=text_compressor,
-                ml_client=ml_client,
-                experiments=experiments,
-                reporter=reporter,
-                logger=self.logger,
-                config=self.config
-            )
+            # Get application context from container
+            context = self.container.application_context()
             
             # Validate context
             if not context.validate_components():
@@ -80,87 +72,6 @@ class ApplicationBootstrapper:
             self.logger.error(f"Bootstrap failed: {e}")
             raise BootstrapError(f"Failed to bootstrap application: {e}") from e
 
-    def _create_token_counter(self) -> TokenCounterProtocol:
-        """
-        Create token counter instance.
-        
-        Returns:
-            TokenCounterProtocol: Initialized token counter
-        """
-        self.logger.debug("Creating token counter")
-        
-        # Use configuration if available, otherwise use defaults
-        mode = self.config.get('token_counter_mode', 'simple')
-        limit_profile = self.config.get('limit_profile', 'practical')
-        
-        # For now, we'll create a mock token counter for testing
-        # In the future, this could create different types based on mode
-        from unittest.mock import Mock
-        mock_counter = Mock(spec=TokenCounterProtocol)
-        mock_counter.count_tokens.return_value = Mock(count=100)
-        mock_counter.get_model_limits.return_value = Mock(max_input_tokens=4096)
-        mock_counter.check_limit_exceeded.return_value = False
-        mock_counter.estimate_compression_target.return_value = 3000
-        
-        return mock_counter
-
-    def _create_text_compressor(self, token_counter: TokenCounterProtocol) -> SimpleTextCompressor:
-        """
-        Create text compressor instance.
-        
-        Args:
-            token_counter: Token counter dependency
-            
-        Returns:
-            SimpleTextCompressor: Initialized text compressor
-        """
-        self.logger.debug("Creating text compressor")
-        return SimpleTextCompressor(token_counter)
-
-    def _create_ml_client(self) -> TokenAnalysisClient:
-        """
-        Create ML client instance.
-        
-        Returns:
-            TokenAnalysisClient: Initialized ML client
-        """
-        self.logger.debug("Creating ML client")
-        
-        # Use configuration for ML service URL if available
-        base_url = self.config.get('ml_service_url', 'http://localhost:8004')
-        
-        return TokenAnalysisClient(base_url=base_url)
-
-    def _create_experiments(
-        self, 
-        ml_client: TokenAnalysisClient, 
-        token_counter: TokenCounterProtocol, 
-        text_compressor: SimpleTextCompressor
-    ) -> TokenLimitExperiments:
-        """
-        Create experiments orchestrator instance.
-        
-        Args:
-            ml_client: ML client dependency
-            token_counter: Token counter dependency
-            text_compressor: Text compressor dependency
-            
-        Returns:
-            TokenLimitExperiments: Initialized experiments orchestrator
-        """
-        self.logger.debug("Creating experiments orchestrator")
-        return TokenLimitExperiments(ml_client, token_counter, text_compressor)
-
-    def _create_reporter(self) -> ConsoleReporter:
-        """
-        Create console reporter instance.
-        
-        Returns:
-            ConsoleReporter: Initialized console reporter
-        """
-        self.logger.debug("Creating console reporter")
-        return ConsoleReporter()
-
     def get_bootstrap_info(self) -> Dict[str, Any]:
         """
         Get information about the bootstrap configuration.
@@ -172,14 +83,48 @@ class ApplicationBootstrapper:
             'config_keys': list(self.config.keys()),
             'config_available': bool(self.config),
             'logger_configured': self.logger is not None,
-            'bootstrap_methods': [
-                '_create_token_counter',
-                '_create_text_compressor', 
-                '_create_ml_client',
-                '_create_experiments',
-                '_create_reporter'
-            ]
+            'container_initialized': self.container is not None,
+            'container_health': self._check_container_health() if self.container else None
         }
+    
+    def _check_container_health(self) -> Dict[str, Any]:
+        """
+        Check container health.
+        
+        Returns:
+            Dict[str, Any]: Container health information
+        """
+        if not self.container:
+            return {"status": "not_initialized"}
+        
+        try:
+            # Test if we can get components from container
+            token_counter = self.container.token_counter()
+            text_compressor = self.container.text_compressor()
+            ml_client = self.container.ml_client()
+            
+            return {
+                "status": "healthy",
+                "components": {
+                    "token_counter": token_counter is not None,
+                    "text_compressor": text_compressor is not None,
+                    "ml_client": ml_client is not None
+                }
+            }
+        except Exception as e:
+            return {
+                "status": "unhealthy",
+                "error": str(e)
+            }
+    
+    def get_container(self) -> Optional[ApplicationContainer]:
+        """
+        Get the DI container instance.
+        
+        Returns:
+            Optional[ApplicationContainer]: Container instance if initialized
+        """
+        return self.container
 
 
 class BootstrapError(Exception):

@@ -4,6 +4,33 @@ Client for Token Analysis ML Service.
 This client provides a clean interface to interact with the ML service
 running in Docker container, handling heavy operations like accurate
 token counting and advanced compression.
+
+Example:
+    Basic usage for token counting:
+    
+    ```python
+    from core.ml_client import TokenAnalysisClient
+    from models.data_models import TokenInfo
+    
+    client = TokenAnalysisClient("http://localhost:8004")
+    
+    # Count tokens accurately
+    token_info = await client.count_tokens("Hello world!", "starcoder")
+    print(f"Token count: {token_info.count}")
+    ```
+    
+    Advanced compression usage:
+    
+    ```python
+    # Compress text using ML service
+    result = await client.compress_text(
+        text="Very long text...",
+        max_tokens=100,
+        strategy="extractive",
+        model_name="starcoder"
+    )
+    print(f"Compressed: {result.compressed_text}")
+    ```
 """
 
 import asyncio
@@ -23,14 +50,63 @@ class TokenAnalysisClient:
 
     Provides methods to interact with the ML service running in Docker
     for accurate token counting and advanced compression strategies.
+    
+    Features:
+    - Retry logic with exponential backoff
+    - Circuit breaker pattern for resilience
+    - Structured logging for debugging
+    - Request validation
+
+    Attributes:
+        base_url (str): Base URL of the ML service
+        client (httpx.AsyncClient): HTTP client for requests
+        logger: Logger instance for structured logging
+        resilient_client (ResilientClient): Client with retry and circuit breaker
+
+    Example:
+        ```python
+        from core.ml_client import TokenAnalysisClient
+        from models.data_models import TokenInfo, CompressionResult
+        
+        # Initialize client
+        client = TokenAnalysisClient("http://localhost:8004")
+        
+        # Count tokens
+        token_info = await client.count_tokens("Hello world!", "starcoder")
+        
+        # Compress text
+        result = await client.compress_text(
+            text="Very long text...",
+            max_tokens=100,
+            strategy="extractive"
+        )
+        
+        # Batch operations
+        texts = ["Text 1", "Text 2", "Text 3"]
+        batch_result = await client.batch_count_tokens(texts, "starcoder")
+        ```
     """
 
     def __init__(self, base_url: str = "http://localhost:8004"):
         """
         Initialize client with retry and circuit breaker.
 
+        Sets up the HTTP client with retry logic, circuit breaker pattern,
+        and structured logging for robust communication with the ML service.
+
         Args:
-            base_url: Base URL of the ML service
+            base_url: Base URL of the ML service (default: "http://localhost:8004")
+
+        Example:
+            ```python
+            from core.ml_client import TokenAnalysisClient
+            
+            # Default local service
+            client = TokenAnalysisClient()
+            
+            # Custom service URL
+            client = TokenAnalysisClient("http://ml-service:8004")
+            ```
         """
         self.base_url = base_url.rstrip("/")
         self.client = httpx.AsyncClient(timeout=30.0)
@@ -101,12 +177,32 @@ class TokenAnalysisClient:
         """
         Count tokens using accurate HuggingFace tokenizers.
 
+        Sends text to the ML service for accurate token counting using
+        the actual tokenizer for the specified model. This provides
+        much more accurate results than word-based estimation.
+
         Args:
             text: Text to count tokens for
-            model_name: Name of the model
+            model_name: Name of the model (default: "starcoder")
 
         Returns:
-            TokenInfo with accurate token count
+            TokenInfo: Object containing accurate token count and metadata
+
+        Example:
+            ```python
+            from core.ml_client import TokenAnalysisClient
+            from models.data_models import TokenInfo
+            
+            client = TokenAnalysisClient()
+            
+            # Count tokens accurately
+            text = "Hello world! This is a test."
+            token_info = await client.count_tokens(text, "starcoder")
+            
+            print(f"Accurate token count: {token_info.count}")
+            print(f"Model: {token_info.model}")
+            print(f"Cost: {token_info.estimated_cost}")
+            ```
         """
         self._validate_count_tokens_input(text, model_name)
         response_data = await self._execute_count_request(text, model_name)
@@ -182,14 +278,41 @@ class TokenAnalysisClient:
         """
         Compress text using advanced strategies.
 
+        Sends text to the ML service for advanced compression using
+        sophisticated algorithms like extractive summarization or
+        semantic chunking. These strategies preserve meaning better
+        than simple truncation.
+
         Args:
             text: Text to compress
-            max_tokens: Maximum allowed tokens
-            model_name: Name of the model
+            max_tokens: Maximum allowed tokens for compressed text
+            model_name: Name of the model (default: "starcoder")
             strategy: Compression strategy ("extractive" or "semantic")
 
         Returns:
-            CompressionResult with compression details
+            CompressionResult: Object containing compressed text, token counts, and ratio
+
+        Example:
+            ```python
+            from core.ml_client import TokenAnalysisClient
+            from models.data_models import CompressionResult
+            
+            client = TokenAnalysisClient()
+            
+            # Compress using extractive strategy
+            text = "This is a very long text that needs compression..."
+            result = await client.compress_text(
+                text=text,
+                max_tokens=100,
+                model_name="starcoder",
+                strategy="extractive"
+            )
+            
+            print(f"Original tokens: {result.original_tokens}")
+            print(f"Compressed tokens: {result.compressed_tokens}")
+            print(f"Compression ratio: {result.compression_ratio}")
+            print(f"Compressed text: {result.compressed_text}")
+            ```
         """
         self._validate_compression_input(text, max_tokens, model_name, strategy)
         response_data = await self._execute_compression_request(text, max_tokens, model_name, strategy)

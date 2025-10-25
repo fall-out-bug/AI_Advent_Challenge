@@ -3,6 +3,45 @@ Structured logging utilities for Token Analysis System.
 
 This module provides structured logging functionality
 with JSON formatting and request tracking.
+
+Example:
+    Basic logging setup:
+    
+    ```python
+    from utils.logging import LoggerFactory
+    
+    # Create logger
+    logger = LoggerFactory.create_logger("my_module")
+    
+    # Log structured data
+    logger.info("Processing request", 
+                request_id="123", 
+                model="starcoder", 
+                tokens=150)
+    
+    # Log errors with context
+    logger.error("Token limit exceeded", 
+                 model="starcoder", 
+                 tokens=5000, 
+                 limit=4096)
+    ```
+    
+    Advanced logging configuration:
+    
+    ```python
+    # Create logger with custom configuration
+    logger = LoggerFactory.create_logger(
+        name="experiments",
+        level="DEBUG",
+        format_type="json"
+    )
+    
+    # Log experiment results
+    logger.info("Experiment completed",
+                experiment="compression_test",
+                success=True,
+                compression_ratio=0.3)
+    ```
 """
 
 import logging

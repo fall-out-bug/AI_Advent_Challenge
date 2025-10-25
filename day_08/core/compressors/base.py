@@ -3,6 +3,25 @@ Base compressor class with template method pattern.
 
 Provides common compression logic and abstract methods
 for specific compression strategies.
+
+Example:
+    Creating a custom compressor:
+    
+    ```python
+    from core.compressors.base import BaseCompressor
+    from core.interfaces.protocols import TokenCounterProtocol
+    from models.data_models import CompressionResult
+    
+    class CustomCompressor(BaseCompressor):
+        def _compress_impl(self, text: str, max_tokens: int, model_name: str) -> CompressionResult:
+            # Implement custom compression logic
+            compressed_text = self._custom_compression(text, max_tokens)
+            return self._build_result(text, compressed_text, model_name)
+        
+        def _custom_compression(self, text: str, max_tokens: int) -> str:
+            # Custom compression implementation
+            return text[:max_tokens]  # Simple truncation example
+    ```
 """
 
 from abc import ABC, abstractmethod
@@ -17,6 +36,31 @@ class BaseCompressor(ABC, CompressorProtocol):
     
     Provides common compression logic and delegates
     specific compression strategies to subclasses.
+    
+    This class implements the Template Method pattern, providing
+    a common structure for compression while allowing subclasses
+    to implement specific compression algorithms.
+
+    Attributes:
+        token_counter (TokenCounterProtocol): Token counter for counting tokens
+
+    Example:
+        ```python
+        from core.compressors.base import BaseCompressor
+        from core.token_analyzer import SimpleTokenCounter
+        from models.data_models import CompressionResult
+        
+        class MyCompressor(BaseCompressor):
+            def _compress_impl(self, text: str, max_tokens: int, model_name: str) -> CompressionResult:
+                # Implement compression logic
+                compressed = text[:max_tokens * 4]  # Rough character limit
+                return self._build_result(text, compressed, model_name)
+        
+        # Use the compressor
+        token_counter = SimpleTokenCounter()
+        compressor = MyCompressor(token_counter)
+        result = compressor.compress("Long text...", max_tokens=100)
+        ```
     """
     
     def __init__(self, token_counter: TokenCounterProtocol):

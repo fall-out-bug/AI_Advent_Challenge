@@ -4,6 +4,37 @@ Experiments module for testing token limits and compression strategies.
 This module provides experiments to demonstrate how models behave
 with different token counts, including limit-exceeding queries
 and various compression strategies.
+
+Example:
+    Basic experiment setup:
+    
+    ```python
+    from core.experiments import TokenLimitExperiments
+    from core.ml_client import TokenAnalysisClient
+    from core.token_analyzer import SimpleTokenCounter
+    from core.text_compressor import SimpleTextCompressor
+    
+    # Initialize components
+    ml_client = TokenAnalysisClient()
+    token_counter = SimpleTokenCounter()
+    text_compressor = SimpleTextCompressor(token_counter)
+    
+    # Create experiments instance
+    experiments = TokenLimitExperiments(ml_client, token_counter, text_compressor)
+    
+    # Run limit exceeded experiment
+    results = experiments.run_limit_exceeded_experiment("starcoder")
+    ```
+    
+    Advanced experiments:
+    
+    ```python
+    # Model comparison experiment
+    comparison_results = experiments.run_model_comparison_experiment()
+    
+    # Advanced compression experiment
+    compression_results = experiments.run_advanced_compression_experiment()
+    ```
 """
 
 import time
@@ -22,6 +53,40 @@ class TokenLimitExperiments:
 
     Provides methods to run experiments with different query lengths
     and compression strategies to demonstrate model behavior.
+
+    Attributes:
+        model_client: Instance of TokenAnalysisClient for ML operations
+        token_counter: Instance of SimpleTokenCounter for token counting
+        text_compressor: Instance of SimpleTextCompressor for text compression
+        logger: Logger instance for structured logging
+
+    Example:
+        ```python
+        from core.experiments import TokenLimitExperiments
+        from core.ml_client import TokenAnalysisClient
+        from core.token_analyzer import SimpleTokenCounter
+        from core.text_compressor import SimpleTextCompressor
+        from models.data_models import ExperimentResult
+        
+        # Initialize components
+        ml_client = TokenAnalysisClient()
+        token_counter = SimpleTokenCounter()
+        text_compressor = SimpleTextCompressor(token_counter)
+        
+        # Create experiments instance
+        experiments = TokenLimitExperiments(ml_client, token_counter, text_compressor)
+        
+        # Run different types of experiments
+        limit_results = experiments.run_limit_exceeded_experiment("starcoder")
+        comparison_results = experiments.run_model_comparison_experiment()
+        compression_results = experiments.run_advanced_compression_experiment()
+        
+        # Process results
+        for result in limit_results:
+            print(f"Query: {result.original_query[:50]}...")
+            print(f"Success: {bool(result.response)}")
+            print(f"Compression ratio: {result.compression_ratio}")
+        ```
     """
 
     def __init__(self, model_client, token_counter, text_compressor):
@@ -29,9 +94,25 @@ class TokenLimitExperiments:
         Initialize experiments with required components.
 
         Args:
-            model_client: Instance of UnifiedModelClient
-            token_counter: Instance of SimpleTokenCounter
-            text_compressor: Instance of SimpleTextCompressor
+            model_client: Instance of TokenAnalysisClient for ML operations
+            token_counter: Instance of SimpleTokenCounter for token counting
+            text_compressor: Instance of SimpleTextCompressor for text compression
+
+        Example:
+            ```python
+            from core.experiments import TokenLimitExperiments
+            from core.ml_client import TokenAnalysisClient
+            from core.token_analyzer import SimpleTokenCounter
+            from core.text_compressor import SimpleTextCompressor
+            
+            # Initialize components
+            ml_client = TokenAnalysisClient()
+            token_counter = SimpleTokenCounter()
+            text_compressor = SimpleTextCompressor(token_counter)
+            
+            # Create experiments instance
+            experiments = TokenLimitExperiments(ml_client, token_counter, text_compressor)
+            ```
         """
         self.model_client = model_client
         self.token_counter = token_counter
@@ -124,11 +205,35 @@ class TokenLimitExperiments:
         """
         Run experiments with limit-exceeding queries and compression strategies.
 
+        Tests how different compression strategies handle queries that exceed
+        the model's token limit. Compares no compression, truncation, and
+        keyword extraction strategies.
+
         Args:
-            model_name: Name of the model to test
+            model_name: Name of the model to test (default: "starcoder")
 
         Returns:
-            List[ExperimentResult]: Results of all experiments
+            List[ExperimentResult]: Results of all experiments including:
+            - No compression test (baseline failure)
+            - Truncation compression test
+            - Keywords compression test
+
+        Example:
+            ```python
+            from core.experiments import TokenLimitExperiments
+            from models.data_models import ExperimentResult
+            
+            experiments = TokenLimitExperiments(ml_client, token_counter, text_compressor)
+            
+            # Run limit exceeded experiments
+            results = await experiments.run_limit_exceeded_experiment("starcoder")
+            
+            # Analyze results
+            for i, result in enumerate(results):
+                strategy = ["no_compression", "truncation", "keywords"][i]
+                print(f"{strategy}: Success={bool(result.response)}, "
+                      f"Ratio={result.compression_ratio}")
+            ```
         """
         context = self._prepare_experiment_context(model_name)
         

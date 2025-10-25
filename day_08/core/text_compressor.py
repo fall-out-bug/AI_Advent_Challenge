@@ -5,6 +5,33 @@ This module provides multiple compression strategies:
 1. Truncation: Keep first and last sentences with middle portion
 2. Keywords: Extract and keep only important keywords
 3. Advanced strategies: Summarization, extractive, semantic chunking
+
+Example:
+    Basic usage with truncation strategy:
+    
+    ```python
+    from core.text_compressor import SimpleTextCompressor
+    from core.token_analyzer import SimpleTokenCounter
+    from models.data_models import CompressionResult
+    
+    token_counter = SimpleTokenCounter()
+    compressor = SimpleTextCompressor(token_counter)
+    
+    text = "This is a very long text that needs compression..."
+    result = compressor.compress_by_truncation(text, max_tokens=100)
+    print(f"Compressed: {result.compressed_text}")
+    print(f"Ratio: {result.compression_ratio}")
+    ```
+    
+    Using different compression strategies:
+    
+    ```python
+    # Keywords strategy
+    result = compressor.compress_by_keywords(text, max_tokens=100)
+    
+    # General compression (auto-selects best strategy)
+    result = compressor.compress_text(text, max_tokens=100, strategy="truncation")
+    ```
 """
 
 import re
@@ -28,6 +55,33 @@ class SimpleTextCompressor:
     
     This class acts as a facade for the new compression strategies
     while maintaining backward compatibility.
+
+    Attributes:
+        token_counter: Instance of token counter for counting tokens
+        factory: Factory for creating compression strategy instances
+
+    Example:
+        ```python
+        from core.text_compressor import SimpleTextCompressor
+        from core.token_analyzer import SimpleTokenCounter
+        from models.data_models import CompressionResult
+        
+        # Initialize compressor
+        token_counter = SimpleTokenCounter()
+        compressor = SimpleTextCompressor(token_counter)
+        
+        # Compress text using different strategies
+        text = "This is a very long text that needs compression..."
+        
+        # Truncation strategy
+        result = compressor.compress_by_truncation(text, max_tokens=100)
+        
+        # Keywords strategy  
+        result = compressor.compress_by_keywords(text, max_tokens=100)
+        
+        # General compression
+        result = compressor.compress_text(text, max_tokens=100, strategy="truncation")
+        ```
     """
 
     def __init__(self, token_counter):
@@ -35,7 +89,16 @@ class SimpleTextCompressor:
         Initialize compressor with token counter.
 
         Args:
-            token_counter: Instance of token counter
+            token_counter: Instance of token counter for counting tokens
+
+        Example:
+            ```python
+            from core.text_compressor import SimpleTextCompressor
+            from core.token_analyzer import SimpleTokenCounter
+            
+            token_counter = SimpleTokenCounter()
+            compressor = SimpleTextCompressor(token_counter)
+            ```
         """
         self.token_counter = token_counter
         self.factory = CompressionStrategyFactory()
@@ -46,13 +109,33 @@ class SimpleTextCompressor:
         """
         Compress text by truncation strategy.
 
+        Uses truncation strategy to compress text by keeping the beginning
+        and end portions while removing the middle section. This preserves
+        the most important information at the start and conclusion.
+
         Args:
             text: Input text to compress
-            max_tokens: Maximum allowed tokens
-            model_name: Name of the model
+            max_tokens: Maximum allowed tokens for the compressed text
+            model_name: Name of the model (default: "starcoder")
 
         Returns:
-            CompressionResult: Result of compression operation
+            CompressionResult: Result containing compressed text, token count, and ratio
+
+        Example:
+            ```python
+            from core.text_compressor import SimpleTextCompressor
+            from core.token_analyzer import SimpleTokenCounter
+            
+            token_counter = SimpleTokenCounter()
+            compressor = SimpleTextCompressor(token_counter)
+            
+            text = "This is a very long text that needs compression..."
+            result = compressor.compress_by_truncation(text, max_tokens=100)
+            
+            print(f"Original tokens: {result.original_tokens}")
+            print(f"Compressed tokens: {result.compressed_tokens}")
+            print(f"Compression ratio: {result.compression_ratio}")
+            ```
         """
         compressor = self.factory.create(CompressionStrategy.TRUNCATION, self.token_counter)
         return compressor.compress(text, max_tokens, model_name)
@@ -63,13 +146,32 @@ class SimpleTextCompressor:
         """
         Compress text by extracting keywords.
 
+        Uses keyword extraction strategy to compress text by identifying
+        and keeping only the most important keywords and phrases. This
+        preserves semantic meaning while significantly reducing token count.
+
         Args:
             text: Input text to compress
-            max_tokens: Maximum allowed tokens
-            model_name: Name of the model
+            max_tokens: Maximum allowed tokens for the compressed text
+            model_name: Name of the model (default: "starcoder")
 
         Returns:
-            CompressionResult: Result of compression operation
+            CompressionResult: Result containing compressed text, token count, and ratio
+
+        Example:
+            ```python
+            from core.text_compressor import SimpleTextCompressor
+            from core.token_analyzer import SimpleTokenCounter
+            
+            token_counter = SimpleTokenCounter()
+            compressor = SimpleTextCompressor(token_counter)
+            
+            text = "Machine learning is a subset of artificial intelligence..."
+            result = compressor.compress_by_keywords(text, max_tokens=50)
+            
+            print(f"Compressed text: {result.compressed_text}")
+            print(f"Compression ratio: {result.compression_ratio}")
+            ```
         """
         compressor = self.factory.create(CompressionStrategy.KEYWORDS, self.token_counter)
         return compressor.compress(text, max_tokens, model_name)
@@ -84,17 +186,39 @@ class SimpleTextCompressor:
         """
         Compress text using specified strategy.
 
+        Provides a unified interface for text compression with different
+        strategies. Automatically selects the appropriate compression
+        method based on the strategy parameter.
+
         Args:
             text: Input text to compress
-            max_tokens: Maximum allowed tokens
-            model_name: Name of the model
-            strategy: Compression strategy ("truncation" or "keywords")
+            max_tokens: Maximum allowed tokens for the compressed text
+            model_name: Name of the model (default: "starcoder")
+            strategy: Compression strategy ("truncation", "keywords", "extractive", "semantic")
 
         Returns:
-            CompressionResult: Result of compression operation
+            CompressionResult: Result containing compressed text, token count, and ratio
 
         Raises:
             ValueError: If strategy is not supported
+
+        Example:
+            ```python
+            from core.text_compressor import SimpleTextCompressor
+            from core.token_analyzer import SimpleTokenCounter
+            
+            token_counter = SimpleTokenCounter()
+            compressor = SimpleTextCompressor(token_counter)
+            
+            text = "This is a very long text that needs compression..."
+            
+            # Use different strategies
+            result1 = compressor.compress_text(text, max_tokens=100, strategy="truncation")
+            result2 = compressor.compress_text(text, max_tokens=100, strategy="keywords")
+            
+            print(f"Truncation ratio: {result1.compression_ratio}")
+            print(f"Keywords ratio: {result2.compression_ratio}")
+            ```
         """
         if not self.factory.is_strategy_supported(strategy):
             available = self.factory.get_available_strategies()

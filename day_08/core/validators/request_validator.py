@@ -3,6 +3,39 @@ Request validation utilities for ML client.
 
 Provides validation for text, model names, and other parameters
 to ensure data integrity before making API calls.
+
+Example:
+    Validating requests before API calls:
+    
+    ```python
+    from core.validators.request_validator import RequestValidator
+    from core.compressors import CompressionStrategy
+    
+    # Validate text input
+    try:
+        RequestValidator.validate_text("Hello world!")
+        print("Text is valid")
+    except ValueError as e:
+        print(f"Invalid text: {e}")
+    
+    # Validate model name
+    try:
+        RequestValidator.validate_model_name("starcoder")
+        print("Model name is valid")
+    except ValueError as e:
+        print(f"Invalid model: {e}")
+    
+    # Validate compression parameters
+    try:
+        RequestValidator.validate_compression_params(
+            text="Long text...",
+            max_tokens=100,
+            strategy="extractive"
+        )
+        print("Compression params are valid")
+    except ValueError as e:
+        print(f"Invalid params: {e}")
+    ```
 """
 
 from typing import List, Optional
@@ -10,7 +43,28 @@ from core.compressors import CompressionStrategy
 
 
 class RequestValidator:
-    """Validator for ML client requests."""
+    """
+    Validator for ML client requests.
+    
+    Provides static methods for validating various types of input
+    parameters before making API calls to the ML service. Ensures
+    data integrity and provides clear error messages for invalid inputs.
+
+    Example:
+        ```python
+        from core.validators.request_validator import RequestValidator
+        
+        # Validate different types of inputs
+        RequestValidator.validate_text("Hello world!")
+        RequestValidator.validate_model_name("starcoder")
+        RequestValidator.validate_max_tokens(100)
+        RequestValidator.validate_compression_strategy("extractive")
+        
+        # Batch validation
+        texts = ["Text 1", "Text 2", "Text 3"]
+        RequestValidator.validate_texts_batch(texts)
+        ```
+    """
     
     @staticmethod
     def validate_text(text: str, max_length: int = 1000000) -> None:

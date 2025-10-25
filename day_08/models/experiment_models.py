@@ -3,6 +3,47 @@ Experiment data models for intermediate processing.
 
 Provides dataclasses for structuring experiment data
 and intermediate processing steps.
+
+Example:
+    Using experiment models for structured data handling:
+    
+    ```python
+    from models.experiment_models import QueryInfo, ResponseInfo, ExperimentContext, ExperimentMetrics
+    from models.data_models import CompressionResult
+    
+    # Create query information
+    query_info = QueryInfo(
+        original_text="Very long query...",
+        processed_text="Compressed query...",
+        original_tokens=1000,
+        processed_tokens=200,
+        compression_applied=True,
+        compression_result=compression_result
+    )
+    
+    # Create response information
+    response_info = ResponseInfo(
+        response_text="Model response...",
+        tokens_used=50,
+        response_time=1.5,
+        success=True
+    )
+    
+    # Create experiment context
+    context = ExperimentContext(
+        model_name="starcoder",
+        query_info=query_info,
+        max_tokens=1000
+    )
+    
+    # Create experiment metrics
+    metrics = ExperimentMetrics(
+        total_tokens=250,
+        compression_ratio=0.2,
+        response_time=1.5,
+        success=True
+    )
+    ```
 """
 
 from dataclasses import dataclass
