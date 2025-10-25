@@ -155,6 +155,11 @@ async def health():
 async def chat(req: Request):
     body = await req.json()
     messages = body.get("messages", [])
+    
+    # Get limits from environment variables
+    MAX_INPUT_TOKENS = int(os.environ.get("MAX_INPUT_TOKENS", "4096"))
+    MAX_OUTPUT_TOKENS = int(os.environ.get("MAX_OUTPUT_TOKENS", "1024"))
+    
     # Optimized defaults for better performance
     max_tokens = body.get("max_tokens", 512)
     temperature = body.get("temperature", 0.2)
@@ -162,7 +167,20 @@ async def chat(req: Request):
     top_p = body.get("top_p", 0.9)
 
     prompt = build_prompt(messages, MODEL_NAME)
-    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+    
+    # Validate and truncate input if needed
+    input_tokens = tokenizer.encode(prompt, add_special_tokens=False)
+    if len(input_tokens) > MAX_INPUT_TOKENS:
+        logger.warning(f"Input {len(input_tokens)} tokens exceeds {MAX_INPUT_TOKENS}, truncating")
+        truncated_tokens = input_tokens[:MAX_INPUT_TOKENS]
+        prompt = tokenizer.decode(truncated_tokens, skip_special_tokens=True)
+        inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+    else:
+        inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+
+    # Clamp max_new_tokens to server limit
+    max_tokens = min(max_tokens, MAX_OUTPUT_TOKENS)
+    
     outputs = model.generate(
         **inputs,
         max_new_tokens=max_tokens,
@@ -188,4 +206,23 @@ async def chat(req: Request):
         "response_tokens": response_tokens,
         "input_tokens": input_tokens,
         "total_tokens": response_tokens + input_tokens
+    }
+
+
+@app.get("/limits")
+async def get_limits():
+    """Return model token limits and configuration."""
+    MAX_INPUT_TOKENS = int(os.environ.get("MAX_INPUT_TOKENS", "4096"))
+    MAX_OUTPUT_TOKENS = int(os.environ.get("MAX_OUTPUT_TOKENS", "1024"))
+    FLASH_ATTN = os.environ.get("FLASH_ATTN", "false").lower() == "true"
+    
+    return {
+        "model": MODEL_NAME,
+        "max_input_tokens": MAX_INPUT_TOKENS,
+        "max_output_tokens": MAX_OUTPUT_TOKENS,
+        "context_window": 16384,  # Theoretical limit
+        "sliding_window": 4096,   # Attention window
+        "flash_attn_enabled": FLASH_ATTN,
+        "practical_limit": MAX_INPUT_TOKENS,
+        "recommended_input": int(MAX_INPUT_TOKENS * 0.8)  # 80% of limit
     }

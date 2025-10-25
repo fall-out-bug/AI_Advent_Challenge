@@ -13,18 +13,37 @@ This module provides the infrastructure for running TechxGenus/StarCoder2-7B-Ins
 
 ```
 local_models/
-├── chat_api.py          # FastAPI server for StarCoder model
-├── docker-compose.yml   # Docker Compose configuration
-├── Dockerfile          # Optimized Docker image with security
-├── download_model.py   # Script for model pre-downloading
-├── .env.example        # Environment variables template
-├── .env               # Environment variables (create from example)
-└── README.md          # This file
+├── chat_api.py                    # FastAPI server for all models
+├── docker-compose.yml            # Docker Compose configuration
+├── Dockerfile                    # Optimized Docker image with security
+├── download_model.py             # Script for model pre-downloading
+├── download_models.sh            # Management script for downloads
+├── Dockerfile.download           # Docker image for downloading
+├── docker-compose.download.yml   # Docker Compose for downloads
+├── requirements.download.txt     # Minimal dependencies for downloading
+├── DOWNLOAD_GUIDE.md             # Complete download guide
+├── .env.example                  # Environment variables template
+├── .env                         # Environment variables (create from example)
+└── README.md                    # This file
 ```
 
 ## 🚀 Quick Start
 
-### 1. Environment Setup
+### 1. Pre-download Models (Recommended)
+
+For faster startup and offline usage, pre-download all models:
+
+```bash
+# Download all models to cache
+./download_models.sh download-all
+
+# Or download specific models
+./download_models.sh download-model Qwen/Qwen1.5-4B-Chat
+```
+
+📖 **Detailed guide**: See [DOWNLOAD_GUIDE.md](DOWNLOAD_GUIDE.md) for complete instructions.
+
+### 2. Environment Setup
 
 ```bash
 # Copy environment template
@@ -34,22 +53,27 @@ cp .env.example .env
 HF_TOKEN=your_huggingface_token_here
 ```
 
-### 2. Start StarCoder Service
+### 3. Start Chat Services
 
 ```bash
-# Build and start StarCoder
-docker-compose build starcoder-chat
-docker-compose up -d starcoder-chat
+# Start all chat services
+docker-compose up -d
+
+# Or start specific services
+docker-compose up -d qwen-chat mistral-chat tinyllama-chat starcoder-chat
 ```
 
-### 3. Verify Service
+### 4. Verify Services
 
 ```bash
-# Check health endpoint
-curl http://localhost:8003/health
+# Check all services
+curl http://localhost:8000/health  # Qwen
+curl http://localhost:8001/health  # Mistral
+curl http://localhost:8002/health  # TinyLlama
+curl http://localhost:8003/health  # StarCoder
 
 # Test chat endpoint
-curl -X POST http://localhost:8003/chat \
+curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
   -d '{"messages":[{"role":"user","content":"Hello"}],"max_tokens":50}'
 ```

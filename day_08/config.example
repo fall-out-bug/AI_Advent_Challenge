@@ -1,0 +1,30 @@
+# Token Analysis System Configuration
+
+# Token Counter Mode
+# Options: "simple" (word-based estimation) or "accurate" (HuggingFace tokenizers)
+TOKEN_COUNTER_MODE=simple
+
+# Model Limits Profile
+# Options: "theoretical" (max architecture supports) or "practical" (real hardware limits)
+LIMIT_PROFILE=practical
+
+# Docker Management
+# Whether to automatically swap model containers during comparison
+AUTO_SWAP_MODELS=true
+
+# Flash Attention (set in docker-compose.yml)
+# Whether flash attention is enabled for better performance
+FLASH_ATTN=false
+
+# Model-specific settings
+# Maximum input tokens for StarCoder (server-side)
+MAX_INPUT_TOKENS=4096
+MAX_OUTPUT_TOKENS=1024
+
+# Compression settings
+# Default compression strategy
+DEFAULT_COMPRESSION_STRATEGY=truncation
+
+# Advanced compression settings
+ENABLE_ADVANCED_COMPRESSION=true
+ENABLE_LLM_SUMMARIZATION=true

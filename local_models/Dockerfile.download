@@ -1,0 +1,47 @@
+# Dockerfile for Model Pre-downloading
+# This image is optimized for downloading models to cache
+# without running the full chat API server
+
+FROM python:3.11-slim
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV HF_HOME=/home/appuser/.cache/huggingface
+ENV TRANSFORMERS_CACHE=/home/appuser/.cache/huggingface/hub
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    wget \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN useradd -m -s /bin/bash appuser && \
+    mkdir -p /home/appuser/.cache/huggingface/hub && \
+    chown -R appuser:appuser /home/appuser
+
+# Switch to non-root user
+USER appuser
+WORKDIR /home/appuser
+
+# Install Python dependencies
+COPY --chown=appuser:appuser requirements.download.txt .
+RUN pip install --user --no-cache-dir -r requirements.download.txt
+
+# Copy download script
+COPY --chown=appuser:appuser download_model.py .
+
+# Create cache directory
+RUN mkdir -p /home/appuser/.cache/huggingface/hub
+
+# Set permissions
+RUN chmod +x download_model.py
+
+# Default command - download all models
+CMD ["python", "download_model.py", "--all"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python download_model.py --cache-size || exit 1

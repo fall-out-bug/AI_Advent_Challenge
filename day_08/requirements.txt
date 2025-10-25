@@ -1,0 +1,19 @@
+# Token Analysis Service Requirements
+# Heavy ML libraries for accurate token counting and advanced compression
+
+# Core ML libraries
+transformers==4.36.0
+torch==2.1.0
+scikit-learn==1.3.0
+numpy==1.24.0
+
+# Web framework
+fastapi==0.104.1
+uvicorn==0.24.0
+
+# HTTP client
+httpx==0.25.2
+
+# Additional utilities
+pydantic==2.5.0
+python-multipart==0.0.6

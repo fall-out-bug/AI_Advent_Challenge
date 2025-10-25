@@ -1,0 +1,66 @@
+# Docker Compose for Model Pre-downloading
+# This configuration downloads all models to a shared cache volume
+# without running the chat API servers
+
+version: '3.8'
+
+volumes:
+  hf-model-cache:
+    driver: local
+
+services:
+  model-downloader:
+    build:
+      context: .
+      dockerfile: Dockerfile.download
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    volumes:
+      - hf-model-cache:/home/appuser/.cache/huggingface/hub
+    restart: "no"  # Don't restart after completion
+    command: ["python", "download_model.py", "--all"]
+    
+  # Individual model downloaders (optional)
+  download-qwen:
+    build:
+      context: .
+      dockerfile: Dockerfile.download
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    volumes:
+      - hf-model-cache:/home/appuser/.cache/huggingface/hub
+    restart: "no"
+    command: ["python", "download_model.py", "--model", "Qwen/Qwen1.5-4B-Chat"]
+    
+  download-mistral:
+    build:
+      context: .
+      dockerfile: Dockerfile.download
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    volumes:
+      - hf-model-cache:/home/appuser/.cache/huggingface/hub
+    restart: "no"
+    command: ["python", "download_model.py", "--model", "mistralai/Mistral-7B-Instruct-v0.2"]
+    
+  download-tinyllama:
+    build:
+      context: .
+      dockerfile: Dockerfile.download
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    volumes:
+      - hf-model-cache:/home/appuser/.cache/huggingface/hub
+    restart: "no"
+    command: ["python", "download_model.py", "--model", "TinyLlama/TinyLlama-1.1B-Chat-v1.0"]
+    
+  download-starcoder:
+    build:
+      context: .
+      dockerfile: Dockerfile.download
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    volumes:
+      - hf-model-cache:/home/appuser/.cache/huggingface/hub
+    restart: "no"
+    command: ["python", "download_model.py", "--model", "TechxGenus/starcoder2-7b-instruct"]

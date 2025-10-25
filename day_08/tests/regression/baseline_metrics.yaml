@@ -1,0 +1,24 @@
+"""
+ML metrics baseline - фиксирует текущие метрики качества ML операций.
+"""
+
+# tests/regression/baseline_metrics.yaml
+token_counting:
+  accuracy_vs_actual: 0.92  # Точность оценки vs реальный tokenizer
+  mean_absolute_error: 15   # Средняя ошибка в токенах
+  
+compression:
+  truncation_ratio: 0.45    # Средний коэффициент сжатия
+  keywords_ratio: 0.38
+  quality_score: 0.85       # Semantic similarity после сжатия
+  
+experiments:
+  success_rate: 1.0         # Все эксперименты должны завершаться успешно
+  avg_response_time: 2.5    # Секунды
+  
+performance:
+  token_counting_short_ms: 0.5    # Миллисекунды для короткого текста
+  token_counting_medium_ms: 5.0  # Миллисекунды для среднего текста
+  token_counting_long_ms: 50.0   # Миллисекунды для длинного текста
+  compression_truncation_ms: 80.0 # Миллисекунды для сжатия обрезкой
+  compression_keywords_ms: 90.0  # Миллисекунды для сжатия ключевыми словами
