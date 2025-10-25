@@ -40,12 +40,13 @@ class TestModelConfigs:
     
     def test_model_configs_structure(self):
         """Test MODEL_CONFIGS structure."""
-        assert len(MODEL_CONFIGS) == 5
+        assert len(MODEL_CONFIGS) == 6
         
         # Test local models
         assert "qwen" in MODEL_CONFIGS
         assert "mistral" in MODEL_CONFIGS
         assert "tinyllama" in MODEL_CONFIGS
+        assert "starcoder" in MODEL_CONFIGS
         
         # Test external models
         assert "perplexity" in MODEL_CONFIGS
@@ -104,10 +105,11 @@ class TestHelperFunctions:
     def test_get_local_models(self):
         """Test get_local_models function."""
         local_models = get_local_models()
-        assert len(local_models) == 3
+        assert len(local_models) == 4
         assert "qwen" in local_models
         assert "mistral" in local_models
         assert "tinyllama" in local_models
+        assert "starcoder" in local_models
     
     def test_get_model_port_local(self):
         """Test get_model_port with local model."""

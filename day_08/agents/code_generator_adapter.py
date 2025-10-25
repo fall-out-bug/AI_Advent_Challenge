@@ -1,7 +1,7 @@
 """
-Code Generator Adapter for integrating day_07 CodeGeneratorAgent.
+Code Generator Adapter for integrating SDK CodeGeneratorAgent.
 
-This module provides the CodeGeneratorAdapter class that wraps the day_07
+This module provides the CodeGeneratorAdapter class that wraps the SDK
 CodeGeneratorAgent and integrates it with day_08's token counting,
 compression, and analysis capabilities.
 """
@@ -12,23 +12,17 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-# Add day_07 to path for importing agents
-day_07_path = Path(__file__).parent.parent.parent / "day_07"
-sys.path.insert(0, str(day_07_path))
+# Add shared SDK to path for importing agents
+shared_path = Path(__file__).parent.parent.parent / "shared"
+sys.path.insert(0, str(shared_path))
 
-try:
-    from agents.core.code_generator import CodeGeneratorAgent
-    from communication.message_schema import (
-        CodeGenerationRequest,
-        CodeGenerationResponse,
-        TaskMetadata
-    )
-except ImportError:
-    # Fallback for when day_07 agents are not available
-    CodeGeneratorAgent = None
-    CodeGenerationRequest = None
-    CodeGenerationResponse = None
-    TaskMetadata = None
+from shared_package.agents.code_generator import CodeGeneratorAgent
+from shared_package.agents.schemas import (
+    AgentRequest,
+    AgentResponse,
+    TaskMetadata
+)
+from shared_package.orchestration.adapters import DirectAdapter
 
 from core.ml_client import TokenAnalysisClient
 from core.token_analyzer import SimpleTokenCounter
@@ -42,13 +36,13 @@ logger = LoggerFactory.create_logger(__name__)
 
 class CodeGeneratorAdapter:
     """
-    Adapter for day_07 CodeGeneratorAgent with day_08 integration.
+    Adapter for SDK CodeGeneratorAgent with day_08 integration.
     
-    Wraps the day_07 CodeGeneratorAgent and integrates it with day_08's
+    Wraps the SDK CodeGeneratorAgent and integrates it with day_08's
     token counting, compression, and analysis capabilities.
     
     Attributes:
-        generator_agent: day_07 CodeGeneratorAgent instance
+        generator_agent: SDK CodeGeneratorAgent instance
         model_client: TokenAnalysisClient for model interactions
         token_counter: TokenCounter for token counting
         text_compressor: TextCompressor for compression
@@ -118,21 +112,23 @@ class CodeGeneratorAdapter:
         self.text_compressor = text_compressor or SimpleTextCompressor(self.token_counter)
         self.logger = LoggerFactory.create_logger(__name__)
         
-        # Initialize day_07 generator agent if available
-        if CodeGeneratorAgent:
-            try:
-                self.generator_agent = CodeGeneratorAgent(
-                    model_name=model_name,
-                    max_tokens=2000,
-                    temperature=0.7
-                )
-                self.logger.info(f"Initialized CodeGeneratorAgent with {model_name}")
-            except Exception as e:
-                self.logger.warning(f"Failed to initialize CodeGeneratorAgent: {e}")
-                self.generator_agent = None
-        else:
-            self.generator_agent = None
-            self.logger.warning("CodeGeneratorAgent not available")
+        # Initialize SDK generator agent
+        try:
+            # Create UnifiedModelClient for SDK agent
+            from shared_package.clients.unified_client import UnifiedModelClient
+            client = UnifiedModelClient()
+            
+            # Initialize SDK agent with client
+            self.generator_agent = CodeGeneratorAgent(
+                client=client,
+                model_name=model_name,
+                max_tokens=2000,
+                temperature=0.7
+            )
+            self.logger.info(f"Initialized SDK CodeGeneratorAgent with {model_name}")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize SDK CodeGeneratorAgent: {e}")
+            raise
         
         self.logger.info("Initialized CodeGeneratorAdapter")
     
@@ -199,15 +195,10 @@ class CodeGeneratorAdapter:
                 processed_query = compression_result.compressed_text
                 self.logger.info(f"Compressed from {compression_result.original_tokens} to {compression_result.compressed_tokens} tokens")
             
-            # Generate code using day_07 agent or fallback
-            if self.generator_agent:
-                response = await self._generate_with_day_07_agent(
-                    processed_query, model_name, max_tokens, language, requirements
-                )
-            else:
-                response = await self._generate_with_fallback(
-                    processed_query, model_name, max_tokens
-                )
+            # Generate code using SDK agent
+            response = await self._generate_with_sdk_agent(
+                processed_query, model_name, max_tokens, language, requirements
+            )
             
             # Count tokens
             input_tokens = self.token_counter.count_tokens(processed_query, model_name).count
@@ -246,7 +237,7 @@ class CodeGeneratorAdapter:
                 error_message=str(e)
             )
     
-    async def _generate_with_day_07_agent(
+    async def _generate_with_sdk_agent(
         self,
         query: str,
         model_name: str,
@@ -254,21 +245,31 @@ class CodeGeneratorAdapter:
         language: str,
         requirements: Optional[List[str]]
     ) -> str:
-        """Generate code using day_07 CodeGeneratorAgent."""
+        """Generate code using SDK CodeGeneratorAgent."""
         try:
-            # Create request for day_07 agent
-            request = CodeGenerationRequest(
-                task_description=query,
-                language=language,
-                requirements=requirements or [],
-                model_name=model_name
+            # Create request for SDK agent
+            request = AgentRequest(
+                task=query,
+                context={
+                    "language": language,
+                    "requirements": requirements or [],
+                    "model_name": model_name,
+                    "max_tokens": max_tokens,
+                    "temperature": 0.7
+                },
+                metadata=TaskMetadata(
+                    task_id=f"gen_{hash(query)}",
+                    task_type="code_generation",
+                    timestamp=asyncio.get_event_loop().time(),
+                    model_name=model_name
+                )
             )
             
-            # Generate code
+            # Generate code using SDK agent
             response = await self.generator_agent.process(request)
             
             # Extract code from response
-            generated_code = response.generated_code
+            generated_code = response.content
             tests = response.tests
             
             # Combine code and tests
@@ -277,59 +278,20 @@ class CodeGeneratorAdapter:
             return full_response
             
         except Exception as e:
-            self.logger.error(f"Day_07 agent generation failed: {e}")
+            self.logger.error(f"SDK agent generation failed: {e}")
             raise
     
-    async def _generate_with_fallback(
-        self,
-        query: str,
-        model_name: str,
-        max_tokens: int
-    ) -> str:
-        """Fallback code generation using direct model client."""
-        try:
-            # Create a simple prompt for code generation
-            prompt = f"""Write Python code for the following task:
-
-{query}
-
-Requirements:
-- Include proper docstrings
-- Add type hints
-- Follow PEP8 style
-- Include error handling
-- Provide example usage
-
-Code:"""
-            
-            response = await self.model_client.make_request(
-                model_name=model_name,
-                prompt=prompt,
-                max_tokens=max_tokens,
-                temperature=0.7
-            )
-            
-            return response.response
-            
-        except Exception as e:
-            self.logger.error(f"Fallback generation failed: {e}")
-            raise
     
     def get_agent_statistics(self) -> Dict[str, Any]:
         """Get statistics from the underlying generator agent."""
-        if self.generator_agent:
-            return {
-                "agent_type": "CodeGeneratorAgent",
-                "model_name": self.generator_agent.model_name,
-                "total_requests": self.generator_agent.stats["total_requests"],
-                "successful_requests": self.generator_agent.stats["successful_requests"],
-                "failed_requests": self.generator_agent.stats["failed_requests"],
-                "total_tokens_used": self.generator_agent.stats["total_tokens_used"],
-                "average_response_time": self.generator_agent.get_average_response_time(),
-                "uptime": self.generator_agent.get_uptime()
-            }
-        else:
-            return {
-                "agent_type": "FallbackGenerator",
-                "status": "day_07 agent not available"
-            }
+        stats = self.generator_agent.get_stats()
+        return {
+            "agent_type": "SDK_CodeGeneratorAgent",
+            "model_name": self.generator_agent.model_name,
+            "total_requests": stats["total_requests"],
+            "successful_requests": stats["successful_requests"],
+            "failed_requests": stats["failed_requests"],
+            "total_response_time": stats["total_response_time"],
+            "average_response_time": stats["average_response_time"],
+            "agent_name": stats["agent_name"]
+        }

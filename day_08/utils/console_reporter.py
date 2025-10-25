@@ -35,7 +35,7 @@ class ConsoleReporter:
         self.logger = LoggerFactory.create_logger(__name__)
         self.collector = StatisticsCollector()
         self.formatter = ConsoleFormatter()
-        self.report_generator = ReportGenerator(self.collector, self.formatter)
+        self.report_generator = ReportGenerator()  # ReportGenerator only takes reports_dir
 
     def print_experiment_summary(self, results: List[ExperimentResult]) -> None:
         """
@@ -44,7 +44,11 @@ class ConsoleReporter:
         Args:
             results: List of experiment results to summarize
         """
-        self.report_generator.generate_summary_report(results)
+        # Generate summary using collector
+        summary = self.collector.generate_summary_report(results)
+        # Format output
+        formatted = self.formatter.format_summary(summary)
+        print(formatted)
 
     def print_detailed_analysis(self, results: List[ExperimentResult]) -> None:
         """
@@ -53,7 +57,11 @@ class ConsoleReporter:
         Args:
             results: List of experiment results to analyze
         """
-        self.report_generator.generate_detailed_analysis(results)
+        # Collect statistics
+        stats = self.collector.collect_all_statistics(results)
+        # Format output
+        formatted = self.formatter.format_detailed_analysis(stats)
+        print(formatted)
 
     def print_recommendations(self, results: List[ExperimentResult]) -> None:
         """
@@ -62,7 +70,11 @@ class ConsoleReporter:
         Args:
             results: List of experiment results to analyze
         """
-        self.report_generator.generate_recommendations_report(results)
+        # Collect statistics for recommendations
+        stats = self.collector.collect_all_statistics(results)
+        # Format recommendations
+        formatted = self.formatter.format_recommendations(stats)
+        print(formatted)
 
     def print_compression_comparison(self, results: List[ExperimentResult]) -> None:
         """
@@ -82,4 +94,8 @@ class ConsoleReporter:
         Args:
             results: List of experiment results to analyze
         """
-        self.report_generator.generate_model_performance_report(results)
+        # Collect model performance statistics
+        performance_stats = self.collector.collect_model_performance_stats(results)
+        # Format performance report
+        formatted = self.formatter.format_model_performance(performance_stats)
+        print(formatted)

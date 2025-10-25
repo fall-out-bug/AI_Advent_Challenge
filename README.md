@@ -145,6 +145,53 @@ AI_Advent_Challenge/
     ├── pyproject.toml  # Poetry dependencies
     ├── Makefile        # Development commands
     └── constants.py    # Configuration constants
+└── day_08/               # Day 8 - Enhanced Token Analysis System
+    ├── core/           # Core business logic
+    │   ├── token_analyzer.py # Token counting strategies
+    │   ├── text_compressor.py # Text compression with strategy pattern
+    │   ├── ml_client.py # ML service client with retry logic
+    │   ├── experiments.py # Experiment management
+    │   ├── compressors/ # Compression strategy implementations
+    │   ├── factories/  # Factory pattern implementations
+    │   ├── builders/   # Builder pattern implementations
+    │   └── validators/ # Request validation
+    ├── domain/         # Domain layer (DDD)
+    │   ├── entities/   # Domain entities
+    │   ├── value_objects/ # Immutable value objects
+    │   ├── repositories/ # Repository interfaces
+    │   └── services/   # Domain services
+    ├── application/    # Application layer
+    │   ├── use_cases/  # Business use cases
+    │   ├── services/   # Application services
+    │   └── dto/        # Data transfer objects
+    ├── infrastructure/ # Infrastructure layer
+    │   ├── repositories/ # Repository implementations
+    │   ├── external/   # External service integrations
+    │   └── config/     # Configuration management
+    ├── tests/          # Comprehensive test suite
+    │   ├── integration/ # End-to-end tests
+    │   ├── regression/ # Baseline behavior tests
+    │   ├── performance/ # Performance baseline tests
+    │   └── mocks/      # Test doubles
+    ├── docs/           # Technical documentation
+    │   ├── DEVELOPMENT_GUIDE.md # Development practices
+    │   ├── DOMAIN_GUIDE.md # Domain-driven design
+    │   ├── ML_ENGINEERING.md # ML framework guide
+    │   └── ASYNC_TESTING_BEST_PRACTICES.md # Testing guide
+    ├── examples/       # Usage examples
+    ├── reports/        # Demo and analysis reports
+    ├── demo_enhanced.py # Enhanced demonstration
+    ├── demo.py         # Basic demonstration
+    ├── README.md       # Comprehensive documentation (EN)
+    ├── README.ru.md    # Executive summary (RU)
+    ├── architecture.md # System architecture
+    ├── api.md          # API reference
+    ├── TASK.md         # Original requirements
+    ├── TASK_VERIFICATION_REPORT.md # Requirements verification
+    ├── PROJECT_SUMMARY.md # Project achievements
+    ├── pyproject.toml  # Poetry dependencies
+    ├── Makefile        # Development commands
+    └── pytest.ini      # Test configuration
 ```
 
 ## 🚀 Quick Start
@@ -220,6 +267,20 @@ make start-traefik # With Traefik reverse proxy
 # CLI usage
 make demo          # Run demo
 make run-simple    # Simple code generation
+
+# Day 8 - Enhanced Token Analysis System
+cd ../day_08
+
+# Install dependencies
+make install-dev
+
+# Run comprehensive tests
+make test
+
+# Run demonstrations
+make demo          # Basic demo
+make demo-enhanced # Enhanced demo with reports
+python examples/task_demonstration.py # TASK.md verification
 ```
 
 ## 📊 Project Comparison
@@ -233,6 +294,7 @@ make run-simple    # Simple code generation
 | day_05 | ⭐⭐⭐ | Python, SDK, Docker | Local | SDK integration |
 | day_06 | ⭐⭐⭐⭐ | Python, SDK, Testing | Local | Model testing |
 | day_07 | ⭐⭐⭐⭐⭐ | FastAPI, Docker, Traefik | 4 models | Multi-Agent System |
+| day_08 | ⭐⭐⭐⭐⭐ | Clean Architecture, DDD, ML Engineering | 4 models | Token Analysis & Compression |
 
 ## 📚 Project Descriptions
 
@@ -707,6 +769,188 @@ docker-compose up -d --scale generator-agent=3 --scale reviewer-agent=2
 4. Integrate into your own projects
 5. Extend functionality with new agents
 
+### Day 08 - Enhanced Token Analysis System
+
+🎯 **Production-ready system** for token analysis, compression, and ML model interaction. Features Clean Architecture with Domain-Driven Design, comprehensive testing, and ML Engineering framework.
+
+#### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Day 08 Enhanced System                       │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
+│  │   Demo      │  │   Enhanced  │  │  SDK        │            │
+│  │  Scripts    │  │  Features   │  │  Adapters   │            │
+│  │             │  │             │  │             │            │
+│  │ • Enhanced  │  │ • Model     │  │ • Generator │            │
+│  │ • Model     │  │   Switching │  │ • Reviewer  │            │
+│  │   Switching │  │ • Quality   │  │ • Direct    │            │
+│  │ • Reports   │  │   Analysis  │  │ • REST      │            │
+│  └─────────────┘  └─────────────┘  └─────────────┘            │
+│         │                 │                 │                  │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │              Core Day 08 Components                        │ │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │ │
+│  │  │   Token     │  │   Text      │  │   ML        │        │ │
+│  │  │   Counter   │  │  Compressor │  │   Client    │        │ │
+│  │  │             │  │             │  │             │        │ │
+│  │  │ • Simple    │  │ • Strategy  │  │ • Retry     │        │ │
+│  │  │ • Accurate  │  │ • Template  │  │ • Circuit   │        │ │
+│  │  │ • Hybrid    │  │ • Factory   │  │ • Breaker   │        │ │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘        │ │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │ │
+│  │  │   Model     │  │   Token     │  │ Compression │        │ │
+│  │  │   Switcher  │  │   Limit    │  │ Evaluator   │        │ │
+│  │  │             │  │   Tester   │  │             │        │ │
+│  │  │ • SDK       │  │ • Three-   │  │ • All       │        │ │
+│  │  │   Workflow  │  │   Stage    │  │   Algorithms│        │ │
+│  │  │ • Quality   │  │ • Dynamic  │  │ • Quality   │        │ │
+│  │  │   Analysis  │  │ • Model-   │  │ • Performance│       │ │
+│  │  │             │  │   Specific │  │             │        │ │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘        │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Technologies
+
+- **Clean Architecture**: Domain, Application, Infrastructure, Presentation layers
+- **Domain-Driven Design**: Entities, value objects, repositories, domain services
+- **SOLID Principles**: Single responsibility, dependency injection, interface segregation
+- **Design Patterns**: Strategy, Factory, Builder, Template Method, Circuit Breaker, Facade
+- **ML Engineering**: Model evaluation, performance monitoring, experiment tracking, model registry
+- **Comprehensive Testing**: 282 tests with 74% coverage, integration, regression, performance tests
+- **Type Safety**: 100% type hints coverage in core modules
+- **Quality Assurance**: Strict linting, pre-commit hooks, security scanning
+
+#### Supported Models
+
+- **StarCoder-7B** (default) - Specialized for code generation
+- **Mistral-7B** - High quality, general-purpose model
+- **Qwen-4B** - Fast responses, good quality
+- **TinyLlama-1.1B** - Compact and fast
+
+#### Key Components
+
+**1. Token Analysis (`core/token_analyzer.py`)**
+- Multiple counting strategies (simple estimation, ML-based, hybrid)
+- Model-specific limits and validation
+- Input/output token counting for requests and responses
+- Support for all models with accurate token estimation
+
+**2. Text Compression (`core/text_compressor.py`)**
+- Strategy pattern with 5 compression algorithms
+- Truncation, keywords, extractive, semantic, summarization
+- Automatic compression on limit-exceeding queries
+- Compression ratio calculation and quality analysis
+
+**3. ML Client (`core/ml_client.py`)**
+- Resilient client with retry logic and circuit breaker
+- Request validation and error handling
+- Performance monitoring and statistics
+- Integration with SDK agents
+
+**4. Experiments (`core/experiments.py`)**
+- Builder pattern for experiment result construction
+- Comprehensive experiment tracking and management
+- Model comparison and analysis
+- Structured logging and reporting
+
+#### Key Features
+
+- ✨ **Token Analysis**: Accurate token counting with multiple strategies
+- 🗜️ **Text Compression**: 5 compression algorithms with quality evaluation
+- 🏗️ **Clean Architecture**: Domain-driven design with SOLID principles
+- 🧪 **Comprehensive Testing**: 282 tests with excellent coverage
+- 📊 **ML Engineering**: Production-ready MLOps framework
+- 🔄 **SDK Integration**: Unified agent system integration
+- 📈 **Performance Monitoring**: Detailed metrics and analytics
+- 🛡️ **Error Handling**: Robust exception management and retry logic
+- 📝 **Documentation**: 12+ comprehensive guides and examples
+- 🔒 **Security**: Input validation and security scanning
+
+#### TASK.md Requirements Fulfillment
+
+✅ **Requirement 1: Token Counting**
+- Implementation: `core/token_analyzer.py`
+- Features: Input/output token counting, multiple strategies, model limits
+- Verification: All models tested with accurate token counts
+
+✅ **Requirement 2: Query Comparison**
+- Implementation: `core/token_limit_tester.py`
+- Features: Three-stage testing (short/medium/long queries)
+- Verification: Comprehensive query analysis and behavior documentation
+
+✅ **Requirement 3: Text Compression**
+- Implementation: `core/text_compressor.py` with strategy pattern
+- Features: 5 compression algorithms, automatic application
+- Verification: Compression applied to limit-exceeding queries
+
+#### Performance Metrics
+
+- **Token counting**: ~0.1ms per 1000 characters
+- **Text compression**: ~5ms per 10KB text
+- **ML requests**: ~200ms average response time
+- **Memory usage**: ~50MB baseline
+- **Test execution**: 282 tests in ~4.6 seconds
+- **Code coverage**: 74% with comprehensive test suite
+
+#### Production Ready Features
+
+- ✅ **Robust Error Handling**: Comprehensive exception hierarchy
+- ✅ **Type Safety**: 100% type hints in core modules
+- ✅ **Security**: Input validation and sanitization
+- ✅ **Monitoring**: Performance metrics and health checks
+- ✅ **Documentation**: Complete API reference and guides
+- ✅ **Testing**: Unit, integration, regression, performance tests
+- ✅ **Quality**: PEP8 compliance, linting, pre-commit hooks
+- ✅ **Architecture**: Clean Architecture with DDD patterns
+
+#### Usage Examples
+
+**Basic Token Counting:**
+```python
+from core.token_analyzer import SimpleTokenCounter
+from tests.mocks.mock_config import MockConfiguration
+
+config = MockConfiguration()
+counter = SimpleTokenCounter(config=config)
+token_info = counter.count_tokens("Hello world", "starcoder")
+print(f"Tokens: {token_info.count}")
+```
+
+**Text Compression:**
+```python
+from core.text_compressor import SimpleTextCompressor
+
+compressor = SimpleTextCompressor(token_counter)
+result = compressor.compress_text(
+    text="Very long text...",
+    max_tokens=1000,
+    model_name="starcoder",
+    strategy="truncation"
+)
+print(f"Compression ratio: {result.compression_ratio}")
+```
+
+**Running Experiments:**
+```python
+from core.experiments import TokenLimitExperiments
+
+experiments = TokenLimitExperiments(ml_client, token_counter, compressor)
+results = await experiments.run_limit_exceeded_experiment("starcoder")
+```
+
+#### Next Steps
+
+1. Study comprehensive documentation in `day_08/README.md`
+2. Run `make demo` to see token analysis in action
+3. Explore `examples/task_demonstration.py` for TASK.md verification
+4. Review `docs/` directory for technical guides
+5. Integrate token analysis into your own projects
+6. Extend compression strategies for specific use cases
+
 ## 🛠️ Technologies and Dependencies
 
 ### Core Technologies
@@ -723,6 +967,15 @@ docker-compose up -d --scale generator-agent=3 --scale reviewer-agent=2
 - **NVIDIA CUDA**: GPU acceleration
 - **4-bit Quantization**: Memory optimization
 - **Local Models**: Qwen, Mistral, TinyLlama, StarCoder
+- **Token Analysis**: Advanced token counting and compression strategies
+- **ML Engineering**: Model evaluation, monitoring, experiment tracking
+
+### Architecture & Design Technologies
+- **Clean Architecture**: Domain, Application, Infrastructure layers
+- **Domain-Driven Design**: Entities, value objects, repositories
+- **SOLID Principles**: Design patterns and best practices
+- **Design Patterns**: Strategy, Factory, Builder, Template Method, Circuit Breaker
+- **Type Safety**: Comprehensive type hints and validation
 
 ### Infrastructure Technologies
 - **Traefik**: Reverse proxy and load balancer

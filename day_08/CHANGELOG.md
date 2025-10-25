@@ -5,6 +5,60 @@ All notable changes to the Enhanced Token Analysis System will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2024-12-XX
+
+### 🔌 SDK Migration Release
+
+This release migrates Day 08 from day_07 dependencies to the shared SDK agents, providing a unified and robust agentic architecture.
+
+### ✨ Added
+
+#### SDK Integration
+- **SDK CodeGeneratorAgent**: Direct integration with shared SDK code generation
+- **SDK CodeReviewerAgent**: Direct integration with shared SDK code review
+- **SDK SequentialOrchestrator**: Enhanced orchestration for generator→reviewer workflows
+- **SDK DirectAdapter**: Seamless agent communication through SDK infrastructure
+
+#### Enhanced Agent Features
+- **Comprehensive Error Handling**: SDK-based exception handling and retry logic
+- **Enhanced Statistics**: Detailed agent performance metrics and monitoring
+- **Improved Reliability**: Robust SDK infrastructure with circuit breakers
+- **Future-Proof Architecture**: Easy updates and feature additions through SDK
+
+### 🔄 Changed
+
+#### Breaking Changes
+- **Removed day_07 Dependencies**: All day_07 references have been removed
+- **SDK Required**: System now requires shared SDK to be available
+- **Agent Initialization**: Agents must be properly initialized with SDK clients
+- **Error Handling**: SDK exceptions replace previous fallback mechanisms
+
+#### Updated Components
+- **CodeGeneratorAdapter**: Now uses SDK CodeGeneratorAgent directly
+- **CodeReviewerAdapter**: Now uses SDK CodeReviewerAgent directly
+- **ModelSwitcherOrchestrator**: Uses SDK SequentialOrchestrator for workflows
+- **Agent Statistics**: Enhanced metrics through SDK agent statistics
+
+### 🗑️ Removed
+
+- **day_07 Fallback Logic**: No longer needed with SDK integration
+- **Legacy Agent Imports**: All day_07 agent imports removed
+- **Fallback Methods**: Removed fallback generation and review methods
+
+### 📚 Documentation
+
+- **SDK Integration Guide**: Comprehensive documentation for SDK usage
+- **Migration Guide**: Step-by-step migration instructions
+- **Updated Examples**: All examples now use SDK agents
+- **Architecture Updates**: Updated diagrams and descriptions
+
+### 🔧 Technical Details
+
+- **Unified Architecture**: Single source of truth for agent implementations
+- **Better Error Handling**: Comprehensive SDK exception handling
+- **Enhanced Monitoring**: Detailed agent performance metrics
+- **Improved Reliability**: Robust SDK infrastructure
+
 ## [1.0.0] - 2024-12-XX
 
 ### 🎉 Initial Production Release

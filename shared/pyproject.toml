@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "shared-sdk"
-version = "0.1.0"
-description = "Shared SDK for AI Challenge projects"
+version = "0.2.0"
+description = "Shared SDK for AI Challenge projects with agentic architecture"
 authors = ["AI Challenge Team"]
 readme = "README.md"
 packages = [{include = "shared_package", from = "."}]
@@ -10,6 +10,7 @@ packages = [{include = "shared_package", from = "."}]
 python = "^3.10"
 httpx = "^0.25.0"
 pydantic = "^2.0.0"
+aiohttp = "^3.9.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"

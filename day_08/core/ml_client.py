@@ -479,7 +479,7 @@ class TokenAnalysisClient:
             unified_client = UnifiedModelClient()
             
             # Make the actual model request
-            result = await unified_client.generate(
+            result = await unified_client.make_request(
                 model_name=model_name,
                 prompt=prompt,
                 max_tokens=max_tokens,
@@ -489,12 +489,12 @@ class TokenAnalysisClient:
             response_time = asyncio.get_event_loop().time() - start_time
             
             # Count tokens in response
-            response_text = result.get("response", "")
-            token_count = len(response_text.split()) * 1.3  # Rough estimate
+            response_text = result.response
+            token_count = result.total_tokens
             
             return ModelResponse(
                 response=response_text,
-                total_tokens=int(token_count),
+                total_tokens=token_count,
                 response_time=response_time,
                 model_name=model_name
             )

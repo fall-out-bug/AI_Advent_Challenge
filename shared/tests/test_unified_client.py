@@ -155,11 +155,11 @@ class TestUnifiedModelClient:
         """Test checking availability of all models."""
         with patch.object(client, 'check_availability') as mock_check:
             mock_check.return_value = True
-            
+    
             result = await client.check_all_availability()
-            
+    
             assert isinstance(result, dict)
-            assert len(result) == 5  # All models in config
+            assert len(result) == 6  # All models in config
             assert all(result.values())  # All should be True
         
         await client.close()

@@ -22,6 +22,13 @@ shared_path = Path(__file__).parent.parent.parent / "shared"
 sys.path.insert(0, str(shared_path))
 from shared_package.clients.unified_client import UnifiedModelClient
 
+# Import SDK orchestration patterns
+from shared_package.orchestration.sequential import SequentialOrchestrator
+from shared_package.orchestration.adapters import DirectAdapter
+from shared_package.agents.code_generator import CodeGeneratorAgent
+from shared_package.agents.code_reviewer import CodeReviewerAgent
+from shared_package.agents.schemas import AgentRequest, TaskMetadata
+
 # Configure logging
 logger = LoggerFactory.create_logger(__name__)
 
@@ -82,6 +89,9 @@ class ModelSwitcherOrchestrator:
         
         # Initialize Docker container management
         self._initialize_docker_management()
+        
+        # Initialize SDK orchestration if available
+        self._initialize_sdk_orchestration()
         
         # Initialize statistics tracking
         self.statistics: Dict[str, Dict[str, Any]] = {}
@@ -613,3 +623,162 @@ class ModelSwitcherOrchestrator:
                 self.logger.error(f"Error stopping {model_name}: {e}")
         
         self.logger.info("Container cleanup completed")
+    
+    def _initialize_sdk_orchestration(self) -> None:
+        """
+        Initialize SDK orchestration patterns.
+        
+        Sets up SDK orchestrator and agents for enhanced workflow management.
+        """
+        try:
+            # Create direct adapter for SDK agents
+            self.sdk_adapter = DirectAdapter()
+            
+            # Initialize SDK agents for each model
+            self.sdk_agents: Dict[str, Dict[str, Any]] = {}
+            for model_name in self.models:
+                # Create UnifiedModelClient for each model
+                from shared_package.clients.unified_client import UnifiedModelClient
+                client = UnifiedModelClient()
+                
+                self.sdk_agents[model_name] = {
+                    "generator": CodeGeneratorAgent(
+                        client=client,
+                        model_name=model_name,
+                        max_tokens=2000,
+                        temperature=0.7
+                    ),
+                    "reviewer": CodeReviewerAgent(
+                        client=client,
+                        model_name=model_name,
+                        max_tokens=1500,
+                        temperature=0.2
+                    )
+                }
+            
+            # Initialize sequential orchestrator with adapter
+            self.sdk_orchestrator = SequentialOrchestrator(adapter=self.sdk_adapter)
+            self.use_sdk_orchestration = True
+            
+            self.logger.info("SDK orchestration patterns enabled")
+                
+        except Exception as e:
+            self.sdk_adapter = None
+            self.sdk_agents = {}
+            self.sdk_orchestrator = None
+            self.use_sdk_orchestration = False
+            self.logger.error(f"SDK orchestration initialization failed: {e}")
+            raise
+    
+    async def run_sdk_workflow(
+        self,
+        model_name: str,
+        task_description: str,
+        language: str = "python",
+        requirements: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """
+        Run SDK orchestrated workflow: Generator → Reviewer.
+        
+        Args:
+            model_name: Name of the model to use
+            task_description: Description of the coding task
+            language: Programming language
+            requirements: Additional requirements
+            
+        Returns:
+            Dictionary containing workflow results
+            
+        Example:
+            ```python
+            result = await orchestrator.run_sdk_workflow(
+                model_name="starcoder",
+                task_description="Write a sorting function",
+                language="python",
+                requirements=["Use quicksort", "Include tests"]
+            )
+            print(f"Generated code: {result['generated_code']}")
+            print(f"Quality score: {result['quality_score']}")
+            ```
+        """
+        if not self.use_sdk_orchestration:
+            raise Exception("SDK orchestration not available - initialization failed")
+        
+        try:
+            # Switch to model first
+            if not await self.switch_to_model(model_name):
+                raise Exception(f"Failed to switch to model {model_name}")
+            
+            # Get SDK agents for this model
+            if model_name not in self.sdk_agents:
+                raise Exception(f"No SDK agents configured for {model_name}")
+            
+            generator_agent = self.sdk_agents[model_name]["generator"]
+            reviewer_agent = self.sdk_agents[model_name]["reviewer"]
+            
+            # Create request for generator
+            generator_request = AgentRequest(
+                task=task_description,
+                context={
+                    "language": language,
+                    "requirements": requirements or [],
+                    "model_name": model_name,
+                    "max_tokens": 2000,
+                    "temperature": 0.7
+                },
+                metadata=TaskMetadata(
+                    task_id=f"workflow_{hash(task_description)}",
+                    task_type="code_generation",
+                    timestamp=asyncio.get_event_loop().time(),
+                    model_name=model_name
+                )
+            )
+            
+            # Run sequential workflow: Generator → Reviewer
+            workflow_result = await self.sdk_orchestrator.execute_sequential(
+                agents=[generator_agent, reviewer_agent],
+                initial_request=generator_request,
+                context_passing=True
+            )
+            
+            # Extract results
+            generator_response = workflow_result.results[0] if workflow_result.results else None
+            reviewer_response = workflow_result.results[1] if len(workflow_result.results) > 1 else None
+            
+            if not generator_response:
+                raise Exception("Generator failed to produce results")
+            
+            # Update statistics
+            self.statistics[model_name]["total_requests"] += 1
+            self.statistics[model_name]["successful_requests"] += 1
+            
+            return {
+                "success": True,
+                "model_name": model_name,
+                "generated_code": generator_response.content,
+                "tests": generator_response.tests,
+                "quality_score": reviewer_response.quality_score if reviewer_response else None,
+                "quality_metrics": reviewer_response.metrics if reviewer_response else None,
+                "workflow_time": workflow_result.total_time,
+                "total_tokens": workflow_result.total_tokens,
+                "agent_statistics": {
+                    "generator": generator_agent.get_statistics(),
+                    "reviewer": reviewer_agent.get_statistics() if reviewer_response else None
+                }
+            }
+            
+        except Exception as e:
+            self.statistics[model_name]["failed_requests"] += 1
+            self.logger.error(f"SDK workflow failed for {model_name}: {e}")
+            
+            return {
+                "success": False,
+                "model_name": model_name,
+                "error": str(e),
+                "generated_code": None,
+                "tests": None,
+                "quality_score": None,
+                "quality_metrics": None,
+                "workflow_time": 0.0,
+                "total_tokens": 0
+            }

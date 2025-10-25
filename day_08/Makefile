@@ -40,12 +40,9 @@ help:
 	@echo "🚀 Experiments:"
 	@echo "  run           Run main experiments"
 	@echo "  run-enhanced  Run enhanced experiments with ML service"
-	@echo "  demo          Run basic demo script"
-	@echo "  demo-switching Run advanced model switching demo with Docker"
-	@echo "  demo-quick     Run quick model switching demo (fast, with timeouts)"
-	@echo "  demo-working   Run working model switching demo (tests direct connections)"
-	@echo "  demo-enhanced  Run comprehensive demo with large queries and all compressions"
-	@echo "  compare-models Run model comparison"
+	@echo "  demo          Run comprehensive demo with automatic reporting"
+	@echo "  demo-model    Run demo for specific model (e.g., make demo-model MODEL=starcoder)"
+	@echo "  demo-all      Run demo for all available models"
 	@echo ""
 	@echo "🐳 Docker Management:"
 	@echo "  docker-build  Build Docker image for ML service"
@@ -182,62 +179,20 @@ run-enhanced:
 	TOKEN_COUNTER_MODE=$(TOKEN_COUNTER_MODE) LIMIT_PROFILE=$(LIMIT_PROFILE) poetry run python main_enhanced.py
 
 demo:
-	@echo "Running demo script..."
-	@if [ ! -f "demo.py" ]; then \
-		echo "❌ demo.py not found!"; \
-		exit 1; \
-	fi
+	@echo "Running comprehensive demo with automatic reporting..."
 	poetry run python demo.py
 
-demo-switching:
-	@echo "Running advanced model switching demo..."
-	@if [ ! -f "demo_model_switching.py" ]; then \
-		echo "❌ demo_model_switching.py not found!"; \
+demo-model:
+	@echo "Running demo for specific model: $(MODEL)"
+	@if [ -z "$(MODEL)" ]; then \
+		echo "❌ Please specify MODEL (e.g., make demo-model MODEL=starcoder)"; \
 		exit 1; \
 	fi
-	@echo "🚀 Starting Model Switching Demo with Docker Integration"
-	@echo "This demo will automatically manage Docker containers"
-	poetry run python demo_model_switching.py
+	poetry run python demo.py --model $(MODEL)
 
-demo-quick:
-	@echo "Running quick model switching demo..."
-	@if [ ! -f "demo_quick.py" ]; then \
-		echo "❌ demo_quick.py not found!"; \
-		exit 1; \
-	fi
-	@echo "⚡ Quick Demo - Fast Docker Integration Test"
-	@echo "This demo runs quickly with timeouts"
-	poetry run python demo_quick.py
-
-demo-working:
-	@echo "Running working model switching demo..."
-	@if [ ! -f "demo_working.py" ]; then \
-		echo "❌ demo_working.py not found!"; \
-		exit 1; \
-	fi
-	@echo "✅ Working Demo - Docker Integration with Direct Testing"
-	@echo "This demo tests direct model connections"
-	poetry run python demo_working.py
-
-demo-enhanced:
-	@echo "Running enhanced comprehensive demo..."
-	@if [ ! -f "demo_enhanced.py" ]; then \
-		echo "❌ demo_enhanced.py not found!"; \
-		exit 1; \
-	fi
-	@echo "🚀 Enhanced Demo - Comprehensive Testing with Large Queries"
-	@echo "This demo tests all models with queries exceeding limits"
-	@echo "Tests all compression strategies with detailed output"
-	poetry run python demo_enhanced.py
-
-compare-models:
-	@echo "Running model comparison..."
-	@echo "Configuration: AUTO_SWAP_MODELS=$(AUTO_SWAP_MODELS)"
-	@if [ ! -f "compare_models.py" ]; then \
-		echo "❌ compare_models.py not found!"; \
-		exit 1; \
-	fi
-	AUTO_SWAP_MODELS=$(AUTO_SWAP_MODELS) poetry run python compare_models.py
+demo-all:
+	@echo "Running demo for all available models..."
+	poetry run python demo.py --all
 
 # Docker targets for ML service
 docker-build:

@@ -23,7 +23,7 @@ class TestAppConfig:
         assert config.app_version == "1.0.0"
         assert config.app_env == "development"
         assert config.debug is False
-        assert config.log_level == "INFO"
+        assert config.log_level == "WARNING"
         assert config.token_counter_mode == "simple"
         assert config.tokens_per_word_ratio == 1.3
         assert config.limit_profile == "practical"

@@ -54,7 +54,7 @@ Example:
     ```
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
@@ -308,7 +308,9 @@ class ExperimentResult:
     response_time: float
     compression_applied: bool
     compression_result: Optional[CompressionResult]
-    timestamp: datetime
+    success: bool = True
+    error_message: Optional[str] = None
+    timestamp: datetime = field(default_factory=datetime.now)
 
 
 @dataclass

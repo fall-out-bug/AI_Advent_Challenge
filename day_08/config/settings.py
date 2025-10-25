@@ -22,7 +22,7 @@ class AppConfig:
         self.debug = os.getenv("DEBUG", "false").lower() == "true"
 
         # Logging settings
-        self.log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+        self.log_level = os.getenv("LOG_LEVEL", "WARNING").upper()
         self.log_format = os.getenv("LOG_FORMAT", "json")
         self.log_file = os.getenv("LOG_FILE")
 

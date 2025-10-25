@@ -409,6 +409,405 @@ When adding new models or features:
 4. Ensure backward compatibility
 5. Run full test suite
 
+## Agentic Architecture
+
+The SDK now includes a comprehensive agentic architecture that supports both direct Python async calls and REST API patterns via adapter interfaces. This enables sophisticated agent coordination patterns and workflow orchestration.
+
+### Core Agent Components
+
+#### BaseAgent
+
+The foundation of all agents, providing a unified async interface:
+
+```python
+from shared_package.agents import BaseAgent, AgentRequest, AgentResponse
+
+class CustomAgent(BaseAgent):
+    def __init__(self, client):
+        super().__init__(client)
+        self.agent_name = "custom_agent"
+    
+    async def process(self, request: AgentRequest) -> AgentResponse:
+        # Implement your agent logic here
+        response = await self.client.make_request("qwen", request.task)
+        return AgentResponse(
+            task_id=request.task_id,
+            result=response.response,
+            metadata=TaskMetadata(
+                agent_name=self.agent_name,
+                model_used="qwen",
+                processing_time=response.response_time
+            )
+        )
+```
+
+#### Code Generation Agent
+
+Specialized agent for generating code with intelligent prompt engineering:
+
+```python
+from shared_package.agents import CodeGeneratorAgent, AgentRequest
+
+async def generate_code():
+    async with UnifiedModelClient() as client:
+        agent = CodeGeneratorAgent(client)
+        
+        request = AgentRequest(
+            task_id="gen_001",
+            task_type="code_generation",
+            task="Create a Python function to calculate fibonacci numbers",
+            context={
+                "language": "python",
+                "style": "recursive",
+                "include_docstring": True
+            }
+        )
+        
+        response = await agent.process(request)
+        print(f"Generated code: {response.result}")
+        print(f"Quality score: {response.metadata.quality_metrics.score}")
+```
+
+#### Code Review Agent
+
+Intelligent code review agent with quality analysis and scoring:
+
+```python
+from shared_package.agents import CodeReviewerAgent, AgentRequest
+
+async def review_code():
+    async with UnifiedModelClient() as client:
+        agent = CodeReviewerAgent(client)
+        
+        code_to_review = """
+        def fibonacci(n):
+            if n <= 1:
+                return n
+            return fibonacci(n-1) + fibonacci(n-2)
+        """
+        
+        request = AgentRequest(
+            task_id="review_001",
+            task_type="code_review",
+            task=code_to_review,
+            context={
+                "language": "python",
+                "focus_areas": ["performance", "readability", "best_practices"]
+            }
+        )
+        
+        response = await agent.process(request)
+        print(f"Review result: {response.result}")
+        print(f"Quality metrics: {response.metadata.quality_metrics}")
+```
+
+### Orchestration Patterns
+
+#### Sequential Orchestration
+
+Execute agents in sequence for complex workflows:
+
+```python
+from shared_package.orchestration import SequentialOrchestrator
+from shared_package.orchestration.adapters import DirectAdapter
+
+async def sequential_workflow():
+    async with UnifiedModelClient() as client:
+        # Create agents
+        generator = CodeGeneratorAgent(client)
+        reviewer = CodeReviewerAgent(client)
+        
+        # Create orchestrator
+        orchestrator = SequentialOrchestrator(
+            agents=[generator, reviewer],
+            adapter=DirectAdapter()
+        )
+        
+        # Execute workflow
+        request = AgentRequest(
+            task_id="workflow_001",
+            task_type="code_generation",
+            task="Create a REST API endpoint for user authentication",
+            context={"framework": "fastapi", "include_tests": True}
+        )
+        
+        results = await orchestrator.execute(request)
+        
+        print("Generation result:", results[0].result)
+        print("Review result:", results[1].result)
+```
+
+#### Parallel Orchestration
+
+Execute multiple agents concurrently for comparison:
+
+```python
+from shared_package.orchestration import ParallelOrchestrator
+
+async def parallel_comparison():
+    async with UnifiedModelClient() as client:
+        # Create multiple generators for different models
+        agents = [
+            CodeGeneratorAgent(client, model_preference="qwen"),
+            CodeGeneratorAgent(client, model_preference="mistral"),
+            CodeGeneratorAgent(client, model_preference="tinyllama")
+        ]
+        
+        orchestrator = ParallelOrchestrator(
+            agents=agents,
+            adapter=DirectAdapter()
+        )
+        
+        request = AgentRequest(
+            task_id="compare_001",
+            task_type="code_generation",
+            task="Implement a binary search algorithm",
+            context={"language": "python", "include_comments": True}
+        )
+        
+        results = await orchestrator.execute(request)
+        
+        for i, result in enumerate(results):
+            print(f"Model {i+1}: {result.result[:100]}...")
+```
+
+### Communication Adapters
+
+The SDK supports flexible communication patterns through adapters:
+
+#### Direct Adapter (Default)
+
+```python
+from shared_package.orchestration.adapters import DirectAdapter
+
+# Direct async calls within the same process
+adapter = DirectAdapter()
+agent = CodeGeneratorAgent(client, adapter=adapter)
+result = await agent.process(request)
+```
+
+#### REST Adapter
+
+```python
+from shared_package.orchestration.adapters import RestAdapter
+
+# HTTP API calls for distributed agents
+adapter = RestAdapter(base_url="http://localhost:8000")
+agent = CodeGeneratorAgent(client, adapter=adapter)
+result = await agent.process(request)
+```
+
+### Agent Configuration
+
+Configure agents with specific parameters:
+
+```python
+from shared_package.config.agents import AgentConfig
+
+# Custom agent configuration
+config = AgentConfig(
+    max_tokens=5000,
+    temperature=0.3,
+    timeout=60.0,
+    retry_attempts=3
+)
+
+agent = CodeGeneratorAgent(client, config=config)
+```
+
+### Advanced Usage Examples
+
+#### Custom Agent Implementation
+
+```python
+from shared_package.agents import BaseAgent, AgentRequest, AgentResponse
+from shared_package.orchestration.adapters import DirectAdapter
+
+class DocumentationAgent(BaseAgent):
+    """Agent specialized in generating technical documentation."""
+    
+    def __init__(self, client, config=None):
+        super().__init__(client, config)
+        self.agent_name = "documentation_agent"
+        self.adapter = DirectAdapter()
+    
+    async def process(self, request: AgentRequest) -> AgentResponse:
+        """Generate documentation for the given code."""
+        prompt = f"""
+        Generate comprehensive documentation for the following code:
+        
+        {request.task}
+        
+        Include:
+        - Function/class descriptions
+        - Parameter documentation
+        - Return value documentation
+        - Usage examples
+        - Error handling notes
+        """
+        
+        response = await self.client.make_request(
+            "mistral", 
+            prompt,
+            max_tokens=self.config.max_tokens,
+            temperature=self.config.temperature
+        )
+        
+        return AgentResponse(
+            task_id=request.task_id,
+            result=response.response,
+            metadata=TaskMetadata(
+                agent_name=self.agent_name,
+                model_used="mistral",
+                processing_time=response.response_time,
+                quality_metrics=QualityMetrics(
+                    score=0.95,  # High quality for documentation
+                    readability=0.9,
+                    completeness=0.95
+                )
+            )
+        )
+```
+
+#### Workflow with Error Handling
+
+```python
+async def robust_workflow():
+    """Example of workflow with comprehensive error handling."""
+    async with UnifiedModelClient() as client:
+        try:
+            # Create agents
+            generator = CodeGeneratorAgent(client)
+            reviewer = CodeReviewerAgent(client)
+            
+            # Create orchestrator
+            orchestrator = SequentialOrchestrator(
+                agents=[generator, reviewer],
+                adapter=DirectAdapter()
+            )
+            
+            # Execute with error handling
+            request = AgentRequest(
+                task_id="robust_001",
+                task_type="code_generation",
+                task="Create a data validation function",
+                context={"language": "python", "include_tests": True}
+            )
+            
+            results = await orchestrator.execute(request)
+            
+            # Process results
+            for i, result in enumerate(results):
+                if result.success:
+                    print(f"Step {i+1} completed successfully")
+                    print(f"Result: {result.result[:200]}...")
+                else:
+                    print(f"Step {i+1} failed: {result.error}")
+                    
+        except Exception as e:
+            print(f"Workflow failed: {e}")
+```
+
+### Migration Guide
+
+#### From Day 07/Day 08 to SDK Agents
+
+**Before (Day 07/Day 08):**
+```python
+# Old approach with direct API calls
+from day_07.agents.code_generator import CodeGeneratorAgent
+from day_08.agents.code_generator_adapter import CodeGeneratorAdapter
+
+adapter = CodeGeneratorAdapter()
+result = await adapter.generate_code(prompt)
+```
+
+**After (SDK Agents):**
+```python
+# New approach with SDK agents
+from shared_package.agents import CodeGeneratorAgent, AgentRequest
+from shared_package.orchestration.adapters import DirectAdapter
+
+async with UnifiedModelClient() as client:
+    agent = CodeGeneratorAgent(client, adapter=DirectAdapter())
+    
+    request = AgentRequest(
+        task_id="migration_001",
+        task_type="code_generation",
+        task=prompt,
+        context={"language": "python"}
+    )
+    
+    result = await agent.process(request)
+```
+
+#### Key Migration Steps
+
+1. **Replace Direct Imports**: Use `shared_package.agents` instead of day-specific imports
+2. **Update Request Format**: Use `AgentRequest` with proper schema
+3. **Use Adapters**: Specify communication adapter (DirectAdapter for local, RestAdapter for distributed)
+4. **Update Error Handling**: Use SDK exception hierarchy
+5. **Leverage Orchestration**: Use orchestrators for complex workflows
+
+#### Backward Compatibility
+
+The SDK maintains full backward compatibility:
+- Existing `UnifiedModelClient` API unchanged
+- All model configurations preserved
+- Exception hierarchy maintained
+- No breaking changes to existing code
+
+### Testing Agentic Architecture
+
+```python
+# Test individual agents
+import pytest
+from shared_package.agents import CodeGeneratorAgent, AgentRequest
+
+@pytest.mark.asyncio
+async def test_code_generator():
+    async with UnifiedModelClient() as client:
+        agent = CodeGeneratorAgent(client)
+        
+        request = AgentRequest(
+            task_id="test_001",
+            task_type="code_generation",
+            task="Create a simple hello world function",
+            context={"language": "python"}
+        )
+        
+        response = await agent.process(request)
+        
+        assert response.success
+        assert "def hello" in response.result
+        assert response.metadata.agent_name == "code_generator"
+
+# Test orchestration
+@pytest.mark.asyncio
+async def test_sequential_orchestration():
+    async with UnifiedModelClient() as client:
+        generator = CodeGeneratorAgent(client)
+        reviewer = CodeReviewerAgent(client)
+        
+        orchestrator = SequentialOrchestrator(
+            agents=[generator, reviewer],
+            adapter=DirectAdapter()
+        )
+        
+        request = AgentRequest(
+            task_id="orchestration_test",
+            task_type="code_generation",
+            task="Create a sorting algorithm",
+            context={"language": "python"}
+        )
+        
+        results = await orchestrator.execute(request)
+        
+        assert len(results) == 2
+        assert results[0].success  # Generation successful
+        assert results[1].success  # Review successful
+```
+
 ## License
 
 This SDK is part of the AI Challenge project and follows the same license terms.

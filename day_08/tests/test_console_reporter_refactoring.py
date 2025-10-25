@@ -6,7 +6,7 @@ StatisticsCollector, ConsoleFormatter, ReportGenerator, and ConsoleReporter faca
 """
 
 from datetime import datetime
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, mock_open
 
 import pytest
 
@@ -328,7 +328,7 @@ class TestReportGenerator:
         """Set up test fixtures."""
         self.collector = Mock(spec=StatisticsCollector)
         self.formatter = Mock(spec=ConsoleFormatter)
-        self.generator = ReportGenerator(self.collector, self.formatter)
+        self.generator = ReportGenerator("test_reports")
         self.sample_results = self._create_sample_results()
 
     def _create_sample_results(self):
@@ -351,16 +351,30 @@ class TestReportGenerator:
         ]
 
     @patch("builtins.print")
-    def test_generate_summary_report_success(self, mock_print):
-        """Test successful summary report generation."""
-        self.formatter.format_experiment_summary.return_value = "Test summary"
-
-        self.generator.generate_summary_report(self.sample_results)
-
-        self.formatter.format_experiment_summary.assert_called_once_with(
-            self.sample_results
-        )
-        mock_print.assert_called_once_with("Test summary")
+    @pytest.mark.asyncio
+    async def test_generate_comprehensive_report_success(self, mock_print):
+        """Test successful comprehensive report generation."""
+        # Mock the comprehensive report generation
+        mock_results = {
+            "models_tested": ["starcoder", "mistral"],
+            "total_experiments": 6,
+            "successful_experiments": 6,
+            "success_rate": 100.0
+        }
+        mock_config = {
+            "demo_name": "Model Switching Demo",
+            "timestamp": datetime.now()
+        }
+        
+        # Mock the file writing
+        with patch("builtins.open", mock_open()) as mock_file:
+            report_path = await self.generator.generate_comprehensive_report(
+                mock_results, mock_config
+            )
+            
+            assert report_path is not None
+            assert "reports" in str(report_path)
+            mock_file.assert_called()
 
     @patch("builtins.print")
     def test_generate_summary_report_error(self, mock_print):

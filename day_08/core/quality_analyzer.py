@@ -2,7 +2,7 @@
 Quality Analyzer for performance and code quality evaluation.
 
 This module provides the QualityAnalyzer class that measures response quality
-and performance metrics using adapted day_07 reviewer agent patterns.
+and performance metrics using SDK reviewer agent patterns.
 """
 
 import asyncio

@@ -56,7 +56,7 @@ from core.interfaces.protocols import LoggerProtocol
 class StructuredLogger:
     """Structured logger implementation."""
 
-    def __init__(self, name: str, level: str = "INFO", format_type: str = "json"):
+    def __init__(self, name: str, level: str = "WARNING", format_type: str = "json"):
         """Initialize structured logger."""
         self.name = name
         self.level = level
@@ -206,21 +206,21 @@ class LoggerFactory:
 
     @staticmethod
     def create_logger(
-        name: str, level: str = "INFO", format_type: str = "json"
+        name: str, level: str = "WARNING", format_type: str = "json"
     ) -> StructuredLogger:
         """Create structured logger."""
         return StructuredLogger(name, level, format_type)
 
     @staticmethod
     def create_request_logger(
-        name: str, level: str = "INFO", format_type: str = "json"
+        name: str, level: str = "WARNING", format_type: str = "json"
     ) -> RequestLogger:
         """Create request logger."""
         logger = LoggerFactory.create_logger(name, level, format_type)
         return RequestLogger(logger)
 
     @staticmethod
-    def setup_root_logger(level: str = "INFO", format_type: str = "json") -> None:
+    def setup_root_logger(level: str = "WARNING", format_type: str = "json") -> None:
         """Setup root logger configuration."""
         logging.basicConfig(
             level=getattr(logging, level.upper()),

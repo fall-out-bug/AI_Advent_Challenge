@@ -16,6 +16,8 @@ Following Python Zen principles:
 
 import asyncio
 import time
+import argparse
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from demo_model_switching import ModelSwitchingDemo
@@ -93,8 +95,8 @@ class EnhancedModelSwitchingDemo(ModelSwitchingDemo):
         
         await self._pause("Initializing enhanced demo...", 1.0)
         
-        # Check ALL models availability with detailed output
-        await self._check_all_models_with_details()
+        # Check model availability and start testing all configured models
+        await self._check_model_availability()
         
         # Test each model independently with comprehensive testing
         for model_name in self.config["models"]:
@@ -108,8 +110,46 @@ class EnhancedModelSwitchingDemo(ModelSwitchingDemo):
         # Print detailed results
         self._print_enhanced_results()
         
+        # Generate comprehensive markdown report
+        report_path = self._generate_markdown_report()
+        print(f"\n📄 Full report saved to: {report_path}")
+        
         return self.results
     
+    async def _check_model_availability(self) -> None:
+        """Check availability of all configured models."""
+        print("\n🔍 Checking model availability...")
+        
+        # Don't start containers during availability check
+        availability = await self.orchestrator.check_all_models_availability(start_containers=False)
+        
+        available_models = []
+        for model, is_available in availability.items():
+            if is_available:
+                print(f"✅ {model} is available")
+                available_models.append(model)
+            else:
+                print(f"❌ {model} is not available")
+        
+        # If specific models were requested, only test those (even if not available)
+        if len(self.config["models"]) == 1:
+            requested_model = self.config["models"][0]
+            print(f"🎯 Testing specific model: {requested_model}")
+            if requested_model not in available_models:
+                print(f"⚠️  {requested_model} is not available, but will attempt to start it during testing.")
+            # Keep only the requested model
+            self.config["models"] = [requested_model]
+        else:
+            # Test all available models
+            if not available_models:
+                print("⚠️  No models are currently running. Will start models sequentially during testing.")
+                available_models = self.config["models"]
+            
+            # Update config to include available or configured models
+            self.config["models"] = available_models
+        
+        print(f"📊 Will test {len(self.config['models'])} models: {self.config['models']}")
+
     async def _pause(self, message: str, seconds: float) -> None:
         """
         Add human-readable pause with message.
@@ -127,31 +167,6 @@ class EnhancedModelSwitchingDemo(ModelSwitchingDemo):
         print(f"⏳ Pausing for {seconds}s...")
         await asyncio.sleep(seconds)
     
-    async def _check_all_models_with_details(self) -> None:
-        """Check availability of all models with detailed output."""
-        print("\n🔍 Checking availability of ALL models...")
-        
-        # Don't start containers during availability check
-        availability = await self.orchestrator.check_all_models_availability(start_containers=False)
-        
-        available_models = []
-        for model, is_available in availability.items():
-            if is_available:
-                print(f"✅ {model} is available")
-                available_models.append(model)
-            else:
-                print(f"❌ {model} is not available")
-        
-        if not available_models:
-            print("⚠️  No models are currently running. Will start models sequentially during testing.")
-            available_models = self.config["models"]
-        
-        # Update config to include available or configured models
-        self.config["models"] = available_models
-        self.orchestrator.models = available_models
-        
-        print(f"📊 Will test {len(available_models)} models: {available_models}")
-        await self._pause("Model availability check completed", 1.5)
     
     async def _test_model_enhanced(self, model_name: str) -> None:
         """
@@ -256,17 +271,19 @@ class EnhancedModelSwitchingDemo(ModelSwitchingDemo):
         if result.long_exceeds_limit:
             query = result.long_query
             print(f"\n📦 Testing compressions on LONG query (exceeds limit)")
-            
-            # Test all compression strategies
-            compression_algorithms = self.config.get("compression_algorithms", [
-                "truncation", "keywords", "extractive", "semantic", "summarization"
-            ])
-            
-            for strategy in compression_algorithms:
-                await self._test_single_compression_detailed(query, model_name, strategy, "long")
-                await self._pause(f"Completed {strategy} compression", 1.0)
         else:
-            print(f"\n⏭️  Skipping compression tests (long query does not exceed limit)")
+            # Force compression testing even when query doesn't exceed limit
+            query = result.long_query
+            print(f"\n📦 Testing compressions on LONG query (forced testing)")
+        
+        # Test all compression strategies
+        compression_algorithms = self.config.get("compression_algorithms", [
+            "truncation", "keywords", "extractive", "semantic", "summarization"
+        ])
+        
+        for strategy in compression_algorithms:
+            await self._test_single_compression_detailed(query, model_name, strategy, "long")
+            await self._pause(f"Completed {strategy} compression", 1.0)
     
     async def _test_single_compression_detailed(self, query: str, model_name: str, 
                                                strategy: str, stage: str) -> None:
@@ -303,6 +320,15 @@ class EnhancedModelSwitchingDemo(ModelSwitchingDemo):
                 response_preview_length = self.display_config.get("show_response_preview", 500)
                 print(f"\n  Model response preview:")
                 print(f"  {compression_result.response[:response_preview_length]}...")
+                
+                # Display generator and reviewer agent outputs
+                await self._display_generator_output(compression_result, stage)
+                await self._display_reviewer_output(
+                    compression_result.response, 
+                    query, 
+                    model_name, 
+                    strategy
+                )
                 
                 # Store results
                 if model_name not in self.results["compression_results"]:
@@ -370,6 +396,71 @@ class EnhancedModelSwitchingDemo(ModelSwitchingDemo):
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
         }
     
+    async def _display_generator_output(self, result, stage: str) -> None:
+        """
+        Display code generator agent output with formatted code preview.
+        
+        Args:
+            result: Compression result containing generated code
+            stage: Current testing stage (short/medium/long)
+            
+        Example:
+            ```python
+            await self._display_generator_output(compression_result, "long")
+            ```
+        """
+        print(f"\n  🤖 GENERATOR OUTPUT:")
+        response_preview = self.display_config.get("show_response_preview", 500)
+        print(f"  Generated code (first {response_preview} chars):")
+        print(f"  {result.response[:response_preview]}...")
+        if len(result.response) > response_preview:
+            print(f"  (Total length: {len(result.response)} characters)")
+    
+    async def _display_reviewer_output(self, code: str, query: str, model: str, strategy: str) -> None:
+        """
+        Display code reviewer agent analysis with quality metrics.
+        
+        Args:
+            code: Generated code to review
+            query: Original query that generated the code
+            model: Model name used for generation
+            strategy: Compression strategy used
+            
+        Example:
+            ```python
+            await self._display_reviewer_output(
+                generated_code, original_query, "starcoder", "semantic"
+            )
+            ```
+        """
+        print(f"\n  🔍 REVIEWER ANALYSIS:")
+        
+        try:
+            # Check if reviewer adapter is available
+            if not hasattr(self.reviewer_adapter, 'review_code_quality'):
+                print(f"  ⚠️  Reviewer adapter not properly initialized")
+                return
+                
+            quality = await self.reviewer_adapter.review_code_quality(
+                code, query, model
+            )
+            
+            if quality:
+                print(f"  Code Quality Score: {quality.code_quality_score:.2f}")
+                print(f"  PEP8 Compliance: {'Yes' if quality.pep8_compliance else 'No'}")
+                print(f"  Has Docstrings: {'Yes' if quality.has_docstrings else 'No'}")
+                print(f"  Has Type Hints: {'Yes' if quality.has_type_hints else 'No'}")
+                print(f"  Test Coverage: {quality.test_coverage}")
+                print(f"  Complexity Score: {quality.complexity_score:.2f}")
+                print(f"  Requirements Coverage: {quality.requirements_coverage:.2f}")
+                print(f"  Completeness Score: {quality.completeness_score:.2f}")
+            else:
+                print(f"  ⚠️  Reviewer not available (SDK dependencies missing)")
+        except Exception as e:
+            print(f"  ⚠️  Reviewer error: {str(e)}")
+            if "SDK agent not available" in str(e):
+                print(f"  💡 Note: SDK CodeReviewerAgent dependencies are missing")
+
     def _print_enhanced_results(self) -> None:
         """Print comprehensive summary results."""
         summary = self.results["summary"]
@@ -411,6 +502,37 @@ class EnhancedModelSwitchingDemo(ModelSwitchingDemo):
                     successful = sum(1 for comp in stage_compressions.values() 
                                     if hasattr(comp, 'success') and comp.success)
                     print(f"    {stage}: {successful}/{len(stage_compressions)} successful")
+    
+    def _generate_markdown_report(self) -> str:
+        """
+        Generate and save comprehensive markdown report.
+        
+        Returns:
+            Path to the generated report file
+            
+        Example:
+            ```python
+            report_path = self._generate_markdown_report()
+            print(f"Report saved to: {report_path}")
+            ```
+        """
+        from utils.demo_report_generator import DemoReportGenerator
+        
+        generator = DemoReportGenerator()
+        report_content = generator.generate_report(self.results)
+        
+        # Create reports directory if it doesn't exist
+        reports_dir = Path("reports")
+        reports_dir.mkdir(exist_ok=True)
+        
+        # Generate timestamped filename
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        report_path = reports_dir / f"demo_report_{timestamp}.md"
+        
+        # Write report to file
+        report_path.write_text(report_content, encoding='utf-8')
+        
+        return str(report_path)
 
 
 async def main():
@@ -420,26 +542,45 @@ async def main():
     Example:
         ```bash
         python demo_enhanced.py
+        python demo_enhanced.py --model starcoder
+        python demo_enhanced.py --model tinyllama
         ```
     """
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Enhanced Model Switching Demo')
+    parser.add_argument('--model', type=str, help='Specific model to test (starcoder, mistral, qwen, tinyllama)')
+    parser.add_argument('--all', action='store_true', help='Test all available models')
+    args = parser.parse_args()
+    
     try:
         print("🚀 Enhanced Model Switching Demo - Day 08")
         print("=" * 80)
         print("This enhanced demo will:")
-        print("1. Test ALL models (StarCoder, Mistral, Qwen, TinyLlama)")
-        print("2. Use large queries that exceed model limits (up to 25K tokens)")
-        print("3. Test ALL compression strategies on ALL query sizes")
-        print("4. Show detailed output with query and response previews")
+        print("1. Test models with large queries exceeding token limits")
+        print("2. Test ALL compression strategies on ALL query sizes")
+        print("3. Show detailed output with query, response, and agent analysis")
+        print("4. Display both generator and reviewer agent outputs")
         print("5. Provide human-readable pacing with delays")
         print("6. Generate comprehensive reports")
         print("=" * 80)
         
-        # Initialize and run enhanced demo
-        demo = EnhancedModelSwitchingDemo()
+        # Determine which models to test
+        if args.model:
+            print(f"🎯 Testing specific model: {args.model}")
+            config = get_config()
+            config["models"] = [args.model]
+            demo = EnhancedModelSwitchingDemo(config)
+        elif args.all:
+            print("🎯 Testing all available models")
+            demo = EnhancedModelSwitchingDemo()
+        else:
+            print("🎯 Testing available models (use --model <name> for specific model)")
+            demo = EnhancedModelSwitchingDemo()
+        
         results = await demo.run_enhanced_demo()
         
         print(f"\n🎉 Enhanced demo completed successfully!")
-        print(f"📊 Tested {len(results['models_tested'])} models")
+        print(f"📊 Tested {len(results.get('models_tested', []))} models")
         print(f"🧪 Ran {results['summary']['total_experiments']} experiments")
         print(f"✅ Success rate: {results['summary']['success_rate']*100:.1f}%")
         

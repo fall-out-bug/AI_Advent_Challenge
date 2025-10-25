@@ -368,7 +368,7 @@ class TestCodeGeneratorAdapter:
                     max_total_tokens=9216
                 )
                 
-                with patch.object(generator_adapter, '_generate_with_fallback') as mock_generate:
+                with patch.object(generator_adapter, '_generate_with_sdk_agent') as mock_generate:
                     mock_generate.return_value = "def example(): pass"
                     
                     result = await generator_adapter.generate_code_with_compression(
@@ -399,7 +399,7 @@ class TestCodeReviewerAdapter:
         code = "def example(): pass"
         task_description = "Write a function"
         
-        with patch.object(reviewer_adapter, '_review_with_fallback') as mock_review:
+        with patch.object(reviewer_adapter, '_review_with_sdk_agent') as mock_review:
             mock_review.return_value = CodeQualityMetrics(
                 code_quality_score=7.0,
                 pep8_compliance=True,
@@ -722,7 +722,7 @@ class TestDataModels:
         )
         
         assert result.total_tokens == 150
-        assert result.compression_ratio == 1.0
+        assert result.compression_result is None
     
     def test_three_stage_result(self):
         """Test ThreeStageResult model."""

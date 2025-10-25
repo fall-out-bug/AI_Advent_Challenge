@@ -125,165 +125,98 @@ class TestApplicationBootstrapper:
     def setup_method(self):
         """Set up test fixtures."""
         self.config = {
-            "token_counter_mode": "simple",
-            "limit_profile": "practical",
-            "ml_service_url": "http://localhost:8004",
+            "token_counter": {"mode": "simple", "limit_profile": "practical"},
+            "ml_service": {"url": "http://localhost:8004"},
         }
         self.bootstrapper = ApplicationBootstrapper(self.config)
 
     def test_create_token_counter(self):
-        """Test token counter creation."""
-        result = self.bootstrapper._create_token_counter()
+        """Test token counter creation via DI container."""
+        # Bootstrap the application to get the container
+        context = self.bootstrapper.bootstrap()
+        
+        # Get token counter from container
+        token_counter = self.bootstrapper.container.token_counter()
+        
+        # Verify it's a proper token counter
+        assert hasattr(token_counter, "count_tokens")
+        assert hasattr(token_counter, "get_model_limits")
+        assert hasattr(token_counter, "check_limit_exceeded")
+        assert hasattr(token_counter, "estimate_compression_target")
 
-        # Verify it's a mock with the right spec
-        assert hasattr(result, "count_tokens")
-        assert hasattr(result, "get_model_limits")
-        assert hasattr(result, "check_limit_exceeded")
-        assert hasattr(result, "estimate_compression_target")
+    def test_create_text_compressor(self):
+        """Test text compressor creation via DI container."""
+        # Bootstrap the application to get the container
+        context = self.bootstrapper.bootstrap()
+        
+        # Get text compressor from container
+        text_compressor = self.bootstrapper.container.text_compressor()
+        
+        # Verify it's a proper text compressor
+        assert hasattr(text_compressor, "compress_by_truncation")
+        assert hasattr(text_compressor, "compress_by_keywords")
+        assert hasattr(text_compressor, "compress_text")
 
-    @patch("core.bootstrap.application_bootstrapper.SimpleTextCompressor")
-    def test_create_text_compressor(self, mock_compressor_class):
-        """Test text compressor creation."""
-        mock_instance = Mock()
-        mock_compressor_class.return_value = mock_instance
-        mock_token_counter = Mock()
+    def test_create_ml_client(self):
+        """Test ML client creation via DI container."""
+        # Bootstrap the application to get the container
+        context = self.bootstrapper.bootstrap()
+        
+        # Get ML client from container
+        ml_client = self.bootstrapper.container.ml_client()
+        
+        # Verify it's a proper ML client
+        assert hasattr(ml_client, "make_request")
+        assert hasattr(ml_client, "count_tokens")
 
-        result = self.bootstrapper._create_text_compressor(mock_token_counter)
+    def test_create_experiments(self):
+        """Test experiments creation via DI container."""
+        # Bootstrap the application to get the container
+        context = self.bootstrapper.bootstrap()
+        
+        # Get experiments from container
+        experiments = self.bootstrapper.container.experiments()
+        
+        # Verify it's a proper experiments instance
+        assert hasattr(experiments, "run_limit_exceeded_experiment")
+        assert hasattr(experiments, "run_model_comparison_experiment")
 
-        assert result == mock_instance
-        mock_compressor_class.assert_called_once_with(mock_token_counter)
+    def test_create_reporter(self):
+        """Test reporter creation via DI container."""
+        # Bootstrap the application to get the container
+        context = self.bootstrapper.bootstrap()
+        
+        # Get reporter from container
+        reporter = self.bootstrapper.container.application_context().reporter
+        
+        # Verify it's a proper reporter
+        assert hasattr(reporter, "print_experiment_summary")
+        assert hasattr(reporter, "print_detailed_analysis")
 
-    @patch("core.bootstrap.application_bootstrapper.TokenAnalysisClient")
-    def test_create_ml_client(self, mock_client_class):
-        """Test ML client creation."""
-        mock_instance = Mock()
-        mock_client_class.return_value = mock_instance
-
-        result = self.bootstrapper._create_ml_client()
-
-        assert result == mock_instance
-        mock_client_class.assert_called_once_with(base_url="http://localhost:8004")
-
-    @patch("core.bootstrap.application_bootstrapper.TokenLimitExperiments")
-    def test_create_experiments(self, mock_experiments_class):
-        """Test experiments creation."""
-        mock_instance = Mock()
-        mock_experiments_class.return_value = mock_instance
-        mock_ml_client = Mock()
-        mock_token_counter = Mock()
-        mock_text_compressor = Mock()
-
-        result = self.bootstrapper._create_experiments(
-            mock_ml_client, mock_token_counter, mock_text_compressor
-        )
-
-        assert result == mock_instance
-        mock_experiments_class.assert_called_once_with(
-            mock_ml_client, mock_token_counter, mock_text_compressor
-        )
-
-    @patch("core.bootstrap.application_bootstrapper.ConsoleReporter")
-    def test_create_reporter(self, mock_reporter_class):
-        """Test reporter creation."""
-        mock_instance = Mock()
-        mock_reporter_class.return_value = mock_instance
-
-        result = self.bootstrapper._create_reporter()
-
-        assert result == mock_instance
-        mock_reporter_class.assert_called_once()
-
-    @patch("core.bootstrap.application_bootstrapper.ApplicationContext")
-    @patch(
-        "core.bootstrap.application_bootstrapper.ApplicationBootstrapper._create_reporter"
-    )
-    @patch(
-        "core.bootstrap.application_bootstrapper.ApplicationBootstrapper._create_experiments"
-    )
-    @patch(
-        "core.bootstrap.application_bootstrapper.ApplicationBootstrapper._create_ml_client"
-    )
-    @patch(
-        "core.bootstrap.application_bootstrapper.ApplicationBootstrapper._create_text_compressor"
-    )
-    @patch(
-        "core.bootstrap.application_bootstrapper.ApplicationBootstrapper._create_token_counter"
-    )
-    def test_bootstrap_success(
-        self,
-        mock_create_token_counter,
-        mock_create_text_compressor,
-        mock_create_ml_client,
-        mock_create_experiments,
-        mock_create_reporter,
-        mock_context_class,
-    ):
+    def test_bootstrap_success(self):
         """Test successful bootstrap."""
-        # Setup mocks
-        mock_token_counter = Mock()
-        mock_text_compressor = Mock()
-        mock_ml_client = Mock()
-        mock_experiments = Mock()
-        mock_reporter = Mock()
-        mock_context = Mock()
-
-        mock_create_token_counter.return_value = mock_token_counter
-        mock_create_text_compressor.return_value = mock_text_compressor
-        mock_create_ml_client.return_value = mock_ml_client
-        mock_create_experiments.return_value = mock_experiments
-        mock_create_reporter.return_value = mock_reporter
-        mock_context_class.return_value = mock_context
-        mock_context.validate_components.return_value = True
-
-        # Execute bootstrap
-        result = self.bootstrapper.bootstrap()
-
-        # Verify result
-        assert result == mock_context
-
-        # Verify all create methods were called
-        mock_create_token_counter.assert_called_once()
-        mock_create_text_compressor.assert_called_once_with(mock_token_counter)
-        mock_create_ml_client.assert_called_once()
-        mock_create_experiments.assert_called_once_with(
-            mock_ml_client, mock_token_counter, mock_text_compressor
-        )
-        mock_create_reporter.assert_called_once()
-
-        # Verify context was created with correct parameters
-        mock_context_class.assert_called_once_with(
-            token_counter=mock_token_counter,
-            text_compressor=mock_text_compressor,
-            ml_client=mock_ml_client,
-            experiments=mock_experiments,
-            reporter=mock_reporter,
-            logger=self.bootstrapper.logger,
-            config=self.config,
-        )
+        # Bootstrap the application
+        context = self.bootstrapper.bootstrap()
+        
+        # Verify context is created
+        assert context is not None
+        assert hasattr(context, "validate_components")
+        
+        # Verify container is initialized
+        assert self.bootstrapper.container is not None
+        
+        # Verify all components are available
+        assert self.bootstrapper.container.token_counter() is not None
+        assert self.bootstrapper.container.text_compressor() is not None
+        assert self.bootstrapper.container.ml_client() is not None
+        assert self.bootstrapper.container.experiments() is not None
+        assert self.bootstrapper.container.application_context() is not None
 
     @patch("core.bootstrap.application_bootstrapper.ApplicationContext")
-    @patch(
-        "core.bootstrap.application_bootstrapper.ApplicationBootstrapper._create_reporter"
-    )
-    @patch(
-        "core.bootstrap.application_bootstrapper.ApplicationBootstrapper._create_experiments"
-    )
-    @patch(
-        "core.bootstrap.application_bootstrapper.ApplicationBootstrapper._create_ml_client"
-    )
-    @patch(
-        "core.bootstrap.application_bootstrapper.ApplicationBootstrapper._create_text_compressor"
-    )
-    @patch(
-        "core.bootstrap.application_bootstrapper.ApplicationBootstrapper._create_token_counter"
-    )
+    @patch("core.bootstrap.application_bootstrapper.configure_container")
     def test_bootstrap_validation_failure(
         self,
-        mock_create_token_counter,
-        mock_create_text_compressor,
-        mock_create_ml_client,
-        mock_create_experiments,
-        mock_create_reporter,
+        mock_configure_container,
         mock_context_class,
     ):
         """Test bootstrap with validation failure."""
@@ -291,6 +224,11 @@ class TestApplicationBootstrapper:
         mock_context = Mock()
         mock_context.validate_components.return_value = False
         mock_context_class.return_value = mock_context
+        
+        # Mock container to return the failing context
+        mock_container = Mock()
+        mock_container.application_context.return_value = mock_context
+        mock_configure_container.return_value = mock_container
 
         # Execute bootstrap and expect exception
         with pytest.raises(
@@ -298,13 +236,11 @@ class TestApplicationBootstrapper:
         ):
             self.bootstrapper.bootstrap()
 
-    @patch(
-        "core.bootstrap.application_bootstrapper.ApplicationBootstrapper._create_token_counter"
-    )
-    def test_bootstrap_component_creation_failure(self, mock_create_token_counter):
+    @patch("core.bootstrap.application_bootstrapper.configure_container")
+    def test_bootstrap_component_creation_failure(self, mock_configure_container):
         """Test bootstrap with component creation failure."""
         # Setup mock to raise exception
-        mock_create_token_counter.side_effect = Exception("Creation failed")
+        mock_configure_container.side_effect = Exception("Container initialization failed")
 
         # Execute bootstrap and expect exception
         with pytest.raises(BootstrapError, match="Failed to bootstrap application"):
@@ -317,10 +253,9 @@ class TestApplicationBootstrapper:
         assert "config_keys" in info
         assert "config_available" in info
         assert "logger_configured" in info
-        assert "bootstrap_methods" in info
+        assert "container_initialized" in info
         assert info["config_available"] is True
         assert info["logger_configured"] is True
-        assert len(info["bootstrap_methods"]) == 5
 
 
 class TestRunPy:

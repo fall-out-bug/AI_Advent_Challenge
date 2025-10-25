@@ -67,8 +67,8 @@ class TestAPIKeyFileLoading:
 class TestAPIKeyManagement:
     """Test API key management functions."""
     
-    @patch('shared.config.api_keys.load_api_key_from_file')
-    @patch('shared.config.api_keys.os.getenv')
+    @patch('shared_package.config.api_keys.load_api_key_from_file')
+    @patch('shared_package.config.api_keys.os.getenv')
     def test_get_api_key_from_file(self, mock_getenv, mock_load_file):
         """Test getting API key from file."""
         mock_load_file.return_value = "file_key_123"
@@ -77,8 +77,8 @@ class TestAPIKeyManagement:
         result = get_api_key("perplexity")
         assert result == "file_key_123"
     
-    @patch('shared.config.api_keys.load_api_key_from_file')
-    @patch('shared.config.api_keys.os.getenv')
+    @patch('shared_package.config.api_keys.load_api_key_from_file')
+    @patch('shared_package.config.api_keys.os.getenv')
     def test_get_api_key_from_env(self, mock_getenv, mock_load_file):
         """Test getting API key from environment variable."""
         mock_load_file.return_value = None
@@ -87,8 +87,8 @@ class TestAPIKeyManagement:
         result = get_api_key("perplexity")
         assert result == "env_key_456"
     
-    @patch('shared.config.api_keys.load_api_key_from_file')
-    @patch('shared.config.api_keys.os.getenv')
+    @patch('shared_package.config.api_keys.load_api_key_from_file')
+    @patch('shared_package.config.api_keys.os.getenv')
     def test_get_api_key_file_priority(self, mock_getenv, mock_load_file):
         """Test that file has priority over environment variable."""
         mock_load_file.return_value = "file_key_123"
@@ -97,8 +97,8 @@ class TestAPIKeyManagement:
         result = get_api_key("perplexity")
         assert result == "file_key_123"
     
-    @patch('shared.config.api_keys.load_api_key_from_file')
-    @patch('shared.config.api_keys.os.getenv')
+    @patch('shared_package.config.api_keys.load_api_key_from_file')
+    @patch('shared_package.config.api_keys.os.getenv')
     def test_get_api_key_not_found(self, mock_getenv, mock_load_file):
         """Test getting API key when not found anywhere."""
         mock_load_file.return_value = None
@@ -107,17 +107,17 @@ class TestAPIKeyManagement:
         result = get_api_key("perplexity")
         assert result is None
     
-    @patch('shared.config.api_keys.load_api_key_from_file')
-    @patch('shared.config.api_keys.os.getenv')
+    @patch('shared_package.config.api_keys.load_api_key_from_file')
+    @patch('shared_package.config.api_keys.os.getenv')
     def test_get_api_key_chadgpt_env_var(self, mock_getenv, mock_load_file):
         """Test getting ChadGPT API key from environment variable."""
         mock_load_file.return_value = None
-        mock_getenv.side_effect = lambda var: "chad_key_789" if var == "CHAD_API_KEY" else None
+        mock_getenv.side_effect = lambda var: "chad_key_789" if var == "CHADGPT_API_KEY" else None
         
         result = get_api_key("chadgpt")
         assert result == "chad_key_789"
     
-    @patch('shared.config.api_keys.get_api_key')
+    @patch('shared_package.config.api_keys.get_api_key')
     def test_is_api_key_configured_true(self, mock_get_key):
         """Test API key configuration check when key is configured."""
         mock_get_key.return_value = "test_key_123"
@@ -125,7 +125,7 @@ class TestAPIKeyManagement:
         result = is_api_key_configured("perplexity")
         assert result is True
     
-    @patch('shared.config.api_keys.get_api_key')
+    @patch('shared_package.config.api_keys.get_api_key')
     def test_is_api_key_configured_false(self, mock_get_key):
         """Test API key configuration check when key is not configured."""
         mock_get_key.return_value = None
@@ -133,7 +133,7 @@ class TestAPIKeyManagement:
         result = is_api_key_configured("perplexity")
         assert result is False
     
-    @patch('shared.config.api_keys.get_api_key')
+    @patch('shared_package.config.api_keys.get_api_key')
     def test_is_api_key_configured_empty(self, mock_get_key):
         """Test API key configuration check when key is empty."""
         mock_get_key.return_value = ""
@@ -141,7 +141,7 @@ class TestAPIKeyManagement:
         result = is_api_key_configured("perplexity")
         assert result is False
     
-    @patch('shared.config.api_keys.get_api_key')
+    @patch('shared_package.config.api_keys.get_api_key')
     def test_is_api_key_configured_whitespace(self, mock_get_key):
         """Test API key configuration check when key is whitespace only."""
         mock_get_key.return_value = "   "
@@ -153,7 +153,7 @@ class TestAPIKeyManagement:
 class TestExternalAPIAvailability:
     """Test external API availability functions."""
     
-    @patch('shared.config.api_keys.is_api_key_configured')
+    @patch('shared_package.config.api_keys.is_api_key_configured')
     def test_get_available_external_apis_all_configured(self, mock_is_configured):
         """Test getting available external APIs when all are configured."""
         mock_is_configured.side_effect = lambda api: api in ["perplexity", "chadgpt"]
@@ -165,7 +165,7 @@ class TestExternalAPIAvailability:
             "chadgpt": True
         }
     
-    @patch('shared.config.api_keys.is_api_key_configured')
+    @patch('shared_package.config.api_keys.is_api_key_configured')
     def test_get_available_external_apis_none_configured(self, mock_is_configured):
         """Test getting available external APIs when none are configured."""
         mock_is_configured.return_value = False
@@ -177,7 +177,7 @@ class TestExternalAPIAvailability:
             "chadgpt": False
         }
     
-    @patch('shared.config.api_keys.is_api_key_configured')
+    @patch('shared_package.config.api_keys.is_api_key_configured')
     def test_get_available_external_apis_partial(self, mock_is_configured):
         """Test getting available external APIs when only some are configured."""
         mock_is_configured.side_effect = lambda api: api == "perplexity"
