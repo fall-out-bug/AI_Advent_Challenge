@@ -1,0 +1,77 @@
+# Model configuration for AI Challenge
+# 
+# This file defines available models, their capabilities, and selection strategies
+# Following the Zen of Python: Simple is better than complex
+
+models:
+  # Default model to use when no specific model is requested
+  default: starcoder
+  
+  # Model selection by task type
+  by_task:
+    code_generation: starcoder
+    code_review: mistral
+    analysis: qwen
+    
+  # Available models with their capabilities
+  available:
+    starcoder:
+      name: "StarCoder"
+      description: "Code generation specialist"
+      max_input_tokens: 2048
+      max_output_tokens: 1024
+      recommended_input: 1536
+      best_for:
+        - code_generation
+        - code_completion
+      temperature_default: 0.2
+      
+    mistral:
+      name: "Mistral"
+      description: "General purpose with strong reasoning"
+      max_input_tokens: 4096
+      max_output_tokens: 2048
+      recommended_input: 3072
+      best_for:
+        - code_review
+        - analysis
+        - reasoning
+      temperature_default: 0.7
+      
+    qwen:
+      name: "Qwen"
+      description: "Fast inference with good comprehension"
+      max_input_tokens: 4096
+      max_output_tokens: 2048
+      recommended_input: 3072
+      best_for:
+        - analysis
+        - code_review
+      temperature_default: 0.5
+      
+    tinyllama:
+      name: "TinyLlama"
+      description: "Lightweight and fast"
+      max_input_tokens: 2048
+      max_output_tokens: 1024
+      recommended_input: 1536
+      best_for:
+        - quick_prototyping
+        - simple_tasks
+      temperature_default: 0.3
+
+  # Constraints for model selection
+  constraints:
+    max_tokens: 2048
+    temperature_default: 0.7
+    timeout_seconds: 30
+
+  # Fallback strategy when model is unavailable
+  fallback:
+    strategy: "sequential"  # sequential, parallel, best_fit
+    order:
+      - starcoder
+      - mistral
+      - qwen
+      - tinyllama
+

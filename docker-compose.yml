@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-challenge-api
+    ports:
+      - "8000:8000"
+    environment:
+      - STORAGE_PATH=/app/data
+      - MODEL_NAME=gpt-4
+      - MODEL_MAX_TOKENS=4096
+      - MODEL_TEMPERATURE=0.7
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    networks:
+      - ai-challenge-network
+
+networks:
+  ai-challenge-network:
+    driver: bridge
+

@@ -1,0 +1,52 @@
+# Performance Benchmark Experiment Template
+# 
+# Comprehensive performance testing
+# Following the Zen of Python: Explicit is better than implicit
+
+experiment:
+  name: "performance_benchmark"
+  description: "Comprehensive performance testing for all models"
+  
+  tasks:
+    - type: "code_generation"
+      description: "Implement a REST API endpoint"
+      language: "python"
+      complexity: "medium"
+    
+    - type: "code_review"
+      description: "Review code for quality and best practices"
+      language: "python"
+      complexity: "medium"
+  
+  models:
+    - name: "starcoder"
+      config:
+        temperature: 0.2
+    - name: "mistral"
+      config:
+        temperature: 0.3
+    - name: "qwen"
+      config:
+        temperature: 0.2
+    - name: "tinyllama"
+      config:
+        temperature: 0.3
+  
+  metrics:
+    performance:
+      - "response_time_p50"
+      - "response_time_p95"
+      - "response_time_p99"
+      - "throughput"
+    quality:
+      - "code_quality_score"
+      - "test_coverage"
+      - "error_rate"
+    resources:
+      - "token_usage"
+      - "memory_usage"
+  
+  aggregation:
+    strategy: "comprehensive"
+    output_format: "json"
+
