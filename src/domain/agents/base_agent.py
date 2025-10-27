@@ -39,6 +39,10 @@ DEFAULT_MAX_TOKENS = 1000
 DEFAULT_TEMPERATURE = 0.7
 
 
+# Valid complexity levels
+VALID_COMPLEXITY_LEVELS = {"low", "medium", "high"}
+
+
 class TaskMetadata:
     """Metadata about a task.
 
@@ -61,6 +65,14 @@ class TaskMetadata:
             estimated_time: Estimated execution time
             dependencies: Required dependencies
         """
+        # Validate complexity level
+        if complexity not in VALID_COMPLEXITY_LEVELS:
+            logger.warning(
+                f"Invalid complexity level '{complexity}' provided. "
+                f"Expected one of {VALID_COMPLEXITY_LEVELS}. Defaulting to 'medium'."
+            )
+            complexity = "medium"
+        
         self.complexity = complexity
         self.lines_of_code = lines_of_code
         self.estimated_time = estimated_time
@@ -274,6 +286,14 @@ class BaseAgent(ABC):
         # Extract complexity
         complexity_match = re.search(COMPLEXITY_PATTERN, response)
         complexity = complexity_match.group(1).lower() if complexity_match else "medium"
+        
+        # Validate complexity level
+        if complexity not in VALID_COMPLEXITY_LEVELS:
+            logger.warning(
+                f"Invalid complexity level '{complexity}' extracted. "
+                f"Expected one of {VALID_COMPLEXITY_LEVELS}. Defaulting to 'medium'."
+            )
+            complexity = "medium"
 
         # Extract lines of code
         loc_match = re.search(LOC_PATTERN, response)

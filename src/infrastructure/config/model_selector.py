@@ -33,10 +33,40 @@ class ModelSelector:
         Args:
             config_path: Path to models.yml configuration file
         """
-        self.config_path = (
-            config_path or Path(__file__).parent.parent.parent / "config" / "models.yml"
-        )
+        self.config_path = config_path or self._find_config_path()
         self.config = self._load_config()
+
+    def _find_config_path(self) -> Path:
+        """Find configuration file path robustly.
+
+        Searches for the project root by looking for common markers
+        (pyproject.toml, setup.py, .git, etc.) and then constructs
+        the path to config/models.yml.
+
+        Returns:
+            Path to models.yml configuration file
+
+        Raises:
+            FileNotFoundError: If project root cannot be determined
+        """
+        # Start from current file location
+        current = Path(__file__).resolve()
+        
+        # Marker files that indicate project root
+        project_markers = ["pyproject.toml", "setup.py", "setup.cfg", ".git"]
+        
+        # Walk up the directory tree to find project root
+        for parent in current.parents:
+            for marker in project_markers:
+                if (parent / marker).exists():
+                    config_path = parent / "config" / "models.yml"
+                    if config_path.exists():
+                        return config_path
+        
+        # Fallback: assume we're in src/infrastructure/config
+        # and go up to project root
+        fallback_root = Path(__file__).resolve().parents[3]
+        return fallback_root / "config" / "models.yml"
 
     def _load_config(self) -> Dict[str, Any]:
         """Load configuration from YAML file.

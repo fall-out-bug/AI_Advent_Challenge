@@ -103,6 +103,27 @@ class TestParallelExecution:
         assert stats["failed_executions"] >= 0
 
     @pytest.mark.asyncio
+    async def test_stats_updated_on_fail_fast_exception(self):
+        """Test that stats are updated when fail_fast=True raises non-timeout exception."""
+        orchestrator = ParallelOrchestrator()
+
+        agent = AsyncMock()
+        agent.process.side_effect = ValueError("Custom error")
+
+        tasks = [(agent, None)]
+
+        # Before fix: stats would not be updated for non-timeout exceptions
+        try:
+            await orchestrator.execute_parallel(tasks, fail_fast=True)
+        except ValueError:
+            pass  # Expected exception
+
+        stats = orchestrator.get_stats()
+        # Verify stats are properly updated despite non-timeout exception
+        assert stats["total_executions"] == 1
+        assert stats["failed_executions"] == 1
+
+    @pytest.mark.asyncio
     async def test_handles_partial_failures(self):
         """Test handling partial failures."""
         orchestrator = ParallelOrchestrator()

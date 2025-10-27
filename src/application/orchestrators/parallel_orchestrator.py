@@ -100,6 +100,16 @@ class ParallelOrchestrator:
             logger.error(f"Parallel execution timed out after {elapsed:.2f}s")
             self.stats["failed_executions"] += 1
             raise
+        except Exception as e:
+            # Handle non-timeout exceptions when fail_fast=True
+            elapsed = (datetime.now() - start_time).total_seconds()
+            error_msg = (
+                f"Parallel execution failed after {elapsed:.2f}s: "
+                f"{type(e).__name__}: {str(e)}"
+            )
+            logger.error(error_msg)
+            self.stats["failed_executions"] += 1
+            raise
 
     async def _execute_single_task(self, agent: Any, request: Any) -> Any:
         """Execute a single agent task.

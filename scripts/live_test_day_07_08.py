@@ -12,8 +12,11 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-# Add shared to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "shared"))
+# Add shared to path - use resolve() for absolute path to work from any directory
+_script_dir = Path(__file__).resolve().parent
+_project_root = _script_dir.parent
+_shared_dir = _project_root / "shared"
+sys.path.insert(0, str(_shared_dir))
 
 from shared.clients.unified_client import UnifiedModelClient
 from src.domain.services.compression.compressor import CompressionService

@@ -107,8 +107,13 @@ def _check_storage() -> Dict:
         # Check if storage is readable/writable
         if storage_path.exists():
             try:
-                storage_path.read_text()
-                storage_path.write_text("{}")
+                # Read existing data to verify read access
+                existing_data = storage_path.read_text()
+                
+                # Test write access using a temporary file in the same directory
+                temp_file = storage_path.parent / f".health_check_{storage_path.name}.tmp"
+                temp_file.write_text("{}")
+                temp_file.unlink()  # Clean up immediately
             except Exception as e:
                 return {"healthy": False, "error": f"Cannot access storage: {e}"}
 
