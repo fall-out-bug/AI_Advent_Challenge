@@ -1,0 +1,17 @@
+# Model Limits Configuration
+models:
+  gpt-4:
+    max_tokens: 4096
+    max_input_tokens: 8192
+    request_timeout: 60
+    
+  gpt-3.5-turbo:
+    max_tokens: 4096
+    max_input_tokens: 4096
+    request_timeout: 30
+
+limits:
+  rate_limit_per_minute: 20
+  rate_limit_per_hour: 500
+  max_requests_per_day: 10000
+
