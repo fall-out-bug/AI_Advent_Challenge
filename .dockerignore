@@ -1,0 +1,91 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+ENV/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.coverage.*
+.tox/
+.hypothesis/
+
+# Documentation
+docs/_build/
+*.md
+!README.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Project specific
+day_01/
+day_02/
+day_03/
+day_04/
+day_05/
+day_06/
+day_07/
+day_08/
+archive/
+local_models/
+shared/
+
+# CI/CD
+.github/
+test_reports/
+reports/
+bandit-report.json
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Legacy directories (will be archived)
+legacy/
+
+# Test files
+test_reports/
+__pycache__/
+
+# Development files
+Makefile
+Makefile.template
+pytest.ini
+.cursorignore
+*.plan.md
+phase-2-enhancement*.md
+
+# Data (only copy what's necessary)
+data/*
+!data/.gitkeep
+
+# API keys (never copy)
+api_key.txt
+*.env
+.env.*

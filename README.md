@@ -4,15 +4,37 @@
 
 > Daily AI-powered projects exploring language models and multi-agent systems
 
-## 🤖 Quick Start for AI Agents
+## 🎯 Phase 3: Local Development Enhancements
 
-**Repository Structure:**
-- `local_models/` - Local language model infrastructure (shared module)
-- `shared/` - SDK for unified model interaction (shared module)
-- `day_01/` to `day_04/` - Learning projects exploring basics
-- `day_05/`, `day_06/` - Production projects using SDK
-- `day_07/` - Multi-Agent System for code generation and review
-- Each `day_XX/` is a standalone project with its own dependencies and tests
+This repository features a comprehensive **Phase 3** implementation following Clean Architecture principles and the Zen of Python.
+
+**Current Architecture:**
+- `src/` - Clean Architecture implementation
+  - `domain/` - Business entities, services, and value objects
+  - `application/` - Use cases and orchestrators
+  - `infrastructure/` - Clients, repositories, monitoring, health, debug
+  - `presentation/` - API and CLI interfaces
+- `scripts/` - Maintenance and quality scripts
+- `config/` - YAML configuration files for models and experiments
+- `src/tests/` - Comprehensive test suite (311 tests, 76.10% coverage)
+- `docs/` - Architecture, testing, deployment, operations, and history
+- `docs/archive/` - Phases 1-3 requirements, reports, and plans
+
+**Key Features:**
+- ✅ Multi-agent orchestrator with comprehensive tests
+- ✅ Enhanced CLI with status, health, metrics, and config commands
+- ✅ Simple monitoring dashboard with percentiles and export
+- ✅ Health check system with model and storage monitoring
+- ✅ Debug utilities for development and troubleshooting
+- ✅ Maintenance scripts for backup, cleanup, export, validation
+- ✅ Quality scripts for formatting, coverage, and checks
+- ✅ Docker improvements with resource limits and health checks
+- ✅ Comprehensive documentation and examples
+- ✅ Clean Architecture with SOLID principles
+- ✅ 311 tests passing with 76.10% coverage
+- ✅ Production-ready for local development
+
+**Status:** ✅ Phase 3 Complete - Ready for Day 10+ Challenges
 
 **Key Components:**
 - **Local Models**: FastAPI servers in `local_models/` (ports 8000-8002)
@@ -27,20 +49,37 @@
 2. Choose project `day_XX/` by complexity
 3. Run `make install && make run` in selected project
 
+## 🚀 Quick Start
+
+```bash
+# Install dependencies
+make install
+
+# Run tests
+make test
+
+# Run the API
+make run-api
+
+# Run the CLI
+make run-cli
+```
+
 ## 📁 Project Structure
 
 ```
-AI_Advent_Challenge/
-├── .gitignore              # Ignored files
-├── config.py              # API key configuration (shared)
-├── api_key.txt.example    # Template for API keys
-├── Makefile              # Project setup commands
-├── README.md             # This file (English)
-├── README.ru.md          # Russian version
-├── AGENTS.md             # AI agents documentation (English)
-├── AGENTS.ru.md          # AI agents documentation (Russian)
-├── AGENTS_QUICK_REFERENCE.md # Quick reference (English)
-├── AGENTS_QUICK_REFERENCE.ru.md # Quick reference (Russian)
+AI_Challenge/
+├── src/                   # 🏗️ Clean Architecture (Phase 2)
+│   ├── domain/           # Business logic layer
+│   ├── application/      # Use cases and orchestrators
+│   ├── infrastructure/   # External integrations
+│   ├── presentation/     # API and CLI
+│   └── tests/           # Test suite (241 tests)
+├── config/               # Configuration files
+│   ├── models.yml       # Model configuration
+│   └── experiment_templates/ # Experiment templates
+├── docs/                 # Documentation
+├── archive/legacy/      # Archived legacy code
 ├── local_models/         # 🏠 Local language model infrastructure
 │   ├── chat_api.py       # FastAPI server for local models
 │   ├── docker-compose.yml # Docker Compose configuration
