@@ -1,4 +1,4 @@
-.PHONY: help install test lint format clean docker-build docker-up docker-down coverage integration e2e maintenance-cleanup maintenance-backup maintenance-export maintenance-validate day-07 day-08
+.PHONY: help install test lint format clean docker-build docker-up docker-down coverage integration e2e maintenance-cleanup maintenance-backup maintenance-export maintenance-validate day-07 day-08 mcp-discover mcp-demo test-mcp
 
 help:
 	@echo "Available commands:"
@@ -16,6 +16,9 @@ help:
 	@echo "  make docker-down      - Stop Docker services"
 	@echo "  make day-07           - Run Day 07 multi-agent workflow"
 	@echo "  make day-08           - Run Day 08 token compression"
+	@echo "  make mcp-discover     - Discover MCP tools"
+	@echo "  make mcp-demo         - Run Day 09 MCP demo"
+	@echo "  make test-mcp         - Run MCP tests"
 	@echo "  make maintenance-cleanup - Clean up old data"
 	@echo "  make maintenance-backup - Create backup"
 	@echo "  make maintenance-export - Export data"
@@ -79,3 +82,15 @@ day-07:
 
 day-08:
 	poetry run python scripts/day_08_compression.py
+
+mcp-discover:
+	poetry run python examples/mcp/basic_discovery.py
+
+mcp-demo:
+	poetry run python scripts/day_09_mcp_demo.py
+
+mcp-demo-report:
+	poetry run python scripts/day_09_mcp_demo_report.py
+
+test-mcp:
+	poetry run pytest src/tests/presentation/mcp -v

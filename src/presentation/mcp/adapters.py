@@ -1,0 +1,203 @@
+"""Facade adapter to bridge MCP tools to application layer."""
+import sys
+from pathlib import Path
+from typing import Any, Dict
+
+# Add shared to path for imports
+_root = Path(__file__).parent.parent.parent.parent
+sys.path.insert(0, str(_root))
+shared_path = _root / "shared"
+sys.path.insert(0, str(shared_path))
+
+# Import specialized adapters
+from src.presentation.mcp.adapters.model_adapter import ModelAdapter  # noqa: E402
+from src.presentation.mcp.adapters.generation_adapter import GenerationAdapter  # noqa: E402
+from src.presentation.mcp.adapters.review_adapter import ReviewAdapter  # noqa: E402
+from src.presentation.mcp.adapters.orchestration_adapter import OrchestrationAdapter  # noqa: E402
+from src.presentation.mcp.adapters.token_adapter import TokenAdapter  # noqa: E402
+
+
+class UnifiedModelClient:  # noqa: F821
+    """Placeholder to avoid F821 errors - actual class imported lazily."""
+    pass
+
+
+class TokenAnalyzer:  # noqa: F821
+    """Placeholder to avoid F821 errors - actual class imported lazily."""
+    pass
+
+
+class ModelClientAdapter:
+    """Adapter to make UnifiedModelClient compatible with BaseAgent interface.
+    
+    Following the Adapter pattern from scripts/day_07_workflow.py.
+    """
+
+    def __init__(self, unified_client: UnifiedModelClient, model_name: str = "starcoder"):
+        """Initialize adapter.
+
+        Args:
+            unified_client: UnifiedModelClient instance
+            model_name: Name of the model to use
+        """
+        self.unified_client = unified_client
+        self.model_name = model_name
+
+    async def generate(
+        self,
+        prompt: str,
+        max_tokens: int = 1500,
+        temperature: float = 0.3,
+    ) -> dict:
+        """Generate response compatible with BaseAgent interface.
+
+        Args:
+            prompt: Input prompt
+            max_tokens: Maximum tokens
+            temperature: Temperature
+
+        Returns:
+            Dictionary with response and tokens
+        """
+        response = await self.unified_client.make_request(
+            model_name=self.model_name,
+            prompt=prompt,
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
+
+        return {
+            "response": response.response,
+            "total_tokens": response.total_tokens,
+            "input_tokens": response.input_tokens,
+            "response_tokens": response.response_tokens,
+        }
+
+
+class MCPApplicationAdapter:
+    """Facade that delegates to specialized adapters."""
+
+    def __init__(self):
+        """Initialize MCP application adapter."""
+        # Import lazily to avoid circular dependencies
+        from shared_package.clients.unified_client import UnifiedModelClient
+        from src.domain.services.token_analyzer import TokenAnalyzer
+        
+        self.unified_client = UnifiedModelClient()
+        self.token_analyzer = TokenAnalyzer()
+        
+        # Initialize specialized adapters
+        self.model_adapter = ModelAdapter(self.unified_client)
+        self.token_adapter = TokenAdapter(self.token_analyzer)
+        self.generation_adapter = GenerationAdapter(
+            self.unified_client, model_name="mistral"
+        )
+        self.review_adapter = ReviewAdapter(
+            self.unified_client, model_name="mistral"
+        )
+        self.orchestration_adapter = OrchestrationAdapter(self.unified_client)
+
+    async def list_available_models(self) -> Dict[str, Any]:
+        """List all configured models.
+
+        Returns:
+            Dictionary with local and external model lists
+        """
+        return self.model_adapter.list_available_models()
+
+    async def check_model_availability(self, model_name: str) -> Dict[str, bool]:
+        """Check if model is available.
+
+        Args:
+            model_name: Name of the model to check
+
+        Returns:
+            Dictionary with availability status
+        """
+        return await self.model_adapter.check_model_availability(model_name)
+
+    async def generate_code_via_agent(self, description: str, model: str) -> Dict[str, Any]:
+        """Generate code using CodeGeneratorAgent.
+
+        Args:
+            description: Description of code to generate
+            model: Model to use
+
+        Returns:
+            Dictionary with generated code and metadata
+        """
+        try:
+            return await self.generation_adapter.generate_code(description, model)
+        except Exception as e:
+            return {
+                "success": False,
+                "code": "",
+                "error": str(e),
+                "metadata": {"model_used": model},
+            }
+
+    async def review_code_via_agent(self, code: str, model: str) -> Dict[str, Any]:
+        """Review code using CodeReviewerAgent.
+
+        Args:
+            code: Python code to review
+            model: Model to use
+
+        Returns:
+            Dictionary with review results and quality score
+        """
+        try:
+            return await self.review_adapter.review_code(code, model)
+        except Exception as e:
+            return {
+                "success": False,
+                "review": "",
+                "quality_score": 0,
+                "error": str(e),
+                "metadata": {"model_used": model},
+            }
+
+    async def orchestrate_generation_and_review(
+        self, description: str, gen_model: str, review_model: str
+    ) -> Dict[str, Any]:
+        """Full workflow via MultiAgentOrchestrator.
+
+        Args:
+            description: Description of code to generate
+            gen_model: Model for generation
+            review_model: Model for review
+
+        Returns:
+            Dictionary with generation and review results
+        """
+        try:
+            return await self.orchestration_adapter.orchestrate_generation_and_review(
+                description, gen_model, review_model
+            )
+        except Exception as e:
+            return {
+                "success": False,
+                "generation": {"code": "", "tests": ""},
+                "review": {"score": 0, "issues": [], "recommendations": []},
+                "workflow_time": 0.0,
+                "error": str(e),
+            }
+
+    def count_text_tokens(self, text: str) -> Dict[str, int]:
+        """Count tokens using TokenAnalyzer.
+
+        Args:
+            text: Text to analyze
+
+        Returns:
+            Dictionary with token count
+        """
+        try:
+            return self.token_adapter.count_text_tokens(text)
+        except Exception as e:
+            return {"count": 0, "error": str(e)}
+
+    async def close(self) -> None:
+        """Cleanup resources."""
+        await self.unified_client.close()
+
