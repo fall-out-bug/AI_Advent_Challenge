@@ -1,0 +1,2 @@
+"""MCP examples module."""
+
