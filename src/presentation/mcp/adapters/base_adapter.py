@@ -4,11 +4,9 @@ import sys
 from pathlib import Path
 from typing import Any, Callable, TypeVar
 
-# Add shared to path for imports
 _root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(_root))
-shared_path = _root / "shared"
-sys.path.insert(0, str(shared_path))
+sys.path.insert(0, str(_root / "shared"))
 
 from src.presentation.mcp.exceptions import MCPBaseException
 
@@ -28,20 +26,10 @@ def _get_model_configs():
 
 
 class BaseMCPAdapter:
-    """Base adapter with common error handling and utilities.
-
-    Provides shared functionality for all MCP adapters including:
-    - Standardized error handling
-    - Lazy imports
-    - Safe model request execution
-    """
+    """Base adapter with common error handling and utilities."""
 
     def __init__(self, unified_client: Any) -> None:
-        """Initialize base adapter.
-
-        Args:
-            unified_client: Unified model client instance
-        """
+        """Initialize base adapter."""
         self.unified_client = unified_client
 
     def safe_execute(
@@ -51,20 +39,7 @@ class BaseMCPAdapter:
         exception_type: type[MCPBaseException] = MCPBaseException,
         **context: Any,
     ) -> T:
-        """Execute operation with standardized error handling.
-
-        Args:
-            operation: Function to execute
-            error_message: Error message for exceptions
-            exception_type: Exception type to raise
-            **context: Additional context for exceptions
-
-        Returns:
-            Operation result
-
-        Raises:
-            exception_type: If operation fails
-        """
+        """Execute operation with standardized error handling."""
         try:
             return operation()
         except exception_type:
@@ -79,20 +54,7 @@ class BaseMCPAdapter:
         exception_type: type[MCPBaseException] = MCPBaseException,
         **context: Any,
     ) -> T:
-        """Execute async operation with standardized error handling.
-
-        Args:
-            operation: Async function to execute
-            error_message: Error message for exceptions
-            exception_type: Exception type to raise
-            **context: Additional context for exceptions
-
-        Returns:
-            Operation result
-
-        Raises:
-            exception_type: If operation fails
-        """
+        """Execute async operation with standardized error handling."""
         try:
             return await operation()
         except exception_type:
@@ -101,18 +63,10 @@ class BaseMCPAdapter:
             raise exception_type(f"{error_message}: {e}", **context)
 
     def get_unified_client_class(self) -> type:
-        """Get UnifiedModelClient class for lazy import.
-
-        Returns:
-            UnifiedModelClient class
-        """
+        """Get UnifiedModelClient class for lazy import."""
         return _get_unified_client()
 
     def get_model_configs(self) -> dict[str, Any]:
-        """Get model configurations for lazy import.
-
-        Returns:
-            MODEL_CONFIGS dictionary
-        """
+        """Get model configurations for lazy import."""
         return _get_model_configs()
 

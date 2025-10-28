@@ -3,11 +3,9 @@ import sys
 from pathlib import Path
 from typing import Any, Optional
 
-# Add root to path
 _root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(_root))
-shared_path = _root / "shared"
-sys.path.insert(0, str(shared_path))
+sys.path.insert(0, str(_root / "shared"))
 
 from src.domain.agents.code_reviewer import CodeReviewerAgent
 from src.domain.agents.base_agent import TaskMetadata
@@ -24,36 +22,13 @@ def _get_model_client_adapter():
 class ReviewAdapter:
     """Adapter for code review operations."""
 
-    def __init__(
-        self,
-        unified_client: Any,
-        model_name: str,
-    ) -> None:
-        """Initialize review adapter.
-
-        Args:
-            unified_client: Unified model client instance
-            model_name: Default model to use
-        """
+    def __init__(self, unified_client: Any, model_name: str) -> None:
+        """Initialize review adapter."""
         self.unified_client = unified_client
         self.model_name = model_name
 
-    async def review_code(
-        self, code: str, model: Optional[str] = None
-    ) -> dict[str, Any]:
-        """Review code using CodeReviewerAgent.
-
-        Args:
-            code: Python code to review
-            model: Model to use (defaults to adapter's model)
-
-        Returns:
-            Dictionary with review results and quality score
-
-        Raises:
-            MCPValidationError: If input is invalid
-            MCPAgentError: If review fails
-        """
+    async def review_code(self, code: str, model: Optional[str] = None) -> dict[str, Any]:
+        """Review code using CodeReviewerAgent."""
         try:
             self._validate_code(code)
             model_to_use = model or self.model_name
@@ -69,26 +44,12 @@ class ReviewAdapter:
             raise MCPAgentError(f"Code review failed: {e}", agent_type="reviewer")
 
     def _validate_code(self, code: str) -> None:
-        """Validate code input.
-
-        Args:
-            code: Code to validate
-
-        Raises:
-            MCPValidationError: If code is invalid
-        """
+        """Validate code input."""
         if not code or not code.strip():
             raise MCPValidationError("Code cannot be empty", field="code")
 
     def _create_request(self, code: str) -> CodeReviewRequest:
-        """Create review request.
-
-        Args:
-            code: Code to review
-
-        Returns:
-            Code review request
-        """
+        """Create review request."""
         # Create empty metadata dict instead of object
         metadata = {}
         
@@ -100,15 +61,7 @@ class ReviewAdapter:
         )
 
     def _build_response(self, response: Any, model: str) -> dict[str, Any]:
-        """Build response dictionary.
-
-        Args:
-            response: Agent response
-            model: Model used
-
-        Returns:
-            Response dictionary
-        """
+        """Build response dictionary."""
         return {
             "success": True,
             "quality_score": response.code_quality_score,
