@@ -1,10 +1,4 @@
-"""Mistral orchestrator for chat-based multi-step workflows.
-
-Following Clean Architecture and the Zen of Python:
-- Simple is better than complex
-- Readability counts
-- Functions should be ≤15 lines
-"""
+"""Mistral orchestrator for chat-based multi-step workflows."""
 
 import asyncio
 import json
@@ -16,12 +10,7 @@ from src.application.services.plan_optimizer import ExecutionOptimizer
 from src.domain.entities.conversation import Conversation, ExecutionPlan, ExecutionStep, IntentAnalysis
 from src.domain.repositories.conversation_repository import ConversationRepository
 from src.application.orchestrators.prompts import INTENT_PARSING_PROMPT, PLAN_GENERATION_PROMPT, CLARIFICATION_PROMPT
-from src.application.orchestrators.response_formatters import (
-    format_code_response,
-    format_test_response,
-    format_review_response,
-    format_complexity_response
-)
+from src.application.orchestrators.response_formatters import format_response
 
 logger = logging.getLogger(__name__)
 
@@ -29,37 +18,8 @@ logger = logging.getLogger(__name__)
 class MistralChatOrchestrator:
     """Orchestrator managing conversation flow with Mistral."""
 
-    def __init__(
-        self,
-        unified_client: Any,
-        conversation_repo: ConversationRepository,
-        model_name: str = "mistral",
-        temperature: float = 0.2,
-        max_tokens: int = 2048,
-        confidence_threshold: float = 0.7,
-        max_clarifying_questions: int = 3,
-        conversation_memory_size: int = 10,
-        timeout_seconds: int = 60,
-        mcp_wrapper: Optional[Any] = None,
-        enable_optimization: bool = True,
-        enable_context_management: bool = True,
-    ):
-        """Initialize orchestrator.
-
-        Args:
-            unified_client: UnifiedModelClient instance
-            conversation_repo: Conversation repository
-            model_name: Model name for inference
-            temperature: Generation temperature
-            max_tokens: Maximum tokens per request
-            confidence_threshold: Confidence threshold for clarification
-            max_clarifying_questions: Max clarifying questions
-            conversation_memory_size: Conversation memory window
-            timeout_seconds: Request timeout
-            mcp_wrapper: Optional MCP wrapper for tool execution
-            enable_optimization: Enable plan optimization
-            enable_context_management: Enable context window management
-        """
+    def __init__(self, unified_client: Any, conversation_repo: ConversationRepository, model_name: str = "mistral", temperature: float = 0.2, max_tokens: int = 2048, confidence_threshold: float = 0.7, max_clarifying_questions: int = 3, conversation_memory_size: int = 10, timeout_seconds: int = 60, mcp_wrapper: Optional[Any] = None, enable_optimization: bool = True, enable_context_management: bool = True):
+        """Initialize orchestrator."""
         self.unified_client = unified_client
         self.conversation_repo = conversation_repo
         self.model_name = model_name
@@ -76,7 +36,7 @@ class MistralChatOrchestrator:
         self.context_manager = ContextManager(max_tokens=max_tokens) if enable_context_management else None
 
     async def initialize(self) -> None:
-        """Setup and validate model availability."""
+        """Initialize orchestrator."""
         try:
             response = await self.unified_client.check_availability(self.model_name)
             self.model_available = response
@@ -86,15 +46,7 @@ class MistralChatOrchestrator:
             self.model_available = True  # Assume available if check fails
 
     async def handle_message(self, message: str, conversation_id: str) -> str:
-        """Main entry point for handling user messages.
-
-        Args:
-            message: User message
-            conversation_id: Conversation identifier
-
-        Returns:
-            Response string
-        """
+        """Main entry point for handling user messages."""
         conversation = await self._ensure_conversation(conversation_id)
         conversation.add_message("user", message)
         await self.conversation_repo.save(conversation)
@@ -124,28 +76,13 @@ class MistralChatOrchestrator:
         return response
 
     def _build_history_context(self, history: List[dict]) -> str:
-        """Build conversation history context.
-
-        Args:
-            history: Conversation history
-
-        Returns:
-            Formatted history text
-        """
+        """Build conversation history context."""
         if self.context_manager:
             return self.context_manager.get_context_window(history)
         return "\n".join([f"{msg['role']}: {msg['content']}" for msg in history])
 
     async def _parse_intent(self, message: str, history: List[dict]) -> IntentAnalysis:
-        """Parse user intent using Mistral.
-
-        Args:
-            message: User message
-            history: Conversation history
-
-        Returns:
-            Intent analysis result
-        """
+        """Parse user intent using Mistral."""
         history_text = self._build_history_context(history)
         context_text = f"\n\nRecent conversation:\n{history_text}\n" if history_text.strip() else ""
         prompt = INTENT_PARSING_PROMPT.format(message=message, context_text=context_text)
@@ -153,14 +90,7 @@ class MistralChatOrchestrator:
         return self._parse_intent_json(response)
 
     def _parse_intent_json(self, response: str) -> IntentAnalysis:
-        """Parse intent from JSON response.
-
-        Args:
-            response: JSON response string
-
-        Returns:
-            Intent analysis
-        """
+        """Parse intent from JSON response."""
         try:
             data = json.loads(response)
             return IntentAnalysis(
@@ -192,31 +122,13 @@ class MistralChatOrchestrator:
         return intent.confidence < self.confidence_threshold or intent.needs_clarification
 
     async def _generate_clarifying_questions(self, intent: IntentAnalysis) -> str:
-        """Generate clarifying questions.
-
-        Args:
-            intent: Intent analysis
-
-        Returns:
-            Questions string
-        """
+        """Generate clarifying questions."""
         unclear = ", ".join(intent.unclear_aspects)
         prompt = CLARIFICATION_PROMPT.format(unclear_aspects=unclear)
         return await self._call_model(prompt)
 
-    async def _generate_execution_plan(  # noqa: ARG002
-        self, intent: IntentAnalysis, tools: Dict[str, Any], history: List[dict] = None
-    ) -> ExecutionPlan:
-        """Generate execution plan.
-
-        Args:
-            intent: Intent analysis
-            tools: Available tools
-            history: Conversation history
-
-        Returns:
-            Execution plan
-        """
+    async def _generate_execution_plan(self, intent: IntentAnalysis, tools: Dict[str, Any], history: List[dict] = None) -> ExecutionPlan:
+        """Generate execution plan."""
         # If no tools needed, return empty plan
         if not intent.tools_needed:
             logger.info("No tools needed, returning empty plan")
@@ -240,14 +152,7 @@ class MistralChatOrchestrator:
         return plan
 
     def _parse_plan_json(self, response: str) -> List[ExecutionStep]:
-        """Parse execution plan from JSON.
-
-        Args:
-            response: JSON response
-
-        Returns:
-            List of execution steps
-        """
+        """Parse execution plan from JSON."""
         try:
             # Try to find JSON array in response if it's wrapped in text
             import re
@@ -280,37 +185,16 @@ class MistralChatOrchestrator:
             return []
 
     async def _format_response(self, results: List[dict], intent: IntentAnalysis) -> str:
-        """Format execution results with actual content.
-
-        Args:
-            results: Execution results
-            intent: Intent analysis
-
-        Returns:
-            Formatted response with actual code/content
-        """
+        """Format execution results."""
         if not results:
             return "Completed your request."
-        
-        parts = []
-        parts.extend(format_code_response(results))
-        parts.extend(format_test_response(results))
-        parts.extend(format_review_response(results))
-        parts.extend(format_complexity_response(results))
-        
+        parts = format_response(results)
         if not parts:
             return f"Completed {intent.primary_goal} with {len(results)} step(s)."
         return "".join(parts)
 
     async def _call_model(self, prompt: str) -> str:
-        """Call Mistral model with timeout.
-
-        Args:
-            prompt: Input prompt
-
-        Returns:
-            Model response
-        """
+        """Call Mistral model with timeout."""
         try:
             response = await asyncio.wait_for(
                 self.unified_client.make_request(
@@ -330,14 +214,7 @@ class MistralChatOrchestrator:
             return f"Error processing request: {str(e)}"
 
     async def _ensure_conversation(self, conversation_id: str) -> Conversation:
-        """Ensure conversation exists.
-
-        Args:
-            conversation_id: Conversation ID
-
-        Returns:
-            Conversation entity
-        """
+        """Ensure conversation exists."""
         conversation = await self.conversation_repo.get_by_id(conversation_id)
         if not conversation:
             conversation = Conversation(conversation_id=conversation_id)

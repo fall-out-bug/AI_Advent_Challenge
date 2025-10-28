@@ -1,12 +1,4 @@
-"""
-Configuration module for shared SDK.
-
-Contains model configurations, constants, agent configurations,
-and settings used across all AI Challenge projects.
-
-Following Python Zen: "Explicit is better than implicit"
-and "Simple is better than complex".
-"""
+"""Configuration module for shared SDK."""
 
 from .models import (
     ModelType,

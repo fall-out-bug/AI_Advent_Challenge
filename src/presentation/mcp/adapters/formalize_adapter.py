@@ -1,16 +1,11 @@
-"""Adapter for task formalization using the shared SDK model client.
-
-Follows Clean Architecture and Python Zen. Keeps functions small and explicit.
-"""
+"""Adapter for task formalization."""
 import sys
 from pathlib import Path
 from typing import Any, Dict
 
-# Add root to path
 _root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(_root))
-shared_path = _root / "shared"
-sys.path.insert(0, str(shared_path))
+sys.path.insert(0, str(_root / "shared"))
 
 from src.presentation.mcp.exceptions import MCPValidationError, MCPAgentError
 
@@ -25,29 +20,12 @@ class FormalizeAdapter:
     """Adapter for converting informal tasks into structured plans."""
 
     def __init__(self, unified_client: Any, model_name: str) -> None:
-        """Initialize adapter.
-
-        Args:
-            unified_client: Unified model client instance
-            model_name: Default model to use for formalization
-        """
+        """Initialize adapter."""
         self.unified_client = unified_client
         self.model_name = model_name
 
     async def formalize(self, informal_request: str, context: str = "") -> Dict[str, Any]:
-        """Formalize an informal task description.
-
-        Args:
-            informal_request: Task in natural language
-            context: Optional additional context
-
-        Returns:
-            Structured plan dictionary
-
-        Raises:
-            MCPValidationError: If inputs are invalid
-            MCPAgentError: If model call fails
-        """
+        """Formalize an informal task description."""
         self._validate_inputs(informal_request)
 
         try:

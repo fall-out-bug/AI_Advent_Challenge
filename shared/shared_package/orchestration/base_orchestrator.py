@@ -70,29 +70,10 @@ class OrchestrationConfig(BaseModel):
 
 
 class BaseOrchestrator(ABC):
-    """
-    Abstract base class for agent orchestration.
+    """Abstract base class for agent orchestration."""
     
-    Following Python Zen: "Simple is better than complex"
-    and "Explicit is better than implicit".
-    
-    This class provides the foundation for coordinating multiple agents
-    in various execution patterns with proper error handling, logging,
-    and result tracking.
-    """
-    
-    def __init__(
-        self,
-        adapter: CommunicationAdapter,
-        config: Optional[OrchestrationConfig] = None
-    ):
-        """
-        Initialize orchestrator.
-        
-        Args:
-            adapter: Communication adapter for agent interaction
-            config: Orchestration configuration (optional)
-        """
+    def __init__(self, adapter: CommunicationAdapter, config: Optional[OrchestrationConfig] = None):
+        """Initialize orchestrator."""
         self.adapter = adapter
         self.config = config or OrchestrationConfig()
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
@@ -100,46 +81,12 @@ class BaseOrchestrator(ABC):
         self._cancelled = False
     
     @abstractmethod
-    async def orchestrate(
-        self,
-        agents: Dict[str, AgentRequest],
-        metadata: Optional[TaskMetadata] = None
-    ) -> OrchestrationResult:
-        """
-        Orchestrate agent execution.
-        
-        Args:
-            agents: Dictionary mapping agent IDs to requests
-            metadata: Optional task metadata
-            
-        Returns:
-            OrchestrationResult: Orchestration execution result
-            
-        Raises:
-            Exception: If orchestration fails
-        """
+    async def orchestrate(self, agents: Dict[str, AgentRequest], metadata: Optional[TaskMetadata] = None) -> OrchestrationResult:
+        """Orchestrate agent execution."""
         pass
     
-    async def _execute_agent(
-        self,
-        agent_id: str,
-        request: AgentRequest,
-        attempt: int = 1
-    ) -> AgentResponse:
-        """
-        Execute single agent with retry logic.
-        
-        Args:
-            agent_id: Agent identifier
-            request: Agent request
-            attempt: Current attempt number
-            
-        Returns:
-            AgentResponse: Agent response
-            
-        Raises:
-            Exception: If agent execution fails after retries
-        """
+    async def _execute_agent(self, agent_id: str, request: AgentRequest, attempt: int = 1) -> AgentResponse:
+        """Execute single agent with retry logic."""
         try:
             self.logger.debug(f"Executing agent {agent_id} (attempt {attempt})")
             
@@ -169,21 +116,8 @@ class BaseOrchestrator(ABC):
             
             raise
     
-    async def _wait_for_completion(
-        self,
-        tasks: Dict[str, asyncio.Task],
-        timeout: Optional[float] = None
-    ) -> Dict[str, Union[AgentResponse, Exception]]:
-        """
-        Wait for task completion with timeout.
-        
-        Args:
-            tasks: Dictionary of agent ID to task mapping
-            timeout: Optional timeout override
-            
-        Returns:
-            Dict[str, Union[AgentResponse, Exception]]: Results by agent ID
-        """
+    async def _wait_for_completion(self, tasks: Dict[str, asyncio.Task], timeout: Optional[float] = None) -> Dict[str, Union[AgentResponse, Exception]]:
+        """Wait for task completion with timeout."""
         timeout = timeout or self.config.timeout
         results = {}
         

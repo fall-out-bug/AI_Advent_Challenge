@@ -1,10 +1,4 @@
-"""Base agent class with model integration.
-
-Following the Zen of Python:
-- Simple is better than complex
-- Readability counts
-- Explicit is better than implicit
-"""
+"""Base agent class with model integration."""
 
 import json
 import logging
@@ -44,27 +38,10 @@ VALID_COMPLEXITY_LEVELS = {"low", "medium", "high"}
 
 
 class TaskMetadata:
-    """Metadata about a task.
+    """Metadata about a task."""
 
-    Simple data class following the Zen of Python principle:
-    "Simple is better than complex"
-    """
-
-    def __init__(
-        self,
-        complexity: str = "medium",
-        lines_of_code: int = 0,
-        estimated_time: Optional[str] = None,
-        dependencies: Optional[list[str]] = None,
-    ):
-        """Initialize task metadata.
-
-        Args:
-            complexity: Complexity level (low/medium/high)
-            lines_of_code: Number of lines
-            estimated_time: Estimated execution time
-            dependencies: Required dependencies
-        """
+    def __init__(self, complexity: str = "medium", lines_of_code: int = 0, estimated_time: Optional[str] = None, dependencies: Optional[list[str]] = None):
+        """Initialize task metadata."""
         # Validate complexity level
         if complexity not in VALID_COMPLEXITY_LEVELS:
             logger.warning(
@@ -79,11 +56,7 @@ class TaskMetadata:
         self.dependencies = dependencies or []
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary.
-
-        Returns:
-            Dictionary representation
-        """
+        """Convert to dictionary."""
         return {
             "complexity": self.complexity,
             "lines_of_code": self.lines_of_code,
@@ -93,14 +66,7 @@ class TaskMetadata:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "TaskMetadata":
-        """Create from dictionary.
-
-        Args:
-            data: Dictionary data
-
-        Returns:
-            TaskMetadata instance
-        """
+        """Create from dictionary."""
         return cls(
             complexity=data.get("complexity", "medium"),
             lines_of_code=data.get("lines_of_code", 0),
@@ -110,31 +76,10 @@ class TaskMetadata:
 
 
 class BaseAgent(ABC):
-    """Base class for all agents with model integration.
+    """Base class for all agents with model integration."""
 
-    Following Clean Architecture and the Zen of Python:
-    - Beautiful is better than ugly
-    - Simple is better than complex
-    - Readability counts
-    """
-
-    def __init__(
-        self,
-        model_name: str = "starcoder",
-        agent_type: str = "base",
-        max_tokens: int = DEFAULT_MAX_TOKENS,
-        temperature: float = DEFAULT_TEMPERATURE,
-        model_client: Optional[Any] = None,
-    ):
-        """Initialize the base agent.
-
-        Args:
-            model_name: Name of model to use
-            agent_type: Type of agent (generator/reviewer)
-            max_tokens: Maximum tokens for generation
-            temperature: Temperature for generation
-            model_client: Model client for making requests
-        """
+    def __init__(self, model_name: str = "starcoder", agent_type: str = "base", max_tokens: int = DEFAULT_MAX_TOKENS, temperature: float = DEFAULT_TEMPERATURE, model_client: Optional[Any] = None):
+        """Initialize the base agent."""
         self.model_name = model_name
         self.agent_type = agent_type
         self.max_tokens = max_tokens
@@ -150,25 +95,8 @@ class BaseAgent(ABC):
             "response_times": [],
         }
 
-    async def _call_model(
-        self,
-        prompt: str,
-        max_tokens: Optional[int] = None,
-        temperature: Optional[float] = None,
-    ) -> Dict[str, Any]:
-        """Call model with the given prompt.
-
-        Args:
-            prompt: Input prompt
-            max_tokens: Override max tokens
-            temperature: Override temperature
-
-        Returns:
-            Model response
-
-        Raises:
-            Exception: If request fails
-        """
+    async def _call_model(self, prompt: str, max_tokens: Optional[int] = None, temperature: Optional[float] = None) -> Dict[str, Any]:
+        """Call model with the given prompt."""
         start_time = datetime.now()
 
         try:
@@ -199,25 +127,8 @@ class BaseAgent(ABC):
             logger.error(f"Model call failed: {str(e)}")
             raise
 
-    async def _make_model_request(
-        self,
-        prompt: str,
-        max_tokens: int,
-        temperature: float,
-    ) -> Dict[str, Any]:
-        """Make model request - abstract to be implemented by subclasses.
-
-        Args:
-            prompt: Input prompt
-            max_tokens: Maximum tokens
-            temperature: Temperature
-
-        Returns:
-            Model response
-
-        Raises:
-            NotImplementedError: If not implemented
-        """
+    async def _make_model_request(self, prompt: str, max_tokens: int, temperature: float) -> Dict[str, Any]:
+        """Make model request - abstract to be implemented by subclasses."""
         if self.model_client is None:
             raise NotImplementedError("Model client not provided")
 
@@ -228,14 +139,7 @@ class BaseAgent(ABC):
         )
 
     def _extract_code_from_response(self, response: str) -> str:
-        """Extract code from model response.
-
-        Args:
-            response: Raw response from model
-
-        Returns:
-            Extracted code
-        """
+        """Extract code from model response."""
         # Try to extract code from markdown code blocks
         matches = re.findall(CODE_BLOCK_PATTERN, response, re.DOTALL)
 
@@ -252,14 +156,7 @@ class BaseAgent(ABC):
         return response.strip()
 
     def _extract_tests_from_response(self, response: str) -> str:
-        """Extract tests from model response.
-
-        Args:
-            response: Raw response from model
-
-        Returns:
-            Extracted test code
-        """
+        """Extract tests from model response."""
         # Look for test sections
         for pattern in TEST_PATTERNS:
             matches = re.findall(pattern, response, re.DOTALL)
@@ -320,17 +217,7 @@ class BaseAgent(ABC):
         )
 
     def _parse_json_response(self, response: str) -> Dict[str, Any]:
-        """Parse JSON response from model.
-
-        Args:
-            response: Raw response from model
-
-        Returns:
-            Parsed JSON data
-
-        Raises:
-            ValueError: If JSON parsing fails
-        """
+        """Parse JSON response from model."""
         # Try to find JSON in the response
         matches = re.findall(JSON_BLOCK_PATTERN, response, re.DOTALL)
 
@@ -354,28 +241,16 @@ class BaseAgent(ABC):
         raise ValueError("No valid JSON found in response")
 
     def get_uptime(self) -> float:
-        """Get agent uptime in seconds.
-
-        Returns:
-            Uptime in seconds
-        """
+        """Get agent uptime in seconds."""
         return (datetime.now() - self.start_time).total_seconds()
 
     def get_average_response_time(self) -> float:
-        """Get average response time.
-
-        Returns:
-            Average response time in seconds
-        """
+        """Get average response time."""
         if not self.stats["response_times"]:
             return 0.0
         return sum(self.stats["response_times"]) / len(self.stats["response_times"])
 
     @abstractmethod
     async def process(self, *args, **kwargs) -> Any:
-        """Process a request. Must be implemented by subclasses.
-
-        Returns:
-            Processing result
-        """
+        """Process a request. Must be implemented by subclasses."""
         pass
