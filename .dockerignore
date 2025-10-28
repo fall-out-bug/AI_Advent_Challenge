@@ -1,10 +1,5 @@
-# Git
-.git
-.gitignore
-.gitattributes
-
 # Python
-__pycache__
+__pycache__/
 *.py[cod]
 *$py.class
 *.so
@@ -12,23 +7,15 @@ __pycache__
 *.egg-info/
 dist/
 build/
-.venv/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
 venv/
 env/
 ENV/
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.coverage.*
-.tox/
-.hypothesis/
-
-# Documentation
-docs/_build/
-*.md
-!README.md
 
 # IDE
 .vscode/
@@ -36,56 +23,54 @@ docs/_build/
 *.swp
 *.swo
 *~
-.DS_Store
 
-# Project specific
-day_01/
-day_02/
-day_03/
-day_04/
-day_05/
-day_06/
-day_07/
-day_08/
-archive/
-local_models/
-shared/
-
-# CI/CD
-.github/
+# Testing
 test_reports/
 reports/
-bandit-report.json
+.coverage.*
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+docs/_build/
+*.md
+!README.md
 
 # Logs
 *.log
 logs/
 
-# Temporary files
-tmp/
-temp/
-*.tmp
+# Data
+data/conversations/
+data/agents/
 
-# Legacy directories (will be archived)
-legacy/
+# Cache (models downloaded separately)
+cache/
+
+# Archive
+archive/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Environment
+.env
+.env.*
+*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tasks (exclude from container)
+tasks/
+
+# Examples (exclude from container)
+examples/
 
 # Test files
-test_reports/
-__pycache__/
-
-# Development files
-Makefile
-Makefile.template
-pytest.ini
-.cursorignore
-*.plan.md
-phase-2-enhancement*.md
-
-# Data (only copy what's necessary)
-data/*
-!data/.gitkeep
-
-# API keys (never copy)
-api_key.txt
-*.env
-.env.*
+tests/

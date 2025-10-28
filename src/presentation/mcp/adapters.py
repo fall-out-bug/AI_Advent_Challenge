@@ -15,6 +15,10 @@ from src.presentation.mcp.adapters.generation_adapter import GenerationAdapter  
 from src.presentation.mcp.adapters.review_adapter import ReviewAdapter  # noqa: E402
 from src.presentation.mcp.adapters.orchestration_adapter import OrchestrationAdapter  # noqa: E402
 from src.presentation.mcp.adapters.token_adapter import TokenAdapter  # noqa: E402
+from src.presentation.mcp.adapters.formalize_adapter import FormalizeAdapter  # noqa: E402
+from src.presentation.mcp.adapters.test_generation_adapter import TestGenerationAdapter  # noqa: E402
+from src.presentation.mcp.adapters.format_adapter import FormatAdapter  # noqa: E402
+from src.presentation.mcp.adapters.complexity_adapter import ComplexityAdapter  # noqa: E402
 
 
 class UnifiedModelClient:  # noqa: F821
@@ -90,12 +94,16 @@ class MCPApplicationAdapter:
         self.model_adapter = ModelAdapter(self.unified_client)
         self.token_adapter = TokenAdapter(self.token_analyzer)
         self.generation_adapter = GenerationAdapter(
-            self.unified_client, model_name="mistral"
+            self.unified_client, model_name="starcoder"
         )
         self.review_adapter = ReviewAdapter(
-            self.unified_client, model_name="mistral"
+            self.unified_client, model_name="starcoder"
         )
         self.orchestration_adapter = OrchestrationAdapter(self.unified_client)
+        self.formalize_adapter = FormalizeAdapter(self.unified_client, model_name="starcoder")
+        self.test_generation_adapter = TestGenerationAdapter(self.unified_client, model_name="starcoder")
+        self.format_adapter = FormatAdapter()
+        self.complexity_adapter = ComplexityAdapter()
 
     async def list_available_models(self) -> Dict[str, Any]:
         """List all configured models.
@@ -157,6 +165,28 @@ class MCPApplicationAdapter:
                 "metadata": {"model_used": model},
             }
 
+    async def formalize_task(self, informal_request: str, context: str = "") -> Dict[str, Any]:
+        """Formalize an informal task description into a structured plan.
+
+        Args:
+            informal_request: Natural language task description
+            context: Optional additional context
+
+        Returns:
+            Structured formalization result
+        """
+        try:
+            return await self.formalize_adapter.formalize(informal_request, context)
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "formalized_description": "",
+                "requirements": [],
+                "steps": [],
+                "estimated_complexity": "unknown",
+            }
+
     async def orchestrate_generation_and_review(
         self, description: str, gen_model: str, review_model: str
     ) -> Dict[str, Any]:
@@ -196,6 +226,80 @@ class MCPApplicationAdapter:
             return self.token_adapter.count_text_tokens(text)
         except Exception as e:
             return {"count": 0, "error": str(e)}
+
+    async def generate_tests(
+        self, code: str, test_framework: str = "pytest", coverage_target: int = 80
+    ) -> Dict[str, Any]:
+        """Generate tests for code.
+        
+        Args:
+            code: Source code to generate tests for
+            test_framework: Testing framework (pytest, unittest, etc.)
+            coverage_target: Target coverage percentage
+            
+        Returns:
+            Dictionary with test code and metadata
+        """
+        try:
+            return await self.test_generation_adapter.generate_tests(
+                code, test_framework, coverage_target
+            )
+        except Exception as e:
+            return {
+                "success": False,
+                "test_code": "",
+                "test_count": 0,
+                "coverage_estimate": 0,
+                "test_cases": [],
+                "error": str(e),
+            }
+    
+    def format_code(
+        self, code: str, formatter: str = "black", line_length: int = 100
+    ) -> Dict[str, Any]:
+        """Format code.
+        
+        Args:
+            code: Code to format
+            formatter: Formatter to use
+            line_length: Maximum line length
+            
+        Returns:
+            Dictionary with formatted code and changes made
+        """
+        try:
+            return self.format_adapter.format_code(code, formatter, line_length)
+        except Exception as e:
+            return {
+                "formatted_code": code,
+                "changes_made": 0,
+                "formatter_used": formatter,
+                "error": str(e),
+            }
+    
+    def analyze_complexity(
+        self, code: str, detailed: bool = True
+    ) -> Dict[str, Any]:
+        """Analyze code complexity.
+        
+        Args:
+            code: Code to analyze
+            detailed: Include detailed analysis
+            
+        Returns:
+            Dictionary with complexity metrics and recommendations
+        """
+        try:
+            return self.complexity_adapter.analyze_complexity(code, detailed)
+        except Exception as e:
+            return {
+                "cyclomatic_complexity": 0,
+                "cognitive_complexity": 0,
+                "lines_of_code": 0,
+                "maintainability_index": 0.0,
+                "recommendations": [],
+                "error": str(e),
+            }
 
     async def close(self) -> None:
         """Cleanup resources."""

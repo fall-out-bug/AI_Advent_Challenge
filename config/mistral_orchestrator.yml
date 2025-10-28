@@ -1,0 +1,18 @@
+mistral_orchestrator:
+  model_name: "mistral"
+  temperature: 0.2
+  max_tokens: 2048
+  confidence_threshold: 0.7
+  max_clarifying_questions: 3
+  conversation_memory_size: 10
+  max_plan_steps: 10
+  timeout_seconds: 60
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+storage:
+  conversations_dir: "data/conversations"
+  storage_file: "conversations.json"
+

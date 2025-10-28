@@ -1,5 +1,6 @@
 # Python
 __pycache__/
+.mypy_cache/
 *.py[cod]
 *$py.class
 *.so
@@ -44,27 +45,12 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
-*tz.md
-model_test_*.md
 
 # Auto-generated reports (all in reports/ folder)
 reports/
-*_REVIEWER_FINAL.md
-*_ANALYSIS_REPORT.md
-*_TECHNICAL_ANALYSIS.md
-*_ZEN_*.md
-*_CLEANUP_REPORT.md
-*_FINAL_ANALYSIS_REPORT.md
-*_PYTHON_ZEN_*.md
-*_ZEN_TESTING_*.md
-*_ZEN_REFACTORING.md
-*_TASKS_COMPLETED.md
-*_MASTER_COMPLETED.md
-*_UPDATE_REPORT.md
-*_FINAL.md
-*_FINAL_*.md
-*PROJECT_*.md
-*_SOLVED_REPORT.md
+*/archive/
+**/*/archive/
+*/reports
 
 # Virtual environments
 .env
@@ -112,6 +98,10 @@ tmp/
 *.db
 *.sqlite
 *.sqlite3
+
+# Model cache (persist across container rebuilds but don't commit)
+cache/
+data/
 
 # Poetry
 poetry.lock
