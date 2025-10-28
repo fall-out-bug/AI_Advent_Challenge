@@ -4,6 +4,7 @@ version = "1.0.0"
 description = "Clean Architecture AI Agents System"
 authors = ["AI Challenge Team"]
 readme = "README.md"
+license = "MIT"
 packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
