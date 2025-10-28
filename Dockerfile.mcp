@@ -1,0 +1,42 @@
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    MODEL_TIMEOUT_SECONDS=60
+
+# Install runtime dependencies (including curl for healthchecks)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install Python dependencies directly (including HTTP server support)
+RUN python -m pip install --upgrade pip && \
+    pip install mcp httpx pydantic black radon fastapi uvicorn \
+    && rm -rf /root/.cache/pip
+
+# Copy only necessary files
+COPY shared/ /app/shared/
+COPY src/presentation/mcp/ /app/src/presentation/mcp/
+COPY src/domain/ /app/src/domain/
+COPY src/application/ /app/src/application/
+COPY src/infrastructure/ /app/src/infrastructure/
+COPY config/ /app/config/
+
+# Create non-root user for security
+RUN useradd -m -u 1000 mcpuser && \
+    chown -R mcpuser:mcpuser /app
+
+USER mcpuser
+
+# Expose port for HTTP server
+EXPOSE 8004
+
+# Add healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8004/health || exit 1
+
+# MCP server runs via HTTP server
+CMD ["python", "src/presentation/mcp/http_server.py"]

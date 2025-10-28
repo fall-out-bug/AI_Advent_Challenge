@@ -1,4 +1,37 @@
-day_01/
-day_02/
-day_03/
-day_04/
+# Archived legacy files (for history, not AI context)
+archive/
+**/*/archive/
+
+# Cache and model files
+cache/
+models/
+
+# Virtual environments
+shared/.venv/
+**/.venv/
+
+# Planning files (for history, not AI context)
+**/*.plan.cursor.md
+**/*.plan.peplexity.md
+**/*.plan.md
+
+# Old documentation versions
+tasks/day_10/PHASE4_SUMMARY.md
+
+# Archived documentation
+docs/archive/
+
+# Archived scripts and demos
+archive/demos/
+
+# .cursor directory (rules excluded from specific ignore)
+# Note: .cursor/rules/ contains active rules, no exclusion needed
+
+# Generated reports
+**/demo_report*.md
+**/reports/
+
+# Large generated or temporary files
+shared/.venv/
+*.log
+*.pid

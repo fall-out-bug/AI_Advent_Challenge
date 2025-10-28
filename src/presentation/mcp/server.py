@@ -2,7 +2,8 @@
 import sys
 from pathlib import Path
 from typing import Any, Dict
-from mcp.server.fastmcp import FastMCP
+from mcp.server import fastmcp
+FastMCP = fastmcp.FastMCP
 
 # Add root to path for imports when running as script
 _root = Path(__file__).parent.parent.parent.parent
@@ -13,6 +14,21 @@ mcp = FastMCP(
     "AI Challenge MCP Server",
     instructions="Expose SDK and agent capabilities via MCP protocol",
 )
+
+# Import MCP resources and prompts
+from src.presentation.mcp.resources.prompts import (
+    get_python_developer_prompt,
+    get_architect_prompt,
+    get_technical_writer_prompt,
+    get_coding_standards,
+)
+from src.presentation.mcp.resources.templates import (
+    get_project_structure_template,
+    get_pytest_template,
+    get_class_template,
+)
+from src.presentation.mcp.prompts.code_review import code_review_prompt
+from src.presentation.mcp.prompts.test_generation import test_generation_prompt
 
 # Import adapters lazily to avoid circular imports
 _adapters_module = None
@@ -44,6 +60,21 @@ def get_adapter():
         adapters = _get_adapters_module()
         _adapter = adapters.MCPApplicationAdapter()
     return _adapter
+# Task Formalization Tool
+@mcp.tool()
+async def formalize_task(informal_request: str, context: str = "") -> Dict[str, Any]:
+    """Convert informal request into a structured development plan.
+
+    Args:
+        informal_request: Natural language description of the task
+        context: Additional context or constraints
+
+    Returns:
+        Structured plan with requirements and steps
+    """
+    adapter = get_adapter()
+    return await adapter.formalize_task(informal_request, context)
+
 
 
 # Calculator Tools (Demo)
@@ -103,12 +134,12 @@ async def check_model(model_name: str) -> Dict[str, bool]:
 
 # Agent Orchestration Tools
 @mcp.tool()
-async def generate_code(description: str, model: str = "mistral") -> Dict[str, Any]:
+async def generate_code(description: str, model: str = "starcoder") -> Dict[str, Any]:
     """Generate Python code from description using AI agent.
 
     Args:
         description: Description of code to generate
-        model: Model to use (default: mistral)
+        model: Model to use (default: starcoder - specialized for code generation)
 
     Returns:
         Dictionary with generated code and metadata
@@ -118,12 +149,12 @@ async def generate_code(description: str, model: str = "mistral") -> Dict[str, A
 
 
 @mcp.tool()
-async def review_code(code: str, model: str = "mistral") -> Dict[str, Any]:
+async def review_code(code: str, model: str = "starcoder") -> Dict[str, Any]:
     """Review Python code for quality and issues.
 
     Args:
         code: Python code to review
-        model: Model to use (default: mistral)
+        model: Model to use (default: starcoder)
 
     Returns:
         Dictionary with review results and quality score
@@ -135,15 +166,15 @@ async def review_code(code: str, model: str = "mistral") -> Dict[str, Any]:
 @mcp.tool()
 async def generate_and_review(
     description: str,
-    gen_model: str = "mistral",
-    review_model: str = "mistral",
+    gen_model: str = "starcoder",
+    review_model: str = "starcoder",
 ) -> Dict[str, Any]:
     """Generate code and review it in single workflow.
 
     Args:
         description: Description of code to generate
-        gen_model: Model for generation (default: mistral)
-        review_model: Model for review (default: mistral)
+        gen_model: Model for generation (default: starcoder)
+        review_model: Model for review (default: starcoder)
 
     Returns:
         Dictionary with generation and review results
@@ -167,6 +198,123 @@ def count_tokens(text: str) -> Dict[str, int]:
     """
     adapter = get_adapter()
     return adapter.count_text_tokens(text)
+
+
+# Test Generation Tool
+@mcp.tool()
+async def generate_tests(code: str, test_framework: str = "pytest", coverage_target: int = 80) -> Dict[str, Any]:
+    """Generate comprehensive tests for provided code.
+
+    Args:
+        code: Source code to generate tests for
+        test_framework: Testing framework (pytest, unittest, etc.)
+        coverage_target: Target coverage percentage
+
+    Returns:
+        Dictionary with test code, test count, and coverage estimate
+    """
+    adapter = get_adapter()
+    return await adapter.generate_tests(code, test_framework, coverage_target)
+
+
+# Code Formatting Tool
+@mcp.tool()
+def format_code(code: str, formatter: str = "black", line_length: int = 100) -> Dict[str, Any]:
+    """Format code according to style guidelines.
+
+    Args:
+        code: Code to format
+        formatter: Formatter to use (black, autopep8, etc.)
+        line_length: Maximum line length
+
+    Returns:
+        Dictionary with formatted code and changes made
+    """
+    adapter = get_adapter()
+    return adapter.format_code(code, formatter, line_length)
+
+
+# Complexity Analysis Tool
+@mcp.tool()
+def analyze_complexity(code: str, detailed: bool = True) -> Dict[str, Any]:
+    """Analyze code complexity metrics.
+
+    Args:
+        code: Code to analyze
+        detailed: Include detailed analysis
+
+    Returns:
+        Dictionary with complexity metrics and recommendations
+    """
+    adapter = get_adapter()
+    return adapter.analyze_complexity(code, detailed)
+
+
+# MCP Resources
+@mcp.resource("prompts://python-developer")
+def python_developer_resource() -> str:
+    """Python developer system prompt."""
+    return get_python_developer_prompt()
+
+
+@mcp.resource("prompts://architect")
+def architect_resource() -> str:
+    """Software architect system prompt."""
+    return get_architect_prompt()
+
+
+@mcp.resource("prompts://technical-writer")
+def technical_writer_resource() -> str:
+    """Technical writer system prompt."""
+    return get_technical_writer_prompt()
+
+
+@mcp.resource("config://coding-standards")
+def coding_standards_resource() -> str:
+    """Coding standards configuration."""
+    return get_coding_standards()
+
+
+@mcp.resource("templates://project-structure")
+def project_structure_resource() -> str:
+    """Standard project structure template."""
+    return get_project_structure_template()
+
+
+@mcp.resource("templates://pytest")
+def pytest_template_resource() -> str:
+    """Pytest test template."""
+    return get_pytest_template()
+
+
+@mcp.resource("templates://python-class")
+def class_template_resource() -> str:
+    """Python class template."""
+    return get_class_template()
+
+
+# MCP Dynamic Prompts
+@mcp.prompt("code-review")
+def code_review_prompt_resource(code: str, language: str = "python", style: str = "pep8") -> str:
+    """Generate code review prompt dynamically.
+    
+    Args:
+        code: Code to review
+        language: Programming language
+        style: Style guide
+    """
+    return code_review_prompt(code, language, style)
+
+
+@mcp.prompt("test-generation")
+def test_generation_prompt_resource(code: str, framework: str = "pytest") -> str:
+    """Generate test generation prompt dynamically.
+    
+    Args:
+        code: Code to generate tests for
+        framework: Testing framework
+    """
+    return test_generation_prompt(code, framework)
 
 
 if __name__ == "__main__":

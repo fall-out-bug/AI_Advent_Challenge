@@ -1,0 +1,2 @@
+"""MCP resources module."""
+
