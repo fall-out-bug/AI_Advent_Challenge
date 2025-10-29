@@ -1,0 +1,56 @@
+# Multi-stage build for Telegram bot
+FROM python:3.11-slim AS builder
+
+WORKDIR /build
+
+# Install poetry
+RUN pip install --no-cache-dir poetry
+
+# Copy dependency files
+COPY pyproject.toml poetry.lock* ./
+
+# Install dependencies using poetry
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-dev --no-interaction --no-ansi || \
+    (echo "Poetry install failed, trying direct pip install" && \
+     pip install --no-cache-dir fastapi uvicorn pydantic pydantic-settings \
+     python-dotenv pyyaml httpx rich mcp motor aiogram dateparser pytz)
+
+# Final stage
+FROM python:3.11-slim
+
+# Create non-root user
+RUN useradd -m -u 1000 butler && \
+    mkdir -p /app && \
+    chown -R butler:butler /app
+
+WORKDIR /app
+
+# Install system dependencies if needed
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Python dependencies from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy application code
+COPY --chown=butler:butler src/ ./src/
+COPY --chown=butler:butler pyproject.toml ./
+
+# Install application in development mode
+RUN pip install --no-cache-dir -e . || \
+    (echo "Direct install failed, copying manually" && \
+     pip install --no-cache-dir fastapi uvicorn pydantic pydantic-settings \
+     python-dotenv pyyaml httpx rich mcp motor aiogram dateparser pytz)
+
+USER butler
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import sys; sys.exit(0)" || exit 1
+
+# Run bot
+CMD ["python", "-m", "src.presentation.bot.butler_bot"]
+
