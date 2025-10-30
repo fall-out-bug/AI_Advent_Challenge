@@ -1,6 +1,36 @@
 version: '3.8'
 
 services:
+  llm-server:
+    image: vllm/vllm-openai:latest
+    container_name: mistral-vllm
+    ports:
+      - "8080:8000"
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    command: ["--model=mistralai/Mistral-7B-Instruct-v0.2", "--tensor-parallel-size=1", "--dtype=float16", "--max-model-len=32768"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+    environment:
+      - LLM_URL=http://llm-server:8000
+      - LLM_MODEL=mistralai/Mistral-7B-Instruct-v0.2
+      - SUMMARIZER_LANGUAGE=ru
+    depends_on:
+      llm-server:
+        condition: service_healthy
+    command: python -c "print('app ready')"
+
+version: '3.8'
+
+services:
   api:
     build:
       context: .

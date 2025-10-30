@@ -129,7 +129,8 @@ async def get_channel_digest(user_id: int, hours: int = 24) -> Dict[str, Any]:
             )
             await db.channels.update_one({"_id": channel["_id"]}, {"$set": {"last_digest": datetime.utcnow().isoformat()}})
         except Exception as e:
-            logger.error("Error processing channel", channel=channel_name, error=str(e), exc_info=True)
+            # Use standard logging formatting
+            logger.error("Error processing channel %s: %s", channel_name, str(e), exc_info=True)
             # Continue with next channel even if one fails
 
     return {"digests": digests, "generated_at": datetime.utcnow().isoformat()}

@@ -65,8 +65,14 @@ services:
       - LLM_URL=http://mistral-chat:8000
       - PYTHONUNBUFFERED=1
       - LOG_LEVEL=INFO
+      - TELEGRAM_API_ID=${TELEGRAM_API_ID}
+      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH}
+      - TELEGRAM_SESSION_STRING=${TELEGRAM_SESSION_STRING}
     ports:
       - "8004:8004"
+    volumes:
+      # Mount Pyrogram session directory (created by init_pyrogram.py)
+      - ./sessions:/app/sessions:rw
     depends_on:
       mongodb:
         condition: service_healthy

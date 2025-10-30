@@ -1,14 +1,14 @@
 """MCP tools for task reminders backed by MongoDB."""
 from __future__ import annotations
 
-import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict
 
 from src.presentation.mcp.server import mcp
 from src.infrastructure.database.mongo import get_db
 from src.infrastructure.monitoring.logger import get_logger
 from src.infrastructure.repositories.task_repository import TaskRepository
+from ._summary_helpers import _build_summary_query, _compute_task_stats
 
 logger = get_logger(name="mcp.reminder_tools")
 
@@ -16,6 +16,8 @@ logger = get_logger(name="mcp.reminder_tools")
 async def _repo() -> TaskRepository:
     db = await get_db()
     return TaskRepository(db)
+
+
 
 
 @mcp.tool()
@@ -201,181 +203,37 @@ async def delete_task(task_id: str) -> Dict[str, str]:
 @mcp.tool()
 async def get_summary(user_id: int, timeframe: str = "today") -> Dict[str, Any]:
     """Get a summary of tasks for a timeframe."""
+    db = await get_db()
+    now = datetime.now(timezone.utc)
 
-    from src.infrastructure.database.mongo import get_db
-    from src.infrastructure.monitoring.logger import get_logger
-    logger = get_logger(name="reminder_tools")
-    
-    print(f"[get_summary] CALLED with user_id={user_id}, timeframe={repr(timeframe)}", file=sys.stderr, flush=True)
-    logger.info("get_summary called", user_id=user_id, timeframe=timeframe)
-    
-    # Initialize tasks early
-    tasks = []
-    print(f"[get_summary] DEBUG: Initialized tasks = {tasks}", file=sys.stderr, flush=True)
+    # Build query (may be empty for last_24h)
+    query = _build_summary_query(user_id=user_id, timeframe=timeframe, now=now)
 
-    try:
-        db = await get_db()
-        from datetime import timezone
-        now = datetime.now(timezone.utc)
-        # Ensure user_id is int (MongoDB stores it as int)
-        user_id_int = int(user_id) if not isinstance(user_id, int) else user_id
-        query: Dict[str, Any] = {"user_id": user_id_int}
-        print(f"[get_summary] DEBUG: Starting query construction for user_id={user_id_int}, timeframe={repr(timeframe)}", file=sys.stderr, flush=True)
-        print(f"[get_summary] DEBUG: timeframe == 'last_24h': {timeframe == 'last_24h'}", file=sys.stderr, flush=True)
-        logger.info("Starting query construction", user_id=user_id_int, timeframe=timeframe)
+    # Fetch tasks
+    if timeframe == "last_24h":
+        tasks_raw = await db.tasks.find({"user_id": int(user_id)}).to_list(length=200)
+        tasks = []
+        for t in tasks_raw:
+            if not t.get("completed", False):
+                task_dict = dict(t)
+                if "_id" in task_dict:
+                    task_dict["id"] = str(task_dict.pop("_id"))
+                tasks.append(task_dict)
+    else:
+        tasks = await db.tasks.find(query).to_list(length=200)
 
-        if timeframe == "today":
-            # Use UTC date for start/end
-            start_dt = datetime(now.year, now.month, now.day, 0, 0, 0, 0, tzinfo=timezone.utc)
-            end_dt = start_dt + timedelta(days=1)
-            query["deadline"] = {"$gte": start_dt.isoformat(), "$lt": end_dt.isoformat()}
-        elif timeframe == "tomorrow":
-            tomorrow_start = datetime(now.year, now.month, now.day, 0, 0, 0, 0, tzinfo=timezone.utc) + timedelta(days=1)
-            end_dt = tomorrow_start + timedelta(days=1)
-            query["deadline"] = {"$gte": tomorrow_start.isoformat(), "$lt": end_dt.isoformat()}
-        elif timeframe == "week":
-            start_dt = datetime(now.year, now.month, now.day, 0, 0, 0, 0, tzinfo=timezone.utc)
-            end_dt = start_dt + timedelta(days=7)
-            query["deadline"] = {"$gte": start_dt.isoformat(), "$lt": end_dt.isoformat()}
-        elif timeframe == "last_24h":
-            # For debug mode: show ALL active tasks (not completed) regardless of deadline
-            # This will be handled separately below, skip query construction here
-            pass
-        elif timeframe == "last_7d":
-            start = (now - timedelta(days=7)).isoformat()
-            end = now.isoformat()
-            query["deadline"] = {"$gte": start, "$lt": end}
-        else:
-            # No timeframe filter, show all tasks
-            pass
+    # Convert _id to id for all tasks
+    converted_tasks = []
+    for t in tasks:
+        task_copy = dict(t)
+        if "_id" in task_copy:
+            task_copy["id"] = str(task_copy.pop("_id"))
+        converted_tasks.append(task_copy)
+    tasks = converted_tasks
 
-        # For last_24h, fetch all tasks and filter in Python to avoid MongoDB query issues
-        if timeframe == "last_24h":
-            logger.info("Fetching all tasks for last_24h debug mode", user_id=user_id_int)
-            try:
-                # Direct query - no intermediate variables
-                tasks_raw = await db.tasks.find({"user_id": user_id_int}).to_list(length=200)
-                logger.info("Found all tasks", user_id=user_id_int, total=len(tasks_raw))
-                
-                # Filter and convert in one step
-                tasks = []
-                for t in tasks_raw:
-                    if not t.get("completed", False):
-                        # Convert _id to id immediately
-                        task_dict = dict(t)
-                        if "_id" in task_dict:
-                            task_dict["id"] = str(task_dict.pop("_id"))
-                        tasks.append(task_dict)
-                
-                logger.info("Filtered active tasks", user_id=user_id_int, active=len(tasks))
-                
-                # Return immediately with tasks
-                return {
-                    "tasks": tasks,
-                    "stats": {
-                        "total": len(tasks),
-                        "completed": 0,
-                        "overdue": 0,  # Skip overdue calculation for now
-                        "high_priority": sum(1 for t in tasks if t.get("priority") == "high"),
-                    },
-                }
-            except Exception as e:
-                logger.error("Error fetching tasks for last_24h", user_id=user_id_int, error=str(e), exc_info=True)
-                import traceback
-                traceback.print_exc()
-                tasks = []
-        else:
-            logger.info("Executing get_summary query", user_id=user_id_int, timeframe=timeframe, query=str(query))
-            tasks = await db.tasks.find(query).to_list(length=200)
-            logger.info("Found tasks", user_id=user_id_int, count=len(tasks))
-        
-        logger.info("After branch, tasks count", user_id=user_id_int, count=len(tasks))
-        print(f"[get_summary] DEBUG: After branch, tasks count = {len(tasks)}, tasks type = {type(tasks)}", file=sys.stderr, flush=True)
-        
-        # CRITICAL: Save tasks count before any processing
-        tasks_count_before_processing = len(tasks)
-        print(f"[get_summary] DEBUG: Tasks count before processing = {tasks_count_before_processing}", file=sys.stderr, flush=True)
-        
-        total = len(tasks)
-        print(f"[get_summary] DEBUG: Total = {total}", file=sys.stderr, flush=True)
-        completed = sum(1 for t in tasks if t.get("completed"))
-        print(f"[get_summary] DEBUG: Completed = {completed}", file=sys.stderr, flush=True)
-        
-        # Check overdue tasks - simplified to avoid timezone comparison issues
-        # Just count tasks with deadline in the past (string comparison)
-        overdue = 0
-        try:
-            now_iso_str = now.isoformat()
-            print(f"[get_summary] DEBUG: Checking overdue, tasks count = {len(tasks)}", file=sys.stderr, flush=True)
-            for t in tasks:
-                deadline_str = t.get("deadline")
-                if deadline_str and isinstance(deadline_str, str):
-                    deadline_normalized = deadline_str.replace("Z", "+00:00")
-                    if deadline_normalized < now_iso_str:
-                        overdue += 1
-        except Exception as overdue_err:
-            print(f"[get_summary] DEBUG: Error in overdue check: {overdue_err}", file=sys.stderr, flush=True)
-            import traceback
-            print(f"[get_summary] DEBUG: Overdue traceback:\n{traceback.format_exc()}", file=sys.stderr, flush=True)
-            overdue = 0  # Skip overdue check if any error
-        
-        print(f"[get_summary] DEBUG: After overdue check, tasks count = {len(tasks)}", file=sys.stderr, flush=True)
-        high_priority = sum(1 for t in tasks if t.get("priority") == "high")
-        print(f"[get_summary] DEBUG: High priority = {high_priority}", file=sys.stderr, flush=True)
+    # Compute stats using string-based comparison
+    stats = _compute_task_stats(tasks, now_iso=now.isoformat())
 
-        # Convert _id to id for all tasks - create new list to avoid issues
-        print(f"[get_summary] DEBUG: Before conversion, tasks count = {len(tasks)}", file=sys.stderr, flush=True)
-        converted_tasks = []
-        try:
-            for t in tasks:
-                task_copy = dict(t)  # Make a copy to avoid mutating original
-                if "_id" in task_copy:
-                    from bson import ObjectId  # local import to avoid global dependency in tests
-                    task_copy["id"] = str(task_copy.pop("_id"))
-                converted_tasks.append(task_copy)
-            tasks = converted_tasks  # Replace with converted list
-            print(f"[get_summary] DEBUG: After conversion, tasks count = {len(tasks)}", file=sys.stderr, flush=True)
-        except Exception as conv_e:
-            print(f"[get_summary] DEBUG: ERROR in conversion: {conv_e}", file=sys.stderr, flush=True)
-            import traceback
-            print(f"[get_summary] DEBUG: Conversion traceback:\n{traceback.format_exc()}", file=sys.stderr, flush=True)
-            # Use original tasks if conversion fails
-            print(f"[get_summary] DEBUG: Using original tasks after conversion error", file=sys.stderr, flush=True)
-        
-        logger.info("Preparing return value", user_id=user_id_int, tasks_count=len(tasks), total_stats=total)
-        print(f"[get_summary] DEBUG: Preparing return, tasks={len(tasks)}, total={total}", file=sys.stderr, flush=True)
-        print(f"[get_summary] DEBUG: tasks is: {tasks}", file=sys.stderr, flush=True)
-        print(f"[get_summary] DEBUG: tasks type: {type(tasks)}, len: {len(tasks) if hasattr(tasks, '__len__') else 'N/A'}", file=sys.stderr, flush=True)
-        
-        result = {
-            "tasks": tasks.copy() if hasattr(tasks, 'copy') else list(tasks) if tasks else [],
-            "stats": {
-                "total": total,
-                "completed": completed,
-                "overdue": overdue,
-                "high_priority": high_priority,
-            },
-        }
-        print(f"[get_summary] DEBUG: Final result tasks count: {len(result['tasks'])}", file=sys.stderr, flush=True)
-        print(f"[get_summary] DEBUG: Final result: {result}", file=sys.stderr, flush=True)
-        return result
-    except TypeError as e:
-        print(f"[get_summary] DEBUG: TypeError caught: {e}", file=sys.stderr)
-        if "can't compare offset-naive and offset-aware datetimes" in str(e):
-            logger.error("Timezone comparison error in get_summary", user_id=user_id, timeframe=timeframe, error=str(e))
-            # Return minimal valid result
-            print(f"[get_summary] DEBUG: Returning empty result due to timezone error", file=sys.stderr)
-            return {
-                "tasks": [],
-                "stats": {"total": 0, "completed": 0, "overdue": 0, "high_priority": 0},
-            }
-        print(f"[get_summary] DEBUG: TypeError not timezone-related, re-raising", file=sys.stderr)
-        raise
-    except Exception as e:
-        print(f"[get_summary] DEBUG: Exception caught: {type(e).__name__}: {e}", file=sys.stderr)
-        import traceback
-        print(f"[get_summary] DEBUG: Traceback:\n{traceback.format_exc()}", file=sys.stderr)
-        logger.error("Error in get_summary", user_id=user_id, timeframe=timeframe, error=str(e), exc_info=True)
-        raise
+    return {"tasks": tasks, "stats": stats}
 
 
