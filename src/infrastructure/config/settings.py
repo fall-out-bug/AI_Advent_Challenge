@@ -4,7 +4,7 @@ Uses pydantic-settings to load environment variables with sensible defaults.
 """
 
 from functools import lru_cache
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -61,6 +61,56 @@ class Settings(BaseSettings):
     pdf_summary_sentences: int = Field(default=5, description="Sentences per channel in PDF (separate from text digest)")
     pdf_summary_max_chars: int = Field(default=3000, description="Max characters per channel summary in PDF")
     pdf_max_posts_per_channel: int = Field(default=100, description="Max posts to summarize per channel")
+
+    @field_validator("post_fetch_interval_hours")
+    @classmethod
+    def validate_post_fetch_interval(cls, v: int) -> int:
+        """Validate post fetch interval is positive."""
+        if v <= 0:
+            raise ValueError("post_fetch_interval_hours must be positive")
+        return v
+
+    @field_validator("post_ttl_days")
+    @classmethod
+    def validate_post_ttl(cls, v: int) -> int:
+        """Validate post TTL is positive."""
+        if v <= 0:
+            raise ValueError("post_ttl_days must be positive")
+        return v
+
+    @field_validator("pdf_cache_ttl_hours")
+    @classmethod
+    def validate_pdf_cache_ttl(cls, v: int) -> int:
+        """Validate PDF cache TTL is positive."""
+        if v <= 0:
+            raise ValueError("pdf_cache_ttl_hours must be positive")
+        return v
+
+    @field_validator("pdf_summary_sentences")
+    @classmethod
+    def validate_pdf_summary_sentences(cls, v: int) -> int:
+        """Validate PDF summary sentences count is reasonable."""
+        if v <= 0:
+            raise ValueError("pdf_summary_sentences must be positive")
+        if v > 20:
+            raise ValueError("pdf_summary_sentences should not exceed 20 for readability")
+        return v
+
+    @field_validator("pdf_summary_max_chars")
+    @classmethod
+    def validate_pdf_summary_max_chars(cls, v: int) -> int:
+        """Validate PDF summary max chars is positive."""
+        if v <= 0:
+            raise ValueError("pdf_summary_max_chars must be positive")
+        return v
+
+    @field_validator("pdf_max_posts_per_channel")
+    @classmethod
+    def validate_pdf_max_posts(cls, v: int) -> int:
+        """Validate PDF max posts per channel is positive."""
+        if v <= 0:
+            raise ValueError("pdf_max_posts_per_channel must be positive")
+        return v
 
     class Config:
         env_prefix = ""
