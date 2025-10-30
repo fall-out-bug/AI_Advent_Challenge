@@ -93,3 +93,62 @@ groups:
           summary: "Post fetcher processing is slow"
           description: "95th percentile of post fetcher processing time exceeds 2 minutes. This may indicate performance issues."
 
+  - name: ml_alerts
+    interval: 30s
+    rules:
+      # LLM Service Alerts
+      - alert: HighLLMLatency
+        expr: |
+          histogram_quantile(0.95, rate(llm_inference_latency_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: llm
+        annotations:
+          summary: "LLM inference latency exceeds 5 seconds (P95)"
+          description: "95th percentile of LLM inference latency exceeds 5 seconds for the last 5 minutes. Check model performance and infrastructure."
+
+      - alert: HighLLMErrorRate
+        expr: |
+          rate(llm_error_rate_total[2m]) > 0.10
+        for: 2m
+        labels:
+          severity: warning
+          service: llm
+        annotations:
+          summary: "LLM error rate exceeds 10%"
+          description: "LLM error rate exceeds 10% in the last 2 minutes. Check logs for error details and model availability."
+
+      - alert: LLMModelDown
+        expr: |
+          up{job=~"mistral-chat|llm-server"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: llm
+        annotations:
+          summary: "LLM model service is down"
+          description: "LLM model service has been unavailable for more than 2 minutes. Check service health and logs."
+
+      - alert: LLMModelDrift
+        expr: |
+          (histogram_quantile(0.95, rate(llm_inference_latency_seconds_bucket[1h])) - 
+           histogram_quantile(0.95, rate(llm_inference_latency_seconds_bucket[6h] offset 1h))) > 2
+        for: 10m
+        labels:
+          severity: critical
+          service: llm
+        annotations:
+          summary: "LLM model latency drift detected"
+          description: "LLM inference latency has increased significantly compared to baseline. Recommends retrain/investigation pipeline."
+
+      - alert: LLMHighTokenUsage
+        expr: |
+          rate(llm_token_generation_rate_total[5m]) > 10000
+        for: 5m
+        labels:
+          severity: warning
+          service: llm
+        annotations:
+          summary: "High LLM token generation rate"
+          description: "Token generation rate exceeds 10,000 tokens per minute. Monitor costs and rate limits."

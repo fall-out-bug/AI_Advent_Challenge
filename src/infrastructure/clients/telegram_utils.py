@@ -160,16 +160,23 @@ async def _fetch_with_pyrogram(
             logger.warning("Channel not found via Pyrogram", channel=channel_username, error=str(e))
             return []
         
-        # Fetch messages (limit to last 100 messages for performance)
+        # Fetch messages (limit to last 1000 messages to catch more posts)
+        # Telegram API allows up to 100 messages per request, but we iterate to get more
         messages = []
         try:
-            logger.debug("Starting to fetch messages", channel=channel_username, since=since.isoformat(), limit=100)
-            async for message in client.get_chat_history(channel.id, limit=100):
+            logger.debug("Starting to fetch messages", channel=channel_username, since=since.isoformat(), limit=1000)
+            messages_before_date = 0  # Count how many messages we've seen before 'since'
+            async for message in client.get_chat_history(channel.id, limit=1000):
                 if message.date >= since:
                     messages.append(message)
+                    messages_before_date = 0  # Reset counter when we find a matching message
                 else:
-                    break  # Messages are in reverse chronological order
-            logger.debug("Finished fetching messages", channel=channel_username, messages_fetched=len(messages))
+                    messages_before_date += 1
+                    # Stop if we've seen 100 consecutive messages before 'since'
+                    # This handles cases where there are gaps in message history
+                    if messages_before_date > 100:
+                        break
+            logger.debug("Finished fetching messages", channel=channel_username, messages_fetched=len(messages), since=since.isoformat())
         except FloodWait as e:
             logger.warning(f"FloodWait: need to wait {e.value} seconds", channel=channel_username)
             # Return what we have so far

@@ -1,0 +1,127 @@
+{
+  "dashboard": {
+    "title": "App Health",
+    "tags": ["app", "health", "monitoring"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "System Resources",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "HTTP Status Codes",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total[5m])) by (status)",
+            "legendFormat": "{{status}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 1}
+      },
+      {
+        "id": 3,
+        "title": "Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total[5m]))",
+            "legendFormat": "Requests/sec"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 1}
+      },
+      {
+        "id": 4,
+        "title": "Error Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100",
+            "legendFormat": "Error %"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 1}
+      },
+      {
+        "id": 5,
+        "title": "Latency",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 9}
+      },
+      {
+        "id": 6,
+        "title": "Response Time P50",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "P50"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 10}
+      },
+      {
+        "id": 7,
+        "title": "Response Time P95",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "P95"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 10}
+      },
+      {
+        "id": 8,
+        "title": "Response Time P99",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "P99"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 10}
+      },
+      {
+        "id": 9,
+        "title": "Availability",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 18}
+      },
+      {
+        "id": 10,
+        "title": "Uptime",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "avg(up)",
+            "legendFormat": "Uptime"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 8, "x": 0, "y": 19}
+      },
+      {
+        "id": 11,
+        "title": "SLA Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "avg(up) * 100",
+            "legendFormat": "SLA %"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 8, "x": 8, "y": 19}
+      }
+    ]
+  }
+}
+

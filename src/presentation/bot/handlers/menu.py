@@ -7,10 +7,11 @@ from datetime import datetime
 
 from aiogram import Router, F
 from aiogram.filters import Command
-from aiogram.types import Message, CallbackQuery, ChatAction, BufferedInputFile
+from aiogram.types import Message, CallbackQuery, BufferedInputFile
+from aiogram.enums import ChatAction
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from src.presentation.mcp.client import MCPClient
+from src.presentation.mcp.client import get_mcp_client
 from src.infrastructure.cache.pdf_cache import get_pdf_cache
 from src.infrastructure.monitoring.logger import get_logger
 from src.infrastructure.monitoring.prometheus_metrics import (
@@ -81,59 +82,21 @@ async def callback_channels(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-@router.callback_query(F.data == "menu:summary")
-async def callback_summary(callback: CallbackQuery) -> None:
-    """Show task summary."""
-    # Placeholder for now
-    await callback.answer("Summary coming soon", show_alert=True)
+async def generate_pdf_digest_for_user(user_id: int, hours: int = 24) -> dict:
+    """Public wrapper for PDF digest generation.
+    
+    Args:
+        user_id: Telegram user ID
+        hours: Hours to look back (default 24)
+    
+    Returns:
+        Dict with pdf_bytes (base64), file_size, pages, or error
+    """
+    client = get_mcp_client()
+    return await _generate_pdf_digest(client, user_id, hours=hours)
 
 
-@router.callback_query(F.data == "menu:digest")
-async def callback_digest(callback: CallbackQuery) -> None:
-    """Show channel digest."""
-    # Placeholder for now
-    await callback.answer("Digest coming soon", show_alert=True)
-
-
-menu_router = Router()
-
-
-def _build_menu_kb() -> InlineKeyboardBuilder:
-    kb = InlineKeyboardBuilder()
-    kb.button(text="📋 Summary", callback_data="menu:summary")
-    kb.button(text="📰 Digest", callback_data="menu:digest")
-    kb.adjust(2)
-    return kb
-
-
-@menu_router.message(Command("menu"))
-async def cmd_menu(message: Message) -> None:
-    """Display main menu with summary and digest actions."""
-    await message.answer("Select an action:", reply_markup=_build_menu_kb().as_markup())
-
-
-@menu_router.callback_query(F.data == "menu:summary")
-async def callback_summary(call: CallbackQuery) -> None:
-    """Show a task summary via MCP tools with basic error handling."""
-    await call.answer()
-    user_id = call.from_user.id if call.from_user else 0
-    try:
-        client = MCPClient()
-        # timeframe could be configurable; use 'today' default
-        result = await client.call_tool("get_summary", {"user_id": int(user_id), "timeframe": "today"})
-        stats = result.get("stats", {})
-        total = stats.get("total", 0)
-        completed = stats.get("completed", 0)
-        overdue = stats.get("overdue", 0)
-        high_priority = stats.get("high_priority", 0)
-        await call.message.answer(
-            f"📋 Summary (today)\n\nTotal: {total}\nCompleted: {completed}\nOverdue: {overdue}\nHigh priority: {high_priority}"
-        )
-    except Exception as e:
-        await call.message.answer("⚠️ Failed to fetch summary. Please try again later.")
-
-
-async def _generate_pdf_digest(client: MCPClient, user_id: int, hours: int = 24) -> dict:
+async def _generate_pdf_digest(client, user_id: int, hours: int = 24) -> dict:
     """Generate PDF digest via MCP tools.
 
     Purpose:
@@ -155,14 +118,18 @@ async def _generate_pdf_digest(client: MCPClient, user_id: int, hours: int = 24)
     try:
         # Step 1: Get posts from database
         posts_result = await client.call_tool("get_posts_from_db", {"user_id": user_id, "hours": hours})
+        logger.debug("Got posts from DB", user_id=user_id, result=posts_result)
+        
         posts_by_channel = posts_result.get("posts_by_channel", {})
         
-        if not posts_by_channel:
+        if not posts_by_channel or len(posts_by_channel) == 0:
+            logger.warning("No posts found for user", user_id=user_id, hours=hours)
             return {"error": "no_posts"}
 
         # Step 2: Summarize each channel
         summaries = []
         for channel_name, posts in posts_by_channel.items():
+            logger.debug(f"Summarizing channel {channel_name}", channel=channel_name, posts_count=len(posts))
             summary_result = await client.call_tool(
                 "summarize_posts",
                 {"posts": posts, "channel_username": channel_name, "max_sentences": 5}
@@ -194,6 +161,7 @@ async def _generate_pdf_digest(client: MCPClient, user_id: int, hours: int = 24)
         )
 
         if "error" in pdf_result:
+            logger.error("PDF generation failed", user_id=user_id, error=pdf_result.get("error"))
             return {"error": "pdf_generation_failed"}
 
         return pdf_result
@@ -202,7 +170,29 @@ async def _generate_pdf_digest(client: MCPClient, user_id: int, hours: int = 24)
         return {"error": "generation_failed"}
 
 
-@menu_router.callback_query(F.data == "menu:digest")
+@router.callback_query(F.data == "menu:summary")
+async def callback_summary(call: CallbackQuery) -> None:
+    """Show a task summary via MCP tools with basic error handling."""
+    await call.answer()
+    user_id = call.from_user.id if call.from_user else 0
+    try:
+        client = get_mcp_client()
+        # timeframe could be configurable; use 'today' default
+        result = await client.call_tool("get_summary", {"user_id": int(user_id), "timeframe": "today"})
+        stats = result.get("stats", {})
+        total = stats.get("total", 0)
+        completed = stats.get("completed", 0)
+        overdue = stats.get("overdue", 0)
+        high_priority = stats.get("high_priority", 0)
+        await call.message.answer(
+            f"📋 Summary (today)\n\nTotal: {total}\nCompleted: {completed}\nOverdue: {overdue}\nHigh priority: {high_priority}"
+        )
+    except Exception as e:
+        logger.error("Error fetching summary", user_id=user_id, error=str(e), exc_info=True)
+        await call.message.answer("⚠️ Failed to fetch summary. Please try again later.")
+
+
+@router.callback_query(F.data == "menu:digest")
 async def callback_digest(call: CallbackQuery) -> None:
     """Generate and send PDF digest or fallback to text digest.
 
@@ -229,7 +219,8 @@ async def callback_digest(call: CallbackQuery) -> None:
         pass  # Ignore errors in chat action
 
     try:
-        client = MCPClient()
+        client = get_mcp_client()
+        logger.debug("MCPClient created", user_id=user_id)
         cache = get_pdf_cache()
         
         # Generate cache key (date + hour)
@@ -247,14 +238,16 @@ async def callback_digest(call: CallbackQuery) -> None:
             return
 
         # Generate PDF digest
+        logger.info("Generating PDF digest", user_id=user_id, hours=24)
         pdf_result = await _generate_pdf_digest(client, user_id, hours=24)
+        logger.debug("PDF digest result", user_id=user_id, result=pdf_result)
         
         if pdf_result.get("error") == "no_posts":
             await call.message.answer("📰 No new posts in last 24 hours.")
             return
         
         if "error" in pdf_result:
-            # Fallback to text digest
+            # Fallback to text digest - show all channels, not just one
             error_type = pdf_result.get("error", "unknown")
             bot_digest_errors_total.labels(error_type=error_type).inc()
             logger.warning("PDF generation failed, falling back to text digest", user_id=user_id)
@@ -263,8 +256,27 @@ async def callback_digest(call: CallbackQuery) -> None:
             if not digests:
                 await call.message.answer("📰 No digests available yet.")
                 return
-            top = digests[0]
-            await call.message.answer(f"📰 {top.get('channel', 'channel')}: {top.get('summary', '')}")
+            
+            # Format all channels into a single message
+            digest_parts = ["📰 Digest за последние 24 часа:\n"]
+            for digest in digests:
+                channel_name = digest.get("channel", "Unknown")
+                summary = digest.get("summary", "")
+                post_count = digest.get("post_count", 0)
+                digest_parts.append(f"\n📌 {channel_name} ({post_count} постов):\n{summary}")
+            
+            full_digest = "\n".join(digest_parts)
+            # Telegram limit is 4096 characters, split if needed
+            if len(full_digest) > 4000:
+                # Send first part
+                await call.message.answer(full_digest[:4000])
+                # Send remaining parts
+                remaining = full_digest[4000:]
+                while remaining:
+                    await call.message.answer(remaining[:4000])
+                    remaining = remaining[4000:]
+            else:
+                await call.message.answer(full_digest)
             return
 
         # Decode PDF bytes and send
@@ -289,4 +301,5 @@ async def callback_digest(call: CallbackQuery) -> None:
         bot_digest_errors_total.labels(error_type=error_type).inc()
         logger.error("Error in callback_digest", user_id=user_id, error=str(e), exc_info=True)
         await call.message.answer("⚠️ Failed to fetch digest. Please try again later.")
+
 
