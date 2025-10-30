@@ -53,6 +53,9 @@ class Settings(BaseSettings):
     conversation_timeout_minutes: int = Field(default=5, description="Timeout in minutes for abandoned FSM conversations")
     max_clarification_attempts: int = Field(default=3, description="Maximum clarification questions before giving up")
     enable_context_aware_parsing: bool = Field(default=True, description="Use conversation context for intent parsing")
+    # Post fetcher settings
+    post_fetch_interval_hours: int = Field(default=1, description="Post collection frequency in hours")
+    post_ttl_days: int = Field(default=7, description="Post retention period in days")
 
     class Config:
         env_prefix = ""

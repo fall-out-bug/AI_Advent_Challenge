@@ -254,7 +254,7 @@ async def _fetch_with_pyrogram(
                 logger.warning(f"Failed to copy session file back: {e}")
 
 
-async def fetch_channel_posts(channel_username: str, since: datetime) -> List[dict]:
+async def fetch_channel_posts(channel_username: str, since: datetime, user_id: int | None = None, save_to_db: bool = True) -> List[dict]:
     """Fetch recent posts from a Telegram channel.
     
     Tries multiple methods:
@@ -264,35 +264,80 @@ async def fetch_channel_posts(channel_username: str, since: datetime) -> List[di
 
     Purpose:
         Retrieve channel posts since a given datetime for digest generation.
+        Optionally saves posts to MongoDB if save_to_db is True and user_id is provided.
 
     Args:
         channel_username: Channel username without @
         since: Minimum timestamp for posts
+        user_id: Optional user ID for saving posts to database
+        save_to_db: Whether to automatically save posts to database (default True)
 
     Returns:
         List of post dictionaries with text, date, etc.
     """
+    posts = []
+    
     # Try Pyrogram first (works for any public channel with user account)
     if PYROGRAM_AVAILABLE and os.getenv("TELEGRAM_API_ID") and os.getenv("TELEGRAM_API_HASH"):
         try:
             posts = await _fetch_with_pyrogram(channel_username, since)
             # Return posts even if empty - Pyrogram worked, just no posts found
             logger.info("Pyrogram fetch completed", channel=channel_username, count=len(posts), since=since.isoformat())
-            return posts
         except Exception as e:
             logger.warning(f"Pyrogram fetch failed: {e}, trying Bot API", channel=channel_username, exc_info=True)
     
     # Fallback to Bot API only if Pyrogram is not available
     # Bot API cannot fetch message history, so we return empty list instead of placeholder
-    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-    if not bot_token:
-        logger.warning("TELEGRAM_BOT_TOKEN not set, cannot fetch channel posts")
+    if not posts:
+        bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+        if not bot_token:
+            logger.warning("TELEGRAM_BOT_TOKEN not set, cannot fetch channel posts")
+            return []
+        
+        # Bot API doesn't provide direct message history access
+        # Only admins can access messages, but there's no direct API method
+        # So we can't fetch real posts via Bot API without admin rights
+        logger.info("Pyrogram not available or failed, Bot API cannot fetch posts", channel=channel_username)
+        logger.info("Returning empty list - no real posts can be fetched without Pyrogram", channel=channel_username)
         return []
+    
+    # Save posts to database if requested
+    if save_to_db and user_id is not None and posts:
+        await _save_posts_to_db(posts, channel_username, user_id)
+    
+    return posts
 
-    # Bot API doesn't provide direct message history access
-    # Only admins can access messages, but there's no direct API method
-    # So we can't fetch real posts via Bot API without admin rights
-    logger.info("Pyrogram not available or failed, Bot API cannot fetch posts", channel=channel_username)
-    logger.info("Returning empty list - no real posts can be fetched without Pyrogram", channel=channel_username)
-    return []
+
+async def _save_posts_to_db(posts: List[dict], channel_username: str, user_id: int) -> None:
+    """Save posts to database via repository.
+
+    Purpose:
+        Helper function to save fetched posts to MongoDB.
+
+    Args:
+        posts: List of post dictionaries
+        channel_username: Channel username
+        user_id: User ID
+
+    Raises:
+        None: Errors are logged and handled gracefully
+    """
+    try:
+        from src.presentation.mcp.tools.digest_tools import save_posts_to_db
+        
+        result = await save_posts_to_db(posts, channel_username, user_id)
+        logger.debug(
+            "Saved posts to database",
+            channel=channel_username,
+            saved=result["saved"],
+            skipped=result["skipped"],
+            total=result["total"]
+        )
+    except Exception as e:
+        logger.warning(
+            "Failed to save posts to database",
+            channel=channel_username,
+            error=str(e),
+            exc_info=True
+        )
 
