@@ -26,6 +26,7 @@ def _register_all_tools():
         ("reminder_tools", "src.presentation.mcp.tools.reminder_tools"),
         ("nlp_tools", "src.presentation.mcp.tools.nlp_tools"),
         ("digest_tools", "src.presentation.mcp.tools.digest_tools"),
+        ("pdf_digest_tools", "src.presentation.mcp.tools.pdf_digest_tools"),
     ]
     
     for name, module_path in tool_modules:
