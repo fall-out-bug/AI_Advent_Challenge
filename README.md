@@ -171,11 +171,39 @@ See [QUICK_START_DAY11.md](docs/QUICK_START_DAY11.md) for detailed guide.
 - [MCP_GUIDE.md](docs/MCP_GUIDE.md) - MCP integration guide
 - [USER_GUIDE.md](docs/USER_GUIDE.md) - User guide
 - [API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md) - Complete API reference
+- [SECURITY.md](docs/SECURITY.md) - Security policies and practices
+- [MONITORING.md](docs/MONITORING.md) - Monitoring setup and Grafana dashboards
+- [ML_MONITORING.md](docs/ML_MONITORING.md) - ML-specific monitoring and metrics
 - [Day 12 PDF Digest](docs/day12/) - PDF digest documentation
   - [API Documentation](docs/day12/api.md) - MCP tools API reference
   - [User Guide](docs/day12/USER_GUIDE.md) - PDF digest usage guide
   - [Architecture](docs/day12/ARCHITECTURE.md) - System architecture with diagrams
 - [INDEX.md](docs/INDEX.md) - Documentation index
+
+## Monitoring
+
+### Quick Start
+
+```bash
+# Start monitoring stack (Prometheus + Grafana)
+docker-compose -f docker-compose.day12.yml up -d prometheus grafana
+
+# Access Grafana
+open http://localhost:3000
+# Default credentials: admin/admin
+
+# Access Prometheus
+open http://localhost:9090
+```
+
+### Available Dashboards
+
+1. **App Health** - System resources, HTTP metrics, latency, availability
+2. **ML Service Metrics** - LLM inference latency, token usage, model versioning
+3. **Post Fetcher & PDF Metrics** - Post collection and PDF generation metrics
+
+See [MONITORING.md](docs/MONITORING.md) for detailed setup and usage.
+
 
 ## Contributing
 

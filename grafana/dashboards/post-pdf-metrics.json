@@ -1,0 +1,175 @@
+{
+  "dashboard": {
+    "title": "Post Fetcher & PDF Metrics",
+    "tags": ["pdf", "post-fetcher", "monitoring"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Post Fetcher",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Posts Saved Total",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(post_fetcher_posts_saved_total)",
+            "legendFormat": "Total Posts"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 6, "x": 0, "y": 1}
+      },
+      {
+        "id": 3,
+        "title": "Posts Skipped (Duplicate)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(post_fetcher_posts_skipped_total)",
+            "legendFormat": "Skipped"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 6, "x": 6, "y": 1}
+      },
+      {
+        "id": 4,
+        "title": "Channels Processed",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(post_fetcher_channels_processed_total)",
+            "legendFormat": "Channels"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 6, "x": 12, "y": 1}
+      },
+      {
+        "id": 5,
+        "title": "Fetcher Duration",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(post_fetcher_duration_seconds_bucket[5m]))",
+            "legendFormat": "P95 Duration"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 7}
+      },
+      {
+        "id": 6,
+        "title": "PDF Generation",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 15}
+      },
+      {
+        "id": 7,
+        "title": "PDF Generation Duration",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(pdf_generation_duration_seconds_bucket[5m]))",
+            "legendFormat": "P95 Duration"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 16}
+      },
+      {
+        "id": 8,
+        "title": "PDF File Size",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(pdf_file_size_bytes_bucket[5m]))",
+            "legendFormat": "P95 Size"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 16}
+      },
+      {
+        "id": 9,
+        "title": "PDF Pages Count",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(pdf_pages_total_bucket[5m]))",
+            "legendFormat": "P95 Pages"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 16}
+      },
+      {
+        "id": 10,
+        "title": "PDF Generation Errors",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(pdf_generation_errors_total[5m])) by (error_type)",
+            "legendFormat": "{{error_type}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}
+      },
+      {
+        "id": 11,
+        "title": "Bot Digest",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 32}
+      },
+      {
+        "id": 12,
+        "title": "Digest Requests",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(bot_digest_requests_total)",
+            "legendFormat": "Total Requests"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 6, "x": 0, "y": 33}
+      },
+      {
+        "id": 13,
+        "title": "Cache Hits",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(bot_digest_cache_hits_total)",
+            "legendFormat": "Cache Hits"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 6, "x": 6, "y": 33}
+      },
+      {
+        "id": 14,
+        "title": "Cache Hit Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(bot_digest_cache_hits_total[1h])) / sum(rate(bot_digest_requests_total[1h])) * 100",
+            "legendFormat": "Hit Rate %"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 6, "x": 12, "y": 33}
+      },
+      {
+        "id": 15,
+        "title": "Digest Errors",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(bot_digest_errors_total[5m])) by (error_type)",
+            "legendFormat": "{{error_type}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 39}
+      }
+    ]
+  }
+}
+

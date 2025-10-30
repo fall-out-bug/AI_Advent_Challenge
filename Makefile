@@ -1,4 +1,4 @@
-.PHONY: help install test lint format clean docker-build docker-up docker-down coverage integration e2e maintenance-cleanup maintenance-backup maintenance-export maintenance-validate day-07 day-08 day-11 day-11-up day-11-down day-11-build day-11-logs day-11-logs-bot day-11-logs-worker day-11-logs-mcp day-11-logs-mistral day-11-ps day-11-restart day-11-clean day-11-setup mcp-discover mcp-demo test-mcp test-mcp-comprehensive mcp-chat mcp-chat-streaming mcp-server-start mcp-server-stop mcp-chat-docker mcp-demo-start mcp-demo-stop mcp-demo-logs demo-mcp-comprehensive
+.PHONY: help install test lint format clean docker-build docker-up docker-down coverage integration e2e maintenance-cleanup maintenance-backup maintenance-export maintenance-validate day-07 day-08 day-11 day-11-up day-11-down day-11-build day-11-logs day-11-logs-bot day-11-logs-worker day-11-logs-mcp day-11-logs-mistral day-11-ps day-11-restart day-11-clean day-11-setup day-12 day-12-up day-12-down day-12-build day-12-logs day-12-logs-bot day-12-logs-worker day-12-logs-mcp day-12-logs-post-fetcher day-12-logs-mistral day-12-ps day-12-restart day-12-clean day-12-setup day-12-test day-12-metrics mcp-discover mcp-demo test-mcp test-mcp-comprehensive mcp-chat mcp-chat-streaming mcp-server-start mcp-server-stop mcp-chat-docker mcp-demo-start mcp-demo-stop mcp-demo-logs demo-mcp-comprehensive
 
 help:
 	@echo "Available commands:"
@@ -29,6 +29,24 @@ help:
 	@echo "  make day-11-restart    - Restart all services"
 	@echo "  make day-11-clean      - Remove all containers and volumes"
 	@echo "  make day-11-setup      - Create .env from .env.example"
+	@echo ""
+	@echo "Day 12 - Butler Bot with Post Fetcher & PDF Digest:"
+	@echo "  make day-12           - Start Day 12 Butler Bot system (default)"
+	@echo "  make day-12-up         - Start all Day 12 services"
+	@echo "  make day-12-down       - Stop all Day 12 services"
+	@echo "  make day-12-build      - Rebuild Day 12 Docker images"
+	@echo "  make day-12-logs       - View logs from all services"
+	@echo "  make day-12-logs-bot   - View bot logs"
+	@echo "  make day-12-logs-worker - View summary worker logs"
+	@echo "  make day-12-logs-post-fetcher - View post fetcher worker logs"
+	@echo "  make day-12-logs-mcp   - View MCP server logs"
+	@echo "  make day-12-logs-mistral - View Mistral LLM logs"
+	@echo "  make day-12-ps         - Show service status"
+	@echo "  make day-12-restart    - Restart all services"
+	@echo "  make day-12-clean      - Remove all containers and volumes"
+	@echo "  make day-12-setup      - Create .env from .env.example"
+	@echo "  make day-12-test       - Run Day 12 tests"
+	@echo "  make day-12-metrics    - View Prometheus metrics"
 	@echo ""
 	@echo "  make day-07           - Run Day 07 multi-agent workflow"
 	@echo "  make day-08           - Run Day 08 token compression"
@@ -217,3 +235,81 @@ day-11-setup:
 	else \
 		echo ".env file already exists"; \
 	fi
+
+# Day 12: Post Fetcher Worker & PDF Digest Generation
+day-12: day-12-up
+	@echo "Day 12 Butler Bot system started"
+	@echo "Check status: make day-12-ps"
+	@echo "View logs: make day-12-logs"
+	@echo "View metrics: make day-12-metrics"
+
+day-12-up:
+	@if [ ! -f .env ]; then \
+		echo "ERROR: .env file not found!"; \
+		echo "Copy .env.example to .env and set TELEGRAM_BOT_TOKEN"; \
+		exit 1; \
+	fi
+	@if ! grep -q "TELEGRAM_BOT_TOKEN=" .env || grep -q "TELEGRAM_BOT_TOKEN=your_bot_token_here" .env || grep -q "^TELEGRAM_BOT_TOKEN=$$" .env; then \
+		echo "ERROR: TELEGRAM_BOT_TOKEN not set in .env file!"; \
+		echo "Edit .env and set your Telegram bot token"; \
+		exit 1; \
+	fi
+	docker-compose -f docker-compose.day12.yml up -d
+	@echo "Waiting for services to be healthy..."
+	@sleep 5
+	@docker-compose -f docker-compose.day12.yml ps
+
+day-12-down:
+	docker-compose -f docker-compose.day12.yml down
+
+day-12-build:
+	docker-compose -f docker-compose.day12.yml build --no-cache
+
+day-12-logs:
+	docker-compose -f docker-compose.day12.yml logs -f
+
+day-12-logs-bot:
+	docker-compose -f docker-compose.day12.yml logs -f telegram-bot
+
+day-12-logs-worker:
+	docker-compose -f docker-compose.day12.yml logs -f summary-worker
+
+day-12-logs-post-fetcher:
+	docker-compose -f docker-compose.day12.yml logs -f post-fetcher-worker
+
+day-12-logs-mcp:
+	docker-compose -f docker-compose.day12.yml logs -f mcp-server
+
+day-12-logs-mistral:
+	docker-compose -f docker-compose.day12.yml logs -f mistral-chat
+
+day-12-ps:
+	docker-compose -f docker-compose.day12.yml ps
+
+day-12-restart:
+	docker-compose -f docker-compose.day12.yml restart
+
+day-12-clean:
+	docker-compose -f docker-compose.day12.yml down -v
+	@echo "All Day 12 containers and volumes removed"
+
+day-12-setup:
+	@if [ ! -f .env ]; then \
+		cp .env.example .env; \
+		echo "Created .env file from .env.example"; \
+		echo "Please edit .env and set:"; \
+		echo "  - TELEGRAM_BOT_TOKEN"; \
+		echo "  - TELEGRAM_API_ID (optional, for Pyrogram)"; \
+		echo "  - TELEGRAM_API_HASH (optional, for Pyrogram)"; \
+		echo "  - TELEGRAM_SESSION_STRING (optional, for Pyrogram)"; \
+	else \
+		echo ".env file already exists"; \
+	fi
+
+day-12-test:
+	@echo "Running Day 12 tests..."
+	python scripts/day12_run.py test
+
+day-12-metrics:
+	@echo "Fetching Prometheus metrics from MCP server..."
+	@curl -s http://localhost:8004/metrics | grep -E "(post_fetcher|pdf_generation|bot_digest)" | head -20 || echo "Metrics endpoint not available. Make sure services are running: make day-12-up"

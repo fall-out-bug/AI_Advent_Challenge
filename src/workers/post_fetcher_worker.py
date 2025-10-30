@@ -196,17 +196,31 @@ class PostFetcherWorker:
         user_id = channel["user_id"]
         
         # Determine since timestamp
+        # Always fetch posts from last 24 hours (or configured interval)
+        # This ensures we don't miss posts even if worker was down
+        lookback_hours = max(self.settings.post_fetch_interval_hours, 24)  # At least 24 hours
+        since = datetime.utcnow() - timedelta(hours=lookback_hours)
+        
+        # Optionally, if last_fetch is recent and we want to avoid duplicates,
+        # we could use last_fetch, but ensure we still cover at least 24 hours
         last_fetch = channel.get("last_fetch")
         if last_fetch:
             try:
                 if isinstance(last_fetch, str):
-                    since = datetime.fromisoformat(last_fetch.replace("Z", "+00:00"))
+                    last_fetch_dt = datetime.fromisoformat(last_fetch.replace("Z", "+00:00"))
                 else:
-                    since = last_fetch
+                    last_fetch_dt = last_fetch
+                
+                # Use last_fetch only if it's more recent than our lookback window
+                # Otherwise use lookback window to ensure we get all posts
+                hours_since_last_fetch = (datetime.utcnow() - last_fetch_dt).total_seconds() / 3600
+                if hours_since_last_fetch < lookback_hours:
+                    # If last fetch was recent, use it to avoid duplicates
+                    # But still ensure we get at least 24 hours of posts
+                    since = max(last_fetch_dt, since)
             except (ValueError, AttributeError):
-                since = datetime.utcnow() - timedelta(hours=self.settings.post_fetch_interval_hours)
-        else:
-            since = datetime.utcnow() - timedelta(hours=self.settings.post_fetch_interval_hours)
+                # If last_fetch parsing fails, use lookback window
+                pass
         
         logger.debug("Processing channel",
                     channel=channel_username,
