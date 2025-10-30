@@ -1,12 +1,8 @@
-"""Adapter for code complexity analysis using radon.
-
-Follows Clean Architecture and Python Zen. Keeps functions small and explicit.
-"""
+"""Adapter for code complexity analysis using radon."""
 import sys
 from pathlib import Path
 from typing import Any, Dict
 
-# Add root to path
 _root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(_root))
 
@@ -27,23 +23,8 @@ class ComplexityAdapter:
         except ImportError:
             self.has_radon = False
 
-    def analyze_complexity(
-        self,
-        code: str,
-        detailed: bool = True,
-    ) -> Dict[str, Any]:
-        """Analyze code complexity metrics.
-
-        Args:
-            code: Code to analyze
-            detailed: Include detailed analysis
-
-        Returns:
-            Dictionary with complexity metrics and recommendations
-
-        Raises:
-            MCPValidationError: If inputs are invalid
-        """
+    def analyze_complexity(self, code: str, detailed: bool = True) -> Dict[str, Any]:
+        """Analyze code complexity metrics."""
         self._validate_inputs(code)
 
         if not self.has_radon:

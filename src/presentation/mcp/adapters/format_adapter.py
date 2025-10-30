@@ -1,12 +1,8 @@
-"""Adapter for code formatting using black.
-
-Follows Clean Architecture and Python Zen. Keeps functions small and explicit.
-"""
+"""Adapter for code formatting using black."""
 import sys
 from pathlib import Path
 from typing import Any, Dict
 
-# Add root to path
 _root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(_root))
 
@@ -25,25 +21,8 @@ class FormatAdapter:
         except ImportError:
             self.has_black = False
 
-    def format_code(
-        self,
-        code: str,
-        formatter: str = "black",
-        line_length: int = 100,
-    ) -> Dict[str, Any]:
-        """Format code using specified formatter.
-
-        Args:
-            code: Code to format
-            formatter: Formatter to use (black, autopep8, etc.)
-            line_length: Maximum line length
-
-        Returns:
-            Dictionary with formatted code and metadata
-
-        Raises:
-            MCPValidationError: If inputs are invalid
-        """
+    def format_code(self, code: str, formatter: str = "black", line_length: int = 100) -> Dict[str, Any]:
+        """Format code using specified formatter."""
         self._validate_inputs(code, formatter, line_length)
 
         if formatter == "black":

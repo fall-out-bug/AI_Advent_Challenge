@@ -19,7 +19,9 @@ class MCPHTTPClient:
             base_url: Base URL of the MCP HTTP server
         """
         self.base_url = base_url.rstrip("/")
-        self.timeout = 300.0  # 5 minutes for code generation
+        # Increased timeout for long-running operations like digest generation
+        # Digest can take up to 5 minutes (fetching posts + summarization)
+        self.timeout = httpx.Timeout(600.0, connect=10.0)  # 10 min total, 10 sec connect
 
     async def _make_request(self, method: str, endpoint: str, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Make HTTP request to MCP server.

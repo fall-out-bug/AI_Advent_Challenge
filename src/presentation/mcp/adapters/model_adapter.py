@@ -3,11 +3,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
-# Add shared to path for imports
 _root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(_root))
-shared_path = _root / "shared"
-sys.path.insert(0, str(shared_path))
+sys.path.insert(0, str(_root / "shared"))
 
 from src.presentation.mcp.exceptions import MCPModelError
 
@@ -28,22 +26,11 @@ class ModelAdapter:
     """Adapter for model listing and availability checks."""
 
     def __init__(self, unified_client: Any) -> None:
-        """Initialize model adapter.
-
-        Args:
-            unified_client: Unified model client instance
-        """
+        """Initialize model adapter."""
         self.unified_client = unified_client
 
     def list_available_models(self) -> dict[str, Any]:
-        """List all configured models.
-
-        Returns:
-            Dictionary with local and external model lists
-
-        Raises:
-            MCPModelError: If listing fails
-        """
+        """List all configured models."""
         try:
             MODEL_CONFIGS = _get_model_configs()
             local_models = []
@@ -63,15 +50,7 @@ class ModelAdapter:
             raise MCPModelError(f"Failed to list models: {e}")
 
     def _build_model_info(self, name: str, config: dict[str, Any]) -> dict[str, Any]:
-        """Build model information dictionary.
-
-        Args:
-            name: Model identifier
-            config: Model configuration
-
-        Returns:
-            Model information dictionary
-        """
+        """Build model information dictionary."""
         return {
             "name": name,
             "display_name": config.get("display_name", name),
@@ -79,17 +58,7 @@ class ModelAdapter:
         }
 
     async def check_model_availability(self, model_name: str) -> dict[str, bool]:
-        """Check if model is available.
-
-        Args:
-            model_name: Name of the model to check
-
-        Returns:
-            Dictionary with availability status
-
-        Raises:
-            MCPModelError: If check fails
-        """
+        """Check if model is available."""
         try:
             is_available = await self.unified_client.check_availability(model_name)
             return {"available": is_available}

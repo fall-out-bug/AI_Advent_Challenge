@@ -1,8 +1,21 @@
 """MCP client for tool discovery and execution."""
-from typing import Any, Dict, List
+import os
+from typing import Any, Dict, List, Protocol
 from pathlib import Path
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+
+
+class MCPClientProtocol(Protocol):
+    """Protocol for MCP client implementations."""
+    
+    async def discover_tools(self) -> List[Dict[str, Any]]:
+        """Discover all available tools."""
+        ...
+    
+    async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Call a tool with arguments."""
+        ...
 
 
 class MCPClient:
@@ -89,8 +102,51 @@ class MCPClient:
                 for tool in tools:
                     print(f"  - {tool['name']}: {tool['description']}")
             elif command.startswith("call "):
-                # TODO: Parse and execute tool call
-                print("Tool call parsing not yet implemented")
+                # Parse and execute tool call
+                try:
+                    parts = command[5:].strip().split(" ", 1)
+                    tool_name = parts[0]
+                    
+                    # Parse arguments (JSON or key=value format)
+                    arguments = {}
+                    if len(parts) > 1:
+                        args_str = parts[1].strip()
+                        if args_str.startswith("{") or args_str.startswith("["):
+                            # JSON format
+                            import json
+                            arguments = json.loads(args_str)
+                        else:
+                            # key=value format
+                            for pair in args_str.split(","):
+                                if "=" in pair:
+                                    key, value = pair.split("=", 1)
+                                    arguments[key.strip()] = value.strip()
+                    
+                    # Execute tool call
+                    result = await self.call_tool(tool_name, arguments)
+                    print(f"Result: {result}")
+                except Exception as e:
+                    print(f"Error calling tool: {e}")
             else:
                 print(f"Unknown command: {command}")
+
+
+def get_mcp_client(server_url: str | None = None) -> MCPClientProtocol:
+    """Get appropriate MCP client based on configuration.
+    
+    Args:
+        server_url: MCP server URL (HTTP) or None for stdio mode
+        
+    Returns:
+        MCPClientProtocol instance (HTTP or stdio)
+    """
+    url = server_url or os.getenv("MCP_SERVER_URL", "")
+    
+    if url and url.startswith("http"):
+        # Use HTTP client
+        from src.presentation.mcp.http_client import MCPHTTPClient
+        return MCPHTTPClient(base_url=url)
+    
+    # Default to stdio client
+    return MCPClient()
 

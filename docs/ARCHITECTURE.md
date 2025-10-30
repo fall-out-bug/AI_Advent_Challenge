@@ -114,6 +114,38 @@ Provides user interfaces (API and CLI).
 - Command-line interface for local development
 - Interactive mode for testing
 
+## Workers Layer
+
+### Purpose
+Background workers for scheduled tasks and notifications.
+
+### Components
+
+#### Summary Worker
+Coordinates scheduled notifications for task summaries and channel digests.
+
+**Modular Structure:**
+```
+src/workers/
+├── summary_worker.py    # Main coordinator (258 lines)
+├── formatters.py         # Message formatting
+├── message_sender.py     # Message sending with retry
+└── data_fetchers.py      # Data fetching from MCP/DB
+```
+
+**Responsibilities:**
+- `summary_worker.py`: Main loop, scheduling, coordination
+- `formatters.py`: Format messages (summary, digest, markdown cleanup)
+- `message_sender.py`: Send messages with exponential backoff retry
+- `data_fetchers.py`: Fetch data from MCP tools or database
+
+**Features:**
+- Scheduled morning task summaries
+- Scheduled evening channel digests
+- Debug mode with configurable intervals
+- Quiet hours support
+- Graceful shutdown handling
+
 ## Design Patterns
 
 ### Strategy Pattern

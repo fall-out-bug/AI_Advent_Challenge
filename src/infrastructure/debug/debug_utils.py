@@ -1,10 +1,4 @@
-"""Debug utilities for development and troubleshooting.
-
-Following the Zen of Python:
-- Simple is better than complex
-- Practicality beats purity
-- Errors should never pass silently
-"""
+"""Debug utilities for development and troubleshooting."""
 
 import json
 from pathlib import Path
@@ -17,19 +11,11 @@ class DebugUtils:
     """Utility methods for debugging and development."""
 
     def __init__(self, settings: Settings):
-        """Initialize debug utils.
-
-        Args:
-            settings: Application settings
-        """
+        """Initialize debug utils."""
         self.settings = settings
 
     def dump_config(self) -> Dict[str, Any]:
-        """Dump current configuration.
-
-        Returns:
-            Dictionary with configuration details
-        """
+        """Dump current configuration."""
         return {
             "storage_path": str(self.settings.storage_path),
             "agent_storage": str(self.settings.get_agent_storage_path()),
@@ -40,14 +26,7 @@ class DebugUtils:
         }
 
     def count_tokens(self, text: str) -> Dict[str, int]:
-        """Estimate token count for text.
-
-        Args:
-            text: Text to count tokens in
-
-        Returns:
-            Dictionary with token statistics
-        """
+        """Estimate token count for text."""
         # Simple estimation: ~4 chars per token
         estimated_tokens = len(text) / 4
 
