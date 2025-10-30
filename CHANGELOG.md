@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Refactored `summary_worker.py` (700 lines → 258 lines) into modular structure:
+  - Extracted `formatters.py` for message formatting (format_summary, format_single_digest, clean_markdown)
+  - Extracted `message_sender.py` for message sending with retry logic and error handling
+  - Extracted `data_fetchers.py` for data fetching (get_summary_text, get_digest_texts)
+  - Improved code readability and maintainability following Clean Architecture principles
+- Updated tests to use new modular structure
+
+### Fixed
+- Implemented TODO in `client.py`: added tool call parsing in interactive mode (supports JSON and key=value formats)
+
+## [Day 11] - 2025-01-XX
+
+### Added
+- FSM-based conversation flow for multi-turn task creation
+- Clarifying questions for ambiguous task inputs
+- Enhanced intent orchestrator with context-aware parsing (Russian/English)
+- Domain value objects for task summary and digest formatting (`TaskSummary`, `DigestMessage`)
+- Comprehensive test suite: unit, integration, E2E, and contract tests
+- MCP tools API documentation with examples (`docs/API_MCP_TOOLS.md`)
+- Architecture diagrams for FSM flow (`docs/ARCHITECTURE_FSM.md`)
+- Quick start guide for Day 11 features (`docs/QUICK_START_DAY11.md`)
+- Telegram bot menu integration with summary and digest callbacks
+- State persistence middleware for FSM conversations
+- Natural language task creation with intent parsing
+
+### Changed
+- Refactored `reminder_tools.py`: extracted query builder and stats calculator into helpers
+- All functions now ≤15 lines (extracted from large functions)
+- Improved Russian language support in intent parsing
+- Menu summary/digest handlers now fully functional via MCP tools
+- Enhanced error handling with user-friendly messages
+
+### Fixed
+- Missing `asyncio` import in `summarizer.py` (line 246)
+- Debug print statements replaced with structured logging
+- Timezone handling in `get_summary` simplified
+- Overdue task calculation (excludes completed tasks)
+
+### Performance
+- Token cost reduced through helper extraction
+- Test coverage maintained at 76%+ (target: 80%+)
+
 ## [Day 10] - 2024-12-25
 
 ### Added

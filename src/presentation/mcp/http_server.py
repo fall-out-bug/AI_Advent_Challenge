@@ -164,7 +164,14 @@ def start_server(host: str = "0.0.0.0", port: int = 8004):
         port: Port to bind to
     """
     logger.info(f"Starting MCP HTTP server on {host}:{port}")
-    run(app, host=host, port=port, log_level="info")
+    run(
+        app, 
+        host=host, 
+        port=port, 
+        log_level="info",
+        timeout_keep_alive=300,  # Keep connections alive for long-running requests
+        timeout_graceful_shutdown=60,
+    )
 
 
 if __name__ == "__main__":

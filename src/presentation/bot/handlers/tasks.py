@@ -3,12 +3,18 @@
 from __future__ import annotations
 
 from aiogram import Router, F
-from aiogram.types import CallbackQuery
+from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.types import Message, CallbackQuery
+from aiogram.enums import ChatAction
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.exceptions import TelegramBadRequest
 
 from src.presentation.mcp.client import get_mcp_client
 from src.infrastructure.monitoring.logger import get_logger
+from src.presentation.bot.states import TaskCreation
+from src.application.orchestration.intent_orchestrator import IntentOrchestrator
+
 
 logger = get_logger(name="butler_bot.tasks")
 
@@ -16,6 +22,8 @@ MAX_ITEMS_PER_PAGE = 10
 
 router = Router()
 _mcp = get_mcp_client()
+
+tasks_router = Router()
 
 
 def build_tasks_menu() -> InlineKeyboardBuilder:
@@ -154,4 +162,68 @@ async def callback_task_add(callback: CallbackQuery) -> None:
         reply_markup=keyboard.as_markup(),
     )
     await callback.answer()
+
+
+@tasks_router.message(Command("task"))
+async def cmd_task(message: Message, state: FSMContext) -> None:
+    """Enter task creation flow and ask for initial task input.
+
+    Example:
+        /task -> bot asks user to describe the task.
+    """
+    await state.set_state(TaskCreation.waiting_for_task)
+    await message.answer("What task would you like to add?")
+
+
+@tasks_router.message(TaskCreation.waiting_for_task, F.text)
+async def handle_task_input(message: Message, state: FSMContext) -> None:
+    """Receive natural language input, parse intent, maybe ask clarifications.
+
+    Calls the intent orchestrator. If clarifications are required, stores partial
+    intent and asks the first question; otherwise, confirms task creation.
+    """
+    # Show typing indicator while processing
+    try:
+        await message.bot.send_chat_action(message.chat.id, ChatAction.TYPING)
+    except Exception:
+        pass
+
+    text = message.text or ""
+    context = await state.get_data()
+
+    orchestrator = IntentOrchestrator()
+    try:
+        result = await orchestrator.parse_task_intent(text=text, context=context)
+    except Exception as e:
+        logger.error(f"Intent parsing failed: {e}")
+        # Keep waiting_for_task state and notify the user
+        await state.set_state(TaskCreation.waiting_for_task)
+        await message.answer("Sorry, parsing is temporarily unavailable. Please try again.")
+        return
+
+    # Persist partial intent
+    await state.update_data(partial_intent=result.model_dump())
+
+    if result.needs_clarification and result.questions:
+        await state.set_state(TaskCreation.waiting_for_clarification)
+        await message.answer(result.questions[0])
+        return
+
+    # If complete, confirm task creation (domain persistence comes later)
+    await state.clear()
+    await message.answer(f"✅ Task added: {result.title}")
+
+
+@tasks_router.message(TaskCreation.waiting_for_clarification, F.text)
+async def handle_clarification(message: Message, state: FSMContext) -> None:
+    """Collect clarification answer and finish the flow (placeholder)."""
+    data = await state.get_data()
+    partial = data.get("partial_intent") or {}
+
+    # For now, assume the clarification answers the deadline
+    # In the future, route by expected field
+    partial["deadline_iso"] = (message.text or "").strip()
+
+    await state.clear()
+    await message.answer(f"✅ Task added: {partial.get('title', 'Task')}")
 

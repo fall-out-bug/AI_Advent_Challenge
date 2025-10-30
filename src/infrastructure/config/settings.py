@@ -49,6 +49,10 @@ class Settings(BaseSettings):
     summarizer_language: str = Field(default="ru", description="Language for summaries (ru/en)")
     summarizer_temperature: float = Field(default=0.5, description="Temperature for summarization (higher = more creative)")
     summarizer_max_tokens: int = Field(default=1200, description="Max tokens for summarization (more = longer summaries)")
+    # FSM conversation settings
+    conversation_timeout_minutes: int = Field(default=5, description="Timeout in minutes for abandoned FSM conversations")
+    max_clarification_attempts: int = Field(default=3, description="Maximum clarification questions before giving up")
+    enable_context_aware_parsing: bool = Field(default=True, description="Use conversation context for intent parsing")
 
     class Config:
         env_prefix = ""

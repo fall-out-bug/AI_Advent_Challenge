@@ -7,7 +7,6 @@ from typing import Any, Dict
 
 from src.presentation.mcp.server import mcp
 from src.application.orchestration.intent_orchestrator import IntentOrchestrator
-from src.infrastructure.clients.llm_client import get_llm_client, ResilientLLMClient
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +23,8 @@ async def parse_task_intent(text: str, user_context: Dict[str, Any] | None = Non
         Parsed intent as a dictionary
     """
     try:
-        # Use resilient client that falls back on errors
-        llm = ResilientLLMClient()
-        orchestrator = IntentOrchestrator(llm=llm)
+        # IntentOrchestrator will use ResilientLLMClient internally
+        orchestrator = IntentOrchestrator()
         result = await orchestrator.parse_task_intent(text, context=user_context or {})
         return result.model_dump()
     except Exception as e:

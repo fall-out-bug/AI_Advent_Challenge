@@ -14,7 +14,8 @@ RUN poetry config virtualenvs.create false && \
     poetry install --no-dev --no-interaction --no-ansi || \
     (echo "Poetry install failed, trying direct pip install" && \
      pip install --no-cache-dir fastapi uvicorn pydantic pydantic-settings \
-     python-dotenv pyyaml httpx rich mcp motor aiogram dateparser pytz)
+     python-dotenv pyyaml httpx rich mcp motor aiogram dateparser pytz \
+     transformers prometheus-client pyrogram)
 
 # Final stage
 FROM python:3.11-slim
@@ -43,7 +44,8 @@ COPY --chown=worker:worker pyproject.toml ./
 RUN pip install --no-cache-dir -e . || \
     (echo "Direct install failed, copying manually" && \
      pip install --no-cache-dir fastapi uvicorn pydantic pydantic-settings \
-     python-dotenv pyyaml httpx rich mcp motor aiogram dateparser pytz)
+     python-dotenv pyyaml httpx rich mcp motor aiogram dateparser pytz \
+     transformers prometheus-client pyrogram)
 
 USER worker
 

@@ -3,11 +3,30 @@
 from __future__ import annotations
 
 import logging
+import asyncio
 import re
 from typing import List
 
 from src.infrastructure.clients.llm_client import LLMClient, get_llm_client, ResilientLLMClient
 from src.infrastructure.config.settings import get_settings
+from src.infrastructure.llm.token_counter import TokenCounter
+from src.infrastructure.llm.chunker import SemanticChunker, TextChunk
+from src.infrastructure.llm.prompts import get_map_prompt, get_reduce_prompt
+try:
+    from prometheus_client import Counter, Histogram  # type: ignore
+
+    _summarization_duration = Histogram(
+        "summarization_duration_seconds",
+        "Time spent on summarization phases",
+        ["phase"],
+    )
+    _chunks_processed = Counter(
+        "summarizer_chunks_processed_total",
+        "Total number of chunks processed",
+    )
+except Exception:  # pragma: no cover - metrics are optional
+    _summarization_duration = None
+    _chunks_processed = None
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +46,9 @@ def _clean_text_for_summary(text: str) -> str:
     text = re.sub(r'utm_[a-z_]+', '', text, flags=re.IGNORECASE)
     # Normalize whitespace
     text = re.sub(r'\s+', ' ', text)
-    # Remove trailing "читать далее" etc.
+    # Remove trailing "читать далее" etc. and trailing ellipsis
     text = re.sub(r'\s*(читать\s+далее|read\s+more|подробнее|\.\.\.)\s*$', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'[\.…]+\s*$', '', text)
     return text.strip()
 
 
@@ -60,15 +80,20 @@ async def summarize_posts(posts: List[dict], max_sentences: int = None, llm: LLM
         llm = ResilientLLMClient()
     llm_client = llm
 
-    # Clean and limit posts
+    # Clean posts (no limit on count - process all posts from last 24 hours)
     cleaned_posts = []
-    for post in posts[:10]:  # Limit to 10 posts
+    for post in posts:  # Process all posts, no limit
         text = post.get("text", "")
         cleaned = _clean_text_for_summary(text)
         if cleaned and len(cleaned) > 20:  # Skip very short posts
-            cleaned_posts.append(cleaned[:150])  # 150 chars per post
+            cleaned_posts.append(cleaned[:500])  # Limit to 500 chars per post to avoid token overflow
+    
+    logger.info(f"Summarizing {len(cleaned_posts)} posts (from {len(posts)} total)")
+    if cleaned_posts:
+        logger.debug(f"Sample posts (first 3): {cleaned_posts[:3]}")
     
     if not cleaned_posts:
+        logger.warning("No suitable posts for summarization")
         return "Нет пригодных постов для саммари."
 
     texts = "\n".join(f"{i+1}. {text}" for i, text in enumerate(cleaned_posts))
@@ -76,6 +101,8 @@ async def summarize_posts(posts: List[dict], max_sentences: int = None, llm: LLM
     # Russian-language prompt with explicit instructions
     if language == "ru":
         prompt = f"""Суммаризируй эти посты из Telegram-канала. Напиши {max_sentences} РАЗНЫХ предложения на русском языке. Каждое предложение раскрывает РАЗНЫЙ аспект. Без повторов. Без нумерации. Без Markdown. Обычный текст.
+
+ВАЖНО: Верни ТОЛЬКО текст, НЕ JSON, НЕ структурированные данные. Только предложения на русском языке.
 
 Пример:
 "Разработчики представили новую версию iOS с улучшенной производительностью на 30%. Добавлены новые функции для работы с жестами и улучшена безопасность. Обсуждаются отзывы пользователей о стабильности и совместимости."
@@ -85,19 +112,43 @@ async def summarize_posts(posts: List[dict], max_sentences: int = None, llm: LLM
 
 Суммари:"""
     else:
-        prompt = f"""Summarize these channel posts in {max_sentences} sentence(s), be very concise, no Markdown:\n\n{texts}"""
+        prompt = f"""Summarize these channel posts in {max_sentences} sentence(s), be very concise, no Markdown, no JSON. Return ONLY plain text sentences.
 
-    # Generate summary with retry
+Posts:
+{texts}
+
+Summary:"""
+
+    # If the concatenated cleaned text is long, use Map-Reduce
+    full_text = "\n\n".join(cleaned_posts)
+    try:
+        counter = TokenCounter()
+        # Fallback to direct summarization when under threshold
+        if counter.count_tokens(full_text) > 3000:
+            # Map-Reduce path
+            summarizer = MapReduceSummarizer(llm=llm_client, token_counter=counter, language=language)
+            return await summarizer.summarize_text(full_text, max_sentences=max_sentences)
+    except Exception:
+        # If token counting fails for any reason, proceed with direct summarization
+        pass
+
+    # Generate summary with retry (direct path)
+    logger.info(f"Starting summarization with LLM (max_sentences={max_sentences}, temperature={temperature})")
+    logger.debug(f"Prompt (first 500 chars): {prompt[:500]}")
+    
     for attempt in range(2):
         try:
             summary = await llm_client.generate(prompt, temperature=temperature, max_tokens=max_tokens)
+            logger.info(f"LLM response received (attempt {attempt + 1}, length={len(summary) if summary else 0})")
+            if summary:
+                logger.debug(f"Raw LLM response (first 300 chars): {summary[:300]}")
             if summary and len(summary.strip()) > 10:
                 # Clean summary - remove any remaining Markdown or artifacts
                 cleaned_summary = summary.strip()
                 
                 # CRITICAL: If summary is JSON, discard it and use fallback
                 if cleaned_summary.startswith('{') or cleaned_summary.startswith('['):
-                    logger.warning("LLM returned JSON instead of text, discarding", summary_preview=cleaned_summary[:100])
+                    logger.warning("LLM returned JSON instead of text, discarding: %s", cleaned_summary[:100])
                     raise ValueError("LLM returned JSON instead of text summary")
                 
                 # Remove any stray JSON artifacts
@@ -162,15 +213,69 @@ async def summarize_posts(posts: List[dict], max_sentences: int = None, llm: LLM
                     cleaned_summary = '. '.join(sentences[:max_sentences]) if sentences else cleaned_summary
                 
                 if cleaned_summary:
+                    logger.info(f"Final summary generated: {cleaned_summary[:200]}...")
                     return cleaned_summary
         except Exception as e:
-            logger.warning(f"Summarization attempt {attempt + 1} failed", error=str(e))
+            logger.warning("Summarization attempt %d failed: %s", attempt + 1, str(e), exc_info=True)
             if attempt == 1:
                 break
 
-    # Fallback to bullet list (Russian)
-    if language == "ru":
-        return ". ".join(f"{post.get('text', '')[:100]}" for post in posts[:3]) + "..."
-    else:
-        return "\n".join(f"• {post.get('text', '')[:100]}" for post in posts[:5])
+    # Fallback to bullet list (Russian) - show all posts but limit each to 200 chars
+    logger.warning("Using fallback summarization (LLM failed or returned invalid format)")
+    fallback_summary = ". ".join(f"{post.get('text', '')[:200]}" for post in posts) + ("..." if len(posts) > 50 else "") if language == "ru" else "\n".join(f"• {post.get('text', '')[:200]}" for post in posts)
+    logger.debug(f"Fallback summary: {fallback_summary[:200]}...")
+    return fallback_summary
+
+
+class MapReduceSummarizer:
+    """Map-Reduce summarization for long texts."""
+
+    def __init__(
+        self,
+        llm: LLMClient,
+        token_counter: TokenCounter | None = None,
+        chunker: SemanticChunker | None = None,
+        language: str = "ru",
+    ) -> None:
+        self.llm = llm
+        self.token_counter = token_counter or TokenCounter()
+        self.chunker = chunker or SemanticChunker(self.token_counter, max_tokens=3000, overlap_tokens=200)
+        self.language = language
+
+    async def _summarize_chunk(self, chunk: TextChunk, max_sentences: int, temperature: float, max_tokens: int) -> str:
+        prompt = get_map_prompt(text=chunk.text, language=self.language, max_sentences=max_sentences)
+        if _summarization_duration is None:
+            return await self.llm.generate(prompt, temperature=temperature, max_tokens=max_tokens)
+        with _summarization_duration.labels("map").time():
+            return await self.llm.generate(prompt, temperature=temperature, max_tokens=max_tokens)
+
+    async def summarize_text(
+        self,
+        text: str,
+        max_sentences: int = 8,
+        temperature: float = 0.2,
+        map_max_tokens: int = 400,
+        reduce_max_tokens: int = 800,
+    ) -> str:
+        chunks = self.chunker.chunk_text(text)
+        if len(chunks) == 1:
+            return await self._summarize_chunk(chunks[0], max_sentences=max_sentences, temperature=temperature, max_tokens=reduce_max_tokens)
+
+        # Map phase
+        if _chunks_processed is not None:
+            _chunks_processed.inc(len(chunks))
+        summaries = await asyncio.gather(
+            *[
+                self._summarize_chunk(c, max_sentences=max(3, max_sentences // 2), temperature=temperature, max_tokens=map_max_tokens)
+                for c in chunks
+            ]
+        )
+
+        # Reduce phase
+        combined = "\n\n".join([f"Fragment {i+1}:\n{s}" for i, s in enumerate(summaries)])
+        prompt = get_reduce_prompt(summaries=combined, language=self.language, max_sentences=max_sentences)
+        if _summarization_duration is None:
+            return await self.llm.generate(prompt, temperature=temperature, max_tokens=reduce_max_tokens)
+        with _summarization_duration.labels("reduce").time():
+            return await self.llm.generate(prompt, temperature=temperature, max_tokens=reduce_max_tokens)
 

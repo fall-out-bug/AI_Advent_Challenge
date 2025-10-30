@@ -7,9 +7,15 @@ from aiogram import Bot, Dispatcher, Router, F
 from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram.exceptions import TelegramBadRequest
+from aiogram import Dispatcher
+from aiogram.fsm.storage.memory import MemoryStorage
 
 from src.presentation.mcp.client import get_mcp_client
 from src.infrastructure.monitoring.logger import get_logger
+from src.presentation.bot.middleware.state_middleware import StatePersistenceMiddleware
+from src.presentation.bot.handlers.tasks import tasks_router
+from src.presentation.bot.handlers.menu import menu_router
+
 
 logger = get_logger(name="butler_bot")
 
@@ -106,8 +112,8 @@ class ButlerBot:
         task_data = {
             "user_id": message.from_user.id,
             "title": intent.get("title", "Task"),
-            "description": intent.get("description", ""),
-            "deadline": intent.get("deadline"),
+            "description": intent.get("description") or "",  # Convert None to empty string
+            "deadline": intent.get("deadline_iso") or intent.get("deadline"),  # Support both formats
             "priority": intent.get("priority", "medium"),
             "tags": intent.get("tags", []),
         }
@@ -116,6 +122,33 @@ class ButlerBot:
             await message.answer(f"✅ Task added: {task_data['title']}")
         else:
             await message.answer("❌ Failed to create task. Please try again.")
+
+
+def create_dispatcher() -> Dispatcher:
+    """Create aiogram Dispatcher with FSM storage, middleware, and routers.
+
+    Purpose:
+        Provide a configured `Dispatcher` that can be used by a runner to
+        start the Telegram bot. Uses in-memory FSM storage suitable for
+        development and tests.
+
+    Returns:
+        Configured `Dispatcher` instance.
+
+    Example:
+        dp = create_dispatcher()
+        # runner elsewhere attaches Bot(token) and starts polling
+    """
+    storage = MemoryStorage()
+    dp = Dispatcher(storage=storage)
+
+    # Register outer middleware explicitly for aiogram v3 compatibility
+    dp.update.outer_middleware.register(StatePersistenceMiddleware())
+
+    dp.include_router(tasks_router)
+    dp.include_router(menu_router)
+
+    return dp
 
 
 async def main() -> None:  # pragma: no cover - manual run helper
