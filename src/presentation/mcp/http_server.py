@@ -11,7 +11,7 @@ sys.path.insert(0, str(_root))
 
 try:
     from fastapi import FastAPI, HTTPException
-    from fastapi.responses import JSONResponse
+    from fastapi.responses import Response
     from pydantic import BaseModel
     from uvicorn import run
 except ImportError:
@@ -21,6 +21,7 @@ except ImportError:
 
 # Import MCP server
 from src.presentation.mcp.server import mcp
+from src.infrastructure.monitoring.prometheus_metrics import get_metrics_registry
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -151,9 +152,39 @@ async def root():
             "/health": "Health check",
             "/tools": "List available tools",
             "/call": "Call a tool (POST)",
+            "/metrics": "Prometheus metrics",
             "/docs": "API documentation"
         }
     }
+
+
+@app.get("/metrics")
+async def metrics():
+    """Prometheus metrics endpoint."""
+    try:
+        from prometheus_client import generate_latest, CONTENT_TYPE_LATEST  # type: ignore
+        registry = get_metrics_registry()
+        if registry is None:
+            return Response(
+                content="# Prometheus metrics not available\n",
+                media_type="text/plain"
+            )
+        return Response(
+            content=generate_latest(registry),
+            media_type=CONTENT_TYPE_LATEST
+        )
+    except ImportError:
+        return Response(
+            content="# Prometheus client not installed\n",
+            media_type="text/plain"
+        )
+    except Exception as e:
+        logger.error(f"Failed to generate metrics: {e}", exc_info=True)
+        return Response(
+            content=f"# Error generating metrics: {str(e)}\n",
+            media_type="text/plain",
+            status_code=500
+        )
 
 
 def start_server(host: str = "0.0.0.0", port: int = 8004):

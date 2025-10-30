@@ -1,21 +1,38 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-*.egg-info/
-dist/
 build/
-.pytest_cache/
-.mypy_cache/
-.coverage
-htmlcov/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
 # Virtual environments
-venv/
+.env
+.venv/
 env/
+venv/
 ENV/
+env.bak/
+venv.bak/
 
 # IDE
 .vscode/
@@ -24,53 +41,73 @@ ENV/
 *.swo
 *~
 
-# Testing
-test_reports/
-reports/
-.coverage.*
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Git
-.git/
-.gitignore
-.gitattributes
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
 
 # Documentation
-docs/_build/
 *.md
 !README.md
+docs/
+tasks/
+
+# Secrets and keys
+api_key.txt
+*.key
+*.pem
+*.session
+*.session-journal
+sessions/
 
 # Logs
 *.log
 logs/
 
-# Data
-data/conversations/
-data/agents/
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
 
-# Cache (models downloaded separately)
+# Cache and data
 cache/
-
-# Archive
+data/
+reports/
+test_reports/
 archive/
 
 # CI/CD
 .github/
 .gitlab-ci.yml
 
-# Environment
-.env
-.env.*
-*.local
+# Poetry
+poetry.lock
 
-# OS
-.DS_Store
-Thumbs.db
+# Local models (large files)
+local_models/
 
-# Tasks (exclude from container)
-tasks/
+# Docker
+docker-compose*.yml
+!docker-compose.day12.yml
+Makefile
 
-# Examples (exclude from container)
-examples/
-
-# Test files
-tests/
+# Prometheus and Grafana configs (will be created)
+prometheus/
+grafana/
