@@ -1,0 +1,92 @@
+# Pre-commit hooks configuration
+# Install with: pip install pre-commit && pre-commit install
+
+repos:
+  # Secret detection
+  - repo: local
+    hooks:
+      - id: check-secrets
+        name: Check for secrets
+        entry: bash scripts/quality/check_secrets.sh
+        language: system
+        pass_filenames: true
+        always_run: false
+        stages: [commit]
+
+  # Code formatting
+  - repo: https://github.com/psf/black
+    rev: 23.11.0
+    hooks:
+      - id: black
+        name: Black code formatter
+        language_version: python3.10
+        args: [--line-length=88, --check]
+        types: [python]
+
+  # Import sorting
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: isort import sorter
+        args: [--check-only, --profile=black]
+        types: [python]
+
+  # Linting
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        name: Flake8 linter
+        args: [--max-line-length=88, --extend-ignore=E203,W503]
+        types: [python]
+        exclude: ^(tests/|src/tests/)
+
+  # Type checking (optional, can be slow)
+  - repo: local
+    hooks:
+      - id: mypy
+        name: MyPy type checker
+        entry: bash -c 'mypy src/ --ignore-missing-imports || true'
+        language: system
+        pass_filenames: false
+        always_run: false
+        stages: [commit]
+
+  # Security scanning
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        name: Bandit security scanner
+        args: [-r, src/, -ll]
+        types: [python]
+        exclude: ^(tests/|src/tests/)
+
+  # Unit tests (quick check)
+  - repo: local
+    hooks:
+      - id: unit-tests
+        name: Unit Tests
+        entry: bash -c 'poetry run pytest src/tests/unit/ -v --tb=short -q || true'
+        language: system
+        pass_filenames: false
+        always_run: false
+        stages: [commit]
+
+  # Trailing whitespace and end of file fixes
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+      - id: end-of-file-fixer
+        name: Fix end of files
+      - id: check-yaml
+        name: Check YAML syntax
+      - id: check-json
+        name: Check JSON syntax
+      - id: check-added-large-files
+        name: Check for large files
+        args: ['--maxkb=500']
+

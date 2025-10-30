@@ -1,0 +1,83 @@
+# Prometheus configuration for AI Challenge project
+# Scrapes metrics from all services
+
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  external_labels:
+    cluster: 'ai-challenge'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093  # Uncomment when Alertmanager is deployed
+
+# Load alert rules
+rule_files:
+  - 'alerts.yml'
+
+# Scrape configurations
+scrape_configs:
+  # MCP Server metrics
+  - job_name: 'mcp-server'
+    static_configs:
+      - targets: ['mcp-server:8004']
+        labels:
+          service: 'mcp-server'
+          layer: 'presentation'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Telegram Bot metrics (if metrics endpoint is added)
+  - job_name: 'telegram-bot'
+    static_configs:
+      - targets: ['telegram-bot:8000']  # Update if bot exposes metrics endpoint
+        labels:
+          service: 'telegram-bot'
+          layer: 'presentation'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    # Skip if endpoint doesn't exist yet
+    honor_labels: true
+
+  # Summary Worker metrics
+  - job_name: 'summary-worker'
+    static_configs:
+      - targets: ['summary-worker:8000']  # Update if worker exposes metrics endpoint
+        labels:
+          service: 'summary-worker'
+          layer: 'workers'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Post Fetcher Worker metrics
+  - job_name: 'post-fetcher-worker'
+    static_configs:
+      - targets: ['post-fetcher-worker:8000']  # Update if worker exposes metrics endpoint
+        labels:
+          service: 'post-fetcher-worker'
+          layer: 'workers'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Mistral LLM Server metrics
+  - job_name: 'mistral-chat'
+    static_configs:
+      - targets: ['mistral-chat:8000']
+        labels:
+          service: 'mistral-chat'
+          layer: 'ml'
+          model: 'mistral-7b-instruct-v0.2'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+

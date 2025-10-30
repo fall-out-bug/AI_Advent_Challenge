@@ -14,7 +14,7 @@ from src.presentation.mcp.client import get_mcp_client
 from src.infrastructure.monitoring.logger import get_logger
 from src.presentation.bot.middleware.state_middleware import StatePersistenceMiddleware
 from src.presentation.bot.handlers.tasks import tasks_router
-from src.presentation.bot.handlers.menu import menu_router
+from src.presentation.bot.handlers.menu import router as menu_router
 
 
 logger = get_logger(name="butler_bot")
@@ -84,12 +84,28 @@ class ButlerBot:
         await self.dp.start_polling(self.bot)
 
     async def handle_natural_language(self, message: Message) -> None:
-        """Handle free-form text: parse intent and create a task via MCP if resolved."""
+        """Handle free-form text: parse intent and route to appropriate handler.
+        
+        Purpose:
+            Parse user intent and route to:
+            - Digest generation if digest intent detected
+            - Task creation if task intent detected
+            - Clarification if intent unclear
+        """
         user_id = message.from_user.id
         text = message.text or ""
         
         try:
-            intent = await self._mcp.call_tool("parse_task_intent", {"text": text, "user_context": {}})
+            # First, check if this is a digest request
+            digest_intent = await self._mcp.call_tool("parse_digest_intent", {"text": text, "user_context": {"user_id": user_id}})
+            
+            if digest_intent.get("intent_type") == "digest" and digest_intent.get("confidence", 0) >= 0.7:
+                # Handle digest request
+                await self._handle_digest_intent(message, digest_intent)
+                return
+            
+            # Otherwise, try parsing as task intent
+            intent = await self._mcp.call_tool("parse_task_intent", {"text": text, "user_context": {"user_id": user_id}})
             if intent.get("needs_clarification"):
                 await self._handle_clarification(message, intent)
                 return
@@ -97,6 +113,114 @@ class ButlerBot:
         except Exception as e:
             logger.error("Failed to handle natural language", user_id=user_id, text=text[:100], error=str(e))
             await message.answer("❌ Sorry, I couldn't process that. Please try again or use /menu.")
+
+    async def _handle_digest_intent(self, message: Message, digest_intent: dict) -> None:
+        """Handle digest generation intent.
+        
+        Purpose:
+            Generate PDF digest when user requests it via natural language.
+            Uses the same logic as menu callback but triggered by intent.
+        
+        Args:
+            message: Telegram message
+            digest_intent: Parsed digest intent with mcp_tools, hours, etc.
+        """
+        user_id = message.from_user.id
+        hours = digest_intent.get("hours", 24)
+        
+        logger.info("Handling digest intent", user_id=user_id, hours=hours, confidence=digest_intent.get("confidence"))
+        
+        # Check if clarification needed
+        if digest_intent.get("needs_clarification"):
+            questions = digest_intent.get("questions", [])
+            if questions:
+                await message.answer(f"Чтобы сгенерировать дайджест, уточните:\n\n" + "\n".join(f"• {q}" for q in questions))
+            return
+        
+        # Show typing action
+        try:
+            from aiogram.enums import ChatAction
+            await message.bot.send_chat_action(message.chat.id, ChatAction.UPLOAD_DOCUMENT)
+        except Exception:
+            pass
+        
+        try:
+            # Import digest generation function
+            from src.presentation.bot.handlers.menu import generate_pdf_digest_for_user
+            from src.infrastructure.cache.pdf_cache import get_pdf_cache
+            from aiogram.types import BufferedInputFile
+            from datetime import datetime
+            import base64
+            
+            cache = get_pdf_cache()
+            
+            # Generate cache key
+            now = datetime.utcnow()
+            date_hour = now.strftime("%Y-%m-%d-%H")
+            
+            # Check cache first
+            cached_pdf = cache.get(user_id, date_hour)
+            if cached_pdf:
+                logger.debug(f"Cache hit for user {user_id}, date_hour {date_hour}")
+                filename = f"digest_{now.strftime('%Y-%m-%d')}.pdf"
+                document = BufferedInputFile(cached_pdf, filename=filename)
+                await message.answer_document(document=document)
+                return
+            
+            # Generate PDF digest
+            pdf_result = await generate_pdf_digest_for_user(user_id, hours=hours)
+            
+            if pdf_result.get("error") == "no_posts":
+                await message.answer(f"📰 За последние {hours} часов новых постов не найдено.")
+                return
+            
+            if "error" in pdf_result:
+                # Fallback to text digest
+                logger.warning("PDF generation failed, falling back to text digest", user_id=user_id)
+                result = await self._mcp.call_tool("get_channel_digest", {"user_id": int(user_id), "hours": hours})
+                digests = result.get("digests", [])
+                if not digests:
+                    await message.answer(f"📰 За последние {hours} часов постов не найдено.")
+                    return
+                
+                # Format all channels
+                digest_parts = [f"📰 Digest за последние {hours} часов:\n"]
+                for digest in digests:
+                    channel_name = digest.get("channel", "Unknown")
+                    summary = digest.get("summary", "")
+                    post_count = digest.get("post_count", 0)
+                    digest_parts.append(f"\n📌 {channel_name} ({post_count} постов):\n{summary}")
+                
+                full_digest = "\n".join(digest_parts)
+                if len(full_digest) > 4000:
+                    await message.answer(full_digest[:4000])
+                    remaining = full_digest[4000:]
+                    while remaining:
+                        await message.answer(remaining[:4000])
+                        remaining = remaining[4000:]
+                else:
+                    await message.answer(full_digest)
+                return
+            
+            # Decode and send PDF
+            pdf_bytes_b64 = pdf_result.get("pdf_bytes", "")
+            if not pdf_bytes_b64:
+                await message.answer("⚠️ Не удалось сгенерировать PDF. Попробуйте позже.")
+                return
+            
+            pdf_bytes = base64.b64decode(pdf_bytes_b64)
+            
+            # Cache PDF
+            cache.set(user_id, date_hour, pdf_bytes)
+            
+            # Send PDF document
+            filename = f"digest_{now.strftime('%Y-%m-%d')}.pdf"
+            document = BufferedInputFile(pdf_bytes, filename=filename)
+            await message.answer_document(document=document)
+            
+        except Exception as e:
+            logger.error("Error handling digest intent", user_id=user_id, error=str(e), exc_info=True)
+            await message.answer("⚠️ Не удалось сгенерировать дайджест. Попробуйте использовать кнопку в меню.")
 
     async def _handle_clarification(self, message: Message, intent: dict) -> None:
         """Handle clarification questions."""

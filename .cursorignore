@@ -18,6 +18,9 @@ shared/.venv/
 tasks/*day_0*/*.plan.cursor.md
 tasks/*day_0*/*.plan.peplexity.md
 tasks/*day_0*/*.plan.md
+tasks/*day_10/*.plan.cursor.md
+tasks/*day_10/*.plan.peplexity.md
+tasks/*day_10/*.plan.md
 
 # Old documentation versions
 tasks/day_10/PHASE4_SUMMARY.md
