@@ -81,8 +81,16 @@ Thumbs.db
 # API Keys and secrets
 api_key.txt
 .env
+.env.*
+local_models/.env
 *.key
 *.pem
+
+# Pyrogram session files (contain authentication tokens)
+*.session
+*.session-journal
+sessions/
+scripts/*.session
 
 # Logs
 *.log

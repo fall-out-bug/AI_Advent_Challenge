@@ -15,6 +15,30 @@ mcp = FastMCP(
     instructions="Expose SDK and agent capabilities via MCP protocol",
 )
 
+# Register tools AFTER mcp is created to avoid circular imports
+# Import modules so their @mcp.tool decorators execute and register tools
+def _register_all_tools():
+    """Register all tool modules by importing them."""
+    import sys
+    import traceback
+    
+    tool_modules = [
+        ("reminder_tools", "src.presentation.mcp.tools.reminder_tools"),
+        ("nlp_tools", "src.presentation.mcp.tools.nlp_tools"),
+        ("digest_tools", "src.presentation.mcp.tools.digest_tools"),
+    ]
+    
+    for name, module_path in tool_modules:
+        try:
+            __import__(module_path)
+            print(f"✓ Registered tools from {name}", file=sys.stderr)
+        except Exception as e:
+            print(f"✗ Failed to import {name} from {module_path}: {e}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
+
+# Register tools immediately when module loads
+_register_all_tools()
+
 # Import MCP resources and prompts
 from src.presentation.mcp.resources.prompts import (
     get_python_developer_prompt,
@@ -60,6 +84,7 @@ def get_adapter():
         adapters = _get_adapters_module()
         _adapter = adapters.MCPApplicationAdapter()
     return _adapter
+ 
 # Task Formalization Tool
 @mcp.tool()
 async def formalize_task(informal_request: str, context: str = "") -> Dict[str, Any]:

@@ -12,9 +12,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Install Python dependencies directly (including HTTP server support)
+# Install Python dependencies directly (including HTTP server support and Day 11 dependencies)
 RUN python -m pip install --upgrade pip && \
     pip install mcp httpx pydantic black radon fastapi uvicorn \
+    motor pymongo aiogram dateparser pytz \
+    transformers prometheus-client pyrogram \
     && rm -rf /root/.cache/pip
 
 # Copy only necessary files

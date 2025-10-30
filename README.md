@@ -8,14 +8,16 @@
 
 This repository contains **daily challenges** building AI-powered systems with language models. Each day introduces new concepts and builds upon previous challenges.
 
-**Current Status:** ✅ Day 10 - Production-Ready MCP System Complete
+**Current Status:** ✅ Day 11 - Butler Bot with FSM Conversation Flow
 
 **Key Features:**
-- ✅ 10 daily challenges from simple chat to production-ready MCP system
+- ✅ 11 daily challenges from simple chat to production-ready MCP system
 - ✅ Clean Architecture with SOLID principles
-- ✅ 311 tests with 76.10% coverage
+- ✅ 319+ tests with 76%+ coverage
 - ✅ Multi-model support (StarCoder, Mistral, Qwen, TinyLlama)
 - ✅ MCP (Model Context Protocol) integration
+- ✅ FSM-based Telegram bot with natural language task creation
+- ✅ Intent parsing with clarification questions (Russian/English)
 - ✅ Health monitoring and metrics dashboard
 - ✅ Comprehensive CLI and REST API
 - ✅ Local model infrastructure with Docker
@@ -29,6 +31,7 @@ This repository contains **daily challenges** building AI-powered systems with l
 4. **Day 7-8**: Multi-agent systems and token analysis
 5. **Day 9**: MCP (Model Context Protocol) integration
 6. **Day 10**: Production-ready MCP system with orchestration and streaming
+7. **Day 11**: Butler Bot with FSM conversation flow and natural language task creation
 
 ## Quick Start
 
@@ -79,6 +82,7 @@ AI_Challenge/
 | Day 8 | Token analysis | Clean Architecture, ML Engineering | ✅ Complete |
 | Day 9 | MCP integration | MCP Protocol, Context management | ✅ Complete |
 | Day 10 | Production MCP system | MCP, Streaming, Orchestration | ✅ Complete |
+| Day 11 | Butler Bot FSM | Telegram Bot, FSM, Intent Parsing | ✅ Complete |
 
 ## Core Infrastructure
 
@@ -106,6 +110,41 @@ response = await client.chat("Hello, world!")
 **Architecture**: Clean Architecture, Domain-Driven Design, SOLID Principles, Design Patterns
 
 **Infrastructure**: Traefik, NVIDIA Container Toolkit, Multi-stage Docker builds
+
+## Day 11 — Butler Bot with FSM Conversation Flow
+
+Telegram bot with finite state machine (FSM) for natural language task creation. Supports Russian and English, intent parsing, and clarification questions.
+
+Key features:
+- FSM-based conversation flow for multi-turn task creation
+- Intent parsing with clarification questions (Russian/English)
+- MCP tools integration for task management
+- Scheduled notifications (morning summaries, evening digests)
+- Modular worker architecture (700→258 lines)
+
+Key modules:
+- `src/presentation/bot/butler_bot.py` — Main bot with FSM
+- `src/presentation/bot/handlers/` — Message handlers
+- `src/workers/summary_worker.py` — Scheduled notifications coordinator
+- `src/workers/formatters.py` — Message formatting
+- `src/workers/message_sender.py` — Message sending with retry
+- `src/workers/data_fetchers.py` — Data fetching utilities
+
+Quick start:
+
+```bash
+# Setup environment
+cp api_key.txt.example api_key.txt
+# Edit api_key.txt with TELEGRAM_BOT_TOKEN
+
+# Run bot
+make run-bot
+
+# Or run worker for scheduled notifications
+make run-worker
+```
+
+See [QUICK_START_DAY11.md](docs/QUICK_START_DAY11.md) for detailed guide.
 
 ## Documentation
 

@@ -29,74 +29,25 @@ class ModelResponse:
 
 
 class BaseModelClient(ABC):
-    """
-    Abstract base class for model clients.
-    
-    Following Python Zen: "Explicit is better than implicit"
-    and "Simple is better than complex".
-    
-    This class defines the interface that all model clients
-    must implement, ensuring consistency across different
-    model types and implementations.
-    """
+    """Abstract base class for model clients."""
     
     def __init__(self, timeout: float = 120.0):
-        """
-        Initialize base model client.
-        
-        Args:
-            timeout: Request timeout in seconds
-        """
+        """Initialize base model client."""
         self.timeout = timeout
     
     @abstractmethod
-    async def make_request(
-        self, 
-        model_name: str, 
-        prompt: str,
-        max_tokens: Optional[int] = None,
-        temperature: Optional[float] = None
-    ) -> ModelResponse:
-        """
-        Make request to model.
-        
-        Args:
-            model_name: Name of the model
-            prompt: Input prompt
-            max_tokens: Maximum tokens to generate (optional)
-            temperature: Generation temperature (optional)
-            
-        Returns:
-            ModelResponse: Model response
-            
-        Raises:
-            ModelConnectionError: If connection fails
-            ModelRequestError: If request fails
-            ModelTimeoutError: If request times out
-        """
+    async def make_request(self, model_name: str, prompt: str, max_tokens: Optional[int] = None, temperature: Optional[float] = None) -> ModelResponse:
+        """Make request to model."""
         pass
     
     @abstractmethod
     async def check_availability(self, model_name: str) -> bool:
-        """
-        Check if model is available.
-        
-        Args:
-            model_name: Name of the model
-            
-        Returns:
-            bool: True if model is available
-        """
+        """Check if model is available."""
         pass
     
     @abstractmethod
     async def close(self) -> None:
-        """
-        Close client resources.
-        
-        This method should clean up any resources
-        used by the client (e.g., HTTP connections).
-        """
+        """Close client resources."""
         pass
     
     def __enter__(self):

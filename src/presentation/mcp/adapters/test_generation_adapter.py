@@ -1,17 +1,12 @@
-"""Adapter for test generation using the shared SDK model client.
-
-Follows Clean Architecture and Python Zen. Keeps functions small and explicit.
-"""
+"""Adapter for test generation."""
 import sys
 from pathlib import Path
 from typing import Any, Dict
 import re
 
-# Add root to path
 _root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(_root))
-shared_path = _root / "shared"
-sys.path.insert(0, str(shared_path))
+sys.path.insert(0, str(_root / "shared"))
 
 from src.presentation.mcp.exceptions import MCPValidationError, MCPAgentError
 
@@ -26,35 +21,12 @@ class TestGenerationAdapter:
     """Adapter for generating tests from code."""
 
     def __init__(self, unified_client: Any, model_name: str = "mistral") -> None:
-        """Initialize adapter.
-
-        Args:
-            unified_client: Unified model client instance
-            model_name: Default model to use for test generation
-        """
+        """Initialize adapter."""
         self.unified_client = unified_client
         self.model_name = model_name
 
-    async def generate_tests(
-        self,
-        code: str,
-        test_framework: str = "pytest",
-        coverage_target: int = 80,
-    ) -> Dict[str, Any]:
-        """Generate tests for provided code.
-
-        Args:
-            code: Source code to generate tests for
-            test_framework: Testing framework (pytest, unittest, etc.)
-            coverage_target: Target coverage percentage
-
-        Returns:
-            Dictionary with test code and metadata
-
-        Raises:
-            MCPValidationError: If inputs are invalid
-            MCPAgentError: If generation fails
-        """
+    async def generate_tests(self, code: str, test_framework: str = "pytest", coverage_target: int = 80) -> Dict[str, Any]:
+        """Generate tests for provided code."""
         self._validate_inputs(code, test_framework)
 
         try:

@@ -1,9 +1,4 @@
-"""
-Abstract base agent for all agents.
-
-Following Python Zen: "Explicit is better than implicit"
-and "Simple is better than complex".
-"""
+"""Abstract base agent for all agents."""
 
 import asyncio
 import logging
@@ -20,31 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 class BaseAgent(ABC):
-    """
-    Abstract base class for all agents.
+    """Abstract base class for all agents."""
     
-    Following Python Zen: "Simple is better than complex"
-    and "Explicit is better than implicit".
-    
-    This class provides the common interface and functionality
-    that all agents share, including model client integration,
-    statistics tracking, and error handling.
-    """
-    
-    def __init__(
-        self, 
-        client: UnifiedModelClient,
-        agent_name: str,
-        max_retries: int = 3
-    ):
-        """
-        Initialize base agent.
-        
-        Args:
-            client: UnifiedModelClient instance
-            agent_name: Name of the agent
-            max_retries: Maximum number of retries for failed requests
-        """
+    def __init__(self, client: UnifiedModelClient, agent_name: str, max_retries: int = 3):
+        """Initialize base agent."""
         self.client = client
         self.agent_name = agent_name
         self.max_retries = max_retries
@@ -56,15 +30,7 @@ class BaseAgent(ABC):
         }
     
     async def process(self, request: AgentRequest) -> AgentResponse:
-        """
-        Process agent request with error handling and statistics.
-        
-        Args:
-            request: Agent request
-            
-        Returns:
-            AgentResponse: Agent response
-        """
+        """Process agent request with error handling and statistics."""
         self.stats["total_requests"] += 1
         start_time = asyncio.get_event_loop().time()
         
@@ -81,18 +47,7 @@ class BaseAgent(ABC):
             self.stats["total_response_time"] += elapsed_time
     
     async def _process_with_retry(self, request: AgentRequest) -> AgentResponse:
-        """
-        Process request with retry logic.
-        
-        Args:
-            request: Agent request
-            
-        Returns:
-            AgentResponse: Agent response
-            
-        Raises:
-            Exception: If all retries fail
-        """
+        """Process request with retry logic."""
         last_error = None
         
         for attempt in range(self.max_retries):
@@ -108,42 +63,11 @@ class BaseAgent(ABC):
     
     @abstractmethod
     async def _process_impl(self, request: AgentRequest) -> AgentResponse:
-        """
-        Implementation-specific processing logic.
-        
-        Args:
-            request: Agent request
-            
-        Returns:
-            AgentResponse: Agent response
-            
-        Raises:
-            Exception: If processing fails
-        """
+        """Implementation-specific processing logic."""
         pass
     
-    async def _call_model(
-        self, 
-        prompt: str, 
-        model_name: str,
-        max_tokens: Optional[int] = None,
-        temperature: Optional[float] = None
-    ) -> ModelResponse:
-        """
-        Make request to model client.
-        
-        Args:
-            prompt: Input prompt
-            model_name: Model name
-            max_tokens: Maximum tokens to generate
-            temperature: Generation temperature
-            
-        Returns:
-            ModelResponse: Model response
-            
-        Raises:
-            Exception: If model request fails
-        """
+    async def _call_model(self, prompt: str, model_name: str, max_tokens: Optional[int] = None, temperature: Optional[float] = None) -> ModelResponse:
+        """Make request to model client."""
         return await self.client.make_request(
             model_name=model_name,
             prompt=prompt,
@@ -152,15 +76,7 @@ class BaseAgent(ABC):
         )
     
     def _create_error_response(self, error_message: str) -> AgentResponse:
-        """
-        Create error response.
-        
-        Args:
-            error_message: Error message
-            
-        Returns:
-            AgentResponse: Error response
-        """
+        """Create error response."""
         return AgentResponse(
             result="",
             success=False,
@@ -169,21 +85,8 @@ class BaseAgent(ABC):
             quality=None
         )
     
-    def _create_metadata(
-        self, 
-        task_type: str, 
-        model_name: Optional[str] = None
-    ) -> TaskMetadata:
-        """
-        Create task metadata.
-        
-        Args:
-            task_type: Type of task
-            model_name: Model name
-            
-        Returns:
-            TaskMetadata: Task metadata
-        """
+    def _create_metadata(self, task_type: str, model_name: Optional[str] = None) -> TaskMetadata:
+        """Create task metadata."""
         return TaskMetadata(
             task_id=f"{self.agent_name}_{datetime.now().timestamp()}",
             task_type=task_type,
@@ -192,12 +95,7 @@ class BaseAgent(ABC):
         )
     
     def get_stats(self) -> dict:
-        """
-        Get agent statistics.
-        
-        Returns:
-            dict: Agent statistics
-        """
+        """Get agent statistics."""
         avg_response_time = (
             self.stats["total_response_time"] / self.stats["total_requests"]
             if self.stats["total_requests"] > 0

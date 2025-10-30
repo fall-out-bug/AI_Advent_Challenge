@@ -11,9 +11,13 @@ shared/.venv/
 **/.venv/
 
 # Planning files (for history, not AI context)
-**/*.plan.cursor.md
-**/*.plan.peplexity.md
-**/*.plan.md
+# **/*.plan.cursor.md
+# **/*.plan.peplexity.md
+# **/*.plan.md
+
+tasks/*day_0*/*.plan.cursor.md
+tasks/*day_0*/*.plan.peplexity.md
+tasks/*day_0*/*.plan.md
 
 # Old documentation versions
 tasks/day_10/PHASE4_SUMMARY.md
@@ -35,3 +39,7 @@ archive/demos/
 shared/.venv/
 *.log
 *.pid
+
+# Allow .env file to be visible in Cursor (still ignored by git)
+# Note: .env contains secrets, but we need to see it for editing
+!.env

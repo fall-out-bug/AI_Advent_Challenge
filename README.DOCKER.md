@@ -1,4 +1,4 @@
-# Docker Deployment Guide - Phase 4
+# Docker Deployment Guide
 
 ## Quick Start
 
@@ -34,7 +34,7 @@ docker-compose -f docker-compose.full.yml down
 | tinyllama-chat | 8002 | TinyLlama-1.1B | Lightweight model for testing |
 | accumulating-chat | 8003 | StarCoder2-7B-Instruct | Code generation specialist |
 
-### 2. MCP Server (Phase 4)
+### 2. MCP Server
 
 - Port: Internal (stdio only)
 - Provides: Code generation, review, testing, formatting

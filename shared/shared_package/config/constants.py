@@ -1,11 +1,7 @@
-"""
-Common constants for all projects.
-
-Following Python Zen: "Explicit is better than implicit".
-"""
+"""Common constants for all projects."""
 
 # HTTP client configuration
-DEFAULT_TIMEOUT = 600.0  # 10 minutes for local models (StarCoder2-7B needs more time)
+DEFAULT_TIMEOUT = 600.0
 QUICK_TIMEOUT = 5.0
 TEST_TIMEOUT = 30.0
 
@@ -21,22 +17,8 @@ DIFFICULTY_LEVELS = {
 }
 
 # Logical keywords for analysis
-LOGICAL_KEYWORDS = [
-    "если", "значит", "поэтому", "следовательно", "отсюда", 
-    "из этого", "получается", "вывод", "рассуждение", "логика",
-    "шаг", "этап", "сначала", "затем", "далее", "в итоге"
-]
-
-# Step-by-step structure patterns
-STEP_PATTERNS = [
-    r'\d+[\.\)]\s',  # 1. or 1)
-    r'шаг\s*\d+',    # step 1
-    r'этап\s*\d+',   # stage 1
-    r'сначала',      # first
-    r'затем',        # then
-    r'далее',        # further
-    r'в итоге'       # in conclusion
-]
+LOGICAL_KEYWORDS = ["если", "значит", "поэтому", "следовательно", "отсюда", "из этого", "получается", "вывод", "рассуждение", "логика", "шаг", "этап", "сначала", "затем", "далее", "в итоге"]
+STEP_PATTERNS = [r'\d+[\.\)]\s', r'шаг\s*\d+', r'этап\s*\d+', r'сначала', r'затем', r'далее', r'в итоге']
 
 # Report configuration
 REPORT_FILENAME_PREFIX = "model_test_report_"
@@ -58,10 +40,7 @@ MAX_TOKENS_LIMIT = 100000
 
 # Advice mode configuration
 MAX_ADVICE_QUESTIONS = 5
-ADVICE_TRIGGER_PHRASES = [
-    "дай совет", "дай мне совет", "нужен совет", "посоветуй",
-    "что посоветуешь", "как быть", "что делать"
-]
+ADVICE_TRIGGER_PHRASES = ["дай совет", "дай мне совет", "нужен совет", "посоветуй", "что посоветуешь", "как быть", "что делать"]
 
 # UI configuration
 TERMINAL_WIDTH = 60
