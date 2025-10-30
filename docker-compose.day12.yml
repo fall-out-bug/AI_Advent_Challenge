@@ -1,0 +1,223 @@
+services:
+  mistral-chat:
+    build:
+      context: ./local_models
+      dockerfile: Dockerfile
+    image: ai-challenge-mistral:day12
+    container_name: mistral-chat-day12
+    ports:
+      - "8001:8000"
+    env_file:
+      - .env
+    environment:
+      - MODEL_NAME=mistralai/Mistral-7B-Instruct-v0.2
+      - HF_TOKEN=${HF_TOKEN}
+      - MAX_INPUT_TOKENS=4096
+      - MAX_OUTPUT_TOKENS=2048
+    volumes:
+      - ./cache/models:/home/appuser/.cache/huggingface/hub:rw
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+    networks:
+      - butler-network
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 16G
+        reservations:
+          cpus: '2.0'
+          memory: 8G
+    runtime: nvidia  # Optional: remove if no GPU available
+
+  mongodb:
+    image: mongo:6.0
+    container_name: butler-mongodb-day12
+    ports:
+      - "27017:27017"
+    volumes:
+      - /datam/mongodb:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok" , "localhost:27017/butler"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - butler-network
+
+  mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp
+    image: ai-challenge-mcp:day12
+    container_name: mcp-server-day12
+    env_file:
+      - .env
+    environment:
+      - MONGODB_URL=mongodb://mongodb:27017
+      - DB_NAME=butler
+      - LLM_URL=http://mistral-chat:8000
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+      - TELEGRAM_API_ID=${TELEGRAM_API_ID}
+      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH}
+      - TELEGRAM_SESSION_STRING=${TELEGRAM_SESSION_STRING}
+    ports:
+      - "8004:8004"
+    volumes:
+      # Mount Pyrogram session directory (created by init_pyrogram.py)
+      - ./sessions:/app/sessions:rw
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mistral-chat:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    networks:
+      - butler-network
+
+  telegram-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.bot
+    image: ai-challenge-bot:day12
+    container_name: telegram-bot-day12
+    env_file:
+      - .env
+    environment:
+      # Required: Telegram bot token from @BotFather
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - MCP_SERVER_URL=http://mcp-server:8004
+      - LLM_URL=http://mistral-chat:8000
+      - MONGODB_URL=mongodb://mongodb:27017
+      - DB_NAME=butler
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mcp-server:
+        condition: service_healthy
+      mistral-chat:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - butler-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          memory: 128M
+
+  summary-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    image: ai-challenge-worker:day12
+    container_name: summary-worker-day12
+    env_file:
+      - .env
+    environment:
+      # Required: Telegram bot token from @BotFather (same as bot)
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - MCP_SERVER_URL=http://mcp-server:8004
+      - LLM_URL=http://mistral-chat:8000
+      - MONGODB_URL=mongodb://mongodb:27017
+      - DB_NAME=butler
+      - MORNING_SUMMARY_TIME=${MORNING_SUMMARY_TIME:-09:00}
+      - EVENING_DIGEST_TIME=${EVENING_DIGEST_TIME:-20:00}
+      - QUIET_HOURS_START=${QUIET_HOURS_START:-22}
+      - QUIET_HOURS_END=${QUIET_HOURS_END:-8}
+      - DEBUG_NOTIFICATION_INTERVAL_MINUTES=${DEBUG_NOTIFICATION_INTERVAL_MINUTES:-0}
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mcp-server:
+        condition: service_healthy
+      mistral-chat:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - butler-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          memory: 64M
+
+  post-fetcher-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    image: ai-challenge-worker:day12
+    container_name: post-fetcher-worker-day12
+    command: ["python", "-m", "src.workers.post_fetcher_worker_main"]
+    env_file:
+      - .env
+    environment:
+      - MCP_SERVER_URL=http://mcp-server:8004
+      - MONGODB_URL=mongodb://mongodb:27017
+      - DB_NAME=butler
+      - POST_FETCH_INTERVAL_HOURS=${POST_FETCH_INTERVAL_HOURS:-1}
+      - POST_TTL_DAYS=${POST_TTL_DAYS:-7}
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mcp-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - butler-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          memory: 64M
+
+volumes:
+  mongodb_data_day12:
+
+networks:
+  butler-network:
+    driver: bridge
+
