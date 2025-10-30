@@ -106,15 +106,24 @@ class HTTPLLMClient:
             content = (data.get("response") or "").strip()
             if content:
                 return content
+            # If response field is empty but status is OK, raise error to trigger fallback
+            error_msg = f"Empty response from /chat endpoint: {data}"
+            logger.warning(error_msg)
+            raise ValueError(error_msg)
         except httpx.HTTPStatusError as e:
             # If /chat returns 404, try OpenAI-compatible /v1/chat/completions
             if e.response is not None and e.response.status_code == 404:
                 logger.debug(f"/chat endpoint not found, trying /v1/chat/completions")
                 pass  # Fall through to try /v1/chat/completions
             else:
+                logger.warning(f"HTTP error from /chat endpoint: {e.response.status_code if e.response else 'unknown'} - {e}")
                 raise
-        except httpx.ConnectError:
+        except httpx.ConnectError as e:
+            logger.warning(f"Connection error to /chat endpoint: {e}")
             raise  # Re-raise connection errors to trigger host URL fallback
+        except Exception as e:
+            logger.warning(f"Unexpected error from /chat endpoint: {e}")
+            raise
         
         # Fallback: try OpenAI-compatible /v1/chat/completions endpoint
         openai_url = f"{self.url}/v1/chat/completions"
@@ -218,10 +227,12 @@ class FallbackLLMClient:
         """
         prompt_lower = prompt.lower()
         
-        # Detect summarization prompts
+        # Detect summarization prompts - check for Russian/English keywords
         summarization_keywords = [
             "суммариз", "summarize", "суммар", "итогов", "факт",
-            "канала", "channel", "пост", "post", "новост", "news"
+            "канала", "channel", "пост", "post", "новост", "news",
+            "перед тобой", "перед тобой фрагмент", "перед тобой несколько",
+            "ключевых фактов", "key facts", "key facts", "фрагмент", "fragment"
         ]
         
         intent_keywords = [
@@ -231,6 +242,12 @@ class FallbackLLMClient:
         
         is_summarization = any(keyword in prompt_lower for keyword in summarization_keywords)
         is_intent = any(keyword in prompt_lower for keyword in intent_keywords)
+        
+        # If both detected, prefer summarization if prompt contains "пост" or "post"
+        if is_summarization and is_intent:
+            if "пост" in prompt_lower or "post" in prompt_lower:
+                is_intent = False
+                is_summarization = True
         
         if is_summarization and not is_intent:
             # Generate simple text summary from prompt content
@@ -264,7 +281,23 @@ class FallbackLLMClient:
                     summary += '.'
                 return summary
             else:
-                # Generic fallback for summarization
+                # Generic fallback for summarization - extract first sentences from prompt
+                # Try to find actual content in prompt
+                lines = prompt.split('\n')
+                content_lines = []
+                for line in lines:
+                    line_stripped = line.strip()
+                    if len(line_stripped) > 20 and not any(skip in line_stripped.lower() for skip in 
+                        ['важно', 'пример', 'суммар', 'верни', 'json', 'задача', 'task', 'фрагмент', 'fragment']):
+                        # Skip lines that are clearly instructions
+                        if not line_stripped.lower().startswith(('задача:', 'task:', 'пример:', 'example:')):
+                            content_lines.append(line_stripped[:200])  # Limit length
+                if content_lines:
+                    summary = '. '.join(content_lines[:2])
+                    if not summary.endswith('.'):
+                        summary += '.'
+                    return summary
+                # Last resort: generic message
                 return "Обсуждаются основные темы и новости."
         else:
             # Default to intent parsing JSON format
