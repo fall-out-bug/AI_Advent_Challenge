@@ -21,11 +21,13 @@ def get_map_prompt(text: str, language: Literal["ru", "en"], max_sentences: int 
             f"Перед тобой фрагмент постов из Telegram-канала.\n\n"
             f"ЗАДАЧА: Выдели {max_sentences} ключевых фактов из этого фрагмента. Каждый факт — одно предложение. "
             f"Факты должны быть РАЗНЫМИ по смыслу. Никаких повторов. Только чистый текст, без нумерации и Markdown.\n\n"
+            f"ВАЖНО: Верни ТОЛЬКО текст, НЕ JSON, НЕ структурированные данные. Только предложения на русском языке через точку.\n\n"
             f"ФРАГМЕНТ:\n{text}\n\nКЛЮЧЕВЫЕ ФАКТЫ:"
         )
     return (
         f"Summarize the following text fragment in {max_sentences} concise sentences. "
-        f"Focus on key facts, no repetition, no markdown.\n\nFRAGMENT:\n{text}\n\nKEY FACTS:"
+        f"Focus on key facts, no repetition, no markdown, NO JSON.\n\n"
+        f"Return ONLY plain text sentences.\n\nFRAGMENT:\n{text}\n\nKEY FACTS:"
     )
 
 
@@ -45,11 +47,13 @@ def get_reduce_prompt(summaries: str, language: Literal["ru", "en"], max_sentenc
             f"Перед тобой несколько суммаризаций фрагментов одного Telegram-канала.\n\n"
             f"ЗАДАЧА: Объедини их в {max_sentences} итоговых предложений, описывающих главные темы канала. "
             f"Избегай повторов. Каждый пункт — уникальная мысль. Только текст, без нумерации и Markdown.\n\n"
+            f"ВАЖНО: Верни ТОЛЬКО текст, НЕ JSON, НЕ структурированные данные. Только предложения на русском языке через точку.\n\n"
             f"СУММАРИЗАЦИИ ФРАГМЕНТОВ:\n{summaries}\n\nИТОГОВАЯ СУММАРИЗАЦИЯ:"
         )
     return (
         f"Combine these chunk summaries into {max_sentences} final sentences covering main topics. "
-        f"No repetition, no markdown.\n\nCHUNK SUMMARIES:\n{summaries}\n\nFINAL SUMMARY:"
+        f"No repetition, no markdown, NO JSON.\n\n"
+        f"Return ONLY plain text sentences.\n\nCHUNK SUMMARIES:\n{summaries}\n\nFINAL SUMMARY:"
     )
 
 

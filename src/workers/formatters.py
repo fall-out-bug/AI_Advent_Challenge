@@ -142,8 +142,8 @@ def format_single_digest(digest: dict[str, Any], debug: bool = False) -> str:
         tags_str = f"\nТеги: {', '.join(f'#{tag}' for tag in tags[:5])}"
 
     # Build detailed message
-    header = ("📰 Дайджест канала\n\n" 
-              if not debug else "📰 Debug Digest (Last 7 days)\n\n")
+    header = ("📰 Дайджест канала (за последние 24 часа)\n\n" 
+              if not debug else "📰 Debug Digest (Last 24 hours)\n\n")
     text = f"{header}"
     text += f"📌 {channel}\n"
     text += f"📊 Постов: {post_count}"
@@ -173,7 +173,7 @@ def format_digest(digests: list[dict[str, Any]], debug: bool = False) -> str:
     """
     settings = get_settings()
 
-    header = ("📰 Debug Digest (Last 7 days)\n\n" 
+    header = ("📰 Debug Digest (Last 24 hours)\n\n" 
               if debug else "📰 Дайджест каналов\n\n")
     text = header
 
