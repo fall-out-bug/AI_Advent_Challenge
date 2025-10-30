@@ -8,16 +8,18 @@
 
 This repository contains **daily challenges** building AI-powered systems with language models. Each day introduces new concepts and builds upon previous challenges.
 
-**Current Status:** ✅ Day 11 - Butler Bot with FSM Conversation Flow
+**Current Status:** ✅ Day 12 - PDF Digest Generation System
 
 **Key Features:**
-- ✅ 11 daily challenges from simple chat to production-ready MCP system
+- ✅ 12 daily challenges from simple chat to production-ready PDF digest system
 - ✅ Clean Architecture with SOLID principles
-- ✅ 319+ tests with 76%+ coverage
+- ✅ 382+ tests with 76%+ coverage
 - ✅ Multi-model support (StarCoder, Mistral, Qwen, TinyLlama)
 - ✅ MCP (Model Context Protocol) integration
 - ✅ FSM-based Telegram bot with natural language task creation
-- ✅ Intent parsing with clarification questions (Russian/English)
+- ✅ PDF digest generation with automatic post collection
+- ✅ Hybrid deduplication (message_id + content_hash)
+- ✅ PDF caching for improved performance
 - ✅ Health monitoring and metrics dashboard
 - ✅ Comprehensive CLI and REST API
 - ✅ Local model infrastructure with Docker
@@ -32,6 +34,7 @@ This repository contains **daily challenges** building AI-powered systems with l
 5. **Day 9**: MCP (Model Context Protocol) integration
 6. **Day 10**: Production-ready MCP system with orchestration and streaming
 7. **Day 11**: Butler Bot with FSM conversation flow and natural language task creation
+8. **Day 12**: PDF Digest generation with automatic post collection and hybrid deduplication
 
 ## Quick Start
 
@@ -83,6 +86,7 @@ AI_Challenge/
 | Day 9 | MCP integration | MCP Protocol, Context management | ✅ Complete |
 | Day 10 | Production MCP system | MCP, Streaming, Orchestration | ✅ Complete |
 | Day 11 | Butler Bot FSM | Telegram Bot, FSM, Intent Parsing | ✅ Complete |
+| Day 12 | PDF Digest System | MongoDB, PDF Generation, MCP Tools | ✅ Complete |
 
 ## Core Infrastructure
 
@@ -111,6 +115,41 @@ response = await client.chat("Hello, world!")
 
 **Infrastructure**: Traefik, NVIDIA Container Toolkit, Multi-stage Docker builds
 
+## Day 12 — PDF Digest Generation System
+
+PDF digest generation system with automatic post collection from Telegram channels. Generates PDF documents containing AI-summarized channel posts with caching and error handling.
+
+Key features:
+- PDF digest generation via MCP tools (5 tools)
+- Automatic hourly post collection via `PostFetcherWorker`
+- Hybrid deduplication (message_id + content_hash) prevents duplicates
+- PDF caching with 1-hour TTL for instant delivery
+- MongoDB storage with 7-day TTL for automatic cleanup
+- Graceful error handling with fallback to text digest
+- Comprehensive test suite (63 tests: unit, integration, E2E, contract)
+
+Key modules:
+- `src/presentation/mcp/tools/pdf_digest_tools.py` — 5 MCP tools for PDF generation
+- `src/infrastructure/repositories/post_repository.py` — Post storage with deduplication
+- `src/workers/post_fetcher_worker.py` — Hourly post collection worker
+- `src/infrastructure/cache/pdf_cache.py` — PDF caching mechanism
+- `src/presentation/bot/handlers/menu.py` — Bot handler with PDF generation
+
+Quick start:
+
+```bash
+# Ensure MongoDB is running
+docker-compose up -d mongodb
+
+# Run post fetcher worker (hourly collection)
+python src/workers/post_fetcher_worker.py
+
+# Or run bot for PDF digest generation
+make run-bot
+```
+
+See [docs/day12/USER_GUIDE.md](docs/day12/USER_GUIDE.md) for user guide and [docs/day12/api.md](docs/day12/api.md) for API documentation.
+
 ## Day 11 — Butler Bot with FSM Conversation Flow
 
 Telegram bot with finite state machine (FSM) for natural language task creation. Supports Russian and English, intent parsing, and clarification questions.
@@ -122,28 +161,6 @@ Key features:
 - Scheduled notifications (morning summaries, evening digests)
 - Modular worker architecture (700→258 lines)
 
-Key modules:
-- `src/presentation/bot/butler_bot.py` — Main bot with FSM
-- `src/presentation/bot/handlers/` — Message handlers
-- `src/workers/summary_worker.py` — Scheduled notifications coordinator
-- `src/workers/formatters.py` — Message formatting
-- `src/workers/message_sender.py` — Message sending with retry
-- `src/workers/data_fetchers.py` — Data fetching utilities
-
-Quick start:
-
-```bash
-# Setup environment
-cp api_key.txt.example api_key.txt
-# Edit api_key.txt with TELEGRAM_BOT_TOKEN
-
-# Run bot
-make run-bot
-
-# Or run worker for scheduled notifications
-make run-worker
-```
-
 See [QUICK_START_DAY11.md](docs/QUICK_START_DAY11.md) for detailed guide.
 
 ## Documentation
@@ -154,6 +171,10 @@ See [QUICK_START_DAY11.md](docs/QUICK_START_DAY11.md) for detailed guide.
 - [MCP_GUIDE.md](docs/MCP_GUIDE.md) - MCP integration guide
 - [USER_GUIDE.md](docs/USER_GUIDE.md) - User guide
 - [API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md) - Complete API reference
+- [Day 12 PDF Digest](docs/day12/) - PDF digest documentation
+  - [API Documentation](docs/day12/api.md) - MCP tools API reference
+  - [User Guide](docs/day12/USER_GUIDE.md) - PDF digest usage guide
+  - [Architecture](docs/day12/ARCHITECTURE.md) - System architecture with diagrams
 - [INDEX.md](docs/INDEX.md) - Documentation index
 
 ## Contributing

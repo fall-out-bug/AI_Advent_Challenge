@@ -18,6 +18,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Implemented TODO in `client.py`: added tool call parsing in interactive mode (supports JSON and key=value formats)
 
+## [Day 12] - 2025-01-XX
+
+### Added
+- PDF digest generation via MCP tools (`get_posts_from_db`, `summarize_posts`, `format_digest_markdown`, `combine_markdown_sections`, `convert_markdown_to_pdf`)
+- Post collection worker (`PostFetcherWorker`) with hourly schedule for automatic post collection from subscribed Telegram channels
+- Hybrid deduplication system (message_id + content_hash) to prevent duplicate posts
+- PDF caching mechanism with 1-hour TTL for improved performance
+- Post repository (`PostRepository`) with MongoDB integration and TTL support (7 days)
+- PDF digest bot handler with automatic fallback to text digest on errors
+- Comprehensive test suite: 63 tests (40 unit, 6 integration, 5 E2E, 12 contract tests)
+- PDF digest API documentation (`docs/day12/api.md`)
+- PDF digest user guide (`docs/day12/USER_GUIDE.md`)
+- PDF digest architecture documentation with Mermaid diagrams (`docs/day12/ARCHITECTURE.md`)
+
+### Changed
+- Digest generation now reads from MongoDB instead of Telegram API (faster, more reliable)
+- `get_channel_digest` updated to use database queries instead of direct API calls
+- `fetch_channel_posts` now supports automatic saving to database via repository
+- Settings extended with PDF-related configuration (`pdf_cache_ttl_hours`, `pdf_summary_sentences`, `pdf_summary_max_chars`, `pdf_max_posts_per_channel`)
+
+### Fixed
+- Post deduplication prevents duplicate entries in database
+- Error handling improved with graceful fallback mechanisms
+- Empty digest handling with informative user messages
+
+### Performance
+- PDF caching reduces regeneration time (instant delivery on cache hit)
+- MongoDB indexes optimize post queries
+- Limits prevent token overflow (max 100 posts per channel, max 10 channels)
+
 ## [Day 11] - 2025-01-XX
 
 ### Added
