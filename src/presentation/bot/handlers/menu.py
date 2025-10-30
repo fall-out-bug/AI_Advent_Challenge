@@ -13,6 +13,11 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from src.presentation.mcp.client import MCPClient
 from src.infrastructure.cache.pdf_cache import get_pdf_cache
 from src.infrastructure.monitoring.logger import get_logger
+from src.infrastructure.monitoring.prometheus_metrics import (
+    bot_digest_requests_total,
+    bot_digest_cache_hits_total,
+    bot_digest_errors_total,
+)
 
 logger = get_logger(name="menu_handlers")
 
@@ -214,6 +219,7 @@ async def callback_digest(call: CallbackQuery) -> None:
     """
     await call.answer()
     user_id = call.from_user.id if call.from_user else 0
+    bot_digest_requests_total.inc()
     
     # Show upload action immediately
     try:
@@ -234,6 +240,7 @@ async def callback_digest(call: CallbackQuery) -> None:
         cached_pdf = cache.get(user_id, date_hour)
         if cached_pdf:
             logger.debug(f"Cache hit for user {user_id}, date_hour {date_hour}")
+            bot_digest_cache_hits_total.inc()
             filename = f"digest_{now.strftime('%Y-%m-%d')}.pdf"
             document = BufferedInputFile(cached_pdf, filename=filename)
             await call.message.answer_document(document=document)
@@ -248,6 +255,8 @@ async def callback_digest(call: CallbackQuery) -> None:
         
         if "error" in pdf_result:
             # Fallback to text digest
+            error_type = pdf_result.get("error", "unknown")
+            bot_digest_errors_total.labels(error_type=error_type).inc()
             logger.warning("PDF generation failed, falling back to text digest", user_id=user_id)
             result = await client.call_tool("get_channel_digest", {"user_id": int(user_id), "hours": 24})
             digests = result.get("digests", [])
@@ -261,6 +270,7 @@ async def callback_digest(call: CallbackQuery) -> None:
         # Decode PDF bytes and send
         pdf_bytes_b64 = pdf_result.get("pdf_bytes", "")
         if not pdf_bytes_b64:
+            bot_digest_errors_total.labels(error_type="empty_pdf").inc()
             await call.message.answer("⚠️ Failed to generate PDF. Please try again later.")
             return
 
@@ -275,6 +285,8 @@ async def callback_digest(call: CallbackQuery) -> None:
         await call.message.answer_document(document=document)
         
     except Exception as e:
+        error_type = type(e).__name__
+        bot_digest_errors_total.labels(error_type=error_type).inc()
         logger.error("Error in callback_digest", user_id=user_id, error=str(e), exc_info=True)
         await call.message.answer("⚠️ Failed to fetch digest. Please try again later.")
 

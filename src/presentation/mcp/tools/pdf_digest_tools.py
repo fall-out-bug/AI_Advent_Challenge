@@ -12,6 +12,13 @@ from src.infrastructure.repositories.post_repository import PostRepository
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.llm.summarizer import summarize_posts as llm_summarize_posts
 from src.infrastructure.monitoring.logger import get_logger
+from src.infrastructure.monitoring.prometheus_metrics import (
+    pdf_generation_duration_seconds,
+    pdf_generation_errors_total,
+    pdf_file_size_bytes,
+    pdf_pages_total,
+)
+import time
 
 logger = get_logger(name="pdf_digest_tools")
 
@@ -385,6 +392,7 @@ async def convert_markdown_to_pdf(
         >>> print(result["file_size"])
         1024
     """
+    start_time = time.time()
     try:
         css = _generate_css()
         pdf_bytes = await _convert_to_pdf(markdown, css)
@@ -395,12 +403,20 @@ async def convert_markdown_to_pdf(
         # Estimate pages (rough: 1 page ≈ 3000 chars at 12pt)
         estimated_pages = max(1, len(markdown) // 3000 + 1)
 
+        # Record metrics
+        duration = time.time() - start_time
+        pdf_generation_duration_seconds.observe(duration)
+        pdf_file_size_bytes.observe(len(pdf_bytes))
+        pdf_pages_total.observe(estimated_pages)
+
         return {
             "pdf_bytes": pdf_base64,
             "file_size": len(pdf_bytes),
             "pages": estimated_pages,
         }
     except Exception as e:
+        error_type = type(e).__name__
+        pdf_generation_errors_total.labels(error_type=error_type).inc()
         logger.error("Error converting markdown to PDF", error=str(e), style=style, exc_info=True)
         return {
             "pdf_bytes": "",

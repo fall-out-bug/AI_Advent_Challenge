@@ -1,0 +1,95 @@
+groups:
+  - name: day12_alerts
+    interval: 30s
+    rules:
+      # Post Fetcher Worker Alerts
+      - alert: PostFetcherWorkerDown
+        expr: post_fetcher_worker_running == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: post_fetcher_worker
+        annotations:
+          summary: "Post fetcher worker is not running"
+          description: "Post fetcher worker has been down for more than 2 minutes. Posts are not being collected from Telegram channels."
+
+      - alert: PostFetcherHighErrorRate
+        expr: |
+          rate(post_fetcher_errors_total[1h]) > 3
+        for: 10m
+        labels:
+          severity: critical
+          service: post_fetcher_worker
+        annotations:
+          summary: "Post fetcher worker has high error rate"
+          description: "Post fetcher worker has failed more than 3 times in the last hour. Check logs for details."
+
+      - alert: PostFetcherNoRuns
+        expr: |
+          time() - post_fetcher_last_run_timestamp_seconds > 7200
+        for: 15m
+        labels:
+          severity: warning
+          service: post_fetcher_worker
+        annotations:
+          summary: "Post fetcher worker has not run in 2 hours"
+          description: "Post fetcher worker last run was more than 2 hours ago. Expected interval is 1 hour."
+
+      # PDF Generation Alerts
+      - alert: PDFGenerationHighErrorRate
+        expr: |
+          rate(pdf_generation_errors_total[5m]) / rate(pdf_generation_duration_seconds_count[5m]) > 0.10
+        for: 5m
+        labels:
+          severity: warning
+          service: pdf_generation
+        annotations:
+          summary: "PDF generation error rate exceeds 10%"
+          description: "PDF generation is failing more than 10% of the time in the last 5 minutes. Check logs for error details."
+
+      - alert: PDFGenerationHighLatency
+        expr: |
+          histogram_quantile(0.95, rate(pdf_generation_duration_seconds_bucket[5m])) > 30
+        for: 2m
+        labels:
+          severity: warning
+          service: pdf_generation
+        annotations:
+          summary: "PDF generation latency exceeds 30 seconds (P95)"
+          description: "95th percentile of PDF generation time exceeds 30 seconds. This may indicate performance issues."
+
+      # Bot Digest Handler Alerts
+      - alert: BotDigestHighErrorRate
+        expr: |
+          rate(bot_digest_errors_total[5m]) / rate(bot_digest_requests_total[5m]) > 0.10
+        for: 5m
+        labels:
+          severity: warning
+          service: bot_digest_handler
+        annotations:
+          summary: "Bot digest handler error rate exceeds 10%"
+          description: "Bot digest requests are failing more than 10% of the time in the last 5 minutes. Check logs for error details."
+
+      - alert: BotDigestLowCacheHitRate
+        expr: |
+          rate(bot_digest_cache_hits_total[1h]) / rate(bot_digest_requests_total[1h]) < 0.3
+        for: 30m
+        labels:
+          severity: info
+          service: bot_digest_handler
+        annotations:
+          summary: "Bot digest cache hit rate is low"
+          description: "Cache hit rate is below 30% in the last hour. Consider reviewing cache TTL settings."
+
+      # General System Alerts
+      - alert: PostFetcherSlowProcessing
+        expr: |
+          histogram_quantile(0.95, rate(post_fetcher_duration_seconds_bucket[5m])) > 120
+        for: 10m
+        labels:
+          severity: warning
+          service: post_fetcher_worker
+        annotations:
+          summary: "Post fetcher processing is slow"
+          description: "95th percentile of post fetcher processing time exceeds 2 minutes. This may indicate performance issues."
+
