@@ -56,6 +56,11 @@ class Settings(BaseSettings):
     # Post fetcher settings
     post_fetch_interval_hours: int = Field(default=1, description="Post collection frequency in hours")
     post_ttl_days: int = Field(default=7, description="Post retention period in days")
+    # PDF digest settings
+    pdf_cache_ttl_hours: int = Field(default=1, description="PDF cache duration in hours")
+    pdf_summary_sentences: int = Field(default=5, description="Sentences per channel in PDF (separate from text digest)")
+    pdf_summary_max_chars: int = Field(default=3000, description="Max characters per channel summary in PDF")
+    pdf_max_posts_per_channel: int = Field(default=100, description="Max posts to summarize per channel")
 
     class Config:
         env_prefix = ""
