@@ -90,8 +90,35 @@ class HTTPLLMClient:
             ValueError: On empty or invalid response structure
         """
         client = await self._get_client()
-        url = f"{self.url}/v1/chat/completions"
-        payload = {
+        
+        # Try /chat endpoint first (used by local Mistral API)
+        chat_url = f"{self.url}/chat"
+        chat_payload = {
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+        }
+        
+        try:
+            response = await client.post(chat_url, json=chat_payload, timeout=self.timeout)
+            response.raise_for_status()
+            data = response.json()
+            content = (data.get("response") or "").strip()
+            if content:
+                return content
+        except httpx.HTTPStatusError as e:
+            # If /chat returns 404, try OpenAI-compatible /v1/chat/completions
+            if e.response is not None and e.response.status_code == 404:
+                logger.debug(f"/chat endpoint not found, trying /v1/chat/completions")
+                pass  # Fall through to try /v1/chat/completions
+            else:
+                raise
+        except httpx.ConnectError:
+            raise  # Re-raise connection errors to trigger host URL fallback
+        
+        # Fallback: try OpenAI-compatible /v1/chat/completions endpoint
+        openai_url = f"{self.url}/v1/chat/completions"
+        openai_payload = {
             "model": os.getenv("LLM_MODEL", "mistralai/Mistral-7B-Instruct-v0.2"),
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": max_tokens,
@@ -99,9 +126,9 @@ class HTTPLLMClient:
             "top_p": 0.95,
             "stop": ["</s>", "[/INST]"]
         }
-
+        
         try:
-            response = await client.post(url, json=payload, timeout=self.timeout)
+            response = await client.post(openai_url, json=openai_payload, timeout=self.timeout)
             response.raise_for_status()
             data = response.json()
             # Validate and extract content
@@ -112,19 +139,8 @@ class HTTPLLMClient:
             if not content:
                 raise ValueError("LLM returned empty content")
             return content
-        except httpx.HTTPStatusError as e:
-            # Fallback: try legacy /chat endpoint used by older servers
-            if e.response is not None and e.response.status_code == 404:
-                legacy_url = f"{self.url}/chat"
-                legacy_payload = {
-                    "messages": [{"role": "user", "content": prompt}],
-                    "max_tokens": max_tokens,
-                    "temperature": temperature,
-                }
-                legacy_resp = await client.post(legacy_url, json=legacy_payload, timeout=self.timeout)
-                legacy_resp.raise_for_status()
-                legacy_data = legacy_resp.json()
-                return (legacy_data.get("response") or "").strip()
+        except httpx.HTTPStatusError:
+            # Both endpoints failed, re-raise to trigger host URL fallback
             raise
         except (httpx.ConnectError, httpx.TimeoutException) as e:
             # If Docker URL failed, try host URL
@@ -149,7 +165,15 @@ class HTTPLLMClient:
                     
                     # If /chat doesn't work, try /v1/chat/completions
                     host_url = f"{self._host_url}/v1/chat/completions"
-                    response = await client.post(host_url, json=payload, timeout=self.timeout)
+                    host_openai_payload = {
+                        "model": os.getenv("LLM_MODEL", "mistralai/Mistral-7B-Instruct-v0.2"),
+                        "messages": [{"role": "user", "content": prompt}],
+                        "max_tokens": max_tokens,
+                        "temperature": temperature,
+                        "top_p": 0.95,
+                        "stop": ["</s>", "[/INST]"]
+                    }
+                    response = await client.post(host_url, json=host_openai_payload, timeout=self.timeout)
                     response.raise_for_status()
                     data = response.json()
                     if "choices" not in data or not data["choices"]:
@@ -161,7 +185,7 @@ class HTTPLLMClient:
                         return content
                 except Exception as host_error:
                     logger.debug(f"Host URL also failed: {host_error}")
-            logger.warning("LLM connection error, service may be unavailable: %s", e, extra={"url": url})
+            logger.warning("LLM connection error, service may be unavailable: %s", e, extra={"url": self.url})
             raise
         except Exception:
             # Re-raise to let ResilientLLMClient fallback if needed

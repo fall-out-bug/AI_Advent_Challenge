@@ -61,21 +61,23 @@ async def _fetch_with_pyrogram(
     session_string = session_string or os.getenv("TELEGRAM_SESSION_STRING")
     session_name = "telegram_channel_reader"
     
-    # Check multiple possible locations for session file
-    possible_session_paths = [
-        f"{session_name}.session",
-        f"sessions/{session_name}.session",
-        f"/app/sessions/{session_name}.session",
-        os.path.expanduser(f"~/{session_name}.session"),
-    ]
-    
+    # Only look for session file if session_string is not available
     session_file = None
-    for path in possible_session_paths:
-        abs_path = os.path.abspath(path)
-        if os.path.exists(abs_path):
-            session_file = abs_path
-            logger.info("Found existing Pyrogram session file", session_file=session_file)
-            break
+    if not session_string:
+        # Check multiple possible locations for session file
+        possible_session_paths = [
+            f"{session_name}.session",
+            f"sessions/{session_name}.session",
+            f"/app/sessions/{session_name}.session",
+            os.path.expanduser(f"~/{session_name}.session"),
+        ]
+        
+        for path in possible_session_paths:
+            abs_path = os.path.abspath(path)
+            if os.path.exists(abs_path):
+                session_file = abs_path
+                logger.info("Found existing Pyrogram session file", session_file=session_file)
+                break
     
     if not session_string and not session_file:
         logger.warning("No Pyrogram session found. Placeholder posts will be used.")
@@ -88,11 +90,16 @@ async def _fetch_with_pyrogram(
         channel_id = channel_username if channel_username.startswith("@") else f"@{channel_username}"
         
         # Create client (will use existing session if available)
-        # Pyrogram Client needs just the name (without .session) and looks for file in current directory
-        # If session_file found, copy it to current working directory so Pyrogram can write to it
+        # If session_string is available, use it directly (no file needed)
+        # Otherwise, copy session file to temp directory for write access
         temp_session_path = None
         original_cwd = None
-        if session_file and os.path.exists(session_file):
+        
+        if session_string:
+            # Use session string directly - no file needed
+            logger.info("Using Pyrogram session string (no file needed)", has_string=bool(session_string), channel=channel_username)
+            client_session_name = session_name  # Name doesn't matter when using session_string
+        elif session_file and os.path.exists(session_file):
             # Copy session file to current working directory so Pyrogram can write to it
             # Pyrogram SQLite needs write access for WAL files
             try:

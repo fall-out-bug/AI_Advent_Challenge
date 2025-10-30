@@ -245,9 +245,13 @@ class MapReduceSummarizer:
     async def _summarize_chunk(self, chunk: TextChunk, max_sentences: int, temperature: float, max_tokens: int) -> str:
         prompt = get_map_prompt(text=chunk.text, language=self.language, max_sentences=max_sentences)
         if _summarization_duration is None:
-            return await self.llm.generate(prompt, temperature=temperature, max_tokens=max_tokens)
-        with _summarization_duration.labels("map").time():
-            return await self.llm.generate(prompt, temperature=temperature, max_tokens=max_tokens)
+            summary = await self.llm.generate(prompt, temperature=temperature, max_tokens=max_tokens)
+        else:
+            with _summarization_duration.labels("map").time():
+                summary = await self.llm.generate(prompt, temperature=temperature, max_tokens=max_tokens)
+        
+        # Clean JSON artifacts from map phase response
+        return self._clean_json_from_summary(summary)
 
     async def summarize_text(
         self,
@@ -275,7 +279,75 @@ class MapReduceSummarizer:
         combined = "\n\n".join([f"Fragment {i+1}:\n{s}" for i, s in enumerate(summaries)])
         prompt = get_reduce_prompt(summaries=combined, language=self.language, max_sentences=max_sentences)
         if _summarization_duration is None:
-            return await self.llm.generate(prompt, temperature=temperature, max_tokens=reduce_max_tokens)
-        with _summarization_duration.labels("reduce").time():
-            return await self.llm.generate(prompt, temperature=temperature, max_tokens=reduce_max_tokens)
+            final_summary = await self.llm.generate(prompt, temperature=temperature, max_tokens=reduce_max_tokens)
+        else:
+            with _summarization_duration.labels("reduce").time():
+                final_summary = await self.llm.generate(prompt, temperature=temperature, max_tokens=reduce_max_tokens)
+        
+        # Clean JSON artifacts from reduce phase response
+        return self._clean_json_from_summary(final_summary)
+
+    def _clean_json_from_summary(self, summary: str) -> str:
+        """Remove JSON artifacts from summary text.
+        
+        Args:
+            summary: Raw summary text that may contain JSON
+            
+        Returns:
+            Cleaned summary text without JSON
+        """
+        if not summary:
+            return ""
+        
+        cleaned = summary.strip()
+        
+        # If summary starts with JSON, try to extract text content
+        if cleaned.startswith('{') or cleaned.startswith('['):
+            logger.warning("LLM returned JSON in map/reduce phase, attempting to extract text")
+            # Try to extract text from JSON-like structures
+            import json
+            try:
+                # Try to parse as JSON and extract useful fields
+                parsed = json.loads(cleaned)
+                if isinstance(parsed, dict):
+                    # Look for 'summary', 'text', 'content', or 'response' fields
+                    for key in ['summary', 'text', 'content', 'response', 'message']:
+                        if key in parsed and isinstance(parsed[key], str):
+                            cleaned = parsed[key]
+                            break
+                    # If no text field found, try to concatenate string values
+                    if cleaned.startswith('{'):
+                        text_parts = [str(v) for v in parsed.values() if isinstance(v, str)]
+                        if text_parts:
+                            cleaned = ' '.join(text_parts)
+                elif isinstance(parsed, list):
+                    # If it's a list, try to join string elements
+                    text_parts = [str(item) for item in parsed if isinstance(item, str)]
+                    if text_parts:
+                        cleaned = ' '.join(text_parts)
+            except (json.JSONDecodeError, ValueError):
+                # If JSON parsing fails, just remove JSON-like structures
+                pass
+        
+        # Remove JSON objects and arrays using regex
+        cleaned = re.sub(r'\{[^{}]*\}', '', cleaned)  # Remove JSON objects (simple)
+        cleaned = re.sub(r'\[[^\[\]]*\]', '', cleaned)  # Remove JSON arrays (simple)
+        
+        # Remove JSON-like field patterns: "key": "value"
+        cleaned = re.sub(r'["\']?\w+["\']?\s*:\s*["\']?([^"\']+)["\']?', r'\1', cleaned)
+        
+        # Remove common JSON artifacts
+        cleaned = cleaned.replace('{', '').replace('}', '').replace('[', '').replace(']', '')
+        cleaned = re.sub(r'["\']', '', cleaned)  # Remove quotes
+        
+        # Clean up whitespace
+        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+        
+        # If cleaned text is too short or empty, log warning
+        if len(cleaned) < 10:
+            logger.warning(f"JSON cleaning resulted in very short text: {cleaned[:50]}")
+            # Return original if cleaning removed too much
+            return summary.strip()
+        
+        return cleaned
 

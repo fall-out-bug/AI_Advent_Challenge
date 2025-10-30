@@ -170,18 +170,19 @@ async def get_digest_texts(
     Args:
         mcp_client: MCP client instance
         user_id: User ID
-        debug: If True, use debug formatting and extended time window (7 days)
+        debug: If True, use debug formatting (same 24-hour window as normal mode)
 
     Returns:
         List of digest text messages, one per channel
     """
     try:
-        # In debug mode, use extended time window (7 days)
-        hours = 168 if debug else 24  # 7 days for debug, 24 hours for normal
+        # Always use 24 hours for consistency (both debug and normal mode)
+        hours = 24
 
         logger.info("Calling get_channel_digest tool", 
                    user_id=user_id, 
-                   hours=hours)
+                   hours=hours,
+                   debug=debug)
 
         digest_data = await mcp_client.call_tool(
             "get_channel_digest", 
@@ -197,10 +198,10 @@ async def get_digest_texts(
         if not digests:
             if debug:
                 return [
-                    f"📰 Debug Digest (Last {hours//24} days):\n\n"
+                    f"📰 Debug Digest (Last 24 hours):\n\n"
                     f"📌 No new posts in subscribed channels."
                 ]
-            return []
+            return []  # Return empty list in normal mode (no message sent)
 
         # Format each channel as a separate message
         results = []
