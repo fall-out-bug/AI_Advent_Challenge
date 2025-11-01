@@ -15,17 +15,18 @@ try:
     from pydantic import BaseModel
     from uvicorn import run
 except ImportError:
-    print("ERROR: fastapi and uvicorn required for HTTP mode")
-    print("Install with: pip install fastapi uvicorn")
+    # Log error before importing logger (logger might not be available)
+    sys.stderr.write("ERROR: fastapi and uvicorn required for HTTP mode\n")
+    sys.stderr.write("Install with: pip install fastapi uvicorn\n")
     sys.exit(1)
 
 # Import MCP server
 from src.presentation.mcp.server import mcp
 from src.infrastructure.monitoring.prometheus_metrics import get_metrics_registry
+from src.infrastructure.logging import get_logger
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 app = FastAPI(
     title="AI Challenge MCP Server",

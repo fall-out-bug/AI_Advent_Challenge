@@ -1,21 +1,23 @@
 # Multi-stage build for Telegram bot
-FROM python:3.11-slim AS builder
+FROM python:3.10-slim AS builder
 
 WORKDIR /build
 
-# Install poetry
-RUN pip install --no-cache-dir poetry
+# Install poetry with pip cache
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install poetry
 
 # Copy dependency files
 COPY pyproject.toml poetry.lock* ./
 
-# Install dependencies using poetry
+# Install dependencies using poetry with cache
 # Single source of truth: dependencies come from pyproject.toml
-RUN poetry config virtualenvs.create false && \
-    poetry install --no-dev --no-interaction --no-ansi
+RUN --mount=type=cache,target=/root/.cache/pypoetry \
+    poetry config virtualenvs.create false && \
+    poetry install --without dev --no-root --no-interaction --no-ansi
 
 # Final stage
-FROM python:3.11-slim
+FROM python:3.10-slim
 
 # Create non-root user
 RUN useradd -m -u 1000 butler && \
@@ -24,31 +26,34 @@ RUN useradd -m -u 1000 butler && \
 
 WORKDIR /app
 
-# Install system dependencies if needed
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install system dependencies if needed with apt cache
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Python dependencies from builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy application code
 COPY --chown=butler:butler src/ ./src/
+COPY --chown=butler:butler shared/ ./shared/
 COPY --chown=butler:butler pyproject.toml ./
 
 # Install application in development mode
 # Use poetry for consistency - single source of truth
-RUN poetry config virtualenvs.create false && \
-    poetry install --no-dev --no-interaction --no-ansi
+# Note: No need to install again since dependencies are already copied from builder
+RUN poetry config virtualenvs.create false || true
 
 USER butler
 
-# Healthcheck - check if bot process is running
-# Better than generic Python import check
+# Healthcheck - verify bot module can be imported and has required dependencies
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import sys; sys.exit(0)" || exit 1
+    CMD python -c "import sys; from src.presentation.bot.butler_bot import ButlerBot; sys.exit(0)" || exit 1
 
-# Run bot
-CMD ["python", "-m", "src.presentation.bot.butler_bot"]
+# Entrypoint and command
+ENTRYPOINT ["python", "-m"]
+CMD ["src.presentation.bot.butler_bot"]
 

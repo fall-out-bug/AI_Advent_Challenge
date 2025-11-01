@@ -1,7 +1,6 @@
 """Base compressor with template method pattern."""
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 from src.domain.value_objects.compression_result import (
     CompressionRatio,

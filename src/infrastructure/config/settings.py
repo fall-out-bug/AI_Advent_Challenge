@@ -4,6 +4,8 @@ Uses pydantic-settings to load environment variables with sensible defaults.
 """
 
 from functools import lru_cache
+from typing import Optional
+
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
@@ -61,6 +63,24 @@ class Settings(BaseSettings):
     pdf_summary_sentences: int = Field(default=5, description="Sentences per channel in PDF (separate from text digest)")
     pdf_summary_max_chars: int = Field(default=3000, description="Max characters per channel summary in PDF")
     pdf_max_posts_per_channel: int = Field(default=100, description="Max posts to summarize per channel")
+    # Parser/agent flags
+    parser_strict_mode: bool = Field(
+        default=False,
+        description="If true, decision parser uses strict JSON-only mode"
+    )
+    parser_max_attempts: int = Field(
+        default=3,
+        description="Max attempts when parsing tool call from fragmented text"
+    )
+    # Logging settings
+    log_level: str = Field(
+        default="INFO",
+        description="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)"
+    )
+    log_format: Optional[str] = Field(
+        default=None,
+        description="Custom log format string. If None, uses default format."
+    )
 
     @field_validator("post_fetch_interval_hours")
     @classmethod

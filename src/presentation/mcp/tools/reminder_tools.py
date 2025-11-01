@@ -6,11 +6,11 @@ from typing import Any, Dict
 
 from src.presentation.mcp.server import mcp
 from src.infrastructure.database.mongo import get_db
-from src.infrastructure.monitoring.logger import get_logger
+from src.infrastructure.logging import get_logger
 from src.infrastructure.repositories.task_repository import TaskRepository
 from ._summary_helpers import _build_summary_query, _compute_task_stats
 
-logger = get_logger(name="mcp.reminder_tools")
+logger = get_logger("mcp.reminder_tools")
 
 
 async def _repo() -> TaskRepository:

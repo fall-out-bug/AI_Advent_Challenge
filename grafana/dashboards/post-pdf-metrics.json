@@ -1,11 +1,24 @@
 {
-  "dashboard": {
+    "id": null,
+    "uid": "post-pdf-metrics",
     "title": "Post Fetcher & PDF Metrics",
     "tags": ["pdf", "post-fetcher", "monitoring"],
     "timezone": "browser",
     "schemaVersion": 38,
     "version": 1,
     "refresh": "30s",
+    "editable": true,
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "templating": {
+      "list": []
+    },
+    "annotations": {
+      "list": []
+    },
     "panels": [
       {
         "id": 1,
@@ -169,7 +182,7 @@
         ],
         "gridPos": {"h": 8, "w": 12, "x": 0, "y": 39}
       }
-    ]
-  }
+    ],
+    "links": []
 }
 

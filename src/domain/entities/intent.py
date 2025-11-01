@@ -1,7 +1,7 @@
 """Intent parsing domain models."""
 
 from typing import List, Optional
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 
 class ClarificationQuestion(BaseModel):

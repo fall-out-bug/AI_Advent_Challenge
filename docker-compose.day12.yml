@@ -10,7 +10,7 @@ services:
     env_file:
       - .env
     environment:
-      - MODEL_NAME=mistralai/Mistral-7B-Instruct-v0.2
+      - MODEL_NAME=mistralai/Mistral-7B-Instruct-v0.3
       - HF_TOKEN=${HF_TOKEN}
       - MAX_INPUT_TOKENS=4096
       - MAX_OUTPUT_TOKENS=2048
@@ -42,6 +42,10 @@ services:
       - "27017:27017"
     volumes:
       - /datam/mongodb:/data/db
+    # Note: MongoDB warnings about access control and transparent_hugepage are expected
+    # in development. For production, enable authentication and configure system settings.
+    environment:
+      - MONGO_INITDB_DATABASE=butler
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok" , "localhost:27017/butler"]
       interval: 30s
@@ -65,6 +69,13 @@ services:
       - LLM_URL=http://mistral-chat:8000
       - PYTHONUNBUFFERED=1
       - LOG_LEVEL=INFO
+      # Agent parsing and pipeline
+      - AGENT_DECISION_TEMPERATURE=${AGENT_DECISION_TEMPERATURE:-0.2}
+      - AGENT_DECISION_MAX_TOKENS=${AGENT_DECISION_MAX_TOKENS:-256}
+      - AGENT_FORMATTING_TEMPERATURE=${AGENT_FORMATTING_TEMPERATURE:-0.7}
+      - AGENT_FORMATTING_MAX_TOKENS=${AGENT_FORMATTING_MAX_TOKENS:-1024}
+      - PARSER_STRICT_MODE=${PARSER_STRICT_MODE:-false}
+      - PARSER_MAX_ATTEMPTS=${PARSER_MAX_ATTEMPTS:-3}
       - TELEGRAM_API_ID=${TELEGRAM_API_ID}
       - TELEGRAM_API_HASH=${TELEGRAM_API_HASH}
       - TELEGRAM_SESSION_STRING=${TELEGRAM_SESSION_STRING}
@@ -101,10 +112,18 @@ services:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - MCP_SERVER_URL=http://mcp-server:8004
       - LLM_URL=http://mistral-chat:8000
+      - MISTRAL_URL=http://mistral-chat:8000
       - MONGODB_URL=mongodb://mongodb:27017
       - DB_NAME=butler
       - PYTHONUNBUFFERED=1
       - LOG_LEVEL=INFO
+      # Agent parsing and pipeline
+      - AGENT_DECISION_TEMPERATURE=${AGENT_DECISION_TEMPERATURE:-0.2}
+      - AGENT_DECISION_MAX_TOKENS=${AGENT_DECISION_MAX_TOKENS:-256}
+      - AGENT_FORMATTING_TEMPERATURE=${AGENT_FORMATTING_TEMPERATURE:-0.7}
+      - AGENT_FORMATTING_MAX_TOKENS=${AGENT_FORMATTING_MAX_TOKENS:-1024}
+      - PARSER_STRICT_MODE=${PARSER_STRICT_MODE:-false}
+      - PARSER_MAX_ATTEMPTS=${PARSER_MAX_ATTEMPTS:-3}
     depends_on:
       mongodb:
         condition: service_healthy

@@ -72,10 +72,22 @@ curl http://localhost:8001/health  # Mistral
 curl http://localhost:8002/health  # TinyLlama
 curl http://localhost:8003/health  # StarCoder
 
-# Test chat endpoint
+# Test OpenAI-compatible endpoint (recommended)
+curl -X POST http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "qwen",
+    "messages": [{"role": "user", "content": "Hello"}],
+    "max_tokens": 50
+  }'
+
+# Test legacy endpoint (backward compatible)
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
   -d '{"messages":[{"role":"user","content":"Hello"}],"max_tokens":50}'
+
+# List available models
+curl http://localhost:8000/v1/models
 ```
 
 ## 🔒 Docker Security Features
@@ -116,11 +128,29 @@ curl http://localhost:8002/chat  # TinyLlama
 
 ### 3. Использование в проектах
 
+**Using OpenAI-compatible endpoint (recommended):**
 ```python
 # В любом проекте репозитория
 import httpx
 
-async def call_local_model(model_name: str, messages: list):
+async def call_local_model_openai(model_name: str, messages: list):
+    port = {"qwen": 8000, "mistral": 8001, "tinyllama": 8002}[model_name]
+    url = f"http://localhost:{port}/v1/chat/completions"
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, json={
+            "model": model_name,
+            "messages": messages,
+            "max_tokens": 500,
+            "temperature": 0.7
+        })
+        data = response.json()
+        return data["choices"][0]["message"]["content"]
+```
+
+**Using legacy endpoint (backward compatible):**
+```python
+async def call_local_model_legacy(model_name: str, messages: list):
     port = {"qwen": 8000, "mistral": 8001, "tinyllama": 8002}[model_name]
     url = f"http://localhost:{port}/chat"
     
@@ -131,6 +161,16 @@ async def call_local_model(model_name: str, messages: list):
             "temperature": 0.7
         })
         return response.json()
+```
+
+**Using UnifiedModelClient (automatic detection):**
+```python
+from shared_package.clients.unified_client import UnifiedModelClient
+
+async def call_local_model_unified(model_name: str, prompt: str):
+    client = UnifiedModelClient()
+    response = await client.make_request(model_name, prompt)
+    return response.response
 ```
 
 ## 🤖 Поддерживаемые модели
@@ -166,8 +206,89 @@ async def call_local_model(model_name: str, messages: list):
 
 ## 📊 API Спецификация
 
-### Запрос
+### OpenAI-Compatible Endpoints (Recommended)
 
+The API now supports OpenAI-compatible endpoints for better interoperability:
+
+#### Chat Completions
+
+```bash
+POST /v1/chat/completions
+```
+
+**Request:**
+```json
+{
+    "model": "qwen",
+    "messages": [
+        {"role": "system", "content": "Ты полезный ассистент"},
+        {"role": "user", "content": "Привет!"}
+    ],
+    "max_tokens": 500,
+    "temperature": 0.7
+}
+```
+
+**Response:**
+```json
+{
+    "id": "chatcmpl-123",
+    "object": "chat.completion",
+    "created": 1234567890,
+    "model": "Qwen/Qwen1.5-4B-Chat",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "Привет! Как дела?"
+            },
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 12,
+        "completion_tokens": 5,
+        "total_tokens": 17
+    }
+}
+```
+
+#### List Models
+
+```bash
+GET /v1/models
+```
+
+**Response:**
+```json
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "Qwen/Qwen1.5-4B-Chat",
+            "object": "model",
+            "created": 1234567890,
+            "owned_by": "local",
+            "permission": [],
+            "root": "Qwen/Qwen1.5-4B-Chat",
+            "parent": null
+        }
+    ]
+}
+```
+
+#### Get Model Info
+
+```bash
+GET /v1/models/{model_id}
+```
+
+### Legacy Endpoints (Backward Compatible)
+
+The legacy `/chat` endpoint is still supported for backward compatibility:
+
+**Request:**
 ```json
 POST /chat
 {
@@ -180,8 +301,7 @@ POST /chat
 }
 ```
 
-### Ответ
-
+**Response:**
 ```json
 {
     "response": "Привет! Как дела?",
@@ -189,6 +309,46 @@ POST /chat
     "input_tokens": 12,
     "total_tokens": 17
 }
+```
+
+### Using OpenAI Client Libraries
+
+You can now use standard OpenAI client libraries:
+
+```python
+import openai
+
+# Configure client for local endpoint
+client = openai.OpenAI(
+    base_url="http://localhost:8000/v1",
+    api_key="not-needed"  # API key not required for local models
+)
+
+# Make request
+response = client.chat.completions.create(
+    model="qwen",
+    messages=[
+        {"role": "user", "content": "Hello!"}
+    ],
+    max_tokens=100
+)
+
+print(response.choices[0].message.content)
+```
+
+### Using UnifiedModelClient (Automatic Detection)
+
+The `UnifiedModelClient` automatically detects and uses OpenAI-compatible endpoints:
+
+```python
+from shared_package.clients.unified_client import UnifiedModelClient
+
+client = UnifiedModelClient()
+
+# Automatically uses /v1/chat/completions if available,
+# falls back to /chat if not
+response = await client.make_request("qwen", "Hello!")
+print(response.response)
 ```
 
 ## 🛠️ Управление

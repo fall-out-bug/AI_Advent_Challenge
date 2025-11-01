@@ -6,10 +6,10 @@ import asyncio
 import os
 import sys
 
-from src.infrastructure.monitoring.logger import get_logger
+from src.infrastructure.logging import get_logger
 from src.workers.post_fetcher_worker import PostFetcherWorker
 
-logger = get_logger(name="post_fetcher_worker_main")
+logger = get_logger("post_fetcher_worker_main")
 
 
 async def main() -> None:

@@ -8,6 +8,7 @@ and "Explicit is better than implicit".
 import asyncio
 from typing import Dict, List, Optional
 import httpx
+import logging
 
 from .base_client import BaseModelClient, ModelResponse
 from ..config.models import MODEL_CONFIGS, ModelType, get_model_config, is_local_model
@@ -26,6 +27,8 @@ from ..exceptions.model_errors import (
     ModelConfigurationError,
     ModelNotAvailableError
 )
+
+logger = logging.getLogger(__name__)
 
 
 class UnifiedModelClient(BaseModelClient):
@@ -110,12 +113,27 @@ class UnifiedModelClient(BaseModelClient):
         max_tokens: int, 
         temperature: float
     ) -> ModelResponse:
-        """Make request to local model."""
+        """Make request to local model with OpenAI-compatible endpoint detection."""
         config = get_model_config(model_name)
-        url = f"{config['url']}/chat"
-        payload = self._create_local_payload(prompt, max_tokens, temperature)
+        openai_compatible = config.get("openai_compatible", False)
+        base_url = config['url']
         
         start_time = asyncio.get_event_loop().time()
+        
+        # Try OpenAI-compatible endpoint first if supported
+        if openai_compatible:
+            try:
+                return await self._try_openai_endpoint(
+                    base_url, model_name, prompt, max_tokens, temperature, start_time
+                )
+            except (httpx.ConnectError, httpx.HTTPStatusError, httpx.TimeoutException):
+                # Fallback to legacy endpoint if OpenAI endpoint fails
+                logger.debug(f"OpenAI endpoint failed for {model_name}, trying legacy /chat")
+                pass
+        
+        # Fallback to legacy /chat endpoint
+        url = f"{base_url}/chat"
+        payload = self._create_local_payload(prompt, max_tokens, temperature)
         
         try:
             response = await self.client.post(url, json=payload)
@@ -142,6 +160,71 @@ class UnifiedModelClient(BaseModelClient):
             "max_tokens": max_tokens,
             "temperature": temperature
         }
+    
+    async def _try_openai_endpoint(
+        self,
+        base_url: str,
+        model_name: str,
+        prompt: str,
+        max_tokens: int,
+        temperature: float,
+        start_time: float
+    ) -> ModelResponse:
+        """Try OpenAI-compatible endpoint for local model."""
+        url = f"{base_url}/v1/chat/completions"
+        payload = self._create_openai_payload(model_name, prompt, max_tokens, temperature)
+        
+        response = await self.client.post(url, json=payload)
+        response.raise_for_status()
+        return self._parse_openai_response(response, model_name, start_time)
+    
+    def _create_openai_payload(
+        self,
+        model_name: str,
+        prompt: str,
+        max_tokens: int,
+        temperature: float
+    ) -> Dict[str, any]:
+        """Create OpenAI-compatible payload."""
+        return {
+            "model": model_name,
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": max_tokens,
+            "temperature": temperature
+        }
+    
+    def _parse_openai_response(
+        self,
+        response: httpx.Response,
+        model_name: str,
+        start_time: float
+    ) -> ModelResponse:
+        """Parse OpenAI-compatible response into ModelResponse."""
+        end_time = asyncio.get_event_loop().time()
+        response_time = end_time - start_time
+        data = response.json()
+        
+        # Extract from OpenAI format
+        if "choices" not in data or not data["choices"]:
+            raise ModelRequestError("Unexpected OpenAI response format: missing choices")
+        
+        message = data["choices"][0].get("message", {})
+        content = message.get("content", "")
+        
+        # Extract usage info
+        usage = data.get("usage", {})
+        prompt_tokens = usage.get("prompt_tokens", 0)
+        completion_tokens = usage.get("completion_tokens", 0)
+        total_tokens = usage.get("total_tokens", prompt_tokens + completion_tokens)
+        
+        return ModelResponse(
+            response=content,
+            response_tokens=completion_tokens,
+            input_tokens=prompt_tokens,
+            total_tokens=total_tokens,
+            model_name=model_name,
+            response_time=response_time
+        )
     
     def _parse_local_response(
         self, 
@@ -364,16 +447,24 @@ class UnifiedModelClient(BaseModelClient):
     async def _check_local_availability(self, model_name: str) -> bool:
         """Check local model availability."""
         config = get_model_config(model_name)
-        url = f"{config['url']}/chat"
+        base_url = config['url']
+        openai_compatible = config.get("openai_compatible", False)
         
+        # Try OpenAI-compatible endpoint first if supported
+        if openai_compatible:
+            try:
+                # Try /v1/models endpoint as health check
+                health_url = f"{base_url}/v1/models"
+                response = await self.client.get(health_url, timeout=5.0)
+                return response.status_code == 200
+            except (httpx.HTTPError, httpx.ConnectError, httpx.TimeoutException):
+                # Fallback to legacy /health endpoint
+                pass
+        
+        # Fallback to legacy /health endpoint
         try:
-            response = await self.client.post(
-                url, 
-                json={
-                    "messages": [{"role": "user", "content": "test"}],
-                    "max_tokens": TEST_MAX_TOKENS
-                }
-            )
+            health_url = f"{base_url}/health"
+            response = await self.client.get(health_url, timeout=5.0)
             return response.status_code == 200
         except (httpx.HTTPError, httpx.ConnectError, httpx.TimeoutException):
             return False

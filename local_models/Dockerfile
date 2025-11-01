@@ -6,26 +6,46 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies and Python packages in a single layer
-RUN apt-get update && \
-    apt-get install -y python3 python3-pip git curl build-essential && \
+# Install system dependencies with apt cache
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
+    apt-get install -y python3 python3-pip git curl build-essential gosu && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip and install base Python packages (lightweight dependencies first)
+RUN --mount=type=cache,target=/root/.cache/pip \
     pip3 install --upgrade pip && \
-    pip3 install torch==2.1.0 torchvision --extra-index-url https://download.pytorch.org/whl/cu121 && \
-    pip3 install transformers accelerate bitsandbytes fastapi uvicorn auto-gptq optimum && \
+    pip3 install prometheus-client fastapi uvicorn
+
+# Install PyTorch and vision (heavy but stable)
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip3 install torch==2.1.0 torchvision --extra-index-url https://download.pytorch.org/whl/cu121
+
+# Install ML libraries and protobuf (needed for newer Mistral models)
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip3 install "protobuf>=3.20.3,<5" sentencepiece safetensors transformers accelerate bitsandbytes auto-gptq optimum
+
+# Install flash-attn separately (heaviest, longest build time - cached separately)
+RUN --mount=type=cache,target=/root/.cache/pip \
     pip3 install flash-attn --no-build-isolation || echo "Flash-attn installation failed, continuing without it"
 
-# Copy application code and set ownership
+# Copy application code and entrypoint script
 COPY --chown=appuser:appuser chat_api.py .
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Create cache directory with proper ownership and permissions
-RUN mkdir -p /home/appuser/.cache/huggingface && \
+RUN mkdir -p /home/appuser/.cache/huggingface/hub && \
     chown -R appuser:appuser /home/appuser/.cache && \
-    chmod -R 755 /home/appuser/.cache
+    chmod -R 777 /home/appuser/.cache
 
-# Switch to non-root user
-USER appuser
+# Entrypoint script (runs as root to fix permissions, then switches to appuser)
+ENTRYPOINT ["/entrypoint.sh"]
+
+# Don't switch user here - entrypoint will do it
+# USER appuser
 
 # Build arguments and environment variables
 ARG MODEL_NAME=Qwen/Qwen1.5-4B-Chat

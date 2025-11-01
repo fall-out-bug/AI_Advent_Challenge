@@ -1,11 +1,24 @@
 {
-  "dashboard": {
+    "id": null,
+    "uid": "app-health",
     "title": "App Health",
     "tags": ["app", "health", "monitoring"],
     "timezone": "browser",
     "schemaVersion": 38,
     "version": 1,
     "refresh": "30s",
+    "editable": true,
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "templating": {
+      "list": []
+    },
+    "annotations": {
+      "list": []
+    },
     "panels": [
       {
         "id": 1,
@@ -121,7 +134,7 @@
         ],
         "gridPos": {"h": 4, "w": 8, "x": 8, "y": 19}
       }
-    ]
-  }
+    ],
+    "links": []
 }
 

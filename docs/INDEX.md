@@ -10,47 +10,32 @@
 ### Architecture & Development
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture overview
 - [TESTING.md](TESTING.md) - Testing strategy and guidelines
-- [DEVELOPMENT.md](DEVELOPMENT.md) - Complete development and deployment guide
 
 ### API Reference
 - [API_DOCUMENTATION.md](API_DOCUMENTATION.md) - Complete API reference
 - [MCP_GUIDE.md](MCP_GUIDE.md) - Model Context Protocol guide (integration, API, troubleshooting)
+- [AGENT_INTEGRATION.md](AGENT_INTEGRATION.md) - MCP-aware agent integration guide (English)
+- [AGENT_INTEGRATION.ru.md](AGENT_INTEGRATION.ru.md) - MCP-aware agent integration guide (Russian)
 
-### Optimization & Performance
-- [TOKEN_OPTIMIZATION.md](TOKEN_OPTIMIZATION.md) - Token optimization guide
-- [PERFORMANCE_BENCHMARKS.md](PERFORMANCE_BENCHMARKS.md) - Performance benchmarks
+### Security & Operations
+- [SECURITY.md](SECURITY.md) - Security policies and practices
+- [MONITORING.md](MONITORING.md) - Monitoring setup and Grafana dashboards
+- [ML_MONITORING.md](ML_MONITORING.md) - ML-specific monitoring and metrics
+
+### Day 12 - PDF Digest System
+- [User Guide](day12/USER_GUIDE.md) - PDF digest usage guide
+- [API Documentation](day12/api.md) - MCP tools API reference
+- [Architecture](day12/ARCHITECTURE.md) - System architecture with diagrams
+- [Testing and Launch](day12/TESTING_AND_LAUNCH.md) - Testing and deployment guide
+- [Quick Start](day12/QUICK_START.ru.md) - Quick start guide (Russian)
+- [Deployment](day12/DEPLOYMENT.md) - Deployment instructions
+
+### Day 11 - Butler Bot
+- [Quick Start Guide](QUICK_START_DAY11.md) - Butler Bot quick start
+- [Architecture FSM](ARCHITECTURE_FSM.md) - FSM conversation flow architecture
 
 ### Project History
 - [CHANGELOG.md](../CHANGELOG.md) - Project version history
-- [REFACTORING_HISTORY.md](REFACTORING_HISTORY.md) - Phases 1-3 transformation history
-
-## Archived Documentation
-
-Archived documentation has been consolidated for easier navigation:
-
-### MCP Documentation (Archived)
-All MCP documentation has been consolidated into [MCP_GUIDE.md](MCP_GUIDE.md):
-- [archive/mcp/MCP_INTEGRATION.md](archive/mcp/MCP_INTEGRATION.md) - Original integration guide
-- [archive/mcp/MCP_API_REFERENCE.md](archive/mcp/MCP_API_REFERENCE.md) - Original API reference
-- [archive/mcp/MCP_TROUBLESHOOTING.md](archive/mcp/MCP_TROUBLESHOOTING.md) - Original troubleshooting guide
-- [archive/mcp/MCP_DEMO_SETUP.md](archive/mcp/MCP_DEMO_SETUP.md) - Original demo setup
-- [archive/mcp/MCP_DEMO_GUIDE.md](archive/mcp/MCP_DEMO_GUIDE.md) - Original demo guide
-- [archive/mcp/MCP_COMPREHENSIVE_DEMO.md](archive/mcp/MCP_COMPREHENSIVE_DEMO.md) - Original comprehensive demo
-- [archive/mcp/MCP_DOCKER_USAGE.md](archive/mcp/MCP_DOCKER_USAGE.md) - Original Docker usage guide
-- [archive/mcp/MCP_IMPROVEMENTS_SUMMARY.md](archive/mcp/MCP_IMPROVEMENTS_SUMMARY.md) - Original improvements summary
-
-### Deployment Documentation (Archived)
-Deployment documentation has been consolidated into [DEVELOPMENT.md](DEVELOPMENT.md):
-- [archive/DEPLOYMENT.md](archive/DEPLOYMENT.md) - Original deployment guide
-- [archive/LOCAL_DEPLOYMENT.md](archive/LOCAL_DEPLOYMENT.md) - Original local deployment guide
-- [archive/OPERATIONS.md](archive/OPERATIONS.md) - Original operations guide
-
-### Historical Requirements
-- [archive/PHASE_1-3_REQUIREMENTS.md](archive/PHASE_1-3_REQUIREMENTS.md) - Consolidated requirements
-- [archive/TESTING_STRATEGY.md](archive/TESTING_STRATEGY.md) - Original testing strategy
-
-### Phase Reports
-- [archive/phase_reports/](archive/phase_reports/) - All phase completion reports
 
 ## Quick Links
 
@@ -69,7 +54,7 @@ Deployment documentation has been consolidated into [DEVELOPMENT.md](DEVELOPMENT
 - Troubleshooting: [DEVELOPMENT.md](DEVELOPMENT.md#troubleshooting)
 - MCP Guide: [MCP_GUIDE.md](MCP_GUIDE.md)
 
-### For Historians
-- Refactoring history: [REFACTORING_HISTORY.md](REFACTORING_HISTORY.md)
-- Phase reports: [archive/phase_reports/](archive/phase_reports/)
-- Requirements: [archive/PHASE_1-3_REQUIREMENTS.md](archive/PHASE_1-3_REQUIREMENTS.md)
+### For Operations
+- Monitoring: [MONITORING.md](MONITORING.md)
+- Security: [SECURITY.md](SECURITY.md)
+- ML Monitoring: [ML_MONITORING.md](ML_MONITORING.md)
