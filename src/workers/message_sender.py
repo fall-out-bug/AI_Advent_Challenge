@@ -9,10 +9,10 @@ from typing import Any, Callable, Union
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError
 
-from src.infrastructure.monitoring.logger import get_logger
+from src.infrastructure.logging import get_logger
 from src.workers.formatters import clean_markdown
 
-logger = get_logger(name="message_sender")
+logger = get_logger("message_sender")
 
 # Constants
 MAX_RETRIES = 3

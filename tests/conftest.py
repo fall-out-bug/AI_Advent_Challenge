@@ -149,3 +149,15 @@ def cleanup_test_files(tmp_path):
     # Cleanup happens automatically via tmp_path fixture
     pass
 
+
+# Import MCP fixtures
+from tests.fixtures.mcp_fixtures import (
+    mock_mcp_client,
+    sample_tools_metadata,
+    sample_dialog_history,
+    mock_mongodb,
+    mock_llm_client,
+    mock_agent_request,
+    mock_agent_response,
+)
+

@@ -15,7 +15,7 @@ from typing import Optional
 
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.database.mongo import get_db
-from src.infrastructure.monitoring.logger import get_logger
+from src.infrastructure.logging import get_logger
 from src.infrastructure.monitoring.prometheus_metrics import (
     post_fetcher_posts_saved_total,
     post_fetcher_channels_processed_total,
@@ -29,7 +29,7 @@ from src.infrastructure.clients.telegram_utils import fetch_channel_posts
 from src.presentation.mcp.client import get_mcp_client
 import time
 
-logger = get_logger(name="post_fetcher_worker")
+logger = get_logger("post_fetcher_worker")
 
 # Constants
 CHECK_INTERVAL_SECONDS = 60

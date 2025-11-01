@@ -5,10 +5,10 @@ from __future__ import annotations
 from typing import Any, Optional, Protocol
 
 from src.infrastructure.database.mongo import get_db
-from src.infrastructure.monitoring.logger import get_logger
+from src.infrastructure.logging import get_logger
 from src.workers.formatters import format_single_digest, format_summary
 
-logger = get_logger(name="data_fetchers")
+logger = get_logger("data_fetchers")
 
 
 class MCPClientProtocol(Protocol):

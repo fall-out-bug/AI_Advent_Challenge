@@ -11,12 +11,12 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.exceptions import TelegramBadRequest
 
 from src.presentation.mcp.client import get_mcp_client
-from src.infrastructure.monitoring.logger import get_logger
+from src.infrastructure.logging import get_logger
 from src.presentation.bot.states import TaskCreation
 from src.application.orchestration.intent_orchestrator import IntentOrchestrator
 
 
-logger = get_logger(name="butler_bot.tasks")
+logger = get_logger("butler_bot.tasks")
 
 MAX_ITEMS_PER_PAGE = 10
 
