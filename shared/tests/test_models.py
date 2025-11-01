@@ -61,6 +61,16 @@ class TestModelConfigs:
         assert qwen_config["url"] == "http://localhost:8000"
         assert qwen_config["display_name"] == "Qwen-4B"
         assert "description" in qwen_config
+        assert qwen_config.get("openai_compatible", False) is True
+    
+    def test_openai_compatible_flag(self):
+        """Test OpenAI compatibility flag for local models."""
+        local_models = ["qwen", "mistral", "tinyllama", "starcoder"]
+        
+        for model_name in local_models:
+            config = MODEL_CONFIGS[model_name]
+            assert config.get("openai_compatible", False) is True, \
+                f"Model {model_name} should have openai_compatible=True"
     
     def test_external_model_config(self):
         """Test external model configuration."""

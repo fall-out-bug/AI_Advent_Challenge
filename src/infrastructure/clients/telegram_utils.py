@@ -16,18 +16,28 @@ from typing import List, Optional
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest, TelegramAPIError
 
-from src.infrastructure.monitoring.logger import get_logger
+from src.infrastructure.logging import get_logger
 
-logger = get_logger(name="telegram_utils")
+logger = get_logger("telegram_utils")
 
-# Try to import Pyrogram for MTProto access
-try:
-    from pyrogram import Client
-    from pyrogram.errors import BadRequest, FloodWait
-    PYROGRAM_AVAILABLE = True
-except ImportError:
-    PYROGRAM_AVAILABLE = False
-    logger.debug("Pyrogram not available, will use Bot API only")
+# Pyrogram will be imported lazily inside functions to avoid event loop issues
+PYROGRAM_AVAILABLE = None  # Will be set on first import attempt
+
+
+def _check_pyrogram_available() -> bool:
+    """Check if Pyrogram is available (lazy import to avoid event loop issues)."""
+    global PYROGRAM_AVAILABLE
+    if PYROGRAM_AVAILABLE is not None:
+        return PYROGRAM_AVAILABLE
+    
+    try:
+        import pyrogram  # noqa: F401
+        PYROGRAM_AVAILABLE = True
+        return True
+    except ImportError:
+        PYROGRAM_AVAILABLE = False
+        logger.debug("Pyrogram not available, will use Bot API only")
+        return False
 
 
 async def _fetch_with_pyrogram(
@@ -49,14 +59,20 @@ async def _fetch_with_pyrogram(
     Returns:
         List of post dictionaries
     """
-    if not PYROGRAM_AVAILABLE:
+    # Lazy import Pyrogram to avoid event loop issues
+    if not _check_pyrogram_available():
         raise ImportError("Pyrogram not installed. Install with: pip install pyrogram")
+    
+    # Import Pyrogram classes only when needed (after event loop is created)
+    from pyrogram import Client  # noqa: F401
+    from pyrogram.errors import BadRequest, FloodWait  # noqa: F401
     
     api_id = api_id or os.getenv("TELEGRAM_API_ID")
     api_hash = api_hash or os.getenv("TELEGRAM_API_HASH")
     
     if not api_id or not api_hash:
         raise ValueError("TELEGRAM_API_ID and TELEGRAM_API_HASH must be set for Pyrogram")
+    
     # Try to get session string from env or use existing session file
     session_string = session_string or os.getenv("TELEGRAM_SESSION_STRING")
     session_name = "telegram_channel_reader"
@@ -285,7 +301,7 @@ async def fetch_channel_posts(channel_username: str, since: datetime, user_id: i
     posts = []
     
     # Try Pyrogram first (works for any public channel with user account)
-    if PYROGRAM_AVAILABLE and os.getenv("TELEGRAM_API_ID") and os.getenv("TELEGRAM_API_HASH"):
+    if _check_pyrogram_available() and os.getenv("TELEGRAM_API_ID") and os.getenv("TELEGRAM_API_HASH"):
         try:
             posts = await _fetch_with_pyrogram(channel_username, since)
             # Return posts even if empty - Pyrogram worked, just no posts found

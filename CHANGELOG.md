@@ -7,16 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- MCP-aware agent (`MCPAwareAgent`) with automatic tool discovery and execution
+- MCP Tools Registry (`MCPToolsRegistry`) with 5-minute caching for tool metadata
+- Robust MCP Client (`RobustMCPClient`) with exponential backoff retry logic
+- Dialog Manager (`DialogManager`) for MongoDB-based conversation history
+- History Compressor (`HistoryCompressor`) for LLM-based dialog compression
+- Graceful shutdown manager (`GracefulShutdown`) for clean service termination
+- Prometheus metrics integration for agent operations
+- Path utilities (`path_utils.py`) for centralized shared package imports
+- Agent integration documentation (`docs/AGENT_INTEGRATION.md` and `.ru.md`)
+- Comprehensive test suite for agent components (26+ tests)
+
 ### Changed
 - Refactored `summary_worker.py` (700 lines → 258 lines) into modular structure:
   - Extracted `formatters.py` for message formatting (format_summary, format_single_digest, clean_markdown)
   - Extracted `message_sender.py` for message sending with retry logic and error handling
   - Extracted `data_fetchers.py` for data fetching (get_summary_text, get_digest_texts)
   - Improved code readability and maintainability following Clean Architecture principles
-- Updated tests to use new modular structure
+- Replaced `sys.path.insert` anti-pattern with centralized `ensure_shared_in_path()` utility
+- Extracted magic numbers into class constants (DEFAULT_MODEL_NAME, MAX_RETRIES, COMPRESSION_THRESHOLD, etc.)
+- Enhanced docstrings with usage examples following Google Style Guide
+- Updated Dockerfile.bot: unified Python version to 3.10, improved healthcheck, added ENTRYPOINT
+- Updated README.md and README.ru.md with MCP-aware agent documentation
 
 ### Fixed
-- Implemented TODO in `client.py`: added tool call parsing in interactive mode (supports JSON and key=value formats)
+- Completed unfinished tests: `test_process_request_tool_selection` and `test_process_request_invalid_tool`
+- Removed unused imports (`Type` from `mcp_client_robust.py`)
+- Fixed Dockerfile.bot healthcheck to verify actual bot module import
+- Improved error handling in agent with more specific exceptions
 
 ## [Day 12] - 2025-01-XX
 

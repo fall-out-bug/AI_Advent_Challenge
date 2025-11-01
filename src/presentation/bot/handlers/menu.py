@@ -13,14 +13,14 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from src.presentation.mcp.client import get_mcp_client
 from src.infrastructure.cache.pdf_cache import get_pdf_cache
-from src.infrastructure.monitoring.logger import get_logger
+from src.infrastructure.logging import get_logger
 from src.infrastructure.monitoring.prometheus_metrics import (
     bot_digest_requests_total,
     bot_digest_cache_hits_total,
     bot_digest_errors_total,
 )
 
-logger = get_logger(name="menu_handlers")
+logger = get_logger("menu_handlers")
 
 # Constants
 MAX_ITEMS_PER_PAGE = 10

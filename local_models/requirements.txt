@@ -8,3 +8,4 @@ optimum>=1.14.0
 flash-attn>=2.3.0
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
+prometheus-client>=0.20.0
