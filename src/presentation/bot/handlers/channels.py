@@ -8,9 +8,9 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.exceptions import TelegramBadRequest
 
 from src.presentation.mcp.client import get_mcp_client
-from src.infrastructure.monitoring.logger import get_logger
+from src.infrastructure.logging import get_logger
 
-logger = get_logger(name="butler_bot.channels")
+logger = get_logger("butler_bot.channels")
 
 MAX_ITEMS_PER_PAGE = 10
 

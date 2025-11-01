@@ -6,9 +6,9 @@ import re
 from typing import Any
 
 from src.infrastructure.config.settings import get_settings
-from src.infrastructure.monitoring.logger import get_logger
+from src.infrastructure.logging import get_logger
 
-logger = get_logger(name="formatters")
+logger = get_logger("formatters")
 
 
 def clean_markdown(text: str) -> str:
@@ -98,10 +98,6 @@ def format_summary(tasks: list[dict[str, Any]], stats: dict[str, Any], debug: bo
 def format_single_digest(digest: dict[str, Any], debug: bool = False) -> str:
     """Format single channel digest message with Russian localization.
 
-    Purpose:
-        Create formatted digest message for one channel.
-        Returns plain text without Markdown to avoid parsing errors.
-
     Args:
         digest: Single digest dict with channel, summary, post_count, tags
         debug: If True, use debug header
@@ -109,52 +105,55 @@ def format_single_digest(digest: dict[str, Any], debug: bool = False) -> str:
     Returns:
         Formatted digest message text (plain text, no Markdown)
     """
-    settings = get_settings()
-    
     channel = digest.get("channel", "unknown")
     summary = digest.get("summary", "")
     post_count = digest.get("post_count", 0)
     tags = digest.get("tags", [])
 
-    # Aggressively clean summary - remove ALL Markdown characters
-    summary_clean = clean_markdown(summary)
-
-    # Enforce max_chars from settings - Telegram message limit is 4096
-    max_chars = settings.digest_summary_max_chars
-    # Additional safety: never exceed 2500 chars
-    absolute_max = min(max_chars, 2500)
-
-    if len(summary_clean) > absolute_max:
-        # Try to truncate at sentence boundary
-        truncated = summary_clean[:absolute_max]
-        last_period = truncated.rfind('.')
-        if last_period > absolute_max * 0.7:  # If period is in last 30%, use it
-            summary_clean = truncated[:last_period + 1]
-        else:
-            summary_clean = truncated + "..."
-            logger.warning("Summary truncated at hard limit", 
-                          original_length=len(summary), 
-                          truncated_length=len(summary_clean))
-
-    # Format with tags if available (no Markdown)
-    tags_str = ""
-    if tags:
-        tags_str = f"\nТеги: {', '.join(f'#{tag}' for tag in tags[:5])}"
-
-    # Build detailed message
-    header = ("📰 Дайджест канала (за последние 24 часа)\n\n" 
-              if not debug else "📰 Debug Digest (Last 24 hours)\n\n")
-    text = f"{header}"
-    text += f"📌 {channel}\n"
-    text += f"📊 Постов: {post_count}"
+    summary_clean = _prepare_summary(summary)
+    tags_str = _format_tags(tags)
+    header = _build_digest_header(debug)
+    
+    text = f"{header}📌 {channel}\n📊 Постов: {post_count}"
     if tags_str:
         text += tags_str
     text += f"\n\n{summary_clean}\n"
+    
+    return clean_markdown(text)
 
-    # Final safety check - remove any Markdown that might have slipped through
-    text = clean_markdown(text)
 
-    return text
+def _prepare_summary(summary: str) -> str:
+    """Clean and truncate summary to safe length."""
+    settings = get_settings()
+    summary_clean = clean_markdown(summary)
+    absolute_max = min(settings.digest_summary_max_chars, 2500)
+    
+    if len(summary_clean) <= absolute_max:
+        return summary_clean
+    
+    truncated = summary_clean[:absolute_max]
+    last_period = truncated.rfind('.')
+    if last_period > absolute_max * 0.7:
+        return truncated[:last_period + 1]
+    
+    logger.warning("Summary truncated at hard limit", 
+                  original_length=len(summary), 
+                  truncated_length=len(truncated) + 3)
+    return truncated + "..."
+
+
+def _format_tags(tags: list) -> str:
+    """Format tags list into string."""
+    if not tags:
+        return ""
+    return f"\nТеги: {', '.join(f'#{tag}' for tag in tags[:5])}"
+
+
+def _build_digest_header(debug: bool) -> str:
+    """Build digest header based on debug flag."""
+    if debug:
+        return "📰 Debug Digest (Last 24 hours)\n\n"
+    return "📰 Дайджест канала (за последние 24 часа)\n\n"
 
 
 def format_digest(digests: list[dict[str, Any]], debug: bool = False) -> str:

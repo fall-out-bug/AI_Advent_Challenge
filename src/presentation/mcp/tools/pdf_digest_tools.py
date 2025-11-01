@@ -10,8 +10,9 @@ from src.presentation.mcp.server import mcp
 from src.infrastructure.database.mongo import get_db
 from src.infrastructure.repositories.post_repository import PostRepository
 from src.infrastructure.config.settings import get_settings
-from src.infrastructure.llm.summarizer import summarize_posts as llm_summarize_posts
-from src.infrastructure.monitoring.logger import get_logger
+# Lazy import to avoid transformers dependency issues at module load time
+# from src.infrastructure.llm.summarizer import summarize_posts as llm_summarize_posts
+from src.infrastructure.logging import get_logger
 from src.infrastructure.monitoring.prometheus_metrics import (
     pdf_generation_duration_seconds,
     pdf_generation_errors_total,
@@ -20,7 +21,7 @@ from src.infrastructure.monitoring.prometheus_metrics import (
 )
 import time
 
-logger = get_logger(name="pdf_digest_tools")
+logger = get_logger("pdf_digest_tools")
 
 
 async def _db():
@@ -41,12 +42,7 @@ async def get_posts_from_db(user_id: int, hours: int = 24) -> Dict[str, Any]:
         hours: Hours to look back (default 24)
 
     Returns:
-        Dict with posts_by_channel, total_posts, and channels_count
-
-    Example:
-        >>> result = await get_posts_from_db(user_id=1, hours=24)
-        >>> print(result["channels_count"])
-        5
+        Dict with keys: posts_by_channel, total_posts, channels_count
     """
     settings = get_settings()
     db = await _db()
@@ -103,16 +99,10 @@ async def summarize_posts(posts: List[dict], channel_username: str, max_sentence
         max_sentences: Maximum sentences per channel (default 5)
 
     Returns:
-        Dict with summary, post_count, and channel
+        Dict with keys: summary, post_count, channel
 
     Raises:
         None: Errors are logged and handled gracefully
-
-    Example:
-        >>> posts = [{"text": "Post 1", "date": datetime.utcnow(), "message_id": "1"}]
-        >>> result = await summarize_posts(posts, "test_channel", max_sentences=5)
-        >>> print(result["summary"])
-        "Summary text here..."
     """
     settings = get_settings()
     max_posts = settings.pdf_max_posts_per_channel
@@ -128,6 +118,9 @@ async def summarize_posts(posts: List[dict], channel_username: str, max_sentence
         }
 
     try:
+        # Lazy import to avoid transformers dependency issues at module load time
+        from src.infrastructure.llm.summarizer import summarize_posts as llm_summarize_posts
+        
         # Use existing summarizer with PDF-specific settings
         summary_text = await llm_summarize_posts(
             limited_posts,
@@ -209,12 +202,7 @@ async def format_digest_markdown(summaries: List[Dict[str, Any]], metadata: Dict
     Returns:
         Dict with markdown and sections_count
 
-    Example:
-        >>> summaries = [{"channel": "ch1", "summary": "Summary", "post_count": 5}]
-        >>> metadata = {"generation_date": "2024-01-15T20:00:00Z"}
-        >>> result = await format_digest_markdown(summaries, metadata)
-        >>> print(result["markdown"][:50])
-        "# Channel Digest\n\nGenerated: 2024-01-15T20:00:00Z..."
+    Returns dict with keys: markdown (str), sections_count (int).
     """
     try:
         markdown = _render_markdown_template(summaries, metadata)
@@ -267,11 +255,7 @@ async def combine_markdown_sections(sections: List[str], template: str = "defaul
     Returns:
         Dict with combined_markdown and total_chars
 
-    Example:
-        >>> sections = ["# Section 1\n\nContent", "# Section 2\n\nContent"]
-        >>> result = await combine_markdown_sections(sections)
-        >>> print(result["total_chars"])
-        120
+    Returns dict with keys: combined_markdown (str), total_chars (int).
     """
     template_str = _load_template(template)
     combined_sections = "\n\n".join(sections)
@@ -386,11 +370,7 @@ async def convert_markdown_to_pdf(
     Raises:
         None: Errors are logged and returned in result dict
 
-    Example:
-        >>> markdown = "# Test\n\nContent"
-        >>> result = await convert_markdown_to_pdf(markdown)
-        >>> print(result["file_size"])
-        1024
+    Returns dict with keys: pdf_bytes (base64 str), file_size (int), pages (int).
     """
     start_time = time.time()
     try:

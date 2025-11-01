@@ -12,13 +12,13 @@ from aiogram import Bot
 
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.database.mongo import get_db
-from src.infrastructure.monitoring.logger import get_logger
+from src.infrastructure.logging import get_logger
 from src.presentation.mcp.client import get_mcp_client
 from src.workers.data_fetchers import get_digest_texts, get_summary_text
 from src.workers.message_sender import send_with_retry
 from src.workers.schedulers import is_quiet_hours, is_time_to_send
 
-logger = get_logger(name="summary_worker")
+logger = get_logger("summary_worker")
 
 # Constants
 CHECK_INTERVAL_SECONDS = 60

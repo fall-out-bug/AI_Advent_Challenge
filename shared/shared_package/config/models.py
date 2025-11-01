@@ -41,28 +41,32 @@ MODEL_CONFIGS: Dict[str, Dict[str, Any]] = {
         "port": ModelPort.QWEN.value,
         "url": f"http://localhost:{ModelPort.QWEN.value}",
         "display_name": "Qwen-4B",
-        "description": "Быстрые ответы, хорошее качество"
+        "description": "Быстрые ответы, хорошее качество",
+        "openai_compatible": True
     },
     ModelName.MISTRAL.value: {
         "type": ModelType.LOCAL.value,
         "port": ModelPort.MISTRAL.value,
         "url": f"http://localhost:{ModelPort.MISTRAL.value}",
         "display_name": "Mistral-7B",
-        "description": "Высокое качество, рекомендована"
+        "description": "Высокое качество, рекомендована",
+        "openai_compatible": True
     },
     ModelName.TINYLLAMA.value: {
         "type": ModelType.LOCAL.value,
         "port": ModelPort.TINYLLAMA.value,
         "url": f"http://localhost:{ModelPort.TINYLLAMA.value}",
         "display_name": "TinyLlama-1.1B",
-        "description": "Компактная, быстрая"
+        "description": "Компактная, быстрая",
+        "openai_compatible": True
     },
     ModelName.STARCODER.value: {
         "type": ModelType.LOCAL.value,
         "port": ModelPort.STARCODER.value,
         "url": f"http://localhost:{ModelPort.STARCODER.value}",
         "display_name": "TechxGenus/StarCoder2-7B-Instruct",
-        "description": "Code generation specialist with instruction tuning"
+        "description": "Code generation specialist with instruction tuning",
+        "openai_compatible": True
     },
     ModelName.PERPLEXITY.value: {
         "type": ModelType.EXTERNAL.value,

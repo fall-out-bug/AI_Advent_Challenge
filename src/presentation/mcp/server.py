@@ -29,13 +29,16 @@ def _register_all_tools():
         ("pdf_digest_tools", "src.presentation.mcp.tools.pdf_digest_tools"),
     ]
     
+    from src.infrastructure.logging import get_logger
+    
+    logger = get_logger(__name__)
+    
     for name, module_path in tool_modules:
         try:
             __import__(module_path)
-            print(f"✓ Registered tools from {name}", file=sys.stderr)
+            logger.info(f"Registered tools from {name}")
         except Exception as e:
-            print(f"✗ Failed to import {name} from {module_path}: {e}", file=sys.stderr)
-            traceback.print_exc(file=sys.stderr)
+            logger.error(f"Failed to import {name} from {module_path}: {e}", exc_info=True)
 
 # Register tools immediately when module loads
 _register_all_tools()

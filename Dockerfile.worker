@@ -3,15 +3,17 @@ FROM python:3.11-slim AS builder
 
 WORKDIR /build
 
-# Install poetry
-RUN pip install --no-cache-dir poetry
+# Install poetry with pip cache
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install poetry
 
 # Copy dependency files
 COPY pyproject.toml poetry.lock* ./
 
-# Install dependencies using poetry
-RUN poetry config virtualenvs.create false && \
-    poetry install --no-dev --no-interaction --no-ansi || \
+# Install dependencies using poetry with cache
+RUN --mount=type=cache,target=/root/.cache/pypoetry \
+    poetry config virtualenvs.create false && \
+    poetry install --without dev --no-root --no-interaction --no-ansi || \
     (echo "Poetry install failed, trying direct pip install" && \
      pip install --no-cache-dir fastapi uvicorn pydantic pydantic-settings \
      python-dotenv pyyaml httpx rich mcp motor aiogram dateparser pytz \
@@ -27,8 +29,10 @@ RUN useradd -m -u 1000 worker && \
 
 WORKDIR /app
 
-# Install system dependencies if needed
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install system dependencies if needed with apt cache
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
@@ -40,8 +44,9 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --chown=worker:worker src/ ./src/
 COPY --chown=worker:worker pyproject.toml ./
 
-# Install application in development mode
-RUN pip install --no-cache-dir -e . || \
+# Install application in development mode with pip cache
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -e . || \
     (echo "Direct install failed, copying manually" && \
      pip install --no-cache-dir fastapi uvicorn pydantic pydantic-settings \
      python-dotenv pyyaml httpx rich mcp motor aiogram dateparser pytz \

@@ -26,6 +26,7 @@ pyrogram = "^2.0.106"
 weasyprint = "^59.0"
 markdown = "^3.4"
 prometheus-client = "^0.20.0"
+tenacity = "^8.2.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"

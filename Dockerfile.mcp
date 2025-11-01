@@ -3,16 +3,18 @@ FROM python:3.11-slim AS builder
 
 WORKDIR /build
 
-# Install poetry
-RUN pip install --no-cache-dir poetry
+# Install poetry with pip cache
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install poetry
 
 # Copy dependency files
 COPY pyproject.toml poetry.lock* ./
 
-# Install dependencies using poetry
+# Install dependencies using poetry with cache
 # Single source of truth: dependencies come from pyproject.toml
-RUN poetry config virtualenvs.create false && \
-    poetry install --no-dev --no-interaction --no-ansi
+RUN --mount=type=cache,target=/root/.cache/pypoetry \
+    poetry config virtualenvs.create false && \
+    poetry install --without dev --no-root --no-interaction --no-ansi
 
 # Final stage
 FROM python:3.11-slim
@@ -22,8 +24,10 @@ ENV PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive \
     MODEL_TIMEOUT_SECONDS=60
 
-# Install runtime dependencies (including curl for healthchecks and WeasyPrint dependencies)
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install runtime dependencies (including curl for healthchecks and WeasyPrint dependencies) with apt cache
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
     curl \
     python3-cffi \
     libpango-1.0-0 \

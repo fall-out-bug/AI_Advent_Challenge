@@ -7,10 +7,10 @@ import os
 import sys
 
 from src.infrastructure.config.settings import get_settings
-from src.infrastructure.monitoring.logger import get_logger
+from src.infrastructure.logging import get_logger
 from src.workers.summary_worker import SummaryWorker
 
-logger = get_logger(name="worker_main")
+logger = get_logger("worker_main")
 
 
 async def main() -> None:

@@ -110,3 +110,21 @@ class MCPValidationError(MCPBaseException):
             self.context["field"] = field
         if value is not None:
             self.context["value"] = value
+
+
+class MCPTimeoutError(MCPBaseException):
+    """Error when MCP operation times out."""
+
+    pass
+
+
+class MCPConnectionError(MCPBaseException):
+    """Error when MCP connection fails."""
+
+    pass
+
+
+class MCPClientError(MCPBaseException):
+    """Generic MCP client error."""
+
+    pass
