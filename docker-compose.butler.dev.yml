@@ -1,0 +1,103 @@
+# Development docker-compose with hotreload support
+# Usage: docker-compose -f docker-compose.butler.yml -f docker-compose.butler.dev.yml up
+# This extends the base compose file and adds:
+# - Volume mounts for source code (hotreload)
+# - Development commands with auto-reload
+# Note: Mistral service is not modified - uses production image
+
+services:
+  # =============================================
+  # MCP Server with Hotreload
+  # =============================================
+  mcp-server:
+    volumes:
+      # Override base volumes - mount source code for hotreload
+      - ./src:/app/src:rw
+      - ./shared:/app/shared:rw
+      - ./config:/app/config:rw
+      - ./pyproject.toml:/app/pyproject.toml:ro
+      # Keep session directory
+      - ./sessions:/app/sessions:rw
+    command: 
+      - sh
+      - -c
+      - |
+        python -m uvicorn src.presentation.mcp.http_server:app \
+          --host 0.0.0.0 \
+          --port 8004 \
+          --reload \
+          --reload-dir /app/src \
+          --reload-dir /app/shared \
+          --reload-dir /app/config \
+          --log-level info
+    environment:
+      - HOTRELOAD=true
+      - PYTHONUNBUFFERED=1
+
+  # =============================================
+  # Butler Bot with Hotreload (watchdog)
+  # =============================================
+  butler-bot:
+    entrypoint: ["/bin/sh", "-c"]
+    volumes:
+      # Mount source code for hotreload
+      - ./src:/app/src:rw
+      - ./shared:/app/shared:rw
+      - ./pyproject.toml:/app/pyproject.toml:ro
+    command:
+      - |
+        # Simple hotreload: restart on file changes using watchdog
+        pip install watchdog > /dev/null 2>&1 || true
+        python3 << 'EOF'
+        import time
+        import subprocess
+        import sys
+        from watchdog.observers import Observer
+        from watchdog.events import FileSystemEventHandler
+        
+        class RestartHandler(FileSystemEventHandler):
+            def __init__(self):
+                self.process = None
+                self.restart_delay = 2
+                self.last_restart = 0
+            
+            def on_modified(self, event):
+                if event.src_path.endswith('.py') and '__pycache__' not in event.src_path:
+                    now = time.time()
+                    if now - self.last_restart > self.restart_delay:
+                        self.last_restart = now
+                        print(f"🔄 File changed: {event.src_path}, restarting...")
+                        if self.process:
+                            self.process.terminate()
+                            self.process.wait(timeout=5)
+                        self.start_process()
+            
+            def start_process(self):
+                print("🚀 Starting butler bot...")
+                self.process = subprocess.Popen(
+                    [sys.executable, "-m", "src.presentation.bot.butler_bot"],
+                    cwd="/app"
+                )
+        
+        handler = RestartHandler()
+        handler.start_process()
+        
+        observer = Observer()
+        observer.schedule(handler, "/app/src", recursive=True)
+        observer.schedule(handler, "/app/shared", recursive=True)
+        observer.start()
+        
+        try:
+            while True:
+                if handler.process and handler.process.poll() is not None:
+                    print("⚠️ Process exited, restarting...")
+                    handler.start_process()
+                time.sleep(1)
+        except KeyboardInterrupt:
+            observer.stop()
+        observer.join()
+        EOF
+    environment:
+      - HOTRELOAD=true
+      - PYTHONUNBUFFERED=1
+

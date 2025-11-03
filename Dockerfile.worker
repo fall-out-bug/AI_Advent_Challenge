@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/root/.cache/pypoetry \
     (echo "Poetry install failed, trying direct pip install" && \
      pip install --no-cache-dir fastapi uvicorn pydantic pydantic-settings \
      python-dotenv pyyaml httpx rich mcp motor aiogram dateparser pytz \
-     transformers prometheus-client pyrogram)
+     transformers prometheus-client pyrogram tgcrypto)
 
 # Final stage
 FROM python:3.11-slim
@@ -50,7 +50,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     (echo "Direct install failed, copying manually" && \
      pip install --no-cache-dir fastapi uvicorn pydantic pydantic-settings \
      python-dotenv pyyaml httpx rich mcp motor aiogram dateparser pytz \
-     transformers prometheus-client pyrogram)
+     transformers prometheus-client pyrogram tgcrypto)
 
 USER worker
 

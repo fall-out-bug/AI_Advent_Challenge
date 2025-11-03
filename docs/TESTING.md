@@ -27,40 +27,72 @@ The project follows a testing pyramid approach:
 - **E2E Tests**: 9 tests - Test complete workflows
 - **Total**: 241 tests
 
-## Test Organization
+## Test Organization (Phase 5)
 
 ### Directory Structure
 
 ```
-src/tests/
-├── unit/                    # Unit tests
-│   ├── application/        # Orchestrator tests
-│   ├── domain/             # Domain logic tests
-│   ├── infrastructure/      # Infrastructure tests
-│   └── presentation/       # API/CLI tests
-├── integration/            # Integration tests
-│   └── test_agent_workflows.py
-└── e2e/                    # End-to-end tests
-    └── test_full_workflow.py
+tests/
+├── conftest.py                    # Shared fixtures
+├── fixtures/
+│   ├── mcp_fixtures.py            # MCP-specific fixtures
+│   └── butler_fixtures.py         # Butler-specific fixtures (Phase 5)
+├── unit/                          # Unit tests
+│   ├── domain/                    # Domain layer tests
+│   │   └── agents/
+│   │       ├── services/          # ModeClassifier tests
+│   │       └── handlers/          # Handler tests
+│   ├── application/               # Application layer tests
+│   │   └── usecases/              # Use case tests
+│   ├── infrastructure/            # Infrastructure layer tests
+│   │   ├── llm/                   # MistralClient tests
+│   │   └── mcp/                   # Tools Registry tests
+│   └── presentation/              # Presentation layer tests
+│       └── bot/                   # ButlerBot, factory tests
+├── integration/                   # Integration tests
+│   ├── conftest.py                # Integration fixtures (Phase 5)
+│   ├── presentation/bot/          # Bot integration tests
+│   └── butler/                    # Butler integration tests (Phase 5)
+│       ├── test_full_message_flow.py
+│       ├── test_mode_transitions.py
+│       ├── test_error_recovery.py
+│       └── test_use_case_integration.py
+└── e2e/                           # End-to-end tests
+    ├── telegram/                  # Telegram bot E2E (Phase 5)
+    │   ├── conftest.py            # E2E fixtures
+    │   ├── test_butler_e2e.py     # Complete workflows
+    │   └── fixtures/              # Test message fixtures
+    └── test_full_workflow.py      # Legacy E2E tests
 ```
 
 ## Running Tests
 
 ### Run All Tests
 ```bash
-pytest src/tests/ -v
+pytest tests/ -v
+# or using make
+make test
 ```
 
 ### Run by Category
 ```bash
 # Unit tests only
-pytest src/tests/unit/ -v
+pytest tests/unit/ -v
+make test-unit
 
 # Integration tests only
-pytest src/tests/integration/ -v
+pytest tests/integration/ -v
+make test-integration
 
 # E2E tests only
-pytest src/tests/e2e/ -v
+pytest tests/e2e/ -v -m e2e
+make test-e2e
+```
+
+### Run with Coverage
+```bash
+pytest tests/ --cov=src --cov-report=html --cov-report=term-missing --cov-fail-under=80
+make test-coverage
 ```
 
 ### Run with Coverage
@@ -73,21 +105,29 @@ pytest --cov=src --cov-report=html --cov-report=term
 pytest src/tests/unit/application/test_multi_agent_orchestrator.py -v
 ```
 
-## Coverage Targets
+## Coverage Targets (Phase 5)
 
 ### Current Status
-- **Overall Coverage**: 70%+
-- **Critical Paths**: 70%+ (orchestrators, agents)
-- **Domain Layer**: 80%+ (business logic)
+- **Overall Coverage**: 80%+ (enforced via `--cov-fail-under=80`)
+- **Critical Paths**: 85%+ (orchestrators, handlers, use cases)
+- **Domain Layer**: 85%+ (business logic)
 
 ### Coverage by Layer
 
-| Layer | Target | Current |
-|-------|--------|---------|
-| Domain | 80% | 75% |
-| Application | 70% | 75% |
-| Infrastructure | 65% | 70% |
-| Presentation | 60% | 65% |
+| Layer | Target | Phase 5 Status |
+|-------|--------|----------------|
+| Domain | 85% | 85%+ ✅ |
+| Application | 85% | 85%+ ✅ |
+| Infrastructure | 80% | 80%+ ✅ |
+| Presentation | 75% | 75%+ ✅ |
+
+### Coverage Configuration
+
+Coverage thresholds are configured in `pyproject.toml`:
+- Overall: 80% (fail_under)
+- Excludes: test files, migrations, __pycache__
+- HTML reports: `htmlcov/index.html`
+- XML reports: `coverage.xml` (for CI/CD)
 
 ## Test Types
 
@@ -172,23 +212,59 @@ class TestFeature:
 4. **Use fixtures** for setup/teardown
 5. **Mock external dependencies**
 
-## Fixtures
+## Fixtures (Phase 5)
 
-### Common Fixtures
+### Butler-Specific Fixtures
+
+Located in `tests/fixtures/butler_fixtures.py`:
 
 ```python
-@pytest.fixture
-def mock_generator():
-    """Mock code generator."""
-    return AsyncMock(spec=CodeGeneratorAgent)
+# LLM and MCP clients
+mock_llm_client_protocol    # Mock LLMClientProtocol
+mock_tool_client_protocol   # Mock ToolClientProtocol
+mock_mongodb                # Mock MongoDB database
 
-@pytest.fixture
-def orchestrator(mock_generator, mock_reviewer):
-    """Orchestrator with mocks."""
-    return MultiAgentOrchestrator(
-        generator_agent=mock_generator,
-        reviewer_agent=mock_reviewer
+# Domain components
+mock_mode_classifier        # ModeClassifier with mocked LLM
+mock_intent_orchestrator    # Mock IntentOrchestrator
+mock_task_handler           # TaskHandler with dependencies
+mock_data_handler           # DataHandler with dependencies
+mock_reminders_handler      # RemindersHandler with dependencies
+mock_chat_handler           # ChatHandler with dependencies
+
+# Complete orchestrator
+butler_orchestrator         # Full ButlerOrchestrator with all mocks
+
+# Test data
+sample_dialog_context       # Sample DialogContext
+sample_task_message         # Sample task message
+sample_data_message         # Sample data message
+sample_idle_message         # Sample chat message
+
+# Telegram mocks
+mock_telegram_bot           # Mock aiogram Bot
+mock_telegram_dispatcher    # Mock aiogram Dispatcher
+mock_telegram_message       # Mock Telegram Message
+```
+
+### Usage Example
+
+```python
+@pytest.mark.asyncio
+async def test_task_creation(butler_orchestrator):
+    """Test task creation using butler_orchestrator fixture."""
+    # Configure mocks
+    butler_orchestrator.mode_classifier.llm_client.make_request = AsyncMock(
+        return_value="TASK"
     )
+    
+    # Execute
+    response = await butler_orchestrator.handle_user_message(
+        user_id="123", message="Create task", session_id="456"
+    )
+    
+    # Verify
+    assert response is not None
 ```
 
 ## Test Markers

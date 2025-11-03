@@ -52,7 +52,7 @@ def _clean_text_for_summary(text: str) -> str:
     return text.strip()
 
 
-async def summarize_posts(posts: List[dict], max_sentences: int = None, llm: LLMClient | None = None) -> str:
+async def summarize_posts(posts: List[dict], max_sentences: int = None, llm: LLMClient | None = None, time_period_hours: int = None) -> str:
     """Summarize a list of channel posts using LLM with Russian language support.
 
     Purpose:
@@ -62,6 +62,7 @@ async def summarize_posts(posts: List[dict], max_sentences: int = None, llm: LLM
         posts: List of post dictionaries (with 'text' key)
         max_sentences: Maximum sentences in summary (defaults to settings value)
         llm: LLM client (defaults to ResilientLLMClient with auto-fallback)
+        time_period_hours: Time period in hours (for prompt context to ensure uniqueness)
 
     Returns:
         Summary text (or fallback bullet list on failure)
@@ -99,10 +100,27 @@ async def summarize_posts(posts: List[dict], max_sentences: int = None, llm: LLM
     texts = "\n".join(f"{i+1}. {text}" for i, text in enumerate(cleaned_posts))
     
     # Russian-language prompt with explicit instructions
+    time_context = ""
+    if time_period_hours:
+        days = time_period_hours / 24
+        if days < 1:
+            time_context = f" (за последние {time_period_hours} часов)"
+        elif days == 1:
+            time_context = " (за последние 24 часа)"
+        elif days < 7:
+            time_context = f" (за последние {int(days)} дня/дней)"
+        else:
+            time_context = f" (за последнюю неделю)"
+    
     if language == "ru":
-        prompt = f"""Суммаризируй эти посты из Telegram-канала. Напиши {max_sentences} РАЗНЫХ предложения на русском языке. Каждое предложение раскрывает РАЗНЫЙ аспект. Без повторов. Без нумерации. Без Markdown. Обычный текст.
+        prompt = f"""Суммаризируй эти посты из Telegram-канала{time_context}. Напиши {max_sentences} РАЗНЫХ предложения на русском языке. Каждое предложение раскрывает РАЗНЫЙ аспект. Без повторов. Без нумерации. Без Markdown. Обычный текст.
 
-ВАЖНО: Верни ТОЛЬКО текст, НЕ JSON, НЕ структурированные данные. Только предложения на русском языке.
+ВАЖНО: 
+- Верни ТОЛЬКО текст, НЕ JSON, НЕ структурированные данные
+- Только предложения на русском языке
+- Пиши ПОЛНЫЙ дайджест - не обрезай текст, используй все {max_sentences} предложений
+- Включи все важные детали из постов
+- Учитывай временной период: это посты{time_context}, сфокусируйся на актуальном контенте за этот период
 
 Пример:
 "Разработчики представили новую версию iOS с улучшенной производительностью на 30%. Добавлены новые функции для работы с жестами и улучшена безопасность. Обсуждаются отзывы пользователей о стабильности и совместимости."
@@ -128,12 +146,14 @@ Summary:"""
             # Map-Reduce path
             summarizer = MapReduceSummarizer(llm=llm_client, token_counter=counter, language=language)
             return await summarizer.summarize_text(full_text, max_sentences=max_sentences)
-    except Exception:
-        # If token counting fails for any reason, proceed with direct summarization
+    except Exception as e:
+        # If token counting fails for any reason (e.g., transformers not available), proceed with direct summarization
+        logger.debug(f"TokenCounter unavailable or failed, using direct summarization: {e}")
         pass
 
     # Generate summary with retry (direct path)
-    logger.info(f"Starting summarization with LLM (max_sentences={max_sentences}, temperature={temperature})")
+    logger.info(f"Starting summarization with LLM (posts={len(cleaned_posts)}, max_sentences={max_sentences}, temperature={temperature})")
+    logger.info(f"Posts content hash (first 3 texts): {hash(str(cleaned_posts[:3]))}")
     logger.debug(f"Prompt (first 500 chars): {prompt[:500]}")
     
     for attempt in range(2):
@@ -225,9 +245,16 @@ Summary:"""
             if attempt == 1:
                 break
 
-    # Fallback to bullet list (Russian) - show all posts but limit each to 200 chars
+    # Fallback to bullet list (Russian) - show all posts, limit only if too long
     logger.warning("Using fallback summarization (LLM failed or returned invalid format)")
-    fallback_summary = ". ".join(f"{post.get('text', '')[:200]}" for post in posts) + ("..." if len(posts) > 50 else "") if language == "ru" else "\n".join(f"• {post.get('text', '')[:200]}" for post in posts)
+    # Don't truncate individual posts - let data_handler handle length limits
+    if language == "ru":
+        fallback_summary = ". ".join(post.get('text', '').strip() for post in posts if post.get('text', '').strip())
+        # Only add truncation marker if really needed
+        if len(fallback_summary) > 4000:
+            fallback_summary = fallback_summary[:3900] + "..."
+    else:
+        fallback_summary = "\n".join(f"• {post.get('text', '').strip()}" for post in posts if post.get('text', '').strip())
     logger.debug(f"Fallback summary: {fallback_summary[:200]}...")
     return fallback_summary
 
@@ -328,8 +355,8 @@ class MapReduceSummarizer:
         text: str,
         max_sentences: int = 8,
         temperature: float = 0.2,
-        map_max_tokens: int = 400,
-        reduce_max_tokens: int = 800,
+        map_max_tokens: int = 600,
+        reduce_max_tokens: int = 2000,
     ) -> str:
         chunks = self.chunker.chunk_text(text)
         if len(chunks) == 1:

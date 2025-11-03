@@ -1,0 +1,31 @@
+{
+  "task_creation": {
+    "simple": "Create a task: Buy milk",
+    "with_description": "Create a task: Buy milk tomorrow at the store",
+    "incomplete": "Create a task",
+    "multiple": "Create tasks: Buy milk, Buy bread, Buy eggs"
+  },
+  "data_collection": {
+    "channel_digest": "Get channel digests",
+    "student_stats": "Get student statistics",
+    "data_summary": "Show me data summaries"
+  },
+  "reminders": {
+    "list": "Show my reminders",
+    "active": "List active reminders",
+    "upcoming": "What reminders do I have?"
+  },
+  "idle_chat": {
+    "greeting": "Hello, how are you?",
+    "question": "What can you do?",
+    "general": "Tell me a joke",
+    "unclear": "hmm what should I do"
+  },
+  "error_scenarios": {
+    "empty": "",
+    "very_long": "x".repeat(10000),
+    "special_chars": "!@#$%^&*()_+-=[]{}|;':\",./<>?",
+    "unicode": "Привет! Создай задачу: Купить молоко"
+  }
+}
+
