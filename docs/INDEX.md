@@ -34,6 +34,12 @@
 - [Quick Start Guide](QUICK_START_DAY11.md) - Butler Bot quick start
 - [Architecture FSM](ARCHITECTURE_FSM.md) - FSM conversation flow architecture
 
+### Day 13 - Butler Agent (Refactored)
+- [Architecture](ARCHITECTURE.md#butler-agent-architecture-day-13-refactoring) - Complete Butler Agent architecture with Clean Architecture layers
+- [API Reference](API.md) - Butler Agent API documentation: dialog modes, state machine, use cases
+- [Deployment Guide](DEPLOYMENT.md) - Step-by-step deployment instructions for local, Docker, and production
+- [Contributing Guidelines](../CONTRIBUTING.md#butler-agent-development-guidelines) - Development guidelines for Butler Agent components
+
 ### Project History
 - [CHANGELOG.md](../CHANGELOG.md) - Project version history
 
@@ -42,10 +48,11 @@
 ### For Developers
 - Start here: [README.md](../README.md)
 - Setup: [DEVELOPMENT.md](DEVELOPMENT.md)
-- Architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
+- Architecture: [ARCHITECTURE.md](ARCHITECTURE.md) (includes Butler Agent architecture)
 - Testing: [TESTING.md](TESTING.md)
-- API Reference: [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
+- API Reference: [API_DOCUMENTATION.md](API_DOCUMENTATION.md) (general API) | [API.md](API.md) (Butler Agent API)
 - MCP Integration: [MCP_GUIDE.md](MCP_GUIDE.md)
+- Butler Agent: [API.md](API.md) | [Deployment](DEPLOYMENT.md) | [Contributing](../CONTRIBUTING.md#butler-agent-development-guidelines)
 
 ### For Users
 - Quick start: [README.md](../README.md)
@@ -58,3 +65,4 @@
 - Monitoring: [MONITORING.md](MONITORING.md)
 - Security: [SECURITY.md](SECURITY.md)
 - ML Monitoring: [ML_MONITORING.md](ML_MONITORING.md)
+- Butler Agent Deployment: [DEPLOYMENT.md](DEPLOYMENT.md)

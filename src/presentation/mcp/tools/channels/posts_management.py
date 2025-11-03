@@ -49,7 +49,7 @@ async def get_posts(
     posts = await cursor.to_list(length=1000)
     posts_count = len(posts)
 
-    logger.debug("get_posts", channel=channel_username, hours=hours, posts_count=posts_count)
+    logger.debug(f"get_posts: channel={channel_username}, hours={hours}, posts_count={posts_count}")
     return {
         "status": "success",
         "channel_username": channel_username,
@@ -131,11 +131,8 @@ async def collect_posts(
     """
     channel_username = channel_username.lstrip("@")
     logger.info(
-        "collect_posts invoked",
-        channel=channel_username,
-        user_id=user_id,
-        wait=wait_for_completion,
-        hours=hours,
+        f"collect_posts invoked: channel={channel_username}, user_id={user_id}, "
+        f"wait={wait_for_completion}, hours={hours}"
     )
 
     if not wait_for_completion:
@@ -205,7 +202,7 @@ async def collect_posts(
             "hours": hours if collected_total else 168 if fallback_to_7_days else hours,
         }
     except Exception as e:
-        logger.error("collect_posts failed", channel=channel_username, error=str(e), exc_info=True)
+        logger.error(f"collect_posts failed: channel={channel_username}, error={str(e)}", exc_info=True)
         return {"status": "error", "error": str(e), "channel_username": channel_username}
 
 
@@ -254,10 +251,10 @@ async def save_posts_to_db(posts: List[dict], channel_username: str, user_id: in
             else:
                 skipped_count += 1
         except ValueError as e:
-            logger.warning("Invalid post skipped", error=str(e), channel=channel_username)
+            logger.warning(f"Invalid post skipped: channel={channel_username}, error={str(e)}")
             skipped_count += 1
         except Exception as e:
-            logger.error("Error saving post", error=str(e), channel=channel_username, exc_info=True)
+            logger.error(f"Error saving post: channel={channel_username}, error={str(e)}", exc_info=True)
             skipped_count += 1
 
     return {"saved": saved_count, "skipped": skipped_count, "total": len(posts)}

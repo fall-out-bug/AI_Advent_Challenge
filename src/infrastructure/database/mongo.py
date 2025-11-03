@@ -43,14 +43,21 @@ async def get_db() -> AsyncIOMotorDatabase:
     Returns:
         AsyncIOMotorDatabase: Selected database instance
     """
-
+    # Always get fresh settings to ensure environment variables are read
+    # This is important for tests where DB_NAME might change
+    settings = get_settings()
+    db_name = settings.db_name
+    
     global _db
+    # Reset DB if name changed (important for tests)
+    if _db is not None and _db.name != db_name:
+        _db = None
+    
     if _db is not None:
         return _db
 
     client = await get_client()
-    settings = get_settings()
-    _db = client[settings.db_name]
+    _db = client[db_name]
     return _db
 
 

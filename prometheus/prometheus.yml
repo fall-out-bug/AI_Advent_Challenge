@@ -28,22 +28,24 @@ scrape_configs:
         labels:
           service: 'mcp-server'
           layer: 'presentation'
+          component: 'mcp-server'
     metrics_path: '/metrics'
     scrape_interval: 30s
-
-  # Telegram Bot metrics (if metrics endpoint is added)
-  - job_name: 'telegram-bot'
-    static_configs:
-      - targets: ['telegram-bot:8000']  # Update if bot exposes metrics endpoint
-        labels:
-          service: 'telegram-bot'
-          layer: 'presentation'
-    metrics_path: '/metrics'
-    scrape_interval: 30s
-    # Skip if endpoint doesn't exist yet
     honor_labels: true
 
-  # Summary Worker metrics
+  # Butler Bot metrics
+  - job_name: 'butler-bot'
+    static_configs:
+      - targets: ['butler-bot:9091']  # Butler bot metrics endpoint
+        labels:
+          service: 'butler-bot'
+          layer: 'presentation'
+          component: 'butler-agent'
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    honor_labels: true
+
+  # Summary Worker metrics (if metrics endpoint is added)
   - job_name: 'summary-worker'
     static_configs:
       - targets: ['summary-worker:8000']  # Update if worker exposes metrics endpoint
@@ -52,8 +54,9 @@ scrape_configs:
           layer: 'workers'
     metrics_path: '/metrics'
     scrape_interval: 30s
+    honor_labels: true
 
-  # Post Fetcher Worker metrics
+  # Post Fetcher Worker metrics (if metrics endpoint is added)
   - job_name: 'post-fetcher-worker'
     static_configs:
       - targets: ['post-fetcher-worker:8000']  # Update if worker exposes metrics endpoint
@@ -62,6 +65,7 @@ scrape_configs:
           layer: 'workers'
     metrics_path: '/metrics'
     scrape_interval: 30s
+    honor_labels: true
 
   # Mistral LLM Server metrics
   - job_name: 'mistral-chat'
@@ -73,6 +77,7 @@ scrape_configs:
           model: 'mistral-7b-instruct-v0.2'
     metrics_path: '/metrics'
     scrape_interval: 30s
+    honor_labels: true
 
   # Prometheus itself
   - job_name: 'prometheus'
@@ -80,4 +85,3 @@ scrape_configs:
       - targets: ['localhost:9090']
         labels:
           service: 'prometheus'
-

@@ -27,6 +27,8 @@ def _register_all_tools():
         ("nlp_tools", "src.presentation.mcp.tools.nlp_tools"),
         ("digest_tools", "src.presentation.mcp.tools.digest_tools"),
         ("pdf_digest_tools", "src.presentation.mcp.tools.pdf_digest_tools"),
+        # Explicitly import channels module to ensure tools are registered
+        ("channels", "src.presentation.mcp.tools.channels"),
     ]
     
     from src.infrastructure.logging import get_logger

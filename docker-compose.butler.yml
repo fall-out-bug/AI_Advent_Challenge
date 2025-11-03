@@ -1,0 +1,352 @@
+services:
+  # =============================================
+  # MongoDB Database
+  # =============================================
+  mongodb:
+    image: mongo:6.0
+    container_name: butler-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - /datam/mongodb:/data/db  # Reuse same volume path for consistency
+    environment:
+      - MONGO_INITDB_DATABASE=butler
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok", "localhost:27017/butler"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - butler-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # =============================================
+  # Mistral LLM Service
+  # =============================================
+  mistral-chat:
+    build:
+      context: ./local_models
+      dockerfile: Dockerfile
+    image: ai-challenge-mistral:latest
+    container_name: mistral-chat
+    ports:
+      - "8001:8000"
+    env_file:
+      - .env
+    environment:
+      - MODEL_NAME=mistralai/Mistral-7B-Instruct-v0.2
+      - HF_TOKEN=${HF_TOKEN}
+      - MAX_INPUT_TOKENS=4096
+      - MAX_OUTPUT_TOKENS=2048
+    volumes:
+      - ./cache/models:/home/appuser/.cache/huggingface/hub:rw
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+    networks:
+      - butler-network
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 16G
+        reservations:
+          cpus: '2.0'
+          memory: 8G
+    runtime: nvidia  # Optional: remove if no GPU available
+
+  # =============================================
+  # MCP Server (Local Primary)
+  # =============================================
+  mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp
+    image: ai-challenge-mcp:latest
+    container_name: mcp-server
+    env_file:
+      - .env
+    environment:
+      - MONGODB_URL=mongodb://mongodb:27017
+      - DB_NAME=butler
+      - LLM_URL=http://mistral-chat:8000
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+      # Agent parsing and pipeline
+      - AGENT_DECISION_TEMPERATURE=${AGENT_DECISION_TEMPERATURE:-0.2}
+      - AGENT_DECISION_MAX_TOKENS=${AGENT_DECISION_MAX_TOKENS:-256}
+      - AGENT_FORMATTING_TEMPERATURE=${AGENT_FORMATTING_TEMPERATURE:-0.7}
+      - AGENT_FORMATTING_MAX_TOKENS=${AGENT_FORMATTING_MAX_TOKENS:-1024}
+      - PARSER_STRICT_MODE=${PARSER_STRICT_MODE:-false}
+      - PARSER_MAX_ATTEMPTS=${PARSER_MAX_ATTEMPTS:-3}
+      - TELEGRAM_API_ID=${TELEGRAM_API_ID}
+      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH}
+      - TELEGRAM_SESSION_STRING=${TELEGRAM_SESSION_STRING}
+    ports:
+      - "8004:8004"
+    volumes:
+      # Mount Pyrogram session directory (created by init_pyrogram.py)
+      - ./sessions:/app/sessions:rw
+      # Source code volumes for hotreload (can be overridden by dev compose)
+      # - ./src:/app/src:ro  # Uncomment for development hotreload
+      # - ./shared:/app/shared:ro  # Uncomment for development hotreload
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mistral-chat:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    networks:
+      - butler-network
+      - ai-challenge-network  # For external connections
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # =============================================
+  # Butler Bot (Telegram Bot with ButlerOrchestrator)
+  # =============================================
+  butler-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.bot
+    image: ai-challenge-bot:latest
+    container_name: butler-bot
+    ports:
+      - "9091:9091"  # Metrics endpoint for Prometheus
+    env_file:
+      - .env
+    environment:
+      # Required: Telegram bot token from @BotFather
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      # Required: MongoDB connection URL
+      - MONGODB_URL=mongodb://mongodb:27017
+      # Required: Mistral API URL
+      - MISTRAL_API_URL=http://mistral-chat:8000
+      # MCP Server URLs (supports multiple servers)
+      # Default: local MCP server
+      # Format: comma-separated URLs or JSON array
+      # Example: MCP_SERVER_URLS=http://mcp-server:8004,http://external-mcp:8005
+      # Or: MCP_SERVER_URLS='["http://mcp-server:8004", "http://external-mcp:8005"]'
+      - MCP_SERVER_URLS=${MCP_SERVER_URLS:-http://mcp-server:8004}
+      # Backward compatibility: single server
+      - MCP_SERVER_URL=${MCP_SERVER_URL:-}
+      # Optional: Logging and configuration
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PYTHONUNBUFFERED=1
+      - METRICS_PORT=9091
+      - MISTRAL_TIMEOUT=${MISTRAL_TIMEOUT:-30}
+      - MISTRAL_MAX_RETRIES=${MISTRAL_MAX_RETRIES:-3}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mistral-chat:
+        condition: service_healthy
+      mcp-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import sys; sys.exit(0)' && curl -f http://localhost:9091/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - butler-network  # Internal network for mongodb, mistral-chat, mcp-server
+      - ai-challenge-network  # External network for external MCP servers
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          memory: 128M
+    labels:
+      - "service=butler-bot"
+      - "layer=presentation"
+      - "component=butler-agent"
+
+  # =============================================
+  # Summary Worker (Digest Generation)
+  # =============================================
+  summary-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    image: ai-challenge-worker:latest
+    container_name: summary-worker
+    env_file:
+      - .env
+    environment:
+      # Required: Telegram bot token from @BotFather (same as bot)
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - MCP_SERVER_URL=http://mcp-server:8004
+      - LLM_URL=http://mistral-chat:8000
+      - MONGODB_URL=mongodb://mongodb:27017
+      - DB_NAME=butler
+      - MORNING_SUMMARY_TIME=${MORNING_SUMMARY_TIME:-09:00}
+      - EVENING_DIGEST_TIME=${EVENING_DIGEST_TIME:-20:00}
+      - QUIET_HOURS_START=${QUIET_HOURS_START:-22}
+      - QUIET_HOURS_END=${QUIET_HOURS_END:-8}
+      - DEBUG_NOTIFICATION_INTERVAL_MINUTES=${DEBUG_NOTIFICATION_INTERVAL_MINUTES:-0}
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mcp-server:
+        condition: service_healthy
+      mistral-chat:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - butler-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          memory: 64M
+
+  # =============================================
+  # Post Fetcher Worker (Post Collection)
+  # =============================================
+  post-fetcher-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    image: ai-challenge-worker:latest
+    container_name: post-fetcher-worker
+    command: ["python", "-m", "src.workers.post_fetcher_worker_main"]
+    env_file:
+      - .env
+    environment:
+      - MCP_SERVER_URL=http://mcp-server:8004
+      - MONGODB_URL=mongodb://mongodb:27017
+      - DB_NAME=butler
+      - POST_FETCH_INTERVAL_HOURS=${POST_FETCH_INTERVAL_HOURS:-1}
+      - POST_TTL_DAYS=${POST_TTL_DAYS:-7}
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mcp-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - butler-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          memory: 64M
+
+  # =============================================
+  # Prometheus (Metrics Collection)
+  # =============================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    restart: unless-stopped
+    networks:
+      - butler-network  # Internal network for local services
+      - ai-challenge-network  # External network for scraping other compose exporters
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # =============================================
+  # Grafana (Visualization)
+  # =============================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - butler-network  # Internal network for local Prometheus
+      - ai-challenge-network  # External network for accessing other compose data sources
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 256M
+
+volumes:
+  mongodb_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  butler-network:
+    driver: bridge
+  ai-challenge-network:  # External network for cross-compose communication
+    external: true
+    # Note: Create this network first with: docker network create ai-challenge-network

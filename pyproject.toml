@@ -23,6 +23,7 @@ aiogram = "^3.13.1"
 dateparser = "^1.2.0"
 pytz = "^2024.1"
 pyrogram = "^2.0.106"
+tgcrypto = "^1.2.5"
 weasyprint = "^59.0"
 markdown = "^3.4"
 prometheus-client = "^0.20.0"
@@ -39,6 +40,8 @@ bandit = "^1.7.5"
 vulture = "^2.14"
 autoflake = "^2.3.1"
 freezegun = "^1.5.1"
+radon = "^6.0.1"
+pylint = "^4.0.2"
 
 [tool.black]
 line-length = 88
@@ -71,10 +74,36 @@ asyncio_mode = "auto"
 
 [tool.coverage.run]
 source = ["src"]
-omit = ["*/tests/*", "*/__pycache__/*"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/migrations/*",
+    "*/venv/*",
+    "*/\\.venv/*",
+    "*/build/*",
+    "*/dist/*",
+    "*/\\.eggs/*",
+    "*.egg-info/*",
+]
 
 [tool.coverage.report]
 precision = 2
 show_missing = true
 skip_covered = false
+fail_under = 80
+
+# Per-layer coverage thresholds (informational, enforced via CI)
+# Domain layer: 85%+
+# Application layer: 85%+
+# Infrastructure layer: 80%+
+# Presentation layer: 75%+
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == ['\"]__main__['\"]:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
 

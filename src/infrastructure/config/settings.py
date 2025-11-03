@@ -47,10 +47,10 @@ class Settings(BaseSettings):
     # Digest summarization settings
     digest_summary_sentences: int = Field(default=8, description="Number of sentences per channel in digest")
     digest_max_channels: int = Field(default=10, description="Maximum channels to show in digest")
-    digest_summary_max_chars: int = Field(default=2000, description="Maximum characters per channel summary (Telegram limit is 4096)")
+    digest_summary_max_chars: int = Field(default=3900, description="Maximum characters per channel summary (Telegram limit is 4096)")
     summarizer_language: str = Field(default="ru", description="Language for summaries (ru/en)")
     summarizer_temperature: float = Field(default=0.5, description="Temperature for summarization (higher = more creative)")
-    summarizer_max_tokens: int = Field(default=1200, description="Max tokens for summarization (more = longer summaries)")
+    summarizer_max_tokens: int = Field(default=2000, description="Max tokens for summarization (more = longer summaries)")
     # FSM conversation settings
     conversation_timeout_minutes: int = Field(default=5, description="Timeout in minutes for abandoned FSM conversations")
     max_clarification_attempts: int = Field(default=3, description="Maximum clarification questions before giving up")
@@ -80,6 +80,19 @@ class Settings(BaseSettings):
     log_format: Optional[str] = Field(
         default=None,
         description="Custom log format string. If None, uses default format."
+    )
+    # Intent classification settings
+    intent_confidence_threshold: float = Field(
+        default=0.7,
+        description="Minimum confidence threshold for rule-based intent classification (0.0-1.0)"
+    )
+    intent_cache_ttl_seconds: int = Field(
+        default=300,
+        description="TTL in seconds for intent classification cache (default: 300 = 5 minutes)"
+    )
+    intent_llm_timeout_seconds: float = Field(
+        default=5.0,
+        description="Timeout in seconds for LLM intent classification requests"
     )
 
     @field_validator("post_fetch_interval_hours")
@@ -130,6 +143,30 @@ class Settings(BaseSettings):
         """Validate PDF max posts per channel is positive."""
         if v <= 0:
             raise ValueError("pdf_max_posts_per_channel must be positive")
+        return v
+
+    @field_validator("intent_confidence_threshold")
+    @classmethod
+    def validate_intent_confidence_threshold(cls, v: float) -> float:
+        """Validate intent confidence threshold is in valid range."""
+        if not 0.0 <= v <= 1.0:
+            raise ValueError("intent_confidence_threshold must be between 0.0 and 1.0")
+        return v
+
+    @field_validator("intent_cache_ttl_seconds")
+    @classmethod
+    def validate_intent_cache_ttl(cls, v: int) -> int:
+        """Validate intent cache TTL is positive."""
+        if v <= 0:
+            raise ValueError("intent_cache_ttl_seconds must be positive")
+        return v
+
+    @field_validator("intent_llm_timeout_seconds")
+    @classmethod
+    def validate_intent_llm_timeout(cls, v: float) -> float:
+        """Validate intent LLM timeout is positive."""
+        if v <= 0:
+            raise ValueError("intent_llm_timeout_seconds must be positive")
         return v
 
     class Config:

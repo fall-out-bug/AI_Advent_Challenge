@@ -52,9 +52,10 @@ class PostFetcherWorker:
         mcp_url = mcp_url or os.getenv("MCP_SERVER_URL")
         self.mcp = get_mcp_client(server_url=mcp_url)
         self.settings = get_settings()
-        logger.info("Post fetcher worker initialized",
-                   interval_hours=self.settings.post_fetch_interval_hours,
-                   ttl_days=self.settings.post_ttl_days)
+        logger.info(
+            f"Post fetcher worker initialized: interval_hours={self.settings.post_fetch_interval_hours}, "
+            f"ttl_days={self.settings.post_ttl_days}"
+        )
         self._running = False
         self._last_run: Optional[datetime] = None
         self._setup_signal_handlers()
@@ -62,7 +63,7 @@ class PostFetcherWorker:
     def _setup_signal_handlers(self) -> None:
         """Register signal handlers for graceful shutdown."""
         def signal_handler(signum, frame):
-            logger.info("Received shutdown signal", signal=signum)
+            logger.info(f"Received shutdown signal: signal={signum}")
             self.stop()
 
         signal.signal(signal.SIGTERM, signal_handler)
@@ -133,7 +134,7 @@ class PostFetcherWorker:
                 logger.info("No active channels to process")
                 return
 
-            logger.info("Processing channels", channel_count=len(channels))
+            logger.info(f"Processing channels: channel_count={len(channels)}")
             
             stats = {
                 "channels_processed": 0,
@@ -166,12 +167,10 @@ class PostFetcherWorker:
             duration = time.time() - start_time
             post_fetcher_duration_seconds.observe(duration)
             
-            logger.info("Channel processing completed", statistics=stats)
+            logger.info(f"Channel processing completed: statistics={stats}")
             
         except Exception as e:
-            logger.error("Error processing channels",
-                       error=str(e),
-                       exc_info=True)
+            logger.error(f"Error processing channels: error={str(e)}", exc_info=True)
             post_fetcher_errors_total.labels(error_type="process_channels").inc()
 
     async def _process_channel(
@@ -222,10 +221,10 @@ class PostFetcherWorker:
                 # If last_fetch parsing fails, use lookback window
                 pass
         
-        logger.debug("Processing channel",
-                    channel=channel_username,
-                    user_id=user_id,
-                    since=since.isoformat())
+        logger.debug(
+            f"Processing channel: channel={channel_username}, user_id={user_id}, "
+            f"since={since.isoformat()}"
+        )
         
         # Fetch posts from Telegram
         posts = await fetch_channel_posts(
@@ -250,9 +249,10 @@ class PostFetcherWorker:
                 result["saved"] = save_result.get("saved", 0)
                 result["skipped"] = save_result.get("skipped", 0)
             except Exception as e:
-                logger.warning("Failed to save posts via MCP tool",
-                             channel=channel_username,
-                             error=str(e))
+                logger.warning(
+                    f"Failed to save posts via MCP tool: channel={channel_username}, "
+                    f"error={str(e)}"
+                )
         
         # Update last_fetch timestamp
         await db.channels.update_one(
@@ -260,11 +260,10 @@ class PostFetcherWorker:
             {"$set": {"last_fetch": datetime.utcnow().isoformat()}}
         )
         
-        logger.debug("Channel processed",
-                    channel=channel_username,
-                    posts_fetched=len(posts),
-                    saved=result["saved"],
-                    skipped=result["skipped"])
+        logger.debug(
+            f"Channel processed: channel={channel_username}, posts_fetched={len(posts)}, "
+            f"saved={result['saved']}, skipped={result['skipped']}"
+        )
         
         return result
 
@@ -280,9 +279,9 @@ class PostFetcherWorker:
         """
         error_type = type(error).__name__
         post_fetcher_errors_total.labels(error_type=error_type).inc()
-        logger.error("Error processing channel",
-                   channel=channel.get("channel_username"),
-                   user_id=channel.get("user_id"),
-                   error=str(error),
-                   exc_info=True)
+        logger.error(
+            f"Error processing channel: channel={channel.get('channel_username')}, "
+            f"user_id={channel.get('user_id')}, error={str(error)}",
+            exc_info=True
+        )
 

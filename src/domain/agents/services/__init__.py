@@ -1,10 +1,8 @@
-"""Agent services module.
+"""Domain services for Butler Agent."""
 
-Services provide reusable functionality for agents,
-following Single Responsibility Principle.
-"""
+from src.domain.agents.services.mode_classifier import (
+    DialogMode,
+    ModeClassifier,
+)
 
-from src.domain.agents.services.channel_resolver import ChannelResolver
-
-__all__ = ["ChannelResolver"]
-
+__all__ = ["DialogMode", "ModeClassifier"]
