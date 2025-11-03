@@ -133,7 +133,7 @@ curl http://localhost:8005/api/check_status/abc123
 
 **GET** `/api/all_checks_status`
 
-Получает список всех проверок с опциональной фильтрацией.
+Получает список всех проверок с опциональной фильтрацией. Используется Butler Agent для отображения полного статуса домашних работ.
 
 **Параметры запроса:**
 - `assignment` (optional): Фильтр по заданию (HW2, HW3)
@@ -150,12 +150,32 @@ curl http://localhost:8005/api/check_status/abc123
       "student_id": "Иванов_Иван",
       "assignment": "HW2",
       "archive_name": "Иванов_Иван_hw2.zip",
-      "completed_at": "2024-11-02T16:05:00Z"
+      "commit_hash": "a1b2c3d4",
+      "created_at": "2024-11-02T16:00:00Z",
+      "updated_at": "2024-11-02T16:05:00Z",
+      "completed_at": "2024-11-02T16:05:00Z",
+      "error_message": null
     }
   ],
-  "total": 1
+  "total_count": 1
 }
 ```
+
+**Поля ответа:**
+- `job_id`: Уникальный идентификатор задачи
+- `status`: Статус проверки (queued, running, passed, failed, error, timeout)
+- `student_id`: Идентификатор студента
+- `assignment`: Название задания
+- `archive_name`: Имя архива (если есть)
+- `commit_hash`: Хеш коммита (если есть)
+- `progress`: Текст прогресса (для running/queued)
+- `error_message`: Сообщение об ошибке (для failed/error)
+- `created_at`: Время создания
+- `updated_at`: Время последнего обновления
+- `completed_at`: Время завершения (если завершена)
+
+**Интеграция с Butler Agent:**
+Butler Agent использует этот endpoint для команды "Дай полный статус домашних работ" и отображает все доступные поля для каждой проверки.
 
 **Пример:**
 ```bash
