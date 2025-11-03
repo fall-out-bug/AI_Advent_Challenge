@@ -8,19 +8,23 @@
 
 This repository contains **12 daily challenges** building AI-powered systems with language models. Each day introduces new concepts and builds upon previous challenges.
 
-**Current Status:** ✅ Day 12 - PDF Digest Generation System
+**Current Status:** ✅ Day 13 - Butler Agent Refactoring & Hybrid Intent Recognition
 
 **Key Features:**
-- ✅ 12 daily challenges from simple chat to production-ready PDF digest system
+- ✅ 13 daily challenges from simple chat to production-ready Butler Agent
 - ✅ Clean Architecture with SOLID principles
-- ✅ 382+ tests with 76%+ coverage
+- ✅ 400+ tests with 80%+ coverage
 - ✅ Multi-model support (StarCoder, Mistral, Qwen, TinyLlama)
-- ✅ MCP (Model Context Protocol) integration
+- ✅ MCP (Model Context Protocol) integration with HTTP server
 - ✅ MCP-aware agent with automatic tool discovery and execution
 - ✅ FSM-based Telegram bot with natural language task creation
+- ✅ **Hybrid Intent Recognition** (Rule-based + LLM with caching)
+- ✅ **HW Checker integration** (all_checks_status, queue_status, retry_check)
+- ✅ Channel digests with metadata support (title, description)
 - ✅ PDF digest generation with automatic post collection
 - ✅ Centralized logging system with structured output
 - ✅ Health monitoring and metrics dashboard
+- ✅ Hotreload for development (uvicorn --reload + watchdog)
 
 ## Quick Start
 
@@ -73,6 +77,7 @@ AI_Challenge/
 | Day 10 | Production MCP system | MCP, Streaming, Orchestration | ✅ Complete |
 | Day 11 | Butler Bot FSM | Telegram Bot, FSM, Intent Parsing | ✅ Complete |
 | Day 12 | PDF Digest System | MongoDB, PDF Generation, MCP Tools | ✅ Complete |
+| Day 13 | Butler Agent Refactoring | Hybrid Intent Recognition, HW Checker, Metadata | ✅ Complete |
 
 ## Core Infrastructure
 
@@ -91,7 +96,15 @@ client = ModelClient(provider="perplexity")
 response = await client.chat("Hello, world!")
 ```
 
-## Current Features (Day 12)
+## Current Features (Day 13)
+
+**Butler Agent System:**
+- **Hybrid Intent Recognition**: Two-layer architecture (rule-based + LLM fallback) with caching
+- **HW Checker Integration**: Full status monitoring, queue management, and retry functionality
+- **Channel Metadata**: Automatic title and description fetching from Telegram API
+- **Enhanced Digests**: Adaptive summary length based on post count, time-aware prompts
+- **Markdown Escaping**: Safe Telegram message formatting
+- **Hotreload Development**: Fast iteration with automatic code reloading
 
 **PDF Digest Generation System:**
 - PDF digest generation via MCP tools (5 tools)
