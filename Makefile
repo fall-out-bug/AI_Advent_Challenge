@@ -71,19 +71,28 @@ install:
 	poetry install
 
 test:
-	poetry run pytest src/tests -v
+	poetry run pytest tests/ -v
 
-unit:
-	poetry run pytest src/tests/unit -v
+test-unit:
+	poetry run pytest tests/unit/ -v
 
-integration:
-	poetry run pytest src/tests/integration -v
+test-integration:
+	poetry run pytest tests/integration/ -v
 
-e2e:
-	poetry run pytest src/tests/e2e -v
+test-e2e:
+	poetry run pytest tests/e2e/ -v -m e2e
 
-coverage:
-	poetry run pytest src/tests --cov=src --cov-report=html --cov-report=term-missing
+test-coverage:
+	poetry run pytest tests/ --cov=src --cov-report=html --cov-report=term-missing --cov-fail-under=80
+
+test-all:
+	poetry run pytest tests/ --cov=src --cov-report=html --cov-report=term-missing --cov-report=xml --cov-fail-under=80
+
+# Legacy aliases for backward compatibility
+unit: test-unit
+integration: test-integration
+e2e: test-e2e
+coverage: test-coverage
 
 lint:
 	poetry run flake8 src
