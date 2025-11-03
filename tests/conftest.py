@@ -161,3 +161,27 @@ from tests.fixtures.mcp_fixtures import (
     mock_agent_response,
 )
 
+# Import Butler fixtures
+from tests.fixtures.butler_fixtures import (
+    mock_llm_client_protocol,
+    mock_tool_client_protocol,
+    mock_mongodb as butler_mock_mongodb,
+    mock_mode_classifier,
+    mock_intent_orchestrator,
+    mock_task_handler,
+    mock_data_handler,
+    mock_reminders_handler,
+    mock_chat_handler,
+    butler_orchestrator,
+    sample_dialog_context,
+    sample_task_message,
+    sample_data_message,
+    sample_reminders_message,
+    sample_idle_message,
+    mock_telegram_bot,
+    mock_telegram_dispatcher,
+    mock_telegram_message,
+    sample_user_id,
+    sample_session_id,
+)
+

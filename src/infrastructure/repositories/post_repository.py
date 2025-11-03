@@ -110,6 +110,7 @@ class PostRepository:
             List of post dictionaries
         """
         since = datetime.utcnow() - timedelta(hours=hours)
+        since_iso = since.isoformat()
 
         # Get user's subscribed channels
         channels_cursor = self._db.channels.find({"user_id": user_id, "active": True})
@@ -120,13 +121,30 @@ class PostRepository:
             return []
 
         # Get posts from subscribed channels
+        # Note: Posts may have date as datetime or ISO string, so we query without date filter
+        # and filter in Python for compatibility
         query = {
             "user_id": user_id,
             "channel_username": {"$in": channel_usernames},
-            "date": {"$gte": since},
         }
         cursor = self._db.posts.find(query).sort("date", -1)
-        posts = await cursor.to_list(length=1000)
+        all_posts = await cursor.to_list(length=1000)
+        
+        # Filter by date in Python to handle both datetime and ISO string formats
+        posts = []
+        for post in all_posts:
+            post_date = post.get("date")
+            if post_date:
+                # Convert ISO string to datetime if needed
+                if isinstance(post_date, str):
+                    try:
+                        post_date = datetime.fromisoformat(post_date.replace("Z", "+00:00"))
+                    except (ValueError, AttributeError):
+                        continue
+                
+                # Compare datetime objects
+                if isinstance(post_date, datetime) and post_date >= since:
+                    posts.append(post)
 
         for post in posts:
             post["id"] = str(post.pop("_id"))

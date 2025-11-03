@@ -76,7 +76,7 @@ llm_requests_total = Counter(
 llm_tokens = Counter(
     "llm_tokens_total",
     "Total LLM tokens",
-    ["model_name", "type"]  # type: input/output
+    ["model_name", "type"]
 )
 
 llm_request_duration = Histogram(

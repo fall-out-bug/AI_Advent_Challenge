@@ -1,6 +1,7 @@
 """HTTP wrapper for MCP server using FastAPI."""
 import asyncio
 import logging
+import os
 from typing import Any, Dict, List, Optional
 from pathlib import Path
 import sys
@@ -101,6 +102,15 @@ async def health_check():
     """Health check endpoint."""
     try:
         tools = _get_tools_list()
+        
+        # Add DB info for debugging
+        try:
+            from src.infrastructure.config.settings import get_settings
+            settings = get_settings()
+            logger.info(f"Health check: DB_NAME={settings.db_name}, MONGODB_URL={settings.mongodb_url}")
+        except Exception:
+            pass
+        
         return HealthResponse(
             status="healthy",
             available_tools=len(tools)
@@ -135,12 +145,56 @@ async def call_tool(request: ToolCallRequest):
             request.arguments
         )
         logger.info(f"Tool call completed: {request.tool_name} (result type: {type(result).__name__})")
+        
+        # Log result structure for debugging
+        if isinstance(result, dict):
+            logger.info(f"Result keys: {list(result.keys())}")
+            if "digests" in result:
+                logger.info(f"Digests count: {len(result.get('digests', []))}")
+                if result.get("digests"):
+                    for i, d in enumerate(result["digests"]):
+                        logger.info(f"Digest {i}: channel={d.get('channel')}, posts={d.get('post_count')}, summary_len={len(d.get('summary', ''))}")
+            if "message" in result:
+                logger.info(f"Result message: {result['message'][:100]}")
+        
         return {"result": result}
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Tool call failed: {request.tool_name} - {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/config")
+async def get_config():
+    """Get server configuration for debugging."""
+    try:
+        from src.infrastructure.config.settings import get_settings
+        settings = get_settings()
+        
+        # Also check actual DB connection
+        try:
+            from src.infrastructure.database.mongo import get_db
+            db = await get_db()
+            db_name = db.name
+            posts_count = await db.posts.count_documents({})
+            channels_count = await db.channels.count_documents({})
+        except Exception as e:
+            db_name = "error"
+            posts_count = -1
+            channels_count = -1
+            logger.error(f"Failed to get DB info: {e}")
+        
+        return {
+            "db_name": settings.db_name,
+            "db_name_actual": db_name,
+            "mongodb_url": settings.mongodb_url,
+            "posts_in_db": posts_count,
+            "channels_in_db": channels_count,
+        }
+    except Exception as e:
+        logger.error(f"Config check failed: {e}", exc_info=True)
+        return {"error": str(e)}
 
 
 @app.get("/")
@@ -151,6 +205,7 @@ async def root():
         "version": "1.0.0",
         "endpoints": {
             "/health": "Health check",
+            "/config": "Server configuration",
             "/tools": "List available tools",
             "/call": "Call a tool (POST)",
             "/metrics": "Prometheus metrics",
@@ -195,7 +250,15 @@ def start_server(host: str = "0.0.0.0", port: int = 8004):
         host: Host to bind to
         port: Port to bind to
     """
+    # Allow port override from environment
+    port = int(os.getenv("PORT", port))
+    
+    # Log configuration for debugging
+    from src.infrastructure.config.settings import get_settings
+    settings = get_settings()
     logger.info(f"Starting MCP HTTP server on {host}:{port}")
+    logger.info(f"Server config: DB_NAME={settings.db_name}, MONGODB_URL={settings.mongodb_url}")
+    
     run(
         app, 
         host=host, 
@@ -207,4 +270,5 @@ def start_server(host: str = "0.0.0.0", port: int = 8004):
 
 
 if __name__ == "__main__":
+    import os
     start_server()

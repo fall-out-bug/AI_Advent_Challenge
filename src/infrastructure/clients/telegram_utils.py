@@ -92,7 +92,7 @@ async def _fetch_with_pyrogram(
             abs_path = os.path.abspath(path)
             if os.path.exists(abs_path):
                 session_file = abs_path
-                logger.info("Found existing Pyrogram session file", session_file=session_file)
+                logger.info(f"Found existing Pyrogram session file: session_file={session_file}")
                 break
     
     if not session_string and not session_file:
@@ -113,7 +113,7 @@ async def _fetch_with_pyrogram(
         
         if session_string:
             # Use session string directly - no file needed
-            logger.info("Using Pyrogram session string (no file needed)", has_string=bool(session_string), channel=channel_username)
+            logger.info(f"Using Pyrogram session string (no file needed): has_string={bool(session_string)}, channel={channel_username}")
             client_session_name = session_name  # Name doesn't matter when using session_string
         elif session_file and os.path.exists(session_file):
             # Copy session file to current working directory so Pyrogram can write to it
@@ -153,14 +153,13 @@ async def _fetch_with_pyrogram(
         # Try to start client (will use existing session if available)
         try:
             await client.start()
-            logger.info("Pyrogram client started successfully", channel=channel_username)
+            logger.info(f"Pyrogram client started successfully: channel={channel_username}")
         except Exception as start_error:
             # If session doesn't exist and no session_string provided, log error
             if "phone number" in str(start_error).lower() or "verification code" in str(start_error).lower():
                 logger.error(
-                    "Pyrogram session not initialized. Please run init_pyrogram.py script first.",
-                    channel=channel_username,
-                    error=str(start_error)
+                    f"Pyrogram session not initialized. Please run init_pyrogram.py script first. "
+                    f"channel={channel_username}, error={str(start_error)}"
                 )
                 raise ValueError(
                     "Pyrogram session not initialized. "
@@ -171,16 +170,16 @@ async def _fetch_with_pyrogram(
         # Get channel entity
         try:
             channel = await client.get_chat(channel_id)
-            logger.info("Channel found via Pyrogram", channel=channel_username, chat_id=channel.id)
+            logger.info(f"Channel found via Pyrogram: channel={channel_username}, chat_id={channel.id}")
         except BadRequest as e:
-            logger.warning("Channel not found via Pyrogram", channel=channel_username, error=str(e))
+            logger.warning(f"Channel not found via Pyrogram: channel={channel_username}, error={str(e)}")
             return []
         
         # Fetch messages (limit to last 1000 messages to catch more posts)
         # Telegram API allows up to 100 messages per request, but we iterate to get more
         messages = []
         try:
-            logger.debug("Starting to fetch messages", channel=channel_username, since=since.isoformat(), limit=1000)
+            logger.debug(f"Starting to fetch messages: channel={channel_username}, since={since.isoformat()}, limit=1000")
             messages_before_date = 0  # Count how many messages we've seen before 'since'
             async for message in client.get_chat_history(channel.id, limit=1000):
                 if message.date >= since:
@@ -192,33 +191,30 @@ async def _fetch_with_pyrogram(
                     # This handles cases where there are gaps in message history
                     if messages_before_date > 100:
                         break
-            logger.debug("Finished fetching messages", channel=channel_username, messages_fetched=len(messages), since=since.isoformat())
+            logger.debug(f"Finished fetching messages: channel={channel_username}, messages_fetched={len(messages)}, since={since.isoformat()}")
         except FloodWait as e:
-            logger.warning(f"FloodWait: need to wait {e.value} seconds", channel=channel_username)
+            logger.warning(f"FloodWait: need to wait {e.value} seconds: channel={channel_username}")
             # Return what we have so far
             pass
         except Exception as fetch_error:
             error_msg = str(fetch_error)
             logger.error(
-                "Error fetching messages from channel",
-                channel=channel_username,
-                error=error_msg,
-                error_type=type(fetch_error).__name__,
+                f"Error fetching messages from channel: channel={channel_username}, "
+                f"error={error_msg}, error_type={type(fetch_error).__name__}",
                 exc_info=True
             )
             # If session is invalid, log it clearly
             if "EOF" in error_msg or "session" in error_msg.lower() or "auth" in error_msg.lower():
                 logger.error(
-                    "Pyrogram session appears to be invalid or expired",
-                    channel=channel_username,
-                    session_file=session_file,
-                    has_session_string=bool(session_string)
+                    f"Pyrogram session appears to be invalid or expired: "
+                    f"channel={channel_username}, session_file={session_file}, "
+                    f"has_session_string={bool(session_string)}"
                 )
             # Return empty list - don't raise, let caller handle it
             pass
         
         # Convert messages to our format
-        logger.debug("Converting messages to post format", channel=channel_username, message_count=len(messages))
+        logger.debug(f"Converting messages to post format: channel={channel_username}, message_count={len(messages)}")
         for msg in messages:
             text = ""
             if msg.text:
@@ -237,22 +233,25 @@ async def _fetch_with_pyrogram(
                     "views": getattr(msg, "views", None),
                 })
         
-        logger.info("Fetched posts via Pyrogram", channel=channel_username, count=len(posts), since=since.isoformat())
+        logger.info(f"Fetched posts via Pyrogram: channel={channel_username}, count={len(posts)}, since={since.isoformat()}")
         if len(posts) == 0:
-            logger.info("No posts found in time window", channel=channel_username, since=since.isoformat(), now=datetime.utcnow().isoformat())
-            logger.debug("Messages fetched but no posts converted", channel=channel_username, messages_fetched=len(messages))
+            logger.info(f"No posts found in time window: channel={channel_username}, since={since.isoformat()}, now={datetime.utcnow().isoformat()}")
+            logger.debug(f"Messages fetched but no posts converted: channel={channel_username}, messages_fetched={len(messages)}")
         return posts
         
     except Exception as e:
         error_msg = str(e)
-        logger.error("Error fetching posts via Pyrogram", channel=channel_username, error=error_msg, error_type=type(e).__name__, exc_info=True)
+        logger.error(
+            f"Error fetching posts via Pyrogram: channel={channel_username}, "
+            f"error={error_msg}, error_type={type(e).__name__}",
+            exc_info=True
+        )
         # If session error, log it clearly
         if "phone number" in error_msg.lower() or "verification code" in error_msg.lower() or "session" in error_msg.lower():
             logger.error(
-                "Pyrogram session invalid - need to reinitialize",
-                channel=channel_username,
-                session_file=session_file,
-                has_session_string=bool(session_string)
+                f"Pyrogram session invalid - need to reinitialize: "
+                f"channel={channel_username}, session_file={session_file}, "
+                f"has_session_string={bool(session_string)}"
             )
         return []
     finally:
@@ -305,9 +304,9 @@ async def fetch_channel_posts(channel_username: str, since: datetime, user_id: i
         try:
             posts = await _fetch_with_pyrogram(channel_username, since)
             # Return posts even if empty - Pyrogram worked, just no posts found
-            logger.info("Pyrogram fetch completed", channel=channel_username, count=len(posts), since=since.isoformat())
+            logger.info(f"Pyrogram fetch completed: channel={channel_username}, count={len(posts)}, since={since.isoformat()}")
         except Exception as e:
-            logger.warning(f"Pyrogram fetch failed: {e}, trying Bot API", channel=channel_username, exc_info=True)
+            logger.warning(f"Pyrogram fetch failed: {e}, trying Bot API: channel={channel_username}", exc_info=True)
     
     # Fallback to Bot API only if Pyrogram is not available
     # Bot API cannot fetch message history, so we return empty list instead of placeholder
@@ -320,8 +319,8 @@ async def fetch_channel_posts(channel_username: str, since: datetime, user_id: i
         # Bot API doesn't provide direct message history access
         # Only admins can access messages, but there's no direct API method
         # So we can't fetch real posts via Bot API without admin rights
-        logger.info("Pyrogram not available or failed, Bot API cannot fetch posts", channel=channel_username)
-        logger.info("Returning empty list - no real posts can be fetched without Pyrogram", channel=channel_username)
+        logger.info(f"Pyrogram not available or failed, Bot API cannot fetch posts: channel={channel_username}")
+        logger.info(f"Returning empty list - no real posts can be fetched without Pyrogram: channel={channel_username}")
         return []
     
     # Save posts to database if requested
@@ -350,17 +349,12 @@ async def _save_posts_to_db(posts: List[dict], channel_username: str, user_id: i
         
         result = await save_posts_to_db(posts, channel_username, user_id)
         logger.debug(
-            "Saved posts to database",
-            channel=channel_username,
-            saved=result["saved"],
-            skipped=result["skipped"],
-            total=result["total"]
+            f"Saved posts to database: channel={channel_username}, "
+            f"saved={result['saved']}, skipped={result['skipped']}, total={result['total']}"
         )
     except Exception as e:
         logger.warning(
-            "Failed to save posts to database",
-            channel=channel_username,
-            error=str(e),
+            f"Failed to save posts to database: channel={channel_username}, error={str(e)}",
             exc_info=True
         )
 

@@ -1,5 +1,5 @@
 groups:
-  - name: day12_alerts
+  - name: worker_alerts
     interval: 30s
     rules:
       # Post Fetcher Worker Alerts
@@ -121,7 +121,7 @@ groups:
 
       - alert: LLMModelDown
         expr: |
-          up{job=~"mistral-chat|llm-server"} == 0
+          up{job="mistral-chat"} == 0
         for: 2m
         labels:
           severity: critical
@@ -152,3 +152,131 @@ groups:
         annotations:
           summary: "High LLM token generation rate"
           description: "Token generation rate exceeds 10,000 tokens per minute. Monitor costs and rate limits."
+
+  - name: mcp_alerts
+    interval: 30s
+    rules:
+      # MCP Server Alerts
+      - alert: MCPServerDown
+        expr: |
+          up{job="mcp-server"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: mcp-server
+          component: mcp-server
+        annotations:
+          summary: "MCP server is down"
+          description: "MCP server has been unavailable for more than 2 minutes. Check container status and logs."
+
+      - alert: MCPServerHighErrorRate
+        expr: |
+          rate(mcp_errors_total[5m]) / rate(mcp_requests_total[5m]) > 0.10
+        for: 5m
+        labels:
+          severity: warning
+          service: mcp-server
+          component: mcp-server
+        annotations:
+          summary: "MCP server error rate exceeds 10%"
+          description: "MCP server error rate exceeds 10% of total requests in the last 5 minutes. Check logs for error details."
+
+      - alert: MCPServerHighLatency
+        expr: |
+          histogram_quantile(0.95, rate(mcp_request_duration_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: mcp-server
+          component: mcp-server
+        annotations:
+          summary: "MCP server request latency exceeds 5 seconds (P95)"
+          description: "95th percentile of MCP server request time exceeds 5 seconds for the last 5 minutes. Check tool performance and dependencies."
+
+  - name: butler_alerts
+    interval: 30s
+    rules:
+      # Butler Bot Service Alerts
+      - alert: ButlerBotDown
+        expr: |
+          up{job="butler-bot"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: butler-bot
+          component: butler-agent
+        annotations:
+          summary: "Butler bot service is down"
+          description: "Butler bot service has been unavailable for more than 2 minutes. Check container status and logs."
+
+      - alert: ButlerBotUnhealthy
+        expr: |
+          butler_bot_healthy == 0
+        for: 3m
+        labels:
+          severity: critical
+          service: butler-bot
+          component: butler-agent
+        annotations:
+          summary: "Butler bot reports unhealthy status"
+          description: "Butler bot health check indicates unhealthy status for more than 3 minutes. Check application logs."
+
+      - alert: ButlerHighErrorRate
+        expr: |
+          rate(butler_errors_total[5m]) / rate(butler_messages_total[5m]) > 0.10
+        for: 5m
+        labels:
+          severity: warning
+          service: butler-bot
+          component: butler-agent
+        annotations:
+          summary: "Butler bot error rate exceeds 10%"
+          description: "Butler bot error rate exceeds 10% of total messages in the last 5 minutes. Check logs for error details."
+
+      - alert: ButlerHighLatency
+        expr: |
+          histogram_quantile(0.95, rate(butler_message_duration_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: butler-bot
+          component: butler-agent
+        annotations:
+          summary: "Butler bot message processing latency exceeds 5 seconds (P95)"
+          description: "95th percentile of message processing time exceeds 5 seconds for the last 5 minutes. Check handler performance and dependencies."
+
+      - alert: ButlerMongoDBConnectionFailed
+        expr: |
+          rate(butler_errors_total{error_type=~".*Connection.*|.*MongoDB.*|.*Database.*"}[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+          service: butler-bot
+          component: butler-agent
+        annotations:
+          summary: "Butler bot MongoDB connection failures detected"
+          description: "Butler bot is experiencing MongoDB connection failures. Check MongoDB service status and network connectivity."
+
+      - alert: ButlerLLMUnavailable
+        expr: |
+          rate(butler_errors_total{error_type=~".*LLM.*|.*Mistral.*|.*ConnectionError.*|.*TimeoutError.*"}[5m]) / rate(butler_messages_total[5m]) > 0.20
+        for: 3m
+        labels:
+          severity: warning
+          service: butler-bot
+          component: butler-agent
+        annotations:
+          summary: "Butler bot LLM client unavailable (high error rate)"
+          description: "Butler bot is experiencing high LLM-related error rate (>20%) in the last 3 minutes. Check Mistral API service availability."
+
+      - alert: ButlerNoMessages
+        expr: |
+          rate(butler_messages_total[10m]) == 0
+        for: 15m
+        labels:
+          severity: info
+          service: butler-bot
+          component: butler-agent
+        annotations:
+          summary: "Butler bot has not processed any messages in 10 minutes"
+          description: "Butler bot has not processed any messages for more than 10 minutes. This may indicate a quiet period or connectivity issue."

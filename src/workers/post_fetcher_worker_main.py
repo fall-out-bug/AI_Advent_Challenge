@@ -23,7 +23,7 @@ async def main() -> None:
     except KeyboardInterrupt:
         logger.info("Worker interrupted by user")
     except Exception as e:
-        logger.error("Worker crashed", error=str(e), exc_info=True)
+        logger.error(f"Worker crashed: error={str(e)}", exc_info=True)
         sys.exit(1)
     finally:
         logger.info("Worker stopped")

@@ -425,9 +425,415 @@ When adding new features:
 3. Get approval from at least one maintainer
 4. Merge to main branch
 
+## Butler Agent Development Guidelines
+
+This section provides specific guidelines for developing Butler Agent components following Clean Architecture and SOLID principles.
+
+### Architecture Principles
+
+Butler Agent follows **Clean Architecture** with strict layer separation:
+
+```
+Presentation → Application → Domain ← Infrastructure
+```
+
+**Key Rules:**
+- **Domain layer must NEVER import from infrastructure or presentation**
+- Use protocols/interfaces for dependencies
+- Dependencies point inward toward domain
+- Infrastructure implements domain protocols
+
+### Handler Development
+
+**Creating a New Handler:**
+
+1. **Implement Handler Interface:**
+```python
+from src.domain.agents.handlers.handler import Handler
+from src.domain.agents.state_machine import DialogContext
+
+class MyNewHandler(Handler):
+    """Handler for specific mode/functionality."""
+    
+    def __init__(self, dependency: DependencyProtocol):
+        """Initialize handler.
+        
+        Args:
+            dependency: Dependency implementing protocol (not concrete class)
+        """
+        self.dependency = dependency
+    
+    async def handle(self, context: DialogContext, message: str) -> str:
+        """Handle message in given context.
+        
+        Args:
+            context: Dialog context with state and data
+            message: User message text
+            
+        Returns:
+            Response text to send to user
+        """
+        # Implementation
+        pass
+```
+
+2. **Follow Handler Rules:**
+   - Handlers are **stateless** - no instance variables for user data
+   - Get `user_id` from `context.user_id`, not initialization
+   - Use dependency injection, not global access
+   - All functions <40 lines
+   - Handle errors gracefully with user-friendly messages
+
+3. **Register Handler:**
+```python
+# In butler_orchestrator.py
+def _get_handler_for_mode(self, mode: DialogMode) -> Handler:
+    if mode == DialogMode.MY_NEW_MODE:
+        return self.my_new_handler
+    # ...
+```
+
+### Use Case Development
+
+**Creating a New Use Case:**
+
+1. **Location:** `src/application/usecases/`
+
+2. **Structure:**
+```python
+from src.application.usecases.result_types import ResultType
+from src.domain.interfaces.tool_client import ToolClientProtocol
+
+class MyNewUseCase:
+    """Use case for specific business operation."""
+    
+    def __init__(self, tool_client: ToolClientProtocol):
+        """Initialize use case.
+        
+        Args:
+            tool_client: Tool client protocol (not concrete class)
+        """
+        self.tool_client = tool_client
+    
+    async def execute(self, param1: str, param2: int) -> ResultType:
+        """Execute use case.
+        
+        Args:
+            param1: First parameter
+            param2: Second parameter
+            
+        Returns:
+            Typed result (not raw dict)
+        """
+        # Implementation
+        pass
+```
+
+3. **Use Case Rules:**
+   - **Stateless**: No instance state for business data
+   - **Single responsibility**: One use case = one operation
+   - **Typed results**: Use Pydantic models, not raw dicts
+   - **Error handling**: Return error in result, don't raise
+   - **All functions ≤15 lines**
+
+4. **Add Result Type:**
+```python
+# In result_types.py
+class MyNewResult(BaseModel):
+    """Result of new use case."""
+    success: bool
+    data: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
+```
+
+### State Machine Development
+
+**Adding New States:**
+
+1. **Update DialogState Enum:**
+```python
+# In state_machine.py
+class DialogState(Enum):
+    # ... existing states
+    MY_NEW_STATE = "my_new_state"
+```
+
+2. **Add State Transitions:**
+   - Document transition rules
+   - Update state diagram in documentation
+   - Add transition logic in handlers
+
+3. **Context Data:**
+   - Use `context.data` dictionary for state-specific data
+   - Document required keys in docstrings
+   - Clear data on state reset
+
+### Testing Butler Agent Components
+
+#### Unit Test Structure for Handlers
+
+```python
+import pytest
+from unittest.mock import AsyncMock
+from src.domain.agents.handlers.task_handler import TaskHandler
+from src.domain.agents.state_machine import DialogContext, DialogState
+
+@pytest.mark.asyncio
+async def test_task_handler_creates_task_successfully():
+    """Test task handler creates task on valid input."""
+    # Arrange
+    mock_intent_orch = AsyncMock()
+    mock_tool_client = AsyncMock()
+    mock_intent_orch.parse_task_intent.return_value = IntentResult(...)
+    mock_tool_client.call_tool.return_value = {"id": "123"}
+    
+    handler = TaskHandler(mock_intent_orch, mock_tool_client)
+    context = DialogContext(
+        state=DialogState.IDLE,
+        user_id="123",
+        session_id="456"
+    )
+    
+    # Act
+    result = await handler.handle(context, "Buy milk")
+    
+    # Assert
+    assert "created" in result.lower()
+    mock_tool_client.call_tool.assert_called_once()
+```
+
+#### Integration Test Setup for Orchestrator
+
+```python
+import pytest
+from src.domain.agents.butler_orchestrator import ButlerOrchestrator
+from tests.fixtures.butler_fixtures import butler_orchestrator
+
+@pytest.mark.asyncio
+async def test_orchestrator_routes_to_correct_handler(
+    butler_orchestrator: ButlerOrchestrator
+):
+    """Test orchestrator routes messages to correct handler."""
+    # Configure mode classifier
+    butler_orchestrator.mode_classifier.llm_client.make_request = AsyncMock(
+        return_value={"content": "TASK"}
+    )
+    
+    # Execute
+    response = await butler_orchestrator.handle_user_message(
+        user_id="123",
+        message="Buy milk",
+        session_id="456"
+    )
+    
+    # Verify
+    assert response is not None
+    # Verify handler was called (check mocks)
+```
+
+#### E2E Test Examples for Telegram Bot
+
+```python
+import pytest
+from aiogram import Bot, Dispatcher
+from aiogram.test import MockedClient
+from src.presentation.bot.factory import create_butler_orchestrator
+
+@pytest.mark.e2e
+@pytest.mark.asyncio
+async def test_telegram_bot_task_creation():
+    """E2E test for task creation via Telegram."""
+    # Arrange
+    orchestrator = await create_butler_orchestrator()
+    bot = Bot(token="test")
+    dp = Dispatcher()
+    
+    # Configure orchestrator mocks
+    # ...
+    
+    # Act
+    # Simulate user message
+    # ...
+    
+    # Assert
+    # Verify bot response
+    # ...
+```
+
+#### Mock Fixtures Usage
+
+```python
+# Use existing fixtures from tests/fixtures/butler_fixtures.py
+@pytest.mark.asyncio
+async def test_with_fixtures(
+    butler_orchestrator,
+    mock_llm_client_protocol,
+    mock_tool_client_protocol,
+    sample_task_message
+):
+    """Test using provided fixtures."""
+    # Configure fixtures
+    mock_llm_client_protocol.make_request = AsyncMock(
+        return_value="TASK"
+    )
+    
+    # Execute test
+    response = await butler_orchestrator.handle_user_message(
+        user_id="123",
+        message=sample_task_message,
+        session_id="456"
+    )
+    
+    # Verify
+    assert response is not None
+```
+
+**Available Fixtures:**
+- `butler_orchestrator`: Full orchestrator with mocks
+- `mock_llm_client_protocol`: Mock LLM client
+- `mock_tool_client_protocol`: Mock tool client
+- `mock_mongodb`: Mock MongoDB
+- `sample_task_message`, `sample_data_message`: Sample messages
+
+### Code Review Checklist for Butler Agent
+
+Before submitting PR for Butler Agent changes:
+
+#### Protocol Compliance
+- [ ] Uses `ToolClientProtocol` or `LLMClientProtocol` (not concrete classes)
+- [ ] Domain layer has no imports from infrastructure/presentation
+- [ ] All dependencies injected via `__init__`
+
+#### Handler Checklist
+- [ ] Handler implements `Handler` interface correctly
+- [ ] Handler is stateless (no user data in instance vars)
+- [ ] Gets `user_id` from `context.user_id`
+- [ ] Error handling returns user-friendly messages
+- [ ] All functions <40 lines
+
+#### Use Case Checklist
+- [ ] Use case is stateless
+- [ ] Returns typed result (Pydantic model)
+- [ ] Error handling in result, not exceptions
+- [ ] All functions ≤15 lines
+- [ ] Single responsibility
+
+#### State Machine Checklist
+- [ ] New states added to `DialogState` enum
+- [ ] State transitions documented
+- [ ] Context data keys documented
+- [ ] No magic strings for states
+
+#### Testing Checklist
+- [ ] Unit tests for new components
+- [ ] Integration tests for workflows
+- [ ] E2E tests for user journeys (if applicable)
+- [ ] Coverage ≥80% for new code
+- [ ] Mocks used correctly (protocols, not concrete)
+
+#### Documentation Checklist
+- [ ] Docstrings in Google style
+- [ ] Architecture diagram updated (if needed)
+- [ ] API docs updated (if new modes/endpoints)
+- [ ] Examples in docstrings
+
+### Butler Agent Specific Rules
+
+#### Mode Classification Guidelines
+
+When adding new modes:
+1. Update `DialogMode` enum in `mode_classifier.py`
+2. Update classification prompt in `ModeClassifier.MODE_CLASSIFICATION_PROMPT`
+3. Add handler for new mode
+4. Register handler in `ButlerOrchestrator._get_handler_for_mode()`
+5. Update documentation
+
+#### Context Management Best Practices
+
+```python
+# Good: Clear context usage
+async def handle(self, context: DialogContext, message: str) -> str:
+    # Get user ID from context
+    user_id = context.user_id
+    
+    # Update context data
+    context.update_data("key", "value")
+    
+    # Transition state
+    context.transition_to(DialogState.NEW_STATE)
+    
+    # Get existing data
+    existing_value = context.get_data("key", default="default")
+```
+
+```python
+# Bad: Using instance variables for user data
+class BadHandler:
+    def __init__(self):
+        self.user_data = {}  # ❌ Stateless violation
+    
+    async def handle(self, context, message):
+        self.user_data[context.user_id] = message  # ❌ Wrong
+```
+
+#### MCP Tool Integration Patterns
+
+```python
+# Good: Using protocol
+from src.domain.interfaces.tool_client import ToolClientProtocol
+
+class MyHandler(Handler):
+    def __init__(self, tool_client: ToolClientProtocol):
+        self.tool_client = tool_client  # ✅ Protocol, not concrete
+    
+    async def handle(self, context, message):
+        result = await self.tool_client.call_tool(
+            "tool_name",
+            {"param": "value"}
+        )
+```
+
+```python
+# Bad: Direct MCP client usage
+from src.presentation.mcp.client import MCPClient  # ❌ Domain imports presentation
+
+class BadHandler:
+    def __init__(self):
+        self.client = MCPClient()  # ❌ Concrete class, not protocol
+```
+
+### Testing Patterns
+
+**Handler Testing:**
+- Mock all dependencies (LLM, MCP, MongoDB)
+- Test happy path and error cases
+- Verify context state transitions
+- Check user-facing error messages
+
+**Use Case Testing:**
+- Test with mock tool client
+- Verify result types
+- Test error scenarios
+- Check clarification flow (if applicable)
+
+**Integration Testing:**
+- Use real orchestrator with mocked dependencies
+- Test full message flows
+- Verify mode transitions
+- Test error recovery
+
+**E2E Testing:**
+- Use aiogram test client
+- Test complete user journeys
+- Verify Telegram message format
+- Test error scenarios
+
 ## Getting Help
 
 - **Documentation**: See [docs/](docs/)
+  - [Architecture Documentation](docs/ARCHITECTURE.md)
+  - [API Documentation](docs/API.md)
+  - [Deployment Guide](docs/DEPLOYMENT.md)
 - **Questions**: Open an issue
 - **Bugs**: Report in issues
 - **Features**: Discuss in issues first
