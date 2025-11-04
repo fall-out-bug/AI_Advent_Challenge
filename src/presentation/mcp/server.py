@@ -29,6 +29,7 @@ def _register_all_tools():
         ("pdf_digest_tools", "src.presentation.mcp.tools.pdf_digest_tools"),
         # Explicitly import channels module to ensure tools are registered
         ("channels", "src.presentation.mcp.tools.channels"),
+        ("homework_review_tool", "src.presentation.mcp.tools.homework_review_tool"),
     ]
     
     from src.infrastructure.logging import get_logger

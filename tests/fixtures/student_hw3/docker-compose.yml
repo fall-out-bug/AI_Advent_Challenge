@@ -1,0 +1,184 @@
+services:
+  minio:
+    image: minio/minio
+    container_name: mlsd_hw3_minio
+    ports: ["9000:9000", "9001:9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - ./minio/data:/data
+    command: server /data --console-address ":9001"
+    networks: [mlsd_hw3]
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c '(exec 3<>/dev/tcp/127.0.0.1/9000) >/dev/null 2>&1'"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  createbuckets:
+    image: minio/mc
+    depends_on: [minio]
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}); do
+        echo 'Waiting for minio...'; sleep 2;
+      done;
+      /usr/bin/mc mb -p local/features || true;
+      /usr/bin/mc mb -p local/mlflow-artifacts || true;
+      /usr/bin/mc mb -p local/movielens || true;
+      /usr/bin/mc mb -p local/raw || true;
+      exit 0
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    networks: [mlsd_hw3]
+
+  redis:
+    image: redis
+    container_name: mlsd_hw3_redis
+    ports: ["6379:6379"]
+    networks: [mlsd_hw3]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 20
+      start_period: 2s
+
+  spark-master:
+    build:
+      context: ./spark
+    image: mlsd_hw3_spark:GavrisAS
+    container_name: mlsd_hw3_spark-master
+    hostname: spark-master
+    environment:
+      - SPARK_MODE=master
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
+      - JAVA_TOOL_OPTIONS=-Dlog4j2.disable.jmx=true -Dcom.sun.management.jmxremote=false -XX:-UseContainerSupport
+      - PYSPARK_PYTHON=/usr/bin/python3
+      - PYSPARK_DRIVER_PYTHON=/usr/bin/python3
+      - SPARK_MASTER_PORT=7077
+      - SPARK_MASTER_WEBUI_PORT=8080
+      - SPARK_LOCAL_HOSTNAME=spark-master
+    command: ["/entrypoint.sh", "master"]
+    ports: ["7077:7077", "8080:8080"]
+    networks: [mlsd_hw3]
+    healthcheck:
+      # мастер «жив», когда процесс Master запущен и порт 7077 слушается
+      test: ["CMD-SHELL", "bash -lc 'pgrep -f org.apache.spark.deploy.master.Master >/dev/null && (echo > /dev/tcp/127.0.0.1/7077) >/dev/null 2>&1'"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    depends_on: [minio]
+
+  spark-worker-1:
+    build:
+      context: ./spark
+    image: mlsd_hw3_spark:GavrisAS
+    container_name: mlsd_hw3_spark-worker-1
+    hostname: spark-worker-1
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER=spark://spark-master:7077
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
+      - JAVA_TOOL_OPTIONS=-Dlog4j2.disable.jmx=true -Dcom.sun.management.jmxremote=false -XX:-UseContainerSupport
+      - PYSPARK_PYTHON=/usr/bin/python3
+      - PYSPARK_DRIVER_PYTHON=/usr/bin/python3
+      - SPARK_WORKER_CORES=4
+      - SPARK_WORKER_MEMORY=8g
+      - SPARK_DAEMON_MEMORY=1g
+      - SPARK_WORKER_WEBUI_PORT=8081
+      - SPARK_LOCAL_HOSTNAME=spark-worker-1
+    command: ["/entrypoint.sh", "worker"]
+    ports: ["8081:8081"]
+    networks: [mlsd_hw3]
+    healthcheck:
+      test: ["CMD-SHELL", "bash -lc 'pgrep -f org.apache.spark.deploy.worker.Worker >/dev/null && (echo > /dev/tcp/127.0.0.1/8081) >/dev/null 2>&1'"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    depends_on: [spark-master]
+
+  airflow:
+    build:
+      context: ./airflow
+    image: mlsd_hw3_airflow:GavrisAS
+    container_name: mlsd_hw3_airflow
+    environment:
+      - AIRFLOW_HOME=/opt/airflow
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=false
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
+      - PYSPARK_PYTHON=/usr/bin/python3
+      - PYSPARK_DRIVER_PYTHON=/usr/bin/python3
+      - AIRFLOW__API__AUTH_BACKENDS=airflow.api.auth.backend.session,airflow.api.auth.backend.basic_auth
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW_API_USER=hw3user
+      - AIRFLOW_API_PASS=hw3pass
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER:-minioadmin}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
+      - AWS_S3_ADDRESSING_STYLE=path
+      - AWS_ENDPOINT_URL_S3=http://minio:9000
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+    command: ["bash","-lc","set -e; airflow db migrate; airflow scheduler & exec airflow webserver --port 8080"]
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./spark-jobs:/opt/airflow/spark-jobs
+      - airflow_home:/opt/airflow
+      - ./mlflow:/opt/mlflow
+    ports: ["8088:8080"]
+    networks: [mlsd_hw3]
+    healthcheck:
+      # НЕ ищем конкретный процесс — просто ждём, пока порт 8080 начнёт слушаться
+      test: ["CMD-SHELL", "bash -lc '(exec 3<>/dev/tcp/127.0.0.1/8080) >/dev/null 2>&1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 120
+      start_period: 120s
+    depends_on:
+      - minio
+      - redis
+      - spark-master
+      - spark-worker-1
+      - mlflow
+
+  mlflow:
+    build:
+      context: ./mlflow
+    image: mlsd_hw3_mlflow:GavrisAS
+    container_name: mlsd_hw3_mlflow
+    environment:
+      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER:-minioadmin}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+      # Опционально: какой URI модели сервить (по умолчанию — прод-версия из реестра)
+      - MODEL_URI=${MODEL_URI:-models:/mlsd_hw3_model/Production}
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_REGISTRY_URI=http://mlflow:5000
+    command: ["bash","-lc","/opt/mlflow/entrypoint.sh"]
+    networks: [mlsd_hw3]
+    ports: ["5000:5000", "6000:6000"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -H 'Host: mlflow:5000' http://127.0.0.1:5000/ >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+    volumes:
+      - ./mlflow:/opt/mlflow
+
+networks:
+  mlsd_hw3:
+    driver: bridge
+
+volumes:
+  airflow_home:
+    driver: local

@@ -1,0 +1,35 @@
+version: "1.0"
+created_at: "2025-01-XX"
+author: "multi_pass_review_system"
+description: "Multi-pass code review prompts for Docker, Airflow, Spark, MLflow"
+
+prompts:
+  pass_1_architecture:
+    filename: "pass_1_architecture_overview.md"
+    description: "High-level architecture analysis"
+    created: "2025-01-XX"
+    
+  pass_2_docker:
+    filename: "pass_2_docker_review.md"
+    description: "Detailed Docker/Compose configuration review"
+    created: "2025-01-XX"
+    
+  pass_2_airflow:
+    filename: "pass_2_airflow_review.md"
+    description: "Apache Airflow DAG analysis"
+    created: "2025-01-XX"
+    
+  pass_2_spark:
+    filename: "pass_2_spark_review.md"
+    description: "Spark job performance and correctness review"
+    created: "2025-01-XX"
+    
+  pass_2_mlflow:
+    filename: "pass_2_mlflow_review.md"
+    description: "MLflow integration and MLOps review"
+    created: "2025-01-XX"
+    
+  pass_3_synthesis:
+    filename: "pass_3_synthesis.md"
+    description: "Final synthesis and integration validation"
+    created: "2025-01-XX"

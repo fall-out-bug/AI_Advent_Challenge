@@ -30,6 +30,13 @@
 - [Quick Start](day12/QUICK_START.ru.md) - Quick start guide (Russian)
 - [Deployment](day12/DEPLOYMENT.md) - Deployment instructions
 
+### Day 14 - Multi-Pass Code Review
+- [Multi-Pass Architecture](MULTI_PASS_ARCHITECTURE.md) - 3-pass code review architecture
+- [Component Detection Strategy](COMPONENT_DETECTION_STRATEGY.md) - Component detection algorithms
+- [Context Compression Strategy](CONTEXT_COMPRESSION_STRATEGY.md) - Token optimization strategies
+- [Phase 1 Implementation](PHASE_1_IMPLEMENTATION.md) - Implementation details
+- [MCP Homework Review](MCP_HOMEWORK_REVIEW.md) - Homework review via MCP tools
+
 ### Day 11 - Butler Bot
 - [Quick Start Guide](QUICK_START_DAY11.md) - Butler Bot quick start
 - [Architecture FSM](ARCHITECTURE_FSM.md) - FSM conversation flow architecture
@@ -39,6 +46,12 @@
 - [API Reference](API.md) - Butler Agent API documentation: dialog modes, state machine, use cases
 - [Deployment Guide](DEPLOYMENT.md) - Step-by-step deployment instructions for local, Docker, and production
 - [Contributing Guidelines](../CONTRIBUTING.md#butler-agent-development-guidelines) - Development guidelines for Butler Agent components
+
+### Code Review & Quality
+- [Multi-Pass Architecture](MULTI_PASS_ARCHITECTURE.md) - 3-pass code review system
+- [Component Detection Strategy](COMPONENT_DETECTION_STRATEGY.md) - Component detection
+- [Context Compression Strategy](CONTEXT_COMPRESSION_STRATEGY.md) - Token optimization
+- [Testing Fixtures Guide](TESTING_FIXTURES_GUIDE.md) - Test fixture organization
 
 ### Project History
 - [CHANGELOG.md](../CHANGELOG.md) - Project version history
@@ -53,6 +66,7 @@
 - API Reference: [API_DOCUMENTATION.md](API_DOCUMENTATION.md) (general API) | [API.md](API.md) (Butler Agent API)
 - MCP Integration: [MCP_GUIDE.md](MCP_GUIDE.md)
 - Butler Agent: [API.md](API.md) | [Deployment](DEPLOYMENT.md) | [Contributing](../CONTRIBUTING.md#butler-agent-development-guidelines)
+- **AI Assistant Support**: [AI_CONTEXT.md](../AI_CONTEXT.md) - Complete project context | [.cursorrules](../.cursorrules) - Coding standards
 
 ### For Users
 - Quick start: [README.md](../README.md)

@@ -17,12 +17,13 @@ logger = logging.getLogger(__name__)
 class DialogMode(Enum):
     """Dialog mode enumeration.
 
-    Represents the 4 possible modes for Butler Agent.
+    Represents the 5 possible modes for Butler Agent.
     """
 
     TASK = "task"
     DATA = "data"
     REMINDERS = "reminders"
+    HOMEWORK_REVIEW = "homework_review"
     IDLE = "idle"
 
 
@@ -41,6 +42,7 @@ class ModeClassifier:
 - TASK: User wants to create, update, or manage a task
 - DATA: User wants to get channel digests, student stats, subscriptions list, channel lists, or data summaries
 - REMINDERS: User wants to see or manage reminders
+- HOMEWORK_REVIEW: User wants to review homework (e.g., "сделай ревью {hash}", "покажи домашки")
 - IDLE: General conversation, questions, or unclear intent
 
 Examples:
@@ -48,10 +50,12 @@ Examples:
 - "Список каналов" → DATA
 - "Дайджест по каналу" → DATA
 - "мои подписки" → DATA
+- "Покажи домашки" → HOMEWORK_REVIEW
+- "Сделай ревью abc123" → HOMEWORK_REVIEW
 - "Привет" → IDLE
 - "Создай задачу" → TASK
 
-Respond with ONLY the mode name: TASK, DATA, REMINDERS, or IDLE.
+Respond with ONLY the mode name: TASK, DATA, REMINDERS, HOMEWORK_REVIEW, or IDLE.
 
 Message: {message}"""
 
@@ -104,13 +108,42 @@ Message: {message}"""
         # Fallback: Fast path - check for obvious keywords before LLM call
         message_lower = message.lower()
         
-        # Check for DATA mode keywords (subscriptions, channels, digests, homework)
+        # Check for HOMEWORK_REVIEW mode keywords (review, домашки list)
+        # Priority: Check HOMEWORK_REVIEW FIRST before DATA to avoid conflicts
+        # Patterns for listing commits (not status checks)
+        homework_list_keywords = [
+            "покажи домашки", "покажи домашк", "покажи домашние работы",
+            "show homework", "homework list", "список домашек", "list homework",
+            "домашки", "homework"  # Simple keywords
+        ]
+        # Patterns for review commands
+        homework_review_keywords = [
+            "сделай ревью", "do review", "review", "ревью",
+            "проверь коммит", "check commit", "проверь домашку"
+        ]
+        
+        # Check if message contains homework list keywords (but not status)
+        if any(keyword in message_lower for keyword in homework_list_keywords):
+            # Exclude status-related messages
+            if "статус" not in message_lower and "status" not in message_lower:
+                logger.debug(f"Fast path: classified '{message}' as HOMEWORK_REVIEW (list) based on keywords")
+                return DialogMode.HOMEWORK_REVIEW
+        
+        # Check for review commands
+        # Match "сделай ревью" even if followed by long commit hash
+        if any(keyword in message_lower for keyword in homework_review_keywords):
+            logger.debug(f"Fast path: classified '{message[:100]}...' as HOMEWORK_REVIEW (review) based on keywords")
+            return DialogMode.HOMEWORK_REVIEW
+        
+        # Check for DATA mode keywords (subscriptions, channels, digests, homework status)
+        # Note: "статус домашек" is for status checks, not listing commits
         data_keywords = [
             "подписк", "подпиш", "subscription", "subscribe", "канал", "channels", "список каналов",
             "дайджест", "digest", "мои подписк", "мои каналы",
             "покажи подписк", "покажи канал", "show channels", "list channels",
             "добавь канал", "add channel",
-            "статус домашек", "статус домашк", "status домашек", "homework status", "hw status",
+            "статус проверки домашних", "статус проверки домашк", "статус домашних заданий",
+            "статус домашк", "status домашек", "homework status", "hw status",
             "статус очеред", "queue status", "очередь",
             "перезапусти сабмит", "retry submission", "retry сабмит"
         ]
@@ -165,6 +198,8 @@ Message: {message}"""
             return DialogMode.DATA
         elif intent == IntentType.REMINDERS or intent.name.startswith("REMINDER_"):
             return DialogMode.REMINDERS
+        elif intent.name.startswith("HOMEWORK_") or intent.name.startswith("REVIEW_"):
+            return DialogMode.HOMEWORK_REVIEW
         else:
             return DialogMode.IDLE
 

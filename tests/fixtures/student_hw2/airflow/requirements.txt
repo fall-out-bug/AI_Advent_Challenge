@@ -1,0 +1,4 @@
+apache-airflow-providers-apache-spark==4.8.2
+apache-airflow-providers-redis==3.7.1
+minio==7.2.7
+requests>=2.31.0
