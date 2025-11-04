@@ -5,13 +5,14 @@ Following Python Zen: Simple is better than complex.
 """
 
 import logging
-from typing import Any
+from typing import Any, Optional
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from src.application.orchestration.intent_orchestrator import IntentOrchestrator
 from src.domain.agents.handlers.chat_handler import ChatHandler
 from src.domain.agents.handlers.data_handler import DataHandler
+from src.domain.agents.handlers.homework_handler import HomeworkHandler
 from src.domain.agents.handlers.reminders_handler import RemindersHandler
 from src.domain.agents.handlers.task_handler import TaskHandler
 from src.domain.agents.services.mode_classifier import DialogMode, ModeClassifier
@@ -33,6 +34,7 @@ class ButlerOrchestrator:
         task_handler: Handler for TASK mode
         data_handler: Handler for DATA mode
         reminders_handler: Handler for REMINDERS mode
+        homework_handler: Handler for HOMEWORK_REVIEW mode
         chat_handler: Handler for IDLE mode
         mongodb: MongoDB database for context storage
         context_collection: MongoDB collection for dialog contexts
@@ -44,6 +46,7 @@ class ButlerOrchestrator:
         task_handler: TaskHandler,
         data_handler: DataHandler,
         reminders_handler: RemindersHandler,
+        homework_handler: HomeworkHandler,
         chat_handler: ChatHandler,
         mongodb: AsyncIOMotorDatabase,
     ):
@@ -54,6 +57,7 @@ class ButlerOrchestrator:
             task_handler: Task mode handler
             data_handler: Data mode handler
             reminders_handler: Reminders mode handler
+            homework_handler: Homework review mode handler
             chat_handler: Chat/IDLE mode handler
             mongodb: MongoDB database instance
         """
@@ -61,12 +65,13 @@ class ButlerOrchestrator:
         self.task_handler = task_handler
         self.data_handler = data_handler
         self.reminders_handler = reminders_handler
+        self.homework_handler = homework_handler
         self.chat_handler = chat_handler
         self.mongodb = mongodb
         self.context_collection = mongodb.dialog_contexts
 
     async def handle_user_message(
-        self, user_id: str, message: str, session_id: str
+        self, user_id: str, message: str, session_id: str, force_mode: Optional[DialogMode] = None
     ) -> str:
         """Handle user message - main entry point.
 
@@ -74,6 +79,7 @@ class ButlerOrchestrator:
             user_id: User identifier
             message: User message text
             session_id: Session identifier
+            force_mode: Optional dialog mode to force (bypasses classification)
 
         Returns:
             Response text to send to user
@@ -90,7 +96,11 @@ class ButlerOrchestrator:
         """
         try:
             context = await self._get_or_create_context(user_id, session_id)
-            mode = await self.mode_classifier.classify(message)
+            if force_mode:
+                mode = force_mode
+                logger.debug(f"Using forced mode: {force_mode.value}")
+            else:
+                mode = await self.mode_classifier.classify(message)
             handler = self._get_handler_for_mode(mode)
             response = await handler.handle(context, message)
             await self._save_context(context)
@@ -149,6 +159,7 @@ class ButlerOrchestrator:
             DialogMode.TASK: self.task_handler,
             DialogMode.DATA: self.data_handler,
             DialogMode.REMINDERS: self.reminders_handler,
+            DialogMode.HOMEWORK_REVIEW: self.homework_handler,
             DialogMode.IDLE: self.chat_handler,
         }
         if mode not in handlers:

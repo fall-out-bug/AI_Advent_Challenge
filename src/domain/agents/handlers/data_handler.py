@@ -906,7 +906,7 @@ class DataHandler(Handler):
                 if safe_archive:
                     lines.append(f"   Архив: {safe_archive}")
                 if safe_commit:
-                    lines.append(f"   Коммит: {safe_commit[:16]}...")
+                    lines.append(f"   Коммит: {safe_commit}")
                 if created_at:
                     lines.append(f"   Создан: {created_at}")
                 if updated_at:

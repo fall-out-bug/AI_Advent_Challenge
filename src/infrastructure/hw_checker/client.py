@@ -212,3 +212,72 @@ class HWCheckerClient:
             logger.error(f"Request error checking health: {e}")
             raise
 
+    async def get_recent_commits(
+        self,
+        days: int = 1,
+        assignment: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Get recent commits with submissions from git.
+
+        Args:
+            days: Number of days to look back (default: 1)
+            assignment: Optional assignment filter (e.g., "HW2")
+
+        Returns:
+            Response dictionary with commits list and total count
+
+        Raises:
+            httpx.HTTPError: If HTTP request fails
+        """
+        params = {"days": days}
+        if assignment:
+            params["assignment"] = assignment
+
+        try:
+            response = await self.client.get(
+                f"{self.base_url}/api/recent_commits", params=params
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP error getting recent commits: {e}")
+            raise
+        except httpx.RequestError as e:
+            logger.error(f"Request error getting recent commits: {e}")
+            raise
+
+    async def download_archive(
+        self,
+        commit_hash: str,
+        assignment: Optional[str] = None,
+    ) -> bytes:
+        """Download archive by commit hash.
+
+        Args:
+            commit_hash: Full git commit hash
+            assignment: Optional assignment filter (e.g., "HW2")
+
+        Returns:
+            Archive file content as bytes
+
+        Raises:
+            httpx.HTTPError: If HTTP request fails
+        """
+        params = {}
+        if assignment:
+            params["assignment"] = assignment
+
+        try:
+            response = await self.client.get(
+                f"{self.base_url}/api/archive/{commit_hash}/download",
+                params=params,
+            )
+            response.raise_for_status()
+            return response.content
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP error downloading archive: {e}")
+            raise
+        except httpx.RequestError as e:
+            logger.error(f"Request error downloading archive: {e}")
+            raise
+

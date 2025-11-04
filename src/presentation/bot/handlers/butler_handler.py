@@ -4,13 +4,16 @@ Following Clean Architecture: Presentation layer delegates to domain layer.
 Following Python Zen: Simple is better than complex.
 """
 
+import base64
 import logging
+import re
 from typing import Optional
 
 from aiogram import Router, F
-from aiogram.types import Message
+from aiogram.types import BufferedInputFile, Message
 
 from src.domain.agents.butler_orchestrator import ButlerOrchestrator
+from src.domain.agents.services.mode_classifier import DialogMode
 from src.infrastructure.logging import get_logger
 
 logger = get_logger("butler_handler")
@@ -76,10 +79,25 @@ async def handle_any_message(message: Message) -> None:
     )
 
     try:
+        # Check if message contains commit hash - force HOMEWORK_REVIEW mode
+        commit_hash = _extract_commit_hash(text)
+        force_mode = None
+        if commit_hash:
+            force_mode = DialogMode.HOMEWORK_REVIEW
+            await message.answer("⏳ Начал ревью коммита...")
+        elif _is_review_command(text):
+            # Also check for review keywords without hash (might be partial)
+            force_mode = DialogMode.HOMEWORK_REVIEW
+            await message.answer("⏳ Начал ревью коммита...")
+
         response = await _orchestrator.handle_user_message(
-            user_id=user_id, message=text, session_id=session_id
+            user_id=user_id, message=text, session_id=session_id, force_mode=force_mode
         )
-        await _safe_answer(message, response)
+        # Check if response is a file format: "FILE:<filename>:<content>"
+        if response.startswith("FILE:"):
+            await _handle_file_response(message, response)
+        else:
+            await _safe_answer(message, response)
     except Exception as e:
         logger.error(
             f"Failed to handle message: user_id={user_id}, error={str(e)}",
@@ -131,6 +149,107 @@ async def _safe_answer(message: Message, text: str) -> None:
             await message.answer(
                 "❌ Sorry, I encountered an error sending the response. "
                 "Please try again."
+            )
+        except Exception:
+            logger.error("Failed to send error message", user_id=message.from_user.id)
+
+
+def _extract_commit_hash(message: str) -> Optional[str]:
+    """Extract commit hash from message.
+
+    Args:
+        message: User message text
+
+    Returns:
+        Commit hash if found, None otherwise
+    """
+    # Patterns for commit hash (7-64 hex characters)
+    patterns = [
+        r"(?:сделай|do|make)\s+ревью\s+([a-f0-9]{7,64})",
+        r"ревью\s+([a-f0-9]{7,64})",
+        r"review\s+([a-f0-9]{7,64})",
+        r"проверь\s+коммит\s+([a-f0-9]{7,64})",
+        r"check\s+commit\s+([a-f0-9]{7,64})",
+        # Also match standalone hash if it's very long (likely commit hash)
+        r"\b([a-f0-9]{40,64})\b",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, message, re.IGNORECASE)
+        if match:
+            return match.group(1).strip()
+
+    return None
+
+
+def _is_review_command(message: str) -> bool:
+    """Check if message is a review command.
+
+    Args:
+        message: User message text
+
+    Returns:
+        True if message is a review command
+    """
+    message_lower = message.lower()
+    review_keywords = [
+        "сделай ревью",
+        "do review",
+        "review",
+        "ревью",
+        "проверь коммит",
+        "check commit",
+    ]
+    return any(keyword in message_lower for keyword in review_keywords)
+
+
+async def _handle_file_response(message: Message, file_response: str) -> None:
+    """Handle file response from handler.
+
+    Purpose:
+        Parse FILE: format and send as document.
+
+    Args:
+        message: Telegram message object
+        file_response: Response in format "FILE:<filename>:<content>"
+    """
+    try:
+        # Parse format: FILE:<filename>:<content>
+        if not file_response.startswith("FILE:"):
+            logger.error(f"Invalid file response format: {file_response[:100]}")
+            await message.answer("❌ Ошибка обработки файла.")
+            return
+
+        parts = file_response[5:].split(":", 1)  # Remove "FILE:" prefix
+        if len(parts) != 2:
+            logger.error(f"Invalid file response format: {file_response[:100]}")
+            await message.answer("❌ Ошибка обработки файла.")
+            return
+
+        filename = parts[0]
+        content_b64 = parts[1]
+
+        # Decode base64 content
+        try:
+            content_bytes = base64.b64decode(content_b64)
+        except Exception as e:
+            logger.error(f"Failed to decode base64 content: {e}")
+            await message.answer("❌ Ошибка декодирования файла.")
+            return
+
+        # Send as document
+        document = BufferedInputFile(content_bytes, filename=filename)
+        await message.answer_document(document=document)
+        logger.debug(f"File sent successfully: {filename}, size: {len(content_bytes)} bytes")
+
+    except Exception as e:
+        logger.error(
+            f"Failed to send file: user_id={message.from_user.id}, error={str(e)}",
+            exc_info=True,
+        )
+        try:
+            await message.answer(
+                "❌ Ошибка при отправке файла. Попробуйте позже."
             )
         except Exception:
             logger.error("Failed to send error message", user_id=message.from_user.id)
