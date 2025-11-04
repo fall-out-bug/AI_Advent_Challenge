@@ -6,12 +6,19 @@
 
 ## Overview
 
-This repository contains **12 daily challenges** building AI-powered systems with language models. Each day introduces new concepts and builds upon previous challenges.
+This repository contains daily challenges building AI-powered systems with language models. Each day introduces new concepts and builds upon previous challenges.
 
-**Current Status:** ✅ Day 13 - Butler Agent Refactoring & Hybrid Intent Recognition
+**Current Status:** ✅ Day 14 Complete - Multi-Pass Code Review & MCP Homework Review
+
+**Project Status:**
+- ✅ 14 daily challenges completed
+- ✅ Clean Architecture fully implemented
+- ✅ 400+ tests with 80%+ coverage
+- ✅ Production-ready multi-agent system
+- ✅ Comprehensive documentation for AI assistants
 
 **Key Features:**
-- ✅ 13 daily challenges from simple chat to production-ready Butler Agent
+- ✅ 14 daily challenges from simple chat to production-ready multi-agent systems
 - ✅ Clean Architecture with SOLID principles
 - ✅ 400+ tests with 80%+ coverage
 - ✅ Multi-model support (StarCoder, Mistral, Qwen, TinyLlama)
@@ -20,11 +27,13 @@ This repository contains **12 daily challenges** building AI-powered systems wit
 - ✅ FSM-based Telegram bot with natural language task creation
 - ✅ **Hybrid Intent Recognition** (Rule-based + LLM with caching)
 - ✅ **HW Checker integration** (all_checks_status, queue_status, retry_check)
+- ✅ **Homework Review via Telegram** (list homeworks, review by commit hash)
 - ✅ Channel digests with metadata support (title, description)
 - ✅ PDF digest generation with automatic post collection
 - ✅ Centralized logging system with structured output
 - ✅ Health monitoring and metrics dashboard
 - ✅ Hotreload for development (uvicorn --reload + watchdog)
+- ✅ **Multi-Pass Code Review** (3-pass architecture for homework analysis)
 
 ## Quick Start
 
@@ -78,6 +87,7 @@ AI_Challenge/
 | Day 11 | Butler Bot FSM | Telegram Bot, FSM, Intent Parsing | ✅ Complete |
 | Day 12 | PDF Digest System | MongoDB, PDF Generation, MCP Tools | ✅ Complete |
 | Day 13 | Butler Agent Refactoring | Hybrid Intent Recognition, HW Checker, Metadata | ✅ Complete |
+| Day 14 | Multi-Pass Code Review | MCP Homework Review, 3-Pass Analysis | ✅ Complete |
 
 ## Core Infrastructure
 
@@ -96,11 +106,34 @@ client = ModelClient(provider="perplexity")
 response = await client.chat("Hello, world!")
 ```
 
-## Current Features (Day 13)
+## Docker Compose Files
+
+The project uses multiple docker-compose files for different scenarios:
+
+- **`docker-compose.yml`** - Main/default services (MongoDB, basic setup)
+- **`docker-compose.day11.yml`** - Butler Bot system (Telegram bot, MCP server, Mistral)
+- **`docker-compose.day12.yml`** - Full system with Post Fetcher & PDF Digest (Day 12 features)
+- **`docker-compose.mcp-demo.yml`** - MCP demo services for testing
+
+**Quick Start:**
+```bash
+# Day 12 (current production setup)
+make day-12-up
+
+# Day 11 (Butler Bot only)
+make day-11-up
+
+# MCP Demo
+make mcp-demo-start
+```
+
+## Current Features (Day 14)
 
 **Butler Agent System:**
 - **Hybrid Intent Recognition**: Two-layer architecture (rule-based + LLM fallback) with caching
 - **HW Checker Integration**: Full status monitoring, queue management, and retry functionality
+- **Homework Review**: List recent commits and perform code review via Telegram bot
+- **Multi-Pass Code Review**: 3-pass architecture (Architecture → Component → Synthesis) for comprehensive code analysis
 - **Channel Metadata**: Automatic title and description fetching from Telegram API
 - **Enhanced Digests**: Adaptive summary length based on post count, time-aware prompts
 - **Markdown Escaping**: Safe Telegram message formatting
@@ -132,7 +165,29 @@ python src/workers/post_fetcher_worker.py
 make run-bot
 ```
 
+**Homework Review Commands:**
+- `Покажи домашки` - List recent homework commits with status
+- `Сделай ревью {commit_hash}` - Download archive and perform code review
+- Review results are sent as Markdown files via Telegram
+
+**Day 14 - Multi-Pass Code Review:**
+- 3-pass architecture for comprehensive code analysis
+- Automatic component detection (Airflow, Spark, MLflow, Docker)
+- Technology-specific deep-dive analysis
+- Integration synthesis and recommendations
+- Markdown report generation with haiku summaries
+
 See [docs/day12/USER_GUIDE.md](docs/day12/USER_GUIDE.md) for user guide and [docs/day12/api.md](docs/day12/api.md) for API documentation.
+
+## AI Assistant Support
+
+This repository includes comprehensive documentation for AI-assisted development:
+
+- **[AI_CONTEXT.md](AI_CONTEXT.md)** - Complete project context for AI assistants
+- **[.cursorrules](.cursorrules)** - Coding standards and conventions
+- **[docs/INDEX.md](docs/INDEX.md)** - Organized documentation index
+
+These files help AI coding assistants understand the project structure, patterns, and conventions.
 
 ## Technologies
 

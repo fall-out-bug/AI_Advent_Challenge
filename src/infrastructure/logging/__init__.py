@@ -9,6 +9,9 @@ import sys
 from typing import Optional
 
 from src.infrastructure.config.settings import Settings
+from src.infrastructure.logging.review_logger import ReviewLogger
+
+__all__ = ["get_logger", "ReviewLogger"]
 
 
 def get_logger(name: str, settings: Optional[Settings] = None) -> logging.Logger:
