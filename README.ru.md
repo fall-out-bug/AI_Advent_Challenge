@@ -8,19 +8,20 @@
 
 Этот репозиторий содержит ежедневные задачи по созданию AI-систем с языковыми моделями. Каждый день вводит новые концепции и основывается на предыдущих задачах.
 
-**Текущий статус:** ✅ День 14 завершен - Multi-Pass Code Review & MCP Homework Review
+**Текущий статус:** ✅ День 15 завершен - Самосовершенствующаяся LLM-система с оценкой качества и файнтюнингом
 
 **Статус проекта:**
-- ✅ 14 ежедневных задач завершено
+- ✅ 15 ежедневных задач завершено
 - ✅ Clean Architecture полностью реализована
-- ✅ 400+ тестов с 80%+ покрытием
-- ✅ Production-ready мультиагентная система
+- ✅ 420+ тестов с 80%+ покрытием
+- ✅ Production-ready мультиагентная система с самосовершенствованием
+- ✅ Автоматическая оценка качества и файнтюнинг
 - ✅ Полная документация для AI-ассистентов
 
 **Ключевые возможности:**
-- ✅ 14 ежедневных задач от простого чата до production-ready мультиагентных систем
+- ✅ 15 ежедневных задач от простого чата до самосовершенствующихся AI-систем
 - ✅ Clean Architecture с принципами SOLID
-- ✅ 400+ тестов с 80%+ покрытием
+- ✅ 420+ тестов с 80%+ покрытием
 - ✅ Поддержка множества моделей (StarCoder, Mistral, Qwen, TinyLlama)
 - ✅ Интеграция MCP (Model Context Protocol) с HTTP сервером
 - ✅ MCP-aware агент с автоматическим обнаружением и выполнением инструментов
@@ -34,6 +35,8 @@
 - ✅ Мониторинг работоспособности и метрики dashboard
 - ✅ Hotreload для разработки (uvicorn --reload + watchdog)
 - ✅ **Multi-Pass Code Review** (3-проходная архитектура для анализа домашних работ)
+- ✅ **LLM-as-Judge оценка качества** (автоматическая оценка суммаризаций)
+- ✅ **Самосовершенствующаяся система** (автоматический файнтюнинг на качественных данных)
 
 ## Быстрый старт
 
@@ -62,7 +65,7 @@ AI_Challenge/
 │   ├── application/ # Use cases и orchestrators
 │   ├── infrastructure/ # Внешние интеграции
 │   └── presentation/   # API и CLI
-├── tasks/           # Ежедневные задачи (day_01 - day_14)
+├── tasks/           # Ежедневные задачи (day_01 - day_15)
 ├── local_models/    # Инфраструктура локальных моделей
 ├── shared/          # Унифицированный SDK для взаимодействия с моделями
 ├── scripts/         # Утилитарные скрипты
@@ -88,6 +91,7 @@ AI_Challenge/
 | День 12 | Система PDF-дайджестов | MongoDB, PDF Generation, MCP Tools | ✅ Завершено |
 | День 13 | Рефакторинг Butler Agent | Hybrid Intent Recognition, HW Checker, Metadata | ✅ Завершено |
 | День 14 | Multi-Pass Code Review | MCP Homework Review, 3-проходный анализ | ✅ Завершено |
+| День 15 | Оценка качества и файнтюнинг | LLM-as-Judge, Самосовершенствующаяся система, Hugging Face | ✅ Завершено |
 
 ## Основная инфраструктура
 
@@ -111,23 +115,34 @@ response = await client.chat("Привет, мир!")
 Проект использует несколько docker-compose файлов для разных сценариев:
 
 - **`docker-compose.yml`** - Основные/дефолтные сервисы (MongoDB, базовая настройка)
+- **`docker-compose.butler.yml`** - **Production система** с оценкой качества и файнтюнингом (День 15)
 - **`docker-compose.day11.yml`** - Система Butler Bot (Telegram бот, MCP сервер, Mistral)
-- **`docker-compose.day12.yml`** - Полная система с Post Fetcher & PDF Digest (функции Дня 12)
 - **`docker-compose.mcp-demo.yml`** - Демо-сервисы MCP для тестирования
 
 **Быстрый старт:**
 ```bash
-# День 12 (текущая production настройка)
-make day-12-up
+# Butler (production система с самосовершенствованием)
+make butler-up
 
 # День 11 (только Butler Bot)
 make day-11-up
 
 # MCP Demo
 make mcp-demo-start
+
+# Legacy алиасы (поддерживаются для совместимости)
+make day-12-up  # То же что make butler-up
 ```
 
-## Текущие возможности (День 14)
+## Текущие возможности (День 15)
+
+**Самосовершенствующаяся LLM-система:**
+- **LLM-as-Judge**: Автоматическая оценка качества с использованием Mistral (полнота, точность, связность, информативность)
+- **Автоматический файнтюнинг**: Самосовершенствование путем обучения на качественных образцах (триггер при 100+ образцах)
+- **Асинхронная оценка**: Паттерн fire-and-forget, не блокирует основной поток
+- **Расширяемая архитектура**: Поддержка различных типов задач файнтюнинга (суммаризация, классификация, Q&A)
+- **ML в Docker**: Полная интеграция Hugging Face Transformers в контейнерах
+- **Управление датасетами**: Автоматический экспорт JSONL для файнтюнинга
 
 **Система Butler Agent:**
 - **Гибридное распознавание намерений**: Двухслойная архитектура (правила + LLM fallback) с кешированием
@@ -181,11 +196,11 @@ make mcp-demo-start
 
 **Основные**: Python 3.10+, Poetry, Docker, FastAPI, Pydantic, pytest
 
-**AI/ML**: HuggingFace Transformers, NVIDIA CUDA, 4-bit Quantization, Локальные модели
+**AI/ML**: HuggingFace Transformers, PyTorch, NVIDIA CUDA, 4-bit Quantization, Локальные модели, Файнтюнинг
 
-**Архитектура**: Clean Architecture, Domain-Driven Design, SOLID принципы
+**Архитектура**: Clean Architecture, Domain-Driven Design, SOLID принципы, LLM-as-Judge паттерн
 
-**Инфраструктура**: Traefik, NVIDIA Container Toolkit, Multi-stage Docker builds
+**Инфраструктура**: Traefik, NVIDIA Container Toolkit, Multi-stage Docker builds, MongoDB, Prometheus
 
 ## Документация
 
@@ -198,7 +213,12 @@ make mcp-demo-start
 - [MONITORING.md](docs/MONITORING.md) - Настройка мониторинга и Grafana дашборды
 - [SECURITY.md](docs/SECURITY.md) - Политики безопасности и практики
 
-Документация Дня 12:
+Документация День 15 (текущая):
+- [Руководство по оценке качества и файнтюнингу](docs/day15/README.md)
+- [API Документация](docs/day15/api.md)
+- [Миграция с Дня 12](docs/day15/MIGRATION_FROM_DAY12.md)
+
+Документация День 12:
 - [Руководство пользователя PDF-дайджестов](docs/day12/USER_GUIDE.md)
 - [API PDF-дайджестов](docs/day12/api.md)
 - [Архитектура PDF-дайджестов](docs/day12/ARCHITECTURE.md)
@@ -209,7 +229,7 @@ make mcp-demo-start
 
 ```bash
 # Запустить стек мониторинга (Prometheus + Grafana)
-docker-compose -f docker-compose.day12.yml up -d prometheus grafana
+docker-compose -f docker-compose.butler.yml up -d prometheus grafana
 
 # Доступ к Grafana: http://localhost:3000 (admin/admin)
 # Доступ к Prometheus: http://localhost:9090
@@ -219,6 +239,7 @@ docker-compose -f docker-compose.day12.yml up -d prometheus grafana
 1. **App Health** - Системные ресурсы, HTTP метрики, latency, доступность
 2. **ML Service Metrics** - LLM inference latency, использование токенов, версионирование моделей
 3. **Post Fetcher & PDF Metrics** - Метрики сбора постов и генерации PDF
+4. **Quality Assessment Metrics** - Оценки качества, запуски файнтюнинга, рост датасета
 
 См. [MONITORING.md](docs/MONITORING.md) для подробной настройки.
 
