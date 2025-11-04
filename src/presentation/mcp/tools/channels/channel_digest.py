@@ -14,8 +14,13 @@ from src.presentation.mcp.tools.channels.utils import get_database
 from src.infrastructure.repositories.post_repository import PostRepository
 from src.infrastructure.logging import get_logger
 from src.infrastructure.config.settings import get_settings
+from src.infrastructure.di.factories import (
+    create_channel_digest_by_name_use_case,
+    create_channel_digest_use_case,
+)
 
 logger = get_logger("channel_digest")
+_settings = get_settings()
 
 
 async def _normalize_post_dates(posts: List[dict]) -> List[dict]:
@@ -306,6 +311,44 @@ async def get_channel_digest_by_name(
         }
         await db.channels.insert_one(channel_doc)
     
+    # Check feature flag for new summarization (after channel resolution)
+    if _settings.use_new_summarization:
+        try:
+            logger.info(f"Using new summarization system for channel digest by name: user_id={user_id}, channel={channel_username}, hours={hours}")
+            use_case = create_channel_digest_by_name_use_case()
+            result = await use_case.execute(
+                user_id=user_id,
+                channel_username=channel_username,
+                hours=hours,
+            )
+            
+            # Convert to expected format (backward compatibility)
+            return {
+                "digests": [{
+                    "channel": result.channel_username,
+                    "summary": result.summary.text,
+                    "post_count": result.post_count,
+                    "tags": result.tags,
+                    "channel_title": result.channel_title,
+                }],
+                "channel": result.channel_username,
+                "generated_at": result.generated_at.isoformat(),
+                "_metadata": {
+                    "method": "new",
+                    "summary_method": result.summary.method,
+                    "confidence": result.summary.confidence,
+                },
+            }
+        except Exception as e:
+            logger.error(
+                f"Error in new summarization, falling back to old: user_id={user_id}, channel={channel_username}, error={str(e)}",
+                exc_info=True,
+            )
+            # Fall through to old implementation
+    
+    # Old implementation (fallback or feature flag disabled)
+    logger.debug(f"Using old summarization system: user_id={user_id}, channel={channel_username}, hours={hours}")
+    
     # Get posts for this channel
     repository = PostRepository(db)
     
@@ -537,15 +580,51 @@ async def get_channel_digest_by_name(
 async def get_channel_digest(user_id: int, hours: int = 24) -> Dict[str, Any]:
     """Generate digest from subscribed channels.
 
-    Reads posts from MongoDB and generates summaries per channel.
-    
+    Purpose:
+        Generates digests for all user's active channels using new or old summarization system.
+
     Args:
         user_id: Telegram user ID
         hours: Hours to look back (default 24)
 
     Returns:
-        Dict with digests list
+        Dict with digests list and metadata.
     """
+    # Check feature flag
+    if _settings.use_new_summarization:
+        try:
+            logger.info(f"Using new summarization system for channel digest: user_id={user_id}, hours={hours}")
+            use_case = create_channel_digest_use_case()
+            result = await use_case.execute(user_id=user_id, hours=hours)
+            
+            # Convert to expected format (backward compatibility)
+            digests = []
+            for digest in result:
+                digests.append({
+                    "channel": digest.channel_username,
+                    "summary": digest.summary.text,
+                    "post_count": digest.post_count,
+                    "tags": digest.tags,
+                    "channel_title": digest.channel_title,
+                })
+            
+            return {
+                "digests": digests,
+                "generated_at": datetime.utcnow().isoformat(),
+                "_metadata": {
+                    "method": "new",
+                    "total_channels": len(digests),
+                },
+            }
+        except Exception as e:
+            logger.error(
+                f"Error in new summarization, falling back to old: user_id={user_id}, error={str(e)}",
+                exc_info=True,
+            )
+            # Fall through to old implementation
+    
+    # Old implementation (fallback or feature flag disabled)
+    logger.debug(f"Using old summarization system: user_id={user_id}, hours={hours}")
     db = await get_database()
     repository = PostRepository(db)
     channels = await db.channels.find({"user_id": user_id, "active": True}).to_list(length=100)
@@ -553,9 +632,9 @@ async def get_channel_digest(user_id: int, hours: int = 24) -> Dict[str, Any]:
     
     try:
         all_posts = await repository.get_posts_by_user_subscriptions(user_id, hours=hours)
-        logger.debug("Retrieved posts from MongoDB", user_id=user_id, post_count=len(all_posts))
+        logger.debug(f"Retrieved posts from MongoDB: user_id={user_id}, post_count={len(all_posts)}")
     except Exception as e:
-        logger.error("Error retrieving posts", user_id=user_id, error=str(e), exc_info=True)
+        logger.error(f"Error retrieving posts: user_id={user_id}, error={str(e)}", exc_info=True)
         return {"digests": [], "generated_at": datetime.utcnow().isoformat()}
     
     # Group posts by channel
@@ -590,7 +669,7 @@ async def get_channel_digest(user_id: int, hours: int = 24) -> Dict[str, Any]:
                 {"$set": {"last_digest": datetime.utcnow().isoformat()}}
             )
         except Exception as e:
-            logger.error("Error processing channel", channel=channel_name, error=str(e), exc_info=True)
+            logger.error(f"Error processing channel: channel={channel_name}, error={str(e)}", exc_info=True)
 
     return {"digests": digests, "generated_at": datetime.utcnow().isoformat()}
 

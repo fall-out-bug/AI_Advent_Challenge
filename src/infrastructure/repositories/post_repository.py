@@ -164,7 +164,7 @@ class PostRepository:
             List of post dictionaries
         """
         query = {"channel_username": channel_username, "date": {"$gte": since}}
-        cursor = self._db.posts.find(query).sort("date", -1)
+        cursor = self._db.posts.find(query).sort("date", 1)  # Sort from old to new
         posts = await cursor.to_list(length=1000)
 
         for post in posts:

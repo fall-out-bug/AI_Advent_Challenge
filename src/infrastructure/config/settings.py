@@ -47,7 +47,47 @@ class Settings(BaseSettings):
     # Digest summarization settings
     digest_summary_sentences: int = Field(default=8, description="Number of sentences per channel in digest")
     digest_max_channels: int = Field(default=10, description="Maximum channels to show in digest")
-    digest_summary_max_chars: int = Field(default=3900, description="Maximum characters per channel summary (Telegram limit is 4096)")
+    digest_summary_max_chars: int = Field(default=1500, description="Maximum characters per channel summary (Telegram limit is 4096)")
+    
+    # Evaluation settings
+    enable_quality_evaluation: bool = Field(
+        default=True,
+        description="Enable automatic quality evaluation of summaries"
+    )
+    evaluation_min_score_for_dataset: float = Field(
+        default=0.7,
+        description="Minimum score to include in fine-tuning dataset"
+    )
+    
+    # Fine-tuning settings
+    enable_auto_finetuning: bool = Field(
+        default=True,
+        description="Enable automatic fine-tuning when threshold reached"
+    )
+    finetuning_min_samples: int = Field(
+        default=100,
+        description="Minimum number of high-quality samples to trigger fine-tuning"
+    )
+    finetuning_model_output_dir: str = Field(
+        default="/models/fine_tuned",
+        description="Base directory for storing fine-tuned models"
+    )
+    finetuning_base_model: str = Field(
+        default="mistralai/Mistral-7B-Instruct-v0.2",
+        description="Base model name for fine-tuning"
+    )
+    finetuning_num_epochs: int = Field(
+        default=3,
+        description="Number of training epochs"
+    )
+    finetuning_batch_size: int = Field(
+        default=4,
+        description="Training batch size"
+    )
+    finetuning_learning_rate: float = Field(
+        default=2e-5,
+        description="Learning rate for fine-tuning"
+    )
     summarizer_language: str = Field(default="ru", description="Language for summaries (ru/en)")
     summarizer_temperature: float = Field(default=0.5, description="Temperature for summarization (higher = more creative)")
     summarizer_max_tokens: int = Field(default=2000, description="Max tokens for summarization (more = longer summaries)")
@@ -93,6 +133,11 @@ class Settings(BaseSettings):
     intent_llm_timeout_seconds: float = Field(
         default=5.0,
         description="Timeout in seconds for LLM intent classification requests"
+    )
+    # Feature flags
+    use_new_summarization: bool = Field(
+        default=False,
+        description="Use refactored summarization system (Phase 6 migration)"
     )
 
     @field_validator("post_fetch_interval_hours")
