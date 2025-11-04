@@ -93,11 +93,25 @@ services:
       - TELEGRAM_API_ID=${TELEGRAM_API_ID}
       - TELEGRAM_API_HASH=${TELEGRAM_API_HASH}
       - TELEGRAM_SESSION_STRING=${TELEGRAM_SESSION_STRING}
+      # Evaluation and fine-tuning settings
+      - ENABLE_QUALITY_EVALUATION=${ENABLE_QUALITY_EVALUATION:-true}
+      - EVALUATION_MIN_SCORE_FOR_DATASET=${EVALUATION_MIN_SCORE_FOR_DATASET:-0.7}
+      - ENABLE_AUTO_FINETUNING=${ENABLE_AUTO_FINETUNING:-true}
+      - FINETUNING_MIN_SAMPLES=${FINETUNING_MIN_SAMPLES:-100}
+      - FINETUNING_MODEL_OUTPUT_DIR=/models/fine_tuned
+      - FINETUNING_BASE_MODEL=${FINETUNING_BASE_MODEL:-mistralai/Mistral-7B-Instruct-v0.2}
+      - FINETUNING_NUM_EPOCHS=${FINETUNING_NUM_EPOCHS:-3}
+      - FINETUNING_BATCH_SIZE=${FINETUNING_BATCH_SIZE:-4}
+      - FINETUNING_LEARNING_RATE=${FINETUNING_LEARNING_RATE:-2e-5}
     ports:
       - "8004:8004"
     volumes:
       # Mount Pyrogram session directory (created by init_pyrogram.py)
       - ./sessions:/app/sessions:rw
+      # Mount models directory for fine-tuned models
+      - ./models:/models/fine_tuned:rw
+      # Mount data directory for datasets
+      - ./data:/app/data:rw
       # Source code volumes for hotreload (can be overridden by dev compose)
       # - ./src:/app/src:ro  # Uncomment for development hotreload
       # - ./shared:/app/shared:ro  # Uncomment for development hotreload
