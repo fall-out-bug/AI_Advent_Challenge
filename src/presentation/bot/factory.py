@@ -17,6 +17,7 @@ from src.application.usecases.create_task_usecase import CreateTaskUseCase
 from src.domain.agents.butler_orchestrator import ButlerOrchestrator
 from src.domain.agents.handlers.chat_handler import ChatHandler
 from src.domain.agents.handlers.data_handler import DataHandler
+from src.domain.agents.handlers.homework_handler import HomeworkHandler
 from src.domain.agents.handlers.reminders_handler import RemindersHandler
 from src.domain.agents.handlers.task_handler import TaskHandler
 from src.domain.agents.services.mode_classifier import ModeClassifier
@@ -157,6 +158,10 @@ async def create_butler_orchestrator(
             tool_client=tool_client,
             hybrid_classifier=hybrid_intent_classifier,
         )
+        homework_handler = HomeworkHandler(
+            hw_checker_client=hw_checker_client,
+            tool_client=tool_client,
+        )
         chat_handler = ChatHandler(
             llm_client=llm_client,
             default_model="mistral",
@@ -170,6 +175,7 @@ async def create_butler_orchestrator(
             task_handler=task_handler,
             data_handler=data_handler,
             reminders_handler=reminders_handler,
+            homework_handler=homework_handler,
             chat_handler=chat_handler,
             mongodb=mongodb,
         )

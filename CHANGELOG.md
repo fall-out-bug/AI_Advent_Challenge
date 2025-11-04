@@ -5,6 +5,35 @@ All notable changes to the AI Challenge project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Day 14] - 2025-11-04
+
+### Added
+- Multi-Pass Code Review system with 3-pass architecture:
+  - **Pass 1: Architecture Overview** - Detects project structure and components
+  - **Pass 2: Component Deep-Dive** - Per-component technology-specific analysis
+  - **Pass 3: Synthesis** - Integration analysis and recommendations
+- Automatic component detection (Airflow, Spark, MLflow, Docker, generic)
+- Technology-specific review passes with specialized prompts
+- Comprehensive markdown report generation with haiku summaries
+- Homework review integration via Telegram bot (`homework_review_tool`)
+- Session-based state management for multi-pass reviews
+- Review logger for detailed review process tracking
+- Code quality checker integration (flake8, pylint, mypy, black, isort)
+- Test fixture optimization (reduced from 100 to 15 files for large_project)
+- AI assistant documentation:
+  - `AI_CONTEXT.md` - Comprehensive project context for AI assistants
+  - `.cursorrules` - Coding standards and conventions
+- Docker compose file cleanup (removed outdated files)
+
+### Changed
+- Updated README.md with Day 14 completion status and docker-compose clarifications
+- Enhanced homework review workflow with multi-pass analysis
+- Improved report generation with structured findings and metadata
+
+### Fixed
+- Session file restoration from TELEGRAM_SESSION_STRING environment variable
+- Test fixture reduction to optimize repository size
+
 ## [Unreleased]
 
 ### Added

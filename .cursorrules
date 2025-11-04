@@ -1,0 +1,185 @@
+# AI Challenge Project Rules
+
+## Architecture Principles
+
+This project follows **Clean Architecture** with **Domain-Driven Design** principles:
+- **Domain Layer** (`src/domain/`): Pure business logic, no external dependencies
+- **Application Layer** (`src/application/`): Use cases and orchestration
+- **Infrastructure Layer** (`src/infrastructure/`): External integrations (DB, APIs, clients)
+- **Presentation Layer** (`src/presentation/`): API, CLI, bot handlers
+
+**Never** import from outer layers to inner layers. Domain should be completely isolated.
+
+## Code Style
+
+### Python Standards
+- **PEP 8** compliance
+- **Type hints** required for all functions (100% coverage)
+- **Docstrings** required for all public functions/classes (English)
+- **Line length**: 88 characters (Black default)
+- **Functions**: Maximum 15 lines where possible
+- **One responsibility per function/method**
+
+### Docstring Format
+```python
+def function_name(param: type) -> return_type:
+    """Brief description.
+
+    Purpose:
+        Detailed explanation of what the function does.
+
+    Args:
+        param: Parameter description.
+
+    Returns:
+        Return value description.
+
+    Raises:
+        ExceptionType: When this exception is raised.
+
+    Example:
+        >>> result = function_name("example")
+        >>> result
+        'expected_output'
+    """
+```
+
+### Import Organization
+1. Standard library
+2. Third-party packages
+3. Local application (`src/`)
+4. Shared package (`shared/`)
+
+### Naming Conventions
+- **Functions/Methods**: `snake_case`
+- **Classes**: `PascalCase`
+- **Constants**: `UPPER_SNAKE_CASE`
+- **Private**: `_leading_underscore`
+
+## Testing Requirements
+
+### TDD Rules
+- **Write tests first** (red-green-refactor)
+- **Test coverage**: Minimum 80% (enforced by CI)
+- **Test location**: `tests/` folder, mirroring `src/` structure
+- **Test naming**: `test_*.py` files, `test_*` functions
+- **Testing framework**: pytest with pytest-asyncio for async
+
+### Test Structure
+```python
+def test_function_name():
+    """Test description."""
+    # Arrange
+    # Act
+    # Assert
+```
+
+## Clean Code Practices
+
+### Function Design
+- **Single Responsibility Principle**: One function = one purpose
+- **Explicit over implicit**: Clear variable names, no magic numbers
+- **Composition over inheritance**: Prefer composition
+- **Remove dead code**: No unused imports, print statements, or commented code
+
+### Error Handling
+- Use specific exceptions, not bare `except:`
+- Log errors with context
+- Fail fast with clear error messages
+
+### Code Organization
+- **File size**: If >150 lines, consider splitting into submodules
+- **Module structure**: One class per file (unless tightly coupled)
+- **Keep related code together**: Group related functions/classes
+
+## Project-Specific Patterns
+
+### Async/Await
+- Use `async/await` for all I/O operations
+- Use `asyncio.gather()` for parallel operations
+- Handle timeouts appropriately
+
+### Dependency Injection
+- Use constructor injection for dependencies
+- Pass interfaces, not concrete implementations
+- Use dependency injection containers where appropriate
+
+### Logging
+- Use structured logging: `logger.info("message", extra={"key": "value"})`
+- Log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+- Never log sensitive data (API keys, passwords, tokens)
+
+### Configuration
+- Use environment variables via `.env` file
+- Use `pydantic-settings` for type-safe config
+- Never hardcode secrets or API keys
+
+## AI Coding Assistant Guidelines
+
+### When Making Changes
+1. **Read existing code first** - understand the pattern
+2. **Follow the architecture** - don't break layer boundaries
+3. **Write tests** - no code without tests
+4. **Update documentation** - README.md for API changes
+5. **Check linting** - run `make lint` before committing
+
+### When Refactoring
+1. **Keep tests passing** - refactor tests alongside code
+2. **Maintain interfaces** - don't break existing contracts
+3. **Document changes** - update docstrings and README
+
+### When Adding Features
+1. **Start with domain** - define entities and value objects
+2. **Add use cases** - application layer orchestration
+3. **Implement infrastructure** - adapters for external services
+4. **Add presentation** - API endpoints or bot handlers
+5. **Write tests** - unit, integration, and E2E tests
+
+## Common Patterns
+
+### MCP Tools
+- Use `@mcp.tool()` decorator for MCP tools
+- Follow FastMCP patterns from `src/presentation/mcp/`
+- Validate inputs with Pydantic models
+
+### Telegram Bot
+- Use FSM (Finite State Machine) for dialog flows
+- Handle errors gracefully with user-friendly messages
+- Escape Markdown for Telegram compatibility
+
+### Multi-Pass Code Review
+- Architecture pass → Component pass → Synthesis pass
+- Use session manager for state persistence
+- Generate detailed markdown reports
+
+## File Structure
+```
+src/
+├── domain/          # Business logic (pure Python)
+├── application/     # Use cases
+├── infrastructure/  # External integrations
+└── presentation/    # API, CLI, bot
+
+tests/
+├── unit/           # Unit tests
+├── integration/    # Integration tests
+└── e2e/            # End-to-end tests
+```
+
+## Tools & Commands
+- `make test` - Run all tests
+- `make lint` - Run linters
+- `make format` - Format code with Black
+- `make coverage` - Run tests with coverage report
+- `make day-12-up` - Start Day 12 services (current)
+- `make day-11-up` - Start Day 11 services
+
+## Prohibited Practices
+- ❌ No magic numbers (use named constants)
+- ❌ No hardcoded secrets or API keys
+- ❌ No imports from outer to inner layers
+- ❌ No functions without type hints
+- ❌ No public functions without docstrings
+- ❌ No code without tests
+- ❌ No `print()` statements (use logging)
+

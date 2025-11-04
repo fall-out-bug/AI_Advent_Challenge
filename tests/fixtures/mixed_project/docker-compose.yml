@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  spark-master:
+    image: bitnami/spark:latest
+    environment:
+      - SPARK_MODE=master
+    ports:
+      - "8080:8080"
+
+  spark-worker:
+    image: bitnami/spark:latest
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+
+  airflow:
+    image: apache/airflow:2.7.0
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+    ports:
+      - "8080:8080"
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.8.1
+    command: mlflow server --host 0.0.0.0 --port 5000
+    ports:
+      - "5000:5000"
+
