@@ -12,10 +12,14 @@ COPY pyproject.toml poetry.lock* ./
 
 # Install dependencies using poetry with cache
 # Single source of truth: dependencies come from pyproject.toml
-# Include optional fine-tuning dependencies
+# Include optional fine-tuning dependencies with retry for network issues
 RUN --mount=type=cache,target=/root/.cache/pypoetry \
     poetry config virtualenvs.create false && \
-    poetry install --without dev --no-root --no-interaction --no-ansi --extras "finetuning"
+    (poetry install --without dev --no-root --no-interaction --no-ansi --extras "finetuning" || \
+     (echo "First attempt failed, retrying..." && sleep 5 && \
+      poetry install --without dev --no-root --no-interaction --no-ansi --extras "finetuning") || \
+     (echo "Second attempt failed, retrying..." && sleep 10 && \
+      poetry install --without dev --no-root --no-interaction --no-ansi --extras "finetuning"))
 
 # Final stage
 FROM python:3.11-slim

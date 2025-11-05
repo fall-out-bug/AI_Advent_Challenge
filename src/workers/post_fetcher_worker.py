@@ -180,6 +180,7 @@ class PostFetcherWorker:
 
         Purpose:
             Fetch posts from channel, save to database, update last_fetch timestamp.
+            Ensures channel_username is valid (not a title) by fetching metadata if needed.
 
         Args:
             channel: Channel document from MongoDB
@@ -191,19 +192,78 @@ class PostFetcherWorker:
         Raises:
             Exception: If channel processing fails
         """
-        channel_username = channel["channel_username"]
-        user_id = channel["user_id"]
+        channel_username = channel.get("channel_username", "")
+        user_id = channel.get("user_id")
+        
+        # Validate channel_username: ensure it's a valid username (not a title)
+        # If channel_username looks like a title (contains Cyrillic, spaces, etc.), 
+        # fetch metadata to get the real username
+        if not channel_username or self._looks_like_title(channel_username):
+            logger.warning(
+                f"Channel username looks like a title: '{channel_username}', "
+                f"fetching metadata to get real username"
+            )
+            try:
+                from src.presentation.mcp.tools.channels.channel_metadata import get_channel_metadata
+                metadata = await get_channel_metadata(channel_username, user_id=user_id)
+                if metadata.get("success") and metadata.get("channel_username"):
+                    # Update channel document with correct username
+                    correct_username = metadata["channel_username"]
+                    if correct_username != channel_username:
+                        await db.channels.update_one(
+                            {"_id": channel["_id"]},
+                            {"$set": {"channel_username": correct_username}}
+                        )
+                        logger.info(
+                            f"Updated channel username in database: "
+                            f"from '{channel_username}' to '{correct_username}'"
+                        )
+                        channel_username = correct_username
+                        channel["channel_username"] = correct_username
+                else:
+                    # Metadata fetch failed or didn't return username
+                    # Skip this channel to avoid errors in fetch_channel_posts
+                    logger.error(
+                        f"Cannot process channel with title-like username '{channel_username}': "
+                        f"failed to get correct username from metadata. "
+                        f"Metadata result: success={metadata.get('success')}, "
+                        f"username={metadata.get('channel_username')}"
+                    )
+                    raise ValueError(
+                        f"Channel username '{channel_username}' looks like a title "
+                        f"but metadata fetch failed or returned no username. "
+                        f"Please update channel_username in database manually."
+                    )
+            except ValueError:
+                # Re-raise ValueError (our own validation error)
+                raise
+            except Exception as e:
+                # For other exceptions, also skip the channel
+                logger.error(
+                    f"Failed to fetch metadata for channel '{channel_username}': {e}. "
+                    f"Skipping channel to avoid errors in fetch_channel_posts."
+                )
+                raise ValueError(
+                    f"Failed to resolve title-like username '{channel_username}': {e}"
+                )
         
         # Determine since timestamp
-        # Always fetch posts from last 24 hours (or configured interval)
-        # This ensures we don't miss posts even if worker was down
-        lookback_hours = max(self.settings.post_fetch_interval_hours, 24)  # At least 24 hours
-        since = datetime.utcnow() - timedelta(hours=lookback_hours)
-        
-        # Optionally, if last_fetch is recent and we want to avoid duplicates,
-        # we could use last_fetch, but ensure we still cover at least 24 hours
+        # For first fetch or if channel was never fetched, use 7 days lookback
+        # For regular fetches, use configured interval (at least 24 hours)
         last_fetch = channel.get("last_fetch")
-        if last_fetch:
+        
+        if not last_fetch:
+            # First fetch: get posts from last 7 days to ensure we don't miss anything
+            lookback_hours = 7 * 24  # 168 hours (7 days)
+            since = datetime.utcnow() - timedelta(hours=lookback_hours)
+            logger.info(
+                f"First fetch for channel {channel_username}: collecting posts from last 7 days"
+            )
+        else:
+            # Regular fetch: use configured interval, but at least 24 hours
+            lookback_hours = max(self.settings.post_fetch_interval_hours, 24)
+            since = datetime.utcnow() - timedelta(hours=lookback_hours)
+            
             try:
                 if isinstance(last_fetch, str):
                     last_fetch_dt = datetime.fromisoformat(last_fetch.replace("Z", "+00:00"))
@@ -217,9 +277,23 @@ class PostFetcherWorker:
                     # If last fetch was recent, use it to avoid duplicates
                     # But still ensure we get at least 24 hours of posts
                     since = max(last_fetch_dt, since)
+                elif hours_since_last_fetch > 7 * 24:
+                    # If worker was down for more than 7 days, extend lookback to 7 days
+                    # to ensure we don't miss posts
+                    lookback_hours = 7 * 24
+                    since = datetime.utcnow() - timedelta(hours=lookback_hours)
+                    logger.warning(
+                        f"Worker was down for {hours_since_last_fetch:.1f} hours, "
+                        f"extending lookback to 7 days for channel {channel_username}"
+                    )
             except (ValueError, AttributeError):
-                # If last_fetch parsing fails, use lookback window
-                pass
+                # If last_fetch parsing fails, use extended lookback window (7 days)
+                lookback_hours = 7 * 24
+                since = datetime.utcnow() - timedelta(hours=lookback_hours)
+                logger.warning(
+                    f"Failed to parse last_fetch for channel {channel_username}, "
+                    f"using 7-day lookback"
+                )
         
         logger.debug(
             f"Processing channel: channel={channel_username}, user_id={user_id}, "
@@ -233,6 +307,13 @@ class PostFetcherWorker:
             user_id=user_id,
             save_to_db=True  # Automatically save via repository
         )
+        
+        # Log if no posts found (might be normal if channel doesn't exist or has no posts)
+        if not posts:
+            logger.debug(
+                f"No posts found for channel: channel={channel_username}, "
+                f"since={since.isoformat()}"
+            )
         
         # Save posts via MCP tool for statistics
         result = {"saved": 0, "skipped": 0}
@@ -266,6 +347,38 @@ class PostFetcherWorker:
         )
         
         return result
+
+    def _looks_like_title(self, text: str) -> bool:
+        """Check if text looks like a channel title rather than username.
+        
+        Purpose:
+            Detect if channel_username is actually a title (e.g., "Набока") 
+            instead of a username (e.g., "onaboka").
+        
+        Args:
+            text: Text to check
+            
+        Returns:
+            True if text looks like a title (contains Cyrillic, spaces, etc.)
+        """
+        if not text:
+            return True
+        
+        # Usernames are typically lowercase ASCII letters, numbers, underscores
+        # They don't contain spaces, Cyrillic, or special characters
+        has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in text)
+        has_spaces = ' ' in text
+        has_uppercase = any(c.isupper() for c in text if c.isalpha())
+        
+        # If contains Cyrillic, spaces, or uppercase (and not all uppercase), it's likely a title
+        if has_cyrillic or has_spaces:
+            return True
+        
+        # If has uppercase letters in the middle (not just at start), might be a title
+        if has_uppercase and not (text[0].isupper() and text[1:].islower()):
+            return True
+        
+        return False
 
     async def _handle_channel_error(self, channel: dict, error: Exception) -> None:
         """Handle error during channel processing.

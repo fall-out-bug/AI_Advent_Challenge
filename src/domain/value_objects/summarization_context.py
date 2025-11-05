@@ -20,6 +20,8 @@ class SummarizationContext:
         max_chars: Maximum characters for summary (soft limit, not hard truncation).
         language: Language for summary ("ru" | "en").
         max_sentences: Maximum number of sentences (soft limit).
+        channel_username: Channel username for channel-specific summarization.
+        channel_title: Channel title for better context.
         user_preferences: User-specific preferences.
         additional_metadata: Additional contextual metadata.
     """
@@ -29,6 +31,8 @@ class SummarizationContext:
     max_chars: int | None = None
     language: str = "ru"
     max_sentences: int | None = None
+    channel_username: str | None = None
+    channel_title: str | None = None
     user_preferences: dict[str, Any] = field(default_factory=dict)
     additional_metadata: dict[str, Any] = field(default_factory=dict)
 

@@ -42,9 +42,13 @@ def get_map_prompt(text: str, language: Literal["ru", "en"], max_sentences: int 
             f"ФРАГМЕНТ:\n{text}\n\nКЛЮЧЕВЫЕ ФАКТЫ:"
         )
     return (
-        f"Summarize the following text fragment in {max_sentences} sentences. "
-        f"Focus on key facts, no repetition, no markdown, NO JSON.\n\n"
+        f"Summarize the following text fragment from ONE Telegram channel in {max_sentences} sentences.\n\n"
         f"CRITICAL:\n"
+        f"- This fragment contains posts from ONLY one channel\n"
+        f"- Do NOT mix information from other channels or sources\n"
+        f"- Extract facts ONLY from this fragment\n\n"
+        f"Requirements:\n"
+        f"- Focus on key facts, no repetition, no markdown, NO JSON\n"
         f"- Return ONLY plain text sentences\n"
         f"- NO JSON, NO structured data (no {{}}, [], quotes for JSON)\n"
         f"- NO Markdown (* _ ` [ ] ( ))\n"
@@ -56,7 +60,7 @@ def get_map_prompt(text: str, language: Literal["ru", "en"], max_sentences: int 
         f"1. OpenAI released GPT-4\n"
         f"{{'summary': 'GPT-4 released'}}\n"
         f"*OpenAI* released **GPT-4**\n\n"
-        f"FRAGMENT:\n{text}\n\nKEY FACTS:"
+        f"FRAGMENT (one channel):\n{text}\n\nKEY FACTS:"
     )
 
 
@@ -77,16 +81,23 @@ def get_reduce_prompt(summaries: str, language: Literal["ru", "en"], max_sentenc
     """
     if language == "ru":
         return (
-            f"Перед тобой несколько суммаризаций фрагментов одного Telegram-канала.\n\n"
-            f"ЗАДАЧА: Объедини их в {max_sentences} итоговых предложений, описывающих главные темы канала. "
-            f"Избегай повторов. Каждый пункт — уникальная мысль. Только текст, без нумерации и Markdown.\n\n"
+            f"Перед тобой несколько суммаризаций фрагментов ОДНОГО Telegram-канала.\n\n"
             f"КРИТИЧЕСКИ ВАЖНО:\n"
+            f"- Все эти суммаризации из ОДНОГО канала\n"
+            f"- НЕ смешивай информацию из других каналов или источников\n"
+            f"- Объединяй ТОЛЬКО информацию из этих суммаризаций\n\n"
+            f"ЗАДАЧА: Объедини их в ПОЛНЫЙ, ПОДРОБНЫЙ и ЖИВОЙ дайджест из {max_sentences} итоговых предложений, описывающих главные темы канала. "
+            f"Избегай повторов. Каждый пункт — уникальная мысль. Раскрой каждую тему подробно и интересно. Только текст, без нумерации и Markdown.\n\n"
+            f"Требования:\n"
             f"- Верни ТОЛЬКО текст, НЕ JSON, НЕ структурированные данные\n"
             f"- НЕ используй фигурные скобки {{}}, квадратные скобки [], кавычки для JSON\n"
             f"- НЕ используй Markdown (* _ ` [ ] ( ))\n"
             f"- Только предложения на русском языке через точку\n"
             f"- НЕ нумеруй предложения (не используй 1., 2., и т.д.)\n"
-            f"- Объедини похожие темы, избегай дублирования\n\n"
+            f"- Объедини похожие темы, избегай дублирования\n"
+            f"- Используй ВСЕ {max_sentences} предложений - пиши подробно и интересно, не обрезай содержание\n"
+            f"- Включи все важные детали и аспекты из исходных суммаризаций\n"
+            f"- Используй разнообразные формулировки, сделай текст живым и увлекательным\n\n"
             f"ПРИМЕР ПРАВИЛЬНОГО ОТВЕТА:\n"
             f"OpenAI представила GPT-4 Turbo с улучшенными возможностями. "
             f"Компания анонсировала интеграцию с Microsoft Azure. "
@@ -95,12 +106,16 @@ def get_reduce_prompt(summaries: str, language: Literal["ru", "en"], max_sentenc
             f"1. OpenAI GPT-4\n"
             f"{{'summary': ['GPT-4', 'Azure integration']}}\n"
             f"*OpenAI* представила **GPT-4**\n\n"
-            f"СУММАРИЗАЦИИ ФРАГМЕНТОВ:\n{summaries}\n\nИТОГОВАЯ СУММАРИЗАЦИЯ:"
+            f"СУММАРИЗАЦИИ ФРАГМЕНТОВ (один канал):\n{summaries}\n\nИТОГОВАЯ СУММАРИЗАЦИЯ:"
         )
     return (
-        f"Combine these chunk summaries into {max_sentences} final sentences covering main topics. "
-        f"No repetition, no markdown, NO JSON.\n\n"
+        f"Combine these chunk summaries from ONE Telegram channel into {max_sentences} final sentences covering main topics.\n\n"
         f"CRITICAL:\n"
+        f"- All these summaries are from ONE channel\n"
+        f"- Do NOT mix information from other channels or sources\n"
+        f"- Combine ONLY information from these summaries\n\n"
+        f"Requirements:\n"
+        f"- No repetition, no markdown, NO JSON\n"
         f"- Return ONLY plain text sentences\n"
         f"- NO JSON, NO structured data (no {{}}, [], quotes for JSON)\n"
         f"- NO Markdown (* _ ` [ ] ( ))\n"
@@ -114,7 +129,7 @@ def get_reduce_prompt(summaries: str, language: Literal["ru", "en"], max_sentenc
         f"1. OpenAI GPT-4\n"
         f"{{'summary': ['GPT-4', 'Azure integration']}}\n"
         f"*OpenAI* released **GPT-4**\n\n"
-        f"CHUNK SUMMARIES:\n{summaries}\n\nFINAL SUMMARY:"
+        f"CHUNK SUMMARIES (one channel):\n{summaries}\n\nFINAL SUMMARY:"
     )
 
 
@@ -124,6 +139,8 @@ def get_direct_summarization_prompt(
     max_sentences: int = 8,
     time_period_hours: int | None = None,
     max_chars: int | None = None,
+    channel_username: str | None = None,
+    channel_title: str | None = None,
 ) -> str:
     """Prompt for direct summarization (without Map-Reduce).
 
@@ -137,6 +154,8 @@ def get_direct_summarization_prompt(
         max_sentences: Maximum sentences in summary.
         time_period_hours: Optional time period for context.
         max_chars: Optional maximum characters (soft limit, not hard truncation).
+        channel_username: Optional channel username for context isolation.
+        channel_title: Optional channel title for better context.
 
     Returns:
         Formatted prompt string.
@@ -153,40 +172,68 @@ def get_direct_summarization_prompt(
         else:
             time_context = " (за последнюю неделю)" if language == "ru" else " (last week)"
 
+    # Build channel context for better isolation
+    channel_context = ""
+    if channel_title:
+        channel_context = f" канала '{channel_title}'"
+    elif channel_username:
+        channel_context = f" канала @{channel_username}"
+    
     if language == "ru":
         return (
-            f"Суммаризируй эти посты из Telegram-канала{time_context}. "
-            f"Напиши {max_sentences} РАЗНЫХ предложения на русском языке. "
-            f"Каждое предложение раскрывает РАЗНЫЙ аспект. Без повторов. "
-            f"Без нумерации. Без Markdown. Обычный текст.\n\n"
-            f"ВАЖНО:\n"
+            f"Суммаризируй эти посты из Telegram-канала{channel_context}{time_context}.\n\n"
+            f"КРИТИЧЕСКИ ВАЖНО:\n"
+            f"- Эти посты ВСЕ из ОДНОГО канала{channel_context}\n"
+            f"- НЕ смешивай информацию из других каналов или источников\n"
+            f"- Суммаризируй ТОЛЬКО то, что написано в этих постах\n\n"
+            f"Требования:\n"
+            f"- Напиши ПОЛНЫЙ, ПОДРОБНЫЙ и ЖИВОЙ дайджест из {max_sentences} РАЗНЫХ предложений на русском языке\n"
+            f"- Каждое предложение раскрывает РАЗНЫЙ аспект или тему\n"
+            f"- Без повторов, без нумерации, без Markdown\n"
+            f"- Обычный текст, только предложения\n\n"
+            f"Формат ответа:\n"
             f"- Верни ТОЛЬКО текст, НЕ JSON, НЕ структурированные данные\n"
             f"- Только предложения на русском языке\n"
-            f"- Пиши ПОЛНЫЙ дайджест - не обрезай текст, используй все {max_sentences} предложений\n"
-            f"- Включи все важные детали из постов, опиши все темы\n"
-            f"- Учитывай временной период: это посты{time_context}, сфокусируйся на актуальном контенте\n"
-            + (f"- Старайся уложиться примерно в {max_chars} символов, но не жертвуй важной информацией\n" if max_chars else "") +
+            f"- Пиши ПОЛНЫЙ, ДЕТАЛЬНЫЙ и ИНТЕРЕСНЫЙ дайджест - используй ВСЕ {max_sentences} предложений, не обрезай текст\n"
+            f"- Включи ВСЕ важные детали из постов, опиши ВСЕ темы и аспекты\n"
+            f"- Раскрой каждую тему подробно и интересно, не ограничивайся общими фразами\n"
+            f"- Используй разнообразные формулировки, сделай текст живым и увлекательным\n"
+            f"- Учитывай временной период: это посты{time_context}, сфокусируйся на актуальном контенте за этот период\n"
+            + (f"- Целевой размер примерно {max_chars} символов - используй это пространство для подробного и интересного описания\n" if max_chars else "") +
             "\n"
             f"Пример правильного ответа:\n"
             f"Разработчики представили новую версию iOS с улучшенной производительностью на 30%. "
             f"Добавлены новые функции для работы с жестами и улучшена безопасность. "
             f"Обсуждаются отзывы пользователей о стабильности и совместимости.\n\n"
-            f"Посты:\n{text}\n\nСуммари:"
+            f"Посты из канала{channel_context}:\n{text}\n\n"
+            f"Суммари (только этот канал):"
         )
-    return (
-        f"Summarize these channel posts{time_context} in {max_sentences} sentence(s). "
-        f"Write a full digest with all important details, no Markdown, no JSON. "
-        f"Return ONLY plain text sentences.\n\n"
-        f"IMPORTANT:\n"
-        f"- Return ONLY plain text, NO JSON, NO structured data\n"
-        f"- Write FULL digest - use all {max_sentences} sentences, don't cut content\n"
-        f"- Include all important details from posts, cover all topics\n"
-        f"- Focus on recent content{time_context}\n"
-        + (f"- Aim for approximately {max_chars} characters, but don't sacrifice important information\n" if max_chars else "") +
-        "\n"
-        f"Example correct output:\n"
-        f"Developers released new iOS version with 30% performance improvement. "
-        f"New gesture features added and security enhanced. "
-        f"Users discuss stability and compatibility feedback.\n\n"
-        f"Posts:\n{text}\n\nSummary:"
-    )
+    else:
+        channel_context_en = f" from channel @{channel_username}" if channel_username else ""
+        return (
+            f"Summarize these Telegram channel posts{channel_context_en}{time_context}.\n\n"
+            f"CRITICAL:\n"
+            f"- These posts are ALL from ONE channel{channel_context_en}\n"
+            f"- Do NOT mix information from other channels or sources\n"
+            f"- Summarize ONLY what is written in these posts\n\n"
+            f"Requirements:\n"
+            f"- Write a FULL, DETAILED and ENGAGING digest in {max_sentences} sentences\n"
+            f"- Each sentence should cover a DIFFERENT aspect or topic\n"
+            f"- No repetition, no numbering, no Markdown\n"
+            f"- Plain text only, sentences only\n\n"
+            f"Format:\n"
+            f"- Return ONLY plain text, NO JSON, NO structured data\n"
+            f"- Write FULL, DETAILED and INTERESTING digest - use ALL {max_sentences} sentences, don't cut content\n"
+            f"- Include ALL important details from posts, cover ALL topics and aspects\n"
+            f"- Elaborate on each topic in detail and engagingly, don't use generic phrases\n"
+            f"- Use varied phrasing, make the text lively and captivating\n"
+            f"- Focus on recent content{time_context}\n"
+            + (f"- Target size approximately {max_chars} characters - use this space for detailed and interesting description\n" if max_chars else "") +
+            "\n"
+            f"Example correct output:\n"
+            f"Developers released new iOS version with 30% performance improvement. "
+            f"New gesture features added and security enhanced. "
+            f"Users discuss stability and compatibility feedback.\n\n"
+            f"Posts{channel_context_en}:\n{text}\n\n"
+            f"Summary (this channel only):"
+        )

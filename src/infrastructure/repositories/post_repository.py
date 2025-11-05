@@ -153,19 +153,38 @@ class PostRepository:
 
         return posts
 
-    async def get_posts_by_channel(self, channel_username: str, since: datetime) -> List[dict]:
+    async def get_posts_by_channel(
+        self, channel_username: str, since: datetime, user_id: int | None = None
+    ) -> List[dict]:
         """Get posts for specific channel since given date.
 
         Args:
             channel_username: Channel username without @
             since: Minimum timestamp for posts
+            user_id: Optional user ID to filter posts (if None, returns all posts for channel)
 
         Returns:
             List of post dictionaries
         """
-        query = {"channel_username": channel_username, "date": {"$gte": since}}
+        query: Dict[str, Any] = {"channel_username": channel_username, "date": {"$gte": since}}
+        if user_id is not None:
+            query["user_id"] = user_id
+        
+        # Log query for debugging
+        from src.infrastructure.logging import get_logger
+        logger = get_logger("post_repository")
+        logger.debug(
+            f"Querying posts from database: channel={channel_username}, "
+            f"user_id={user_id}, since={since.isoformat()}"
+        )
+        
         cursor = self._db.posts.find(query).sort("date", 1)  # Sort from old to new
         posts = await cursor.to_list(length=1000)
+        
+        logger.info(
+            f"Found {len(posts)} posts in database: channel={channel_username}, "
+            f"user_id={user_id}, since={since.isoformat()}"
+        )
 
         for post in posts:
             post["id"] = str(post.pop("_id"))

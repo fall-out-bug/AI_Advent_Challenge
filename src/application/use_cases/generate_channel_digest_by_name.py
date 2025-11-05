@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -75,9 +76,9 @@ class GenerateChannelDigestByNameUseCase:
         # Clean username
         channel_username = channel_username.lstrip("@")
 
-        # Get posts for channel
+        # Get posts for channel from database (cached posts)
         since = datetime.now(timezone.utc) - timedelta(hours=hours)
-        posts_data = await post_repo.get_posts_by_channel(channel_username, since)
+        posts_data = await post_repo.get_posts_by_channel(channel_username, since, user_id=user_id)
 
         # Get channel title from database
         db = await get_db()
@@ -88,7 +89,9 @@ class GenerateChannelDigestByNameUseCase:
 
         if not posts_data:
             logger.warning(
-                f"No posts found for channel: {channel_username}, hours={hours}, user_id={user_id}"
+                f"No posts found in database for channel: {channel_username}, "
+                f"hours={hours}, user_id={user_id}, since={since.isoformat()}. "
+                f"Make sure post_fetcher_worker has collected posts for this channel."
             )
             # Return empty digest
             language = self._settings.summarizer_language
@@ -152,9 +155,27 @@ class GenerateChannelDigestByNameUseCase:
             max_chars=max_chars,
             language=language,
             max_sentences=max_sentences,
+            channel_username=channel_username,
+            channel_title=channel_title,
         )
 
         try:
+            logger.info(
+                f"Starting summarization: channel={channel_username}, "
+                f"posts_count={len(post_contents)}, max_sentences={max_sentences}, "
+                f"language={language}, hours={hours}"
+            )
+            
+            # Log sample post data for debugging
+            if post_contents:
+                sample_posts = post_contents[:3]
+                logger.debug(
+                    f"Sample posts for summarization: "
+                    f"count={len(sample_posts)}, "
+                    f"first_post_length={len(sample_posts[0].text) if sample_posts else 0}, "
+                    f"first_post_preview={sample_posts[0].text[:200] if sample_posts else 'N/A'}"
+                )
+            
             summary_result = await summarizer.summarize_posts(
                 posts=post_contents,
                 max_sentences=max_sentences,
@@ -164,11 +185,20 @@ class GenerateChannelDigestByNameUseCase:
             
             logger.info(
                 f"Summary generated successfully: channel={channel_username}, "
-                f"method={summary_result.method}, sentences={summary_result.sentences_count}"
+                f"method={summary_result.method}, sentences={summary_result.sentences_count}, "
+                f"summary_length={len(summary_result.text)}, "
+                f"confidence={summary_result.confidence}"
             )
             
             # Trigger async evaluation (fire-and-forget)
-            if self._settings.enable_quality_evaluation:
+            # Only evaluate if summary was successfully generated (not error)
+            if (self._settings.enable_quality_evaluation and 
+                summary_result.method != "error" and 
+                summary_result.confidence > 0):
+                # Combine posts text for evaluation
+                combined_text = "\n\n".join(
+                    post.text for post in post_contents if post.text
+                )
                 asyncio.create_task(
                     self._evaluate_summary_quality(
                         original_text=combined_text,
@@ -178,7 +208,10 @@ class GenerateChannelDigestByNameUseCase:
                 )
         except Exception as e:
             logger.error(
-                f"Error generating summary, using fallback: channel={channel_username}, error={str(e)}",
+                f"Error generating summary, using fallback: channel={channel_username}, "
+                f"error_type={type(e).__name__}, error={str(e)}, "
+                f"posts_count={len(post_contents)}, "
+                f"max_sentences={max_sentences}, language={language}",
                 exc_info=True,
             )
             # Fallback summary
@@ -195,9 +228,17 @@ class GenerateChannelDigestByNameUseCase:
                 metadata={"error": str(e)},
             )
 
-        # Extract tags from posts (if any) - simple implementation
+        # Extract tags from posts (if any)
+        # Note: Tag extraction is currently minimal - extracts hashtags from post text
+        # Future enhancement: Use NLP to identify topic tags, extract from metadata
         tags = []
-        # TODO: Enhance tag extraction logic
+        for post in posts:
+            if post.text:
+                # Extract hashtags
+                hashtags = re.findall(r"#\w+", post.text)
+                tags.extend([tag.lower().strip("#") for tag in hashtags])
+        # Deduplicate and limit
+        tags = list(set(tags))[:10]
 
         return ChannelDigest(
             channel_username=channel_username,
@@ -258,5 +299,7 @@ class GenerateChannelDigestByNameUseCase:
         except Exception as e:
             # Don't fail main flow if evaluation fails
             logger.error(
-                f"Error evaluating summary quality: {e}", exc_info=True
+                f"Error evaluating summary quality: {e}",
+                exc_info=True
             )
+            # Evaluation is non-critical, just log and continue

@@ -5,84 +5,164 @@ Following Python Zen: "Explicit is better than implicit".
 
 import logging
 from typing import Optional
-from prometheus_client import Counter, Histogram, Gauge
+from prometheus_client import Counter, Histogram, Gauge, REGISTRY
 
 logger = logging.getLogger(__name__)
 
+# Track if metrics are already registered to avoid duplicate registration
+_metrics_initialized = False
+_metrics_cache: dict[str, Counter | Histogram | Gauge] = {}
+
+
+def _get_or_create_metric(
+    metric_type: type[Counter | Histogram | Gauge],
+    name: str,
+    documentation: str,
+    labelnames: list[str] | None = None,
+    **kwargs
+) -> Counter | Histogram | Gauge:
+    """Get existing metric or create new one to avoid duplicates.
+    
+    Args:
+        metric_type: Type of metric (Counter, Histogram, or Gauge)
+        name: Metric name
+        documentation: Metric documentation
+        labelnames: Label names for the metric
+        **kwargs: Additional arguments for metric creation
+        
+    Returns:
+        Existing or newly created metric
+    """
+    global _metrics_cache
+    
+    if name in _metrics_cache:
+        return _metrics_cache[name]
+    
+    # Check if metric already exists in registry
+    try:
+        existing = REGISTRY._names_to_collectors.get(name)
+        if existing:
+            _metrics_cache[name] = existing
+            return existing
+    except Exception:
+        pass
+    
+    # Create new metric
+    if labelnames:
+        metric = metric_type(name, documentation, labelnames, **kwargs)
+    else:
+        metric = metric_type(name, documentation, **kwargs)
+    
+    _metrics_cache[name] = metric
+    return metric
+
 
 # Agent metrics
-agent_requests_total = Counter(
+agent_requests_total = _get_or_create_metric(
+    Counter,
     "agent_requests_total",
     "Total number of agent requests",
     ["user_id", "status"]
 )
 
-agent_tokens_used = Counter(
+agent_tokens_used = _get_or_create_metric(
+    Counter,
     "agent_tokens_used_total",
     "Total tokens used by agent",
     ["user_id"]
 )
 
-agent_request_duration = Histogram(
+agent_request_duration = _get_or_create_metric(
+    Histogram,
     "agent_request_duration_seconds",
     "Agent request duration in seconds",
     ["user_id"]
 )
 
-agent_tools_used = Counter(
+agent_tools_used = _get_or_create_metric(
+    Counter,
     "agent_tools_used_total",
     "Total number of tools used",
     ["tool_name", "status"]
 )
 
-agent_dialog_messages = Counter(
+agent_dialog_messages = _get_or_create_metric(
+    Counter,
     "agent_dialog_messages_total",
     "Total dialog messages",
     ["session_id", "role"]
 )
 
-agent_dialog_tokens = Gauge(
+agent_dialog_tokens = _get_or_create_metric(
+    Gauge,
     "agent_dialog_tokens",
     "Current dialog token count",
     ["session_id"]
 )
 
 # MCP Client metrics
-mcp_client_requests_total = Counter(
+mcp_client_requests_total = _get_or_create_metric(
+    Counter,
     "mcp_client_requests_total",
     "Total MCP client requests",
     ["tool_name", "status"]
 )
 
-mcp_client_retries_total = Counter(
+mcp_client_retries_total = _get_or_create_metric(
+    Counter,
     "mcp_client_retries_total",
     "Total MCP client retries",
     ["tool_name", "reason"]
 )
 
-mcp_client_request_duration = Histogram(
+mcp_client_request_duration = _get_or_create_metric(
+    Histogram,
     "mcp_client_request_duration_seconds",
     "MCP client request duration",
     ["tool_name"]
 )
 
 # LLM metrics
-llm_requests_total = Counter(
+llm_requests_total = _get_or_create_metric(
+    Counter,
     "llm_requests_total",
     "Total LLM requests",
     ["model_name", "status"]
 )
 
-llm_tokens = Counter(
+llm_tokens = _get_or_create_metric(
+    Counter,
     "llm_tokens_total",
     "Total LLM tokens",
     ["model_name", "type"]
 )
 
-llm_request_duration = Histogram(
+llm_request_duration = _get_or_create_metric(
+    Histogram,
     "llm_request_duration_seconds",
     "LLM request duration",
     ["model_name"]
+)
+
+# Long tasks metrics
+long_tasks_total = _get_or_create_metric(
+    Counter,
+    "long_tasks_total",
+    "Total long summarization tasks",
+    ["status"]
+)
+
+long_tasks_duration = _get_or_create_metric(
+    Histogram,
+    "long_tasks_duration_seconds",
+    "Long task processing duration in seconds",
+    ["status"]
+)
+
+long_tasks_queue_size = _get_or_create_metric(
+    Gauge,
+    "long_tasks_queue_size",
+    "Current number of queued long tasks"
 )
 
 
