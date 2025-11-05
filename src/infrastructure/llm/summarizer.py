@@ -52,7 +52,14 @@ def _clean_text_for_summary(text: str) -> str:
     return text.strip()
 
 
-async def summarize_posts(posts: List[dict], max_sentences: int = None, llm: LLMClient | None = None, time_period_hours: int = None) -> str:
+async def summarize_posts(
+    posts: List[dict], 
+    max_sentences: int = None, 
+    llm: LLMClient | None = None, 
+    time_period_hours: int = None,
+    channel_username: str | None = None,
+    channel_title: str | None = None
+) -> str:
     """Summarize a list of channel posts using LLM with Russian language support.
 
     Purpose:
@@ -63,6 +70,8 @@ async def summarize_posts(posts: List[dict], max_sentences: int = None, llm: LLM
         max_sentences: Maximum sentences in summary (defaults to settings value)
         llm: LLM client (defaults to ResilientLLMClient with auto-fallback)
         time_period_hours: Time period in hours (for prompt context to ensure uniqueness)
+        channel_username: Channel username for context isolation
+        channel_title: Channel title for better context
 
     Returns:
         Summary text (or fallback bullet list on failure)
@@ -87,14 +96,41 @@ async def summarize_posts(posts: List[dict], max_sentences: int = None, llm: LLM
         text = post.get("text", "")
         cleaned = _clean_text_for_summary(text)
         if cleaned and len(cleaned) > 20:  # Skip very short posts
-            cleaned_posts.append(cleaned[:500])  # Limit to 500 chars per post to avoid token overflow
+            # Increased limit to 1000 chars per post for better context
+            cleaned_posts.append(cleaned[:1000])
+    
+    # Verify all posts belong to the same channel (if channel_username provided)
+    if channel_username:
+        wrong_channel_posts = [
+            i for i, post in enumerate(posts) 
+            if post.get("channel_username") and post.get("channel_username") != channel_username
+        ]
+        if wrong_channel_posts:
+            logger.warning(
+                f"Found {len(wrong_channel_posts)} posts from different channel in summarization batch. "
+                f"Expected: {channel_username}, filtering them out."
+            )
+            # Filter out posts from wrong channel
+            cleaned_posts = [
+                cleaned for i, cleaned in enumerate(cleaned_posts)
+                if i not in wrong_channel_posts
+            ]
+            posts = [
+                post for i, post in enumerate(posts)
+                if i not in wrong_channel_posts
+            ]
     
     logger.info(f"Summarizing {len(cleaned_posts)} posts (from {len(posts)} total)")
     if cleaned_posts:
         logger.debug(f"Sample posts (first 3): {cleaned_posts[:3]}")
     
     if not cleaned_posts:
-        logger.warning("No suitable posts for summarization")
+        logger.warning(
+            f"No suitable posts for summarization: "
+            f"total_posts={len(posts)}, "
+            f"cleaned_posts={len(cleaned_posts)}, "
+            f"min_length=20"
+        )
         return "Нет пригодных постов для саммари."
 
     texts = "\n".join(f"{i+1}. {text}" for i, text in enumerate(cleaned_posts))
@@ -112,30 +148,56 @@ async def summarize_posts(posts: List[dict], max_sentences: int = None, llm: LLM
         else:
             time_context = f" (за последнюю неделю)"
     
+    # Build channel context for better isolation
+    channel_context = ""
+    if channel_title:
+        channel_context = f" канала '{channel_title}'"
+    elif channel_username:
+        channel_context = f" канала @{channel_username}"
+    
     if language == "ru":
-        prompt = f"""Суммаризируй эти посты из Telegram-канала{time_context}. Напиши {max_sentences} РАЗНЫХ предложения на русском языке. Каждое предложение раскрывает РАЗНЫЙ аспект. Без повторов. Без нумерации. Без Markdown. Обычный текст.
+        prompt = f"""Суммаризируй эти посты из Telegram-канала{channel_context}{time_context}. 
 
-ВАЖНО: 
+КРИТИЧЕСКИ ВАЖНО:
+- Эти посты ВСЕ из ОДНОГО канала{channel_context}
+- НЕ смешивай информацию из других каналов или источников
+- Суммаризируй ТОЛЬКО то, что написано в этих постах
+
+Требования:
+- Напиши {max_sentences} РАЗНЫХ предложения на русском языке
+- Каждое предложение раскрывает РАЗНЫЙ аспект
+- Без повторов, без нумерации, без Markdown
+- Обычный текст, только предложения
+
+Формат ответа:
 - Верни ТОЛЬКО текст, НЕ JSON, НЕ структурированные данные
 - Только предложения на русском языке
-- Пиши ПОЛНЫЙ дайджест - не обрезай текст, используй все {max_sentences} предложений
+- Пиши ПОЛНЫЙ дайджест - используй все {max_sentences} предложений
 - Включи все важные детали из постов
 - Учитывай временной период: это посты{time_context}, сфокусируйся на актуальном контенте за этот период
 
-Пример:
+Пример правильного ответа:
 "Разработчики представили новую версию iOS с улучшенной производительностью на 30%. Добавлены новые функции для работы с жестами и улучшена безопасность. Обсуждаются отзывы пользователей о стабильности и совместимости."
 
-Посты:
+Посты из канала{channel_context}:
 {texts}
 
-Суммари:"""
+Суммари (только этот канал):"""
     else:
-        prompt = f"""Summarize these channel posts in {max_sentences} sentence(s), be very concise, no Markdown, no JSON. Return ONLY plain text sentences.
+        channel_context = f" from channel @{channel_username}" if channel_username else ""
+        prompt = f"""Summarize these Telegram channel posts{channel_context} in {max_sentences} sentence(s).
 
-Posts:
+CRITICAL: These posts are ALL from ONE channel{channel_context}. Do NOT mix information from other channels or sources.
+
+Requirements:
+- Be very concise, no Markdown, no JSON
+- Return ONLY plain text sentences
+- Summarize ONLY what is written in these posts
+
+Posts{channel_context}:
 {texts}
 
-Summary:"""
+Summary (this channel only):"""
 
     # If the concatenated cleaned text is long, use Map-Reduce
     full_text = "\n\n".join(cleaned_posts)

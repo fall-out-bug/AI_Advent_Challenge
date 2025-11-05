@@ -1,0 +1,38 @@
+[importlinter]
+root_package = src
+
+[contract:clean-architecture]
+name = Clean Architecture layer boundaries
+type = layers
+layers =
+    presentation
+    application
+    infrastructure
+    domain
+
+[contract:no-domain-outward]
+name = Domain layer must not import from outer layers
+type = forbidden
+source_modules =
+    src.domain
+forbidden_modules =
+    src.presentation
+    src.application
+    src.infrastructure
+
+[contract:no-application-presentation]
+name = Application layer must not import from presentation
+type = forbidden
+source_modules =
+    src.application
+forbidden_modules =
+    src.presentation
+
+[contract:no-infrastructure-presentation]
+name = Infrastructure layer must not import from presentation
+type = forbidden
+source_modules =
+    src.infrastructure
+forbidden_modules =
+    src.presentation
+

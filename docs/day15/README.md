@@ -257,6 +257,82 @@ task = FineTuningTask(
 - Старт/завершение файнтюнинга
 - Ошибки при оценке (не ломают основной поток)
 
+## Асинхронная суммаризация с длинными таймаутами
+
+### Обзор
+
+Для больших дайджестов, которые могут занимать несколько минут, реализована асинхронная система обработки с увеличенными таймаутами (600 секунд).
+
+### Архитектура
+
+**Длинные задачи обрабатываются в фоне:**
+1. Пользователь запрашивает дайджест → задача ставится в очередь
+2. Бот сразу отвечает подтверждением
+3. Worker обрабатывает задачу с таймаутом 600 секунд
+4. Результат отправляется отдельным сообщением
+
+### Компоненты
+
+**Domain:**
+- `LongSummarizationTask` - сущность задачи
+- `TaskStatus` - enum: QUEUED, RUNNING, SUCCEEDED, FAILED
+
+**Application:**
+- `RequestChannelDigestAsyncUseCase` - создает задачу в очереди
+- `ProcessLongSummarizationTaskUseCase` - обрабатывает с длинным таймаутом
+
+**Infrastructure:**
+- `LongTasksRepository` - MongoDB репозиторий с идемпотентными операциями
+- `TelegramNotifier` - отправка результатов через Telegram
+- `create_adaptive_summarizer_with_long_timeout()` - factory с таймаутом 600s
+
+**Worker:**
+- `summary_worker` расширен для опроса и обработки длинных задач
+- Атомарный `pick_next_queued()` предотвращает двойную обработку
+
+### Настройки
+
+```python
+summarizer_timeout_seconds_long: float = 600.0  # Таймаут для длинных задач
+long_tasks_poll_interval_seconds: int = 5  # Интервал опроса очереди
+long_tasks_max_retries: int = 1  # Максимум повторов
+enable_async_long_summarization: bool = True  # Feature flag
+```
+
+### Метрики
+
+- `long_tasks_total{status}` - счетчик задач по статусам
+- `long_tasks_duration_seconds{status}` - длительность обработки
+- `long_tasks_queue_size` - размер очереди
+
+### Использование
+
+**MCP Tool:**
+```python
+result = await request_channel_digest_async(
+    user_id=123,
+    chat_id=456,
+    channel_username="channel_name",  # или None для всех каналов
+    hours=72,
+    language="ru",
+    max_sentences=8
+)
+# Возвращает: {"task_id": "...", "ack_message": "..."}
+```
+
+**Поток обработки:**
+1. Задача создается со статусом QUEUED
+2. Worker атомарно меняет статус на RUNNING
+3. Генерируется суммаризация с таймаутом 600s
+4. Статус меняется на SUCCEEDED или FAILED
+5. Результат отправляется пользователю через TelegramNotifier
+
+### Обработка ошибок
+
+- При ошибке задача помечается как FAILED
+- Пользователю отправляется сообщение с описанием ошибки и task_id
+- Метрики фиксируют успешные и неуспешные задачи
+
 ## Следующие шаги
 
 1. **Экспериментируйте с промптами** для оценки качества

@@ -84,12 +84,16 @@ class LLMSummarizer:
         # Build prompt
         time_period = context.time_period_hours if context else None
         max_chars = context.max_chars if context else None
+        channel_username = context.channel_username if context else None
+        channel_title = context.channel_title if context else None
         prompt = get_direct_summarization_prompt(
             text=cleaned_text,
             language=language,
             max_sentences=max_sentences,
             time_period_hours=time_period,
             max_chars=max_chars,
+            channel_username=channel_username,
+            channel_title=channel_title,
         )
 
         # Generate with retry
@@ -176,7 +180,30 @@ class LLMSummarizer:
         for post in posts:
             cleaned = self.text_cleaner.clean_for_summarization(post.text)
             if cleaned and len(cleaned) > 20:
-                cleaned_posts.append(cleaned[:500])
+                # Increased limit to 1000 chars per post for better context
+                cleaned_posts.append(cleaned[:1000])
+        
+        # Verify all posts belong to the same channel (if context provided)
+        if context and context.channel_username:
+            wrong_channel_posts = [
+                i for i, post in enumerate(posts)
+                if post.channel_username and post.channel_username != context.channel_username
+            ]
+            if wrong_channel_posts:
+                from src.infrastructure.logging import get_logger
+                logger = get_logger("llm_summarizer")
+                logger.warning(
+                    f"Found {len(wrong_channel_posts)} posts from different channel in LLMSummarizer. "
+                    f"Expected: {context.channel_username}, filtering them out."
+                )
+                cleaned_posts = [
+                    cleaned for i, cleaned in enumerate(cleaned_posts)
+                    if i not in wrong_channel_posts
+                ]
+                posts = [
+                    post for i, post in enumerate(posts)
+                    if i not in wrong_channel_posts
+                ]
 
         if not cleaned_posts:
             # Fallback: return empty summary

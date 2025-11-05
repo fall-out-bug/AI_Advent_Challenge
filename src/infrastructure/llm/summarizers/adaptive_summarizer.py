@@ -116,7 +116,28 @@ class AdaptiveSummarizer:
         for post in posts:
             cleaned = text_cleaner.clean_for_summarization(post.text)
             if cleaned and len(cleaned) > 20:
-                cleaned_posts.append(cleaned[:500])
+                # Increased limit to 1000 chars per post for better context
+                cleaned_posts.append(cleaned[:1000])
+        
+        # Verify all posts belong to the same channel (if context provided)
+        if context and context.channel_username:
+            wrong_channel_posts = [
+                i for i, post in enumerate(posts)
+                if post.channel_username and post.channel_username != context.channel_username
+            ]
+            if wrong_channel_posts:
+                logger.warning(
+                    f"Found {len(wrong_channel_posts)} posts from different channel in AdaptiveSummarizer. "
+                    f"Expected: {context.channel_username}, filtering them out."
+                )
+                cleaned_posts = [
+                    cleaned for i, cleaned in enumerate(cleaned_posts)
+                    if i not in wrong_channel_posts
+                ]
+                posts = [
+                    post for i, post in enumerate(posts)
+                    if i not in wrong_channel_posts
+                ]
 
         if not cleaned_posts:
             return SummaryResult(
@@ -128,6 +149,48 @@ class AdaptiveSummarizer:
             )
 
         combined_text = "\n\n".join(cleaned_posts)
-        return await self.summarize_text(
-            combined_text, max_sentences=max_sentences, language=language, context=context
+        
+        # Log before summarization for debugging
+        from src.infrastructure.logging import get_logger
+        logger = get_logger("adaptive_summarizer")
+        logger.info(
+            f"Summarizing posts: posts_count={len(posts)}, "
+            f"cleaned_posts_count={len(cleaned_posts)}, "
+            f"combined_text_length={len(combined_text)}, "
+            f"max_sentences={max_sentences}, language={language}"
         )
+        
+        try:
+            result = await self.summarize_text(
+                combined_text, max_sentences=max_sentences, language=language, context=context
+            )
+            logger.info(
+                f"Summary generated: method={result.method}, "
+                f"sentences={result.sentences_count}, "
+                f"confidence={result.confidence}, "
+                f"strategy={result.metadata.get('adaptive_strategy', 'unknown')}"
+            )
+            return result
+        except Exception as e:
+            logger.error(
+                f"Error in adaptive summarization: type={type(e).__name__}, "
+                f"error={str(e)}, posts_count={len(posts)}, "
+                f"cleaned_posts_count={len(cleaned_posts)}",
+                exc_info=True
+            )
+            # Return error summary instead of raising
+            return SummaryResult(
+                text=(
+                    "Ошибка при генерации суммаризации."
+                    if language == "ru"
+                    else "Error generating summary."
+                ),
+                sentences_count=0,
+                method="error",
+                confidence=0.0,
+                metadata={
+                    "method": "adaptive",
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                },
+            )

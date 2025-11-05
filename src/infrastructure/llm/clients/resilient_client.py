@@ -65,8 +65,10 @@ class ResilientLLMClient:
         initial_backoff: float = 1.0,
         max_backoff: float = 60.0,
         backoff_factor: float = 2.0,
+        timeout: float = 120.0,
     ) -> None:
-        self._primary = get_llm_client(url) if url else get_llm_client()
+        # Use longer timeout for summarization (120s default vs 30s for regular requests)
+        self._primary = get_llm_client(url, timeout=timeout) if url else get_llm_client(timeout=timeout)
         self._fallback = FallbackLLMClient()
         self._use_fallback = isinstance(self._primary, FallbackLLMClient)
         self.max_retries = max_retries

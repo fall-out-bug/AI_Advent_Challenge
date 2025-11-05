@@ -60,6 +60,7 @@ class SummarizationContainer(containers.DeclarativeContainer):
     llm_client = providers.Singleton(
         ResilientLLMClient,
         url=settings.provided.llm_url,
+        timeout=settings.provided.summarizer_timeout_seconds,
     )
 
     # Infrastructure: Token Counter

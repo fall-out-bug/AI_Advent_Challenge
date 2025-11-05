@@ -37,6 +37,7 @@ This repository contains daily challenges building AI-powered systems with langu
 - ✅ **Multi-Pass Code Review** (3-pass architecture for homework analysis)
 - ✅ **LLM-as-Judge Quality Assessment** (automatic evaluation of summaries)
 - ✅ **Self-Improving System** (automatic fine-tuning on high-quality data)
+- ✅ **Async Long Summarization** (queue-based processing with 600s timeout)
 
 ## Quick Start
 

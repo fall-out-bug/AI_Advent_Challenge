@@ -57,15 +57,50 @@ async def _generate_summary(posts: List[dict], max_sentences: int, hours: int = 
     Returns:
         Summary text
     """
+    if not posts:
+        logger.warning("_generate_summary called with empty posts list")
+        return "Нет постов для суммаризации."
+    
     try:
         from src.infrastructure.llm.summarizer import summarize_posts
         # Pass hours as metadata to ensure different prompts for different periods
-        logger.info(f"Calling LLM summarizer for {len(posts)} posts, max_sentences={max_sentences}, hours={hours}")
-        summary = await summarize_posts(posts, max_sentences=max_sentences, time_period_hours=hours)
-        logger.info(f"LLM summarizer returned summary of {len(summary)} characters")
+        logger.info(
+            f"Calling LLM summarizer: posts_count={len(posts)}, "
+            f"max_sentences={max_sentences}, hours={hours}, "
+            f"total_text_length={sum(len(p.get('text', '')) for p in posts)}"
+        )
+        
+        # Log sample posts for debugging
+        if posts:
+            sample_posts = posts[:3]
+            logger.debug(
+                f"Sample posts for summarization: "
+                f"first_post_length={len(sample_posts[0].get('text', '')) if sample_posts else 0}, "
+                f"first_post_preview={sample_posts[0].get('text', '')[:200] if sample_posts else 'N/A'}"
+            )
+        
+        # Extract channel info from first post for context isolation
+        channel_username_from_posts = None
+        if posts and posts[0].get("channel_username"):
+            channel_username_from_posts = posts[0].get("channel_username")
+        
+        summary = await summarize_posts(
+            posts, 
+            max_sentences=max_sentences, 
+            time_period_hours=hours,
+            channel_username=channel_username or channel_username_from_posts
+        )
+        logger.info(
+            f"LLM summarizer returned summary: length={len(summary)} characters, "
+            f"first_200_chars={summary[:200]}"
+        )
         return summary
     except Exception as e:
-        logger.error(f"Error in summarizer (type: {type(e).__name__}), using fallback: {e}", exc_info=True)
+        logger.error(
+            f"Error in summarizer: type={type(e).__name__}, error={str(e)}, "
+            f"posts_count={len(posts)}, max_sentences={max_sentences}, hours={hours}",
+            exc_info=True
+        )
         # Fallback: simple heuristic summary
         texts: List[str] = []
         for p in posts[:min(20, len(posts))]:
@@ -299,23 +334,83 @@ async def get_channel_digest_by_name(
                 logger.warning(f"Failed to resolve channel by metadata: {e}", exc_info=True)
                 # Continue with original channel_username even if resolution fails
     
+    # If channel not found in subscriptions, try to find it via Telegram search
+    # and offer subscription (as per cases.md: "Предлагать подписаться и только после согласия делать дайджест")
     if not existing:
-        logger.info(f"Auto-subscribing to channel: user_id={user_id}, channel={channel_username}")
-        channel_doc = {
-            "user_id": user_id,
-            "channel_username": channel_username,
-            "tags": [],
-            "subscribed_at": datetime.utcnow().isoformat(),
-            "last_digest": None,
-            "active": True,
+        logger.info(
+            f"Channel not subscribed: user_id={user_id}, channel={channel_username}. "
+            f"Attempting to find via Telegram search..."
+        )
+        
+        # Try to search for channel via Telegram API
+        # This handles cases like "крупнокалиберный_переполох" -> "bolshiepushki"
+        try:
+            from src.application.use_cases.search_channel_for_subscription import (
+                SearchChannelForSubscriptionUseCase,
+            )
+            
+            # SearchChannelForSubscriptionUseCase doesn't need MCP client - it uses Telegram API directly
+            search_use_case = SearchChannelForSubscriptionUseCase()
+            
+            logger.info(f"Searching Telegram for channel matching '{channel_username}'...")
+            search_results = await search_use_case.execute(user_id, channel_username)
+            
+            if search_results and len(search_results) > 0:
+                # Found potential channel - offer to subscribe
+                top_match = search_results[0]
+                found_username = top_match.username
+                found_title = top_match.title
+                
+                logger.info(
+                    f"Found channel via Telegram search: username={found_username}, "
+                    f"title={found_title} for query '{channel_username}'"
+                )
+                
+                return {
+                    "digests": [],
+                    "channel": channel_username,
+                    "status": "not_subscribed",
+                    "found_channel": {
+                        "username": found_username,
+                        "title": found_title,
+                        "description": top_match.description,
+                    },
+                    "message": (
+                        f"Подписка не найдена для канала '{channel_username}'. "
+                        f"Найден канал: {found_title} (@{found_username}). "
+                        f"Подпишитесь на канал, чтобы получать дайджесты."
+                    ),
+                    "generated_at": datetime.utcnow().isoformat(),
+                }
+            else:
+                logger.info(f"No channels found in Telegram for query '{channel_username}'")
+        except Exception as e:
+            logger.warning(
+                f"Failed to search Telegram for channel '{channel_username}': {e}",
+                exc_info=True
+            )
+        
+        # If search failed or no results, return simple not_subscribed
+        return {
+            "digests": [],
+            "channel": channel_username,
+            "status": "not_subscribed",
+            "message": f"Подписка не найдена для канала '{channel_username}'. Попробуйте подписаться на канал через команду подписки.",
+            "generated_at": datetime.utcnow().isoformat(),
         }
-        await db.channels.insert_one(channel_doc)
     
     # Check feature flag for new summarization (after channel resolution)
     if _settings.use_new_summarization:
         try:
             logger.info(f"Using new summarization system for channel digest by name: user_id={user_id}, channel={channel_username}, hours={hours}")
+            # Create use case instance
             use_case = create_channel_digest_by_name_use_case()
+            # Verify it's the correct type before calling execute
+            from src.application.use_cases.generate_channel_digest_by_name import GenerateChannelDigestByNameUseCase
+            if not isinstance(use_case, GenerateChannelDigestByNameUseCase):
+                error_msg = f"Factory returned {type(use_case)}, expected GenerateChannelDigestByNameUseCase"
+                logger.error(error_msg)
+                raise TypeError(error_msg)
             result = await use_case.execute(
                 user_id=user_id,
                 channel_username=channel_username,
@@ -538,6 +633,38 @@ async def get_channel_digest_by_name(
     sample_texts = [p.get("text", "")[:100] for p in normalized_posts[:3]]
     logger.info(f"Sample post texts (first 100 chars of first 3): {sample_texts}")
     
+    # CRITICAL: Verify all posts belong to the correct channel
+    wrong_channel_posts = []
+    for post in normalized_posts:
+        post_channel = post.get("channel_username", "")
+        if post_channel != channel_username:
+            wrong_channel_posts.append({
+                "message_id": post.get("message_id"),
+                "expected_channel": channel_username,
+                "actual_channel": post_channel,
+                "text_preview": post.get("text", "")[:100]
+            })
+    
+    if wrong_channel_posts:
+        logger.error(
+            f"⚠️  CRITICAL: Found {len(wrong_channel_posts)} posts with wrong channel_username "
+            f"for digest generation! Expected: {channel_username}, "
+            f"Wrong posts: {wrong_channel_posts[:5]}"
+        )
+        # Filter out wrong channel posts
+        normalized_posts = [
+            p for p in normalized_posts 
+            if p.get("channel_username") == channel_username
+        ]
+        logger.warning(
+            f"Filtered out {len(wrong_channel_posts)} wrong channel posts, "
+            f"remaining: {len(normalized_posts)}"
+        )
+    else:
+        logger.info(
+            f"✅ All {len(normalized_posts)} posts belong to correct channel: {channel_username}"
+        )
+    
     # Adaptive max_sentences based on post count and time period
     # Base: 8 sentences, scale up with more posts
     base_sentences = settings.digest_summary_sentences
@@ -595,6 +722,12 @@ async def get_channel_digest(user_id: int, hours: int = 24) -> Dict[str, Any]:
         try:
             logger.info(f"Using new summarization system for channel digest: user_id={user_id}, hours={hours}")
             use_case = create_channel_digest_use_case()
+            # Verify it's the correct type (not a Future)
+            from src.application.use_cases.generate_channel_digest import GenerateChannelDigestUseCase
+            if not isinstance(use_case, GenerateChannelDigestUseCase):
+                error_msg = f"Factory returned {type(use_case)}, expected GenerateChannelDigestUseCase"
+                logger.error(error_msg)
+                raise TypeError(error_msg)
             result = await use_case.execute(user_id=user_id, hours=hours)
             
             # Convert to expected format (backward compatibility)
@@ -673,4 +806,61 @@ async def get_channel_digest(user_id: int, hours: int = 24) -> Dict[str, Any]:
 
     return {"digests": digests, "generated_at": datetime.utcnow().isoformat()}
 
+
+@mcp.tool()
+async def request_channel_digest_async(
+    user_id: int,
+    chat_id: int,
+    channel_username: str | None = None,
+    hours: int = 72,
+    language: str | None = None,
+    max_sentences: int | None = None,
+) -> Dict[str, Any]:
+    """Request async channel digest generation (long-running task).
+
+    Purpose:
+        Creates and enqueues a long-running summarization task.
+        Returns immediately with task ID and acknowledgment message.
+        Actual summarization happens in background worker with extended timeout.
+
+    Args:
+        user_id: Telegram user ID
+        chat_id: Telegram chat ID for sending results
+        channel_username: Optional channel username (None = all channels)
+        hours: Time window in hours (default 72)
+        language: Language for summary ("ru" | "en", default from settings)
+        max_sentences: Maximum sentences in summary (default from settings)
+
+    Returns:
+        Dict with task_id and ack_message.
+    """
+    from src.application.use_cases.request_channel_digest_async import (
+        RequestChannelDigestAsyncUseCase,
+    )
+
+    # Use settings defaults if not provided
+    if language is None:
+        language = _settings.summarizer_language
+    if max_sentences is None:
+        max_sentences = _settings.digest_summary_sentences
+
+    logger.info(
+        f"Requesting async digest: user_id={user_id}, chat_id={chat_id}, "
+        f"channel={channel_username}, hours={hours}, max_sentences={max_sentences}, language={language}"
+    )
+
+    use_case = RequestChannelDigestAsyncUseCase()
+    result = await use_case.execute(
+        user_id=user_id,
+        chat_id=chat_id,
+        channel_username=channel_username,
+        hours=hours,
+        language=language,
+        max_sentences=max_sentences,
+    )
+
+    return {
+        "task_id": result["task_id"],
+        "ack_message": result["ack_message"],
+    }
 

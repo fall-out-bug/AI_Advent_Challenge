@@ -248,6 +248,119 @@ python scripts/export_fine_tuning_dataset.py \
 - `--limit` - максимальное количество образцов (optional)
 - `--output` - путь к выходному файлу (default: /app/data/fine_tuning_dataset.jsonl)
 
+## Async Long Summarization API
+
+### request_channel_digest_async
+
+MCP tool для создания асинхронной задачи на генерацию дайджеста.
+
+```python
+@mcp.tool()
+async def request_channel_digest_async(
+    user_id: int,
+    chat_id: int,
+    channel_username: str | None = None,
+    hours: int = 72,
+    language: str = "ru",
+    max_sentences: int = 8,
+) -> Dict[str, Any]
+```
+
+**Параметры:**
+- `user_id` - Telegram user ID
+- `chat_id` - Telegram chat ID для отправки результатов
+- `channel_username` - Имя канала (None = все каналы)
+- `hours` - Временное окно в часах (default: 72)
+- `language` - Язык суммаризации ("ru" | "en", default: "ru")
+- `max_sentences` - Максимум предложений (default: 8)
+
+**Возвращает:**
+```python
+{
+    "task_id": "digest_abc123_1234567890",
+    "ack_message": "Принял задачу на создание дайджеста..."
+}
+```
+
+**Пример:**
+```python
+result = await request_channel_digest_async(
+    user_id=123,
+    chat_id=456,
+    channel_username="channel_name",
+    hours=72,
+    language="ru",
+    max_sentences=8
+)
+# Пользователь получает: "Принял задачу на создание дайджеста канала channel_name за 72 часов. Пришлю результат отдельным сообщением."
+# Worker обрабатывает задачу с таймаутом 600s
+# Результат отправляется отдельным сообщением: "📋 Дайджест канала channel_name:\n\n..."
+```
+
+### LongSummarizationTask
+
+Сущность задачи для длинной суммаризации.
+
+```python
+@dataclass
+class LongSummarizationTask:
+    task_id: str
+    user_id: int
+    chat_id: int
+    channel_username: str | None = None
+    context: SummarizationContext
+    status: TaskStatus  # QUEUED, RUNNING, SUCCEEDED, FAILED
+    result_text: str | None = None
+    error: str | None = None
+    created_at: datetime
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+```
+
+### LongTasksRepository
+
+Репозиторий для работы с длинными задачами.
+
+```python
+class LongTasksRepository:
+    async def create(task: LongSummarizationTask) -> str
+    async def pick_next_queued() -> LongSummarizationTask | None
+    async def mark_running(task_id: str) -> None
+    async def complete(task_id: str, result_text: str) -> None
+    async def fail(task_id: str, error: str) -> None
+    async def get_by_id(task_id: str) -> LongSummarizationTask | None
+    async def get_by_user(user_id: int, limit: int, status: TaskStatus | None) -> list[LongSummarizationTask]
+```
+
+**Особенности:**
+- Атомарный `pick_next_queued()` предотвращает двойную обработку
+- Идемпотентные операции через MongoDB
+- Автоматический TTL 7 дней для старых задач
+
+### Метрики
+
+**Prometheus метрики:**
+- `long_tasks_total{status}` - счетчик задач по статусам (queued, running, succeeded, failed)
+- `long_tasks_duration_seconds{status}` - длительность обработки задач
+- `long_tasks_queue_size` - текущий размер очереди
+
+### Настройки
+
+```python
+summarizer_timeout_seconds_long: float = 600.0  # Таймаут для длинных задач
+long_tasks_poll_interval_seconds: int = 5  # Интервал опроса очереди worker'ом
+long_tasks_max_retries: int = 1  # Максимум повторов
+enable_async_long_summarization: bool = True  # Feature flag
+```
+
+### Обработка ошибок
+
+При ошибке обработки:
+1. Задача помечается как FAILED в MongoDB
+2. Пользователю отправляется сообщение с описанием ошибки и task_id
+3. Метрики фиксируют неуспешную задачу
+4. Логи содержат полный traceback для отладки
+
 ## MongoDB Schema
 
 ### Collection: `summarization_evaluations`

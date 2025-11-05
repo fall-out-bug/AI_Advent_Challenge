@@ -12,9 +12,13 @@ from src.presentation.mcp.tools.channels.channel_management import (
 from src.presentation.mcp.tools.channels.channel_metadata import (
     get_channel_metadata,
 )
+from src.presentation.mcp.tools.channels.channel_resolution import (
+    resolve_channel_name,
+)
 from src.presentation.mcp.tools.channels.channel_digest import (
     get_channel_digest,
     get_channel_digest_by_name,
+    request_channel_digest_async,
 )
 from src.presentation.mcp.tools.channels.posts_management import (
     get_posts,
@@ -29,6 +33,8 @@ __all__ = [
     "get_channel_metadata",
     "get_channel_digest",
     "get_channel_digest_by_name",
+    "request_channel_digest_async",
+    "resolve_channel_name",
     "get_posts",
     "collect_posts",
     "save_posts_to_db",

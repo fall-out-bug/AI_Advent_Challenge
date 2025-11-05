@@ -27,16 +27,53 @@ async def add_channel(
         user_id: Telegram user ID
         channel_username: Channel username without @
         tags: Optional annotation tags
-        title: Optional channel title (metadata)
-        description: Optional channel description (metadata)
+        title: Optional channel title (overrides Telegram metadata if provided)
+        description: Optional channel description (overrides Telegram metadata if provided)
 
     Returns:
         Dict with channel_id and status
     """
+    from src.presentation.mcp.tools.channels.channel_metadata import get_channel_metadata
+    from src.infrastructure.logging import get_logger
+    
+    logger = get_logger("channel_management")
+    
     db = await get_database()
-    existing = await db.channels.find_one({"user_id": user_id, "channel_username": channel_username})
+    channel_username = channel_username.lstrip("@")
+    
+    # Check if channel already exists (only active channels)
+    existing = await db.channels.find_one({
+        "user_id": user_id, 
+        "channel_username": channel_username,
+        "active": True
+    })
     if existing:
-        # Update metadata if provided
+        # Always fetch fresh metadata from Telegram API if not provided
+        if title is None or description is None:
+            try:
+                logger.info(f"Fetching fresh metadata for existing channel: {channel_username}")
+                metadata = await get_channel_metadata(channel_username, user_id=user_id)
+                if metadata.get("success"):
+                    # Use provided values or fallback to Telegram metadata
+                    final_title = title if title is not None else metadata.get("title")
+                    final_description = description if description is not None else metadata.get("description")
+                    
+                    update_fields = {}
+                    if final_title and final_title != existing.get("title"):
+                        update_fields["title"] = final_title
+                    if final_description is not None and final_description != existing.get("description"):
+                        update_fields["description"] = final_description
+                    
+                    if update_fields:
+                        await db.channels.update_one(
+                            {"_id": existing["_id"]}, 
+                            {"$set": update_fields}
+                        )
+                        logger.info(f"Updated existing channel metadata: {channel_username}, fields={update_fields.keys()}")
+            except Exception as e:
+                logger.warning(f"Failed to fetch metadata for existing channel {channel_username}: {e}")
+        
+        # Update metadata if explicitly provided
         update_fields = {}
         if title is not None:
             update_fields["title"] = title
@@ -49,6 +86,68 @@ async def add_channel(
             )
         return {"channel_id": str(existing["_id"]), "status": "already_subscribed"}
 
+    # New channel subscription - ALWAYS validate channel exists via Telegram API
+    # This ensures we don't subscribe to invalid/non-existent channels
+    telegram_title = title
+    telegram_description = description
+    metadata_valid = False
+    
+    # Always fetch metadata from Telegram API to validate channel exists
+    try:
+        logger.info(f"Validating channel via Telegram API: {channel_username}")
+        metadata = await get_channel_metadata(channel_username, user_id=user_id)
+        
+        logger.debug(
+            f"Metadata response: success={metadata.get('success')}, "
+            f"title={metadata.get('title')}, "
+            f"error={metadata.get('error')}, "
+            f"full_response={metadata}"
+        )
+        
+        if metadata.get("success"):
+            metadata_valid = True
+            # Use provided values or fallback to Telegram metadata
+            telegram_title = title if title is not None else metadata.get("title")
+            telegram_description = description if description is not None else metadata.get("description")
+            
+            # Validate that we got a valid title (required)
+            if not telegram_title or not telegram_title.strip():
+                logger.warning(
+                    f"Channel {channel_username} has no title, cannot subscribe. "
+                    f"metadata={metadata}"
+                )
+                metadata_valid = False
+            else:
+                logger.info(
+                    f"Channel validated: {channel_username}, "
+                    f"title={telegram_title}, has_description={bool(telegram_description)}"
+                )
+        else:
+            error_msg = metadata.get("error", "unknown error")
+            logger.warning(
+                f"Failed to validate channel via Telegram API: {channel_username}, "
+                f"error={error_msg}, full_metadata={metadata}"
+            )
+    except Exception as e:
+        logger.error(
+            f"Error validating channel {channel_username}: {e}",
+            exc_info=True
+        )
+    
+    # If metadata validation failed, don't subscribe
+    if not metadata_valid:
+        error_message = (
+            f"Не удалось подтвердить существование канала '{channel_username}'. "
+            f"Проверьте правильность username канала."
+        )
+        logger.error(f"Cannot subscribe to invalid channel: {channel_username}")
+        return {
+            "status": "error",
+            "error": "channel_validation_failed",
+            "message": error_message
+        }
+
+    # Channel is valid, proceed with subscription
     channel_doc = {
         "user_id": user_id,
         "channel_username": channel_username,
@@ -56,15 +155,16 @@ async def add_channel(
         "subscribed_at": datetime.utcnow().isoformat(),
         "last_digest": None,
         "active": True,
+        "title": telegram_title,
     }
     
-    # Add metadata if provided
-    if title is not None:
-        channel_doc["title"] = title
-    if description is not None:
-        channel_doc["description"] = description
+    if telegram_description:
+        channel_doc["description"] = telegram_description
     
     result = await db.channels.insert_one(channel_doc)
+    logger.info(
+        f"Subscribed to validated channel: {channel_username}, title={telegram_title}"
+    )
     return {"channel_id": str(result.inserted_id), "status": "subscribed"}
 
 

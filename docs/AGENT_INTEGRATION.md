@@ -1,5 +1,7 @@
 # MCP-Aware Agent Integration Guide
 
+[English](AGENT_INTEGRATION.md) | [Русский](AGENT_INTEGRATION.ru.md)
+
 ## Overview
 
 The MCP-aware agent is an intelligent assistant that can automatically discover and use MCP (Model Context Protocol) tools to fulfill user requests. It integrates with a local LLM (Mistral) to understand user intent and execute appropriate tools.
