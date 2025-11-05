@@ -42,7 +42,9 @@ class ButlerBot:
             orchestrator: ButlerOrchestrator instance (injected via DI)
         """
         self.bot = Bot(token=token)
-        self.dp = Dispatcher()
+        # Initialize Dispatcher with FSM storage for state management
+        self.storage = MemoryStorage()
+        self.dp = Dispatcher(storage=self.storage)
         self.router = Router()
         self.orchestrator = orchestrator
         self._setup_handlers()

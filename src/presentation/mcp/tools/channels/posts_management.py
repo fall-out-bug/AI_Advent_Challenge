@@ -10,7 +10,6 @@ import re
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from pyrogram import Client
 from src.presentation.mcp.server import mcp
 from src.presentation.mcp.tools.channels.utils import get_database, guess_usernames_from_human_name
 from src.infrastructure.repositories.post_repository import PostRepository
@@ -60,7 +59,7 @@ async def get_posts(
 
 
 async def _fetch_and_save_posts(
-    client: Client,
+    client: "Client",  # Pyrogram Client - lazy import
     channel_username: str,
     user_id: Optional[int],
     window_hours: int
@@ -155,11 +154,19 @@ async def collect_posts(
                 "message": "Telegram credentials not configured",
             }
 
+        # Lazy import to avoid event loop issues at module load time
+        from pyrogram import Client
+        
+        # Use unique client name to avoid conflicts with concurrent requests
+        import uuid
+        client_name = f"butler_posts_{uuid.uuid4().hex[:8]}"
+
         client = Client(
-            "butler_client",
+            client_name,
             api_id=int(api_id),
             api_hash=api_hash,
             session_string=session_string,
+            no_updates=True,  # Don't process updates in background
         )
 
         await client.start()
@@ -229,8 +236,13 @@ async def save_posts_to_db(posts: List[dict], channel_username: str, user_id: in
 
     for post in posts:
         try:
+            # Handle both "channel" and "channel_username" fields
+            # Posts from telegram_utils have "channel" field with actual username
+            # Posts from other sources may have "channel_username" field
+            post_channel = post.get("channel") or post.get("channel_username") or channel_username
+            
             post_with_metadata = {
-                "channel_username": channel_username,
+                "channel_username": post_channel,  # Use actual username from post if available
                 "message_id": post.get("message_id", ""),
                 "text": post.get("text", ""),
                 "user_id": user_id,

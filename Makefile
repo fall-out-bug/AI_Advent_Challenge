@@ -1,4 +1,4 @@
-.PHONY: help install test lint format clean docker-build docker-up docker-down coverage integration e2e maintenance-cleanup maintenance-backup maintenance-export maintenance-validate day-07 day-08 day-11 day-11-up day-11-down day-11-build day-11-logs day-11-logs-bot day-11-logs-worker day-11-logs-mcp day-11-logs-mistral day-11-ps day-11-restart day-11-clean day-11-setup day-12 day-12-up day-12-down day-12-build day-12-logs day-12-logs-bot day-12-logs-worker day-12-logs-mcp day-12-logs-post-fetcher day-12-logs-mistral day-12-ps day-12-restart day-12-clean day-12-setup day-12-test day-12-metrics mcp-discover mcp-demo test-mcp test-mcp-comprehensive mcp-chat mcp-chat-streaming mcp-server-start mcp-server-stop mcp-chat-docker mcp-demo-start mcp-demo-stop mcp-demo-logs demo-mcp-comprehensive
+.PHONY: help install test lint format clean docker-build docker-up docker-down coverage integration e2e maintenance-cleanup maintenance-backup maintenance-export maintenance-validate day-07 day-08 day-11 day-11-up day-11-down day-11-build day-11-logs day-11-logs-bot day-11-logs-worker day-11-logs-mcp day-11-logs-mistral day-11-ps day-11-restart day-11-clean day-11-setup day-12 day-12-up day-12-down day-12-build day-12-logs day-12-logs-bot day-12-logs-worker day-12-logs-post-fetcher day-12-logs-mcp day-12-logs-mistral day-12-ps day-12-restart day-12-clean day-12-setup day-12-test day-12-metrics butler butler-up butler-down butler-build butler-logs butler-logs-bot butler-logs-worker butler-logs-mcp butler-logs-post-fetcher butler-logs-mistral butler-ps butler-restart butler-clean butler-setup butler-test butler-metrics mcp-discover mcp-demo test-mcp test-mcp-comprehensive mcp-chat mcp-chat-streaming mcp-server-start mcp-server-stop mcp-chat-docker mcp-demo-start mcp-demo-stop mcp-demo-logs demo-mcp-comprehensive
 
 help:
 	@echo "Available commands:"
@@ -15,6 +15,20 @@ help:
 	@echo "  make docker-up        - Start Docker services"
 	@echo "  make docker-down      - Stop Docker services"
 	@echo ""
+	@echo "Code Quality & Security:"
+	@echo "  make check-all        - Run all checks (format, lint, test, coverage, security)"
+	@echo "  make security          - Run security checks (bandit, safety)"
+	@echo "  make update-deps      - Check for outdated dependencies"
+	@echo "  make docs-check       - Check markdown links"
+	@echo ""
+	@echo "Pre-commit Hooks:"
+	@echo "  make hook             - Install pre-commit hooks"
+	@echo "  make hook-update      - Update pre-commit hooks"
+	@echo "  make hook-run         - Run pre-commit hooks on all files"
+	@echo ""
+	@echo "Docker:"
+	@echo "  make docker-clean     - Clean unused Docker images and containers"
+	@echo ""
 	@echo "Day 11 - Butler Bot:"
 	@echo "  make day-11           - Start Day 11 Butler Bot system (default)"
 	@echo "  make day-11-up         - Start all Day 11 services"
@@ -30,23 +44,25 @@ help:
 	@echo "  make day-11-clean      - Remove all containers and volumes"
 	@echo "  make day-11-setup      - Create .env from .env.example"
 	@echo ""
-	@echo "Day 12 - Butler Bot with Post Fetcher & PDF Digest:"
-	@echo "  make day-12           - Start Day 12 Butler Bot system (default)"
-	@echo "  make day-12-up         - Start all Day 12 services"
-	@echo "  make day-12-down       - Stop all Day 12 services"
-	@echo "  make day-12-build      - Rebuild Day 12 Docker images"
-	@echo "  make day-12-logs       - View logs from all services"
-	@echo "  make day-12-logs-bot   - View bot logs"
-	@echo "  make day-12-logs-worker - View summary worker logs"
-	@echo "  make day-12-logs-post-fetcher - View post fetcher worker logs"
-	@echo "  make day-12-logs-mcp   - View MCP server logs"
-	@echo "  make day-12-logs-mistral - View Mistral LLM logs"
-	@echo "  make day-12-ps         - Show service status"
-	@echo "  make day-12-restart    - Restart all services"
-	@echo "  make day-12-clean      - Remove all containers and volumes"
-	@echo "  make day-12-setup      - Create .env from .env.example"
-	@echo "  make day-12-test       - Run Day 12 tests"
-	@echo "  make day-12-metrics    - View Prometheus metrics"
+	@echo "Butler - Butler Bot with Post Fetcher & PDF Digest:"
+	@echo "  make butler           - Start Butler Bot system (unified, default)"
+	@echo "  make butler-up         - Start all Butler services"
+	@echo "  make butler-down       - Stop all Butler services"
+	@echo "  make butler-build      - Rebuild Butler Docker images"
+	@echo "  make butler-logs       - View logs from all services"
+	@echo "  make butler-logs-bot   - View bot logs"
+	@echo "  make butler-logs-worker - View summary worker logs"
+	@echo "  make butler-logs-post-fetcher - View post fetcher worker logs"
+	@echo "  make butler-logs-mcp   - View MCP server logs"
+	@echo "  make butler-logs-mistral - View Mistral LLM logs"
+	@echo "  make butler-ps         - Show service status"
+	@echo "  make butler-restart    - Restart all services"
+	@echo "  make butler-clean      - Remove all containers and volumes"
+	@echo "  make butler-setup      - Create .env from .env.example"
+	@echo "  make butler-test       - Run Butler tests"
+	@echo "  make butler-metrics    - View Prometheus metrics"
+	@echo ""
+	@echo "  (Legacy: make butler-* still works but deprecated, use butler-* instead)"
 	@echo ""
 	@echo "  make day-07           - Run Day 07 multi-agent workflow"
 	@echo "  make day-08           - Run Day 08 token compression"
@@ -245,14 +261,9 @@ day-11-setup:
 		echo ".env file already exists"; \
 	fi
 
-# Day 12: Post Fetcher Worker & PDF Digest Generation
-day-12: day-12-up
-	@echo "Day 12 Butler Bot system started"
-	@echo "Check status: make day-12-ps"
-	@echo "View logs: make day-12-logs"
-	@echo "View metrics: make day-12-metrics"
+butler: butler-up
 
-day-12-up:
+butler-up:
 	@if [ ! -f .env ]; then \
 		echo "ERROR: .env file not found!"; \
 		echo "Copy .env.example to .env and set TELEGRAM_BOT_TOKEN"; \
@@ -263,46 +274,69 @@ day-12-up:
 		echo "Edit .env and set your Telegram bot token"; \
 		exit 1; \
 	fi
-	docker-compose -f docker-compose.day12.yml up -d
+	docker-compose -f docker-compose.butler.yml up -d
 	@echo "Waiting for services to be healthy..."
 	@sleep 5
-	@docker-compose -f docker-compose.day12.yml ps
+	@docker-compose -f docker-compose.butler.yml ps
+	@echo "Butler Bot system started"
+	@echo "Check status: make butler-ps"
+	@echo "View logs: make butler-logs"
+	@echo "View metrics: make butler-metrics"
 
-day-12-down:
-	docker-compose -f docker-compose.day12.yml down
+day-12: butler  # Legacy alias
+day-12-up: butler-up  # Legacy alias
 
-day-12-build:
-	docker-compose -f docker-compose.day12.yml build --no-cache
+day-12-down: butler-down  # Legacy alias
+butler-down:
+	docker-compose -f docker-compose.butler.yml down
 
-day-12-logs:
-	docker-compose -f docker-compose.day12.yml logs -f
+day-12-build: butler-build  # Legacy alias
+butler-build:
+	docker-compose -f docker-compose.butler.yml build --no-cache
 
-day-12-logs-bot:
-	docker-compose -f docker-compose.day12.yml logs -f telegram-bot
+# Legacy aliases for day-12 commands
+day-12-logs: butler-logs
+day-12-logs-bot: butler-logs-bot
+day-12-logs-worker: butler-logs-worker
+day-12-logs-post-fetcher: butler-logs-post-fetcher
+day-12-logs-mcp: butler-logs-mcp
+day-12-logs-mistral: butler-logs-mistral
+day-12-ps: butler-ps
+day-12-restart: butler-restart
+day-12-clean: butler-clean
+day-12-setup: butler-setup
+day-12-test: butler-test
+day-12-metrics: butler-metrics
 
-day-12-logs-worker:
-	docker-compose -f docker-compose.day12.yml logs -f summary-worker
+butler-logs:
+	docker-compose -f docker-compose.butler.yml logs -f
 
-day-12-logs-post-fetcher:
-	docker-compose -f docker-compose.day12.yml logs -f post-fetcher-worker
+butler-logs-bot:
+	docker-compose -f docker-compose.butler.yml logs -f butler-bot
 
-day-12-logs-mcp:
-	docker-compose -f docker-compose.day12.yml logs -f mcp-server
+butler-logs-worker:
+	docker-compose -f docker-compose.butler.yml logs -f summary-worker
 
-day-12-logs-mistral:
-	docker-compose -f docker-compose.day12.yml logs -f mistral-chat
+butler-logs-post-fetcher:
+	docker-compose -f docker-compose.butler.yml logs -f post-fetcher-worker
 
-day-12-ps:
-	docker-compose -f docker-compose.day12.yml ps
+butler-logs-mcp:
+	docker-compose -f docker-compose.butler.yml logs -f mcp-server
 
-day-12-restart:
-	docker-compose -f docker-compose.day12.yml restart
+butler-logs-mistral:
+	docker-compose -f docker-compose.butler.yml logs -f mistral-chat
 
-day-12-clean:
-	docker-compose -f docker-compose.day12.yml down -v
-	@echo "All Day 12 containers and volumes removed"
+butler-ps:
+	docker-compose -f docker-compose.butler.yml ps
 
-day-12-setup:
+butler-restart:
+	docker-compose -f docker-compose.butler.yml restart
+
+butler-clean:
+	docker-compose -f docker-compose.butler.yml down -v
+	@echo "All Butler containers and volumes removed"
+
+butler-setup:
 	@if [ ! -f .env ]; then \
 		cp .env.example .env; \
 		echo "Created .env file from .env.example"; \
@@ -315,10 +349,45 @@ day-12-setup:
 		echo ".env file already exists"; \
 	fi
 
-day-12-test:
-	@echo "Running Day 12 tests..."
+butler-test:
+	@echo "Running Butler tests..."
 	python scripts/day12_run.py test
 
-day-12-metrics:
+butler-metrics:
 	@echo "Fetching Prometheus metrics from MCP server..."
-	@curl -s http://localhost:8004/metrics | grep -E "(post_fetcher|pdf_generation|bot_digest)" | head -20 || echo "Metrics endpoint not available. Make sure services are running: make day-12-up"
+	@curl -s http://localhost:8004/metrics | grep -E "(post_fetcher|pdf_generation|bot_digest|long_tasks)" | head -30 || echo "Metrics endpoint not available. Make sure services are running: make butler-up"
+
+# Code quality and security checks
+check-all: format lint test-coverage security
+	@echo "All checks completed successfully"
+
+security:
+	@echo "Running security checks..."
+	poetry run bandit -r src/ -ll
+	poetry run safety check --json || echo "Safety check completed (may show warnings)"
+
+update-deps:
+	@echo "Checking for outdated dependencies..."
+	poetry update --dry-run
+
+docker-clean:
+	@echo "Cleaning unused Docker images and containers..."
+	docker system prune -f
+	docker image prune -f
+
+docs-check:
+	@echo "Checking markdown links..."
+	@command -v markdown-link-check >/dev/null && find . -name "*.md" -not -path "./.venv/*" -not -path "./node_modules/*" -exec markdown-link-check {} \; || echo "markdown-link-check not installed, skipping"
+
+# Pre-commit hooks
+hook:
+	@echo "Installing pre-commit hooks..."
+	poetry run pre-commit install
+
+hook-update:
+	@echo "Updating pre-commit hooks..."
+	poetry run pre-commit autoupdate
+
+hook-run:
+	@echo "Running pre-commit hooks on all files..."
+	poetry run pre-commit run --all-files

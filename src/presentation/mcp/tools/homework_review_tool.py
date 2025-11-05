@@ -16,9 +16,46 @@ sys.path.insert(0, str(_root))
 shared_path = _root / "shared"
 sys.path.insert(0, str(shared_path))
 
-from shared_package.clients.unified_client import UnifiedModelClient
+# Try to import UnifiedModelClient with fallbacks
+_UNIFIED_CLIENT_AVAILABLE = False
+try:
+    from shared_package.clients.unified_client import UnifiedModelClient
+    _UNIFIED_CLIENT_AVAILABLE = True
+except ImportError:
+    # Fallback: try shared.clients.unified_client
+    try:
+        from shared.clients.unified_client import UnifiedModelClient
+        _UNIFIED_CLIENT_AVAILABLE = True
+    except ImportError:
+        # Last resort: try to add shared_package to path
+        shared_package_path = _root / "shared" / "shared_package"
+        if shared_package_path.exists():
+            sys.path.insert(0, str(shared_package_path.parent))
+            try:
+                from shared_package.clients.unified_client import UnifiedModelClient
+                _UNIFIED_CLIENT_AVAILABLE = True
+            except ImportError:
+                pass
 
-from src.domain.agents.multi_pass_reviewer import MultiPassReviewerAgent
+# If UnifiedModelClient is not available, create a dummy class
+if not _UNIFIED_CLIENT_AVAILABLE:
+    # Create a dummy UnifiedModelClient to prevent NameError
+    class UnifiedModelClient:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError("UnifiedModelClient not available. Shared package not installed.")
+
+# Import other dependencies (these should be available)
+try:
+    from src.domain.agents.multi_pass_reviewer import MultiPassReviewerAgent
+except ImportError as e:
+    # If MultiPassReviewerAgent depends on UnifiedModelClient, we need to handle it
+    if not _UNIFIED_CLIENT_AVAILABLE:
+        # Create a dummy MultiPassReviewerAgent if UnifiedModelClient is not available
+        class MultiPassReviewerAgent:
+            def __init__(self, *args, **kwargs):
+                raise RuntimeError("MultiPassReviewerAgent not available. Shared package not installed.")
+    else:
+        raise
 from src.infrastructure.database.mongo import get_db
 from src.infrastructure.logging.review_logger import ReviewLogger
 from src.infrastructure.repositories.homework_review_repository import (
@@ -211,6 +248,8 @@ async def review_homework_archive(
         )
 
         # Initialize client and agent with logger
+        if not _UNIFIED_CLIENT_AVAILABLE:
+            raise RuntimeError("UnifiedModelClient not available. Shared package not installed.")
         client = UnifiedModelClient(timeout=300.0)
         agent = MultiPassReviewerAgent(
             client, token_budget=token_budget, review_logger=review_logger

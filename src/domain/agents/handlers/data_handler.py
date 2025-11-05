@@ -358,6 +358,16 @@ class DataHandler(Handler):
             
             logger.info(f"Tool {tool_name} returned: keys={list(result.keys()) if isinstance(result, dict) else type(result)}")
             
+            # Handle not_subscribed status with found_channel (offer to subscribe)
+            if result.get("status") == "not_subscribed" and result.get("found_channel"):
+                found_channel = result.get("found_channel")
+                message = result.get("message", "Подписка не найдена.")
+                return (
+                    f"{message}\n\n"
+                    f"Для получения дайджеста подпишитесь на канал: "
+                    f"@{found_channel.get('username')} - {found_channel.get('title', '')}"
+                )
+            
             # Handle response format
             if "digests" in result:
                 digests = result.get("digests", [])

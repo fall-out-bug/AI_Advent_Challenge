@@ -3,9 +3,14 @@
 Following TDD principles: comprehensive fixtures for cross-layer testing.
 """
 
+import os
+
 import pytest
+from motor.motor_asyncio import AsyncIOMotorClient
 from unittest.mock import AsyncMock, MagicMock
 from typing import Any, Dict
+
+from src.infrastructure.config.settings import get_settings
 
 from tests.fixtures.butler_fixtures import (
     butler_orchestrator,
@@ -123,4 +128,33 @@ async def integration_mongodb(mock_mongodb):
     mock_mongodb.dialog_contexts.update_one = AsyncMock(side_effect=update_one_mock)
     
     return mock_mongodb
+
+
+@pytest.fixture(scope="function")
+async def real_mongodb():
+    """Real MongoDB connection for integration tests.
+
+    Purpose:
+        Provides connection to test MongoDB database.
+        Uses test database name to avoid conflicts with production.
+
+    Yields:
+        MongoDB database instance.
+
+    Note:
+        Requires MONGODB_URL environment variable or default localhost:27017.
+        Uses 'ai_challenge_integration_test' database.
+    """
+    settings = get_settings()
+    mongodb_url = os.getenv("TEST_MONGODB_URL", settings.mongodb_url)
+    
+    # Use test database
+    client = AsyncIOMotorClient(mongodb_url)
+    db = client.get_database("ai_challenge_integration_test")
+    
+    yield db
+    
+    # Cleanup: drop test database
+    await client.drop_database("ai_challenge_integration_test")
+    client.close()
 

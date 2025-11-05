@@ -15,7 +15,33 @@ sys.path.insert(0, str(_root))
 shared_path = _root / "shared"
 sys.path.insert(0, str(shared_path))
 
-from shared_package.clients.unified_client import UnifiedModelClient
+# Try to import UnifiedModelClient with fallbacks
+_UNIFIED_CLIENT_AVAILABLE = False
+try:
+    from shared_package.clients.unified_client import UnifiedModelClient
+    _UNIFIED_CLIENT_AVAILABLE = True
+except ImportError:
+    # Fallback: try shared.clients.unified_client
+    try:
+        from shared.clients.unified_client import UnifiedModelClient
+        _UNIFIED_CLIENT_AVAILABLE = True
+    except ImportError:
+        # Last resort: try to add shared_package to path
+        shared_package_path = _root / "shared" / "shared_package"
+        if shared_package_path.exists():
+            sys.path.insert(0, str(shared_package_path.parent))
+            try:
+                from shared_package.clients.unified_client import UnifiedModelClient
+                _UNIFIED_CLIENT_AVAILABLE = True
+            except ImportError:
+                pass
+
+# If UnifiedModelClient is not available, create a dummy class
+if not _UNIFIED_CLIENT_AVAILABLE:
+    # Create a dummy UnifiedModelClient to prevent NameError
+    class UnifiedModelClient:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError("UnifiedModelClient not available. Shared package not installed.")
 
 from src.domain.agents.passes.architecture_pass import (
     ArchitectureReviewPass,
@@ -63,7 +89,12 @@ class MultiPassReviewerAgent:
             unified_client: UnifiedModelClient instance
             token_budget: Total token budget for all passes (default: 12000)
             review_logger: Optional ReviewLogger for detailed logging
+            
+        Raises:
+            RuntimeError: If UnifiedModelClient is not available
         """
+        if not _UNIFIED_CLIENT_AVAILABLE:
+            raise RuntimeError("UnifiedModelClient not available. Shared package not installed.")
         self.client = unified_client
         self.token_budget = token_budget
         self.review_logger = review_logger

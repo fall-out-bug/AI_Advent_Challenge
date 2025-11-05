@@ -10,6 +10,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Import os at module level for get_llm_client
+import os
+
 
 class LLMClient(Protocol):
     async def generate(self, prompt: str, temperature: float = 0.2, max_tokens: int = 256) -> str:
@@ -117,12 +120,55 @@ class HTTPLLMClient:
                 pass  # Fall through to try /v1/chat/completions
             else:
                 logger.warning(f"HTTP error from /chat endpoint: {e.response.status_code if e.response else 'unknown'} - {e}")
+                # Try host URL fallback for HTTP errors too
+                if self._host_url is None and ("llm-server" in self.url or "mistral" in self.url.lower()):
+                    self._host_url = self._get_host_url(self.url)
+                    logger.info(f"Trying host URL fallback after HTTP error: {self._host_url}")
+                    try:
+                        host_url = f"{self._host_url}/chat"
+                        host_payload = {
+                            "messages": [{"role": "user", "content": prompt}],
+                            "max_tokens": max_tokens,
+                            "temperature": temperature,
+                        }
+                        response = await client.post(host_url, json=host_payload, timeout=self.timeout)
+                        response.raise_for_status()
+                        data = response.json()
+                        content = (data.get("response") or "").strip()
+                        if content:
+                            logger.info(f"Successfully connected to LLM via host URL after HTTP error")
+                            return content
+                    except Exception as host_error:
+                        logger.debug(f"Host URL fallback after HTTP error also failed: {host_error}")
                 raise
         except httpx.ConnectError as e:
             logger.warning(f"Connection error to /chat endpoint: {e}")
-            raise  # Re-raise connection errors to trigger host URL fallback
+            # Try host URL fallback before re-raising
+            if self._host_url is None and ("llm-server" in self.url or "mistral" in self.url.lower()):
+                self._host_url = self._get_host_url(self.url)
+                logger.info(f"Trying host URL fallback after connection error: {self._host_url}")
+                try:
+                    host_url = f"{self._host_url}/chat"
+                    host_payload = {
+                        "messages": [{"role": "user", "content": prompt}],
+                        "max_tokens": max_tokens,
+                        "temperature": temperature,
+                    }
+                    response = await client.post(host_url, json=host_payload, timeout=self.timeout)
+                    response.raise_for_status()
+                    data = response.json()
+                    content = (data.get("response") or "").strip()
+                    if content:
+                        logger.info(f"Successfully connected to LLM via host URL after connection error")
+                        return content
+                except Exception as host_error:
+                    logger.debug(f"Host URL fallback after connection error also failed: {host_error}")
+            raise  # Re-raise if all attempts failed
         except Exception as e:
-            logger.warning(f"Unexpected error from /chat endpoint: {e}")
+            logger.warning(
+                f"Unexpected error from /chat endpoint: {type(e).__name__}: {e}",
+                exc_info=True
+            )
             raise
         
         # Fallback: try OpenAI-compatible /v1/chat/completions endpoint
@@ -228,42 +274,68 @@ class FallbackLLMClient:
         prompt_lower = prompt.lower()
         
         # Detect summarization prompts - check for Russian/English keywords
+        # More comprehensive detection for summarization prompts
         summarization_keywords = [
             "суммариз", "summarize", "суммар", "итогов", "факт",
             "канала", "channel", "пост", "post", "новост", "news",
             "перед тобой", "перед тобой фрагмент", "перед тобой несколько",
-            "ключевых фактов", "key facts", "key facts", "фрагмент", "fragment"
+            "ключевых фактов", "key facts", "фрагмент", "fragment",
+            "напиши", "write", "предложен", "sentences", "предложения",
+            "дайджест", "digest", "резюме", "summary", "саммар"
         ]
         
         intent_keywords = [
             "извлеки", "extract", "intent", "задача", "task",
-            "deadline", "приоритет", "priority", "title", "название"
+            "deadline", "приоритет", "priority", "title", "название",
+            "json", "needs_clarification"
         ]
         
         is_summarization = any(keyword in prompt_lower for keyword in summarization_keywords)
         is_intent = any(keyword in prompt_lower for keyword in intent_keywords)
         
-        # If both detected, prefer summarization if prompt contains "пост" or "post"
-        if is_summarization and is_intent:
-            if "пост" in prompt_lower or "post" in prompt_lower:
-                is_intent = False
-                is_summarization = True
+        # Stronger detection: if prompt contains "пост" or "post" and summarization keywords, it's summarization
+        if ("пост" in prompt_lower or "post" in prompt_lower) and is_summarization:
+            is_intent = False
+            is_summarization = True
+        
+        # If prompt explicitly asks for summary or digest, prioritize summarization
+        if ("суммар" in prompt_lower or "summary" in prompt_lower or 
+            "дайджест" in prompt_lower or "digest" in prompt_lower):
+            is_intent = False
+            is_summarization = True
         
         if is_summarization and not is_intent:
             # Generate simple text summary from prompt content
             # Extract post texts - look for numbered lines like "1. текст поста"
+            # Also look for posts after markers like "ФРАГМЕНТ:" or "POSTS:" or "ПОСТЫ:"
             lines = prompt.split('\n')
             post_texts = []
+            in_content_section = False
+            skip_keywords = ['важно', 'пример', 'суммар', 'верни', 'json', 'задача', 'task', 
+                           'фрагмент', 'fragment', 'критич', 'critical', 'пример правильного', 
+                           'пример неправильного', 'example correct', 'example wrong']
             
             for line in lines:
                 line_stripped = line.strip()
+                if not line_stripped:
+                    continue
+                    
                 line_lower = line_stripped.lower()
                 
+                # Detect content sections
+                if any(marker in line_lower for marker in ['фрагмент:', 'fragment:', 'посты:', 'posts:', 'post:', 'post ']):
+                    in_content_section = True
+                    continue
+                
+                # Stop at instruction sections
+                if any(marker in line_lower for marker in ['ключевые факты:', 'key facts:', 'итоговая суммаризация:', 'final summary:', 'критически важно:', 'critical:']):
+                    in_content_section = False
+                    break
+                
                 # Skip instructions and empty lines
-                if (not line_stripped or 
-                    'важно' in line_lower or 'пример' in line_lower or 
-                    'суммар' in line_lower or 'верни' in line_lower or
-                    line_stripped.startswith('Пример') or line_stripped.startswith('ВАЖНО')):
+                if (not in_content_section and 
+                    any(skip in line_lower for skip in skip_keywords) or
+                    line_stripped.startswith(('Пример', 'ВАЖНО', 'Example', 'CRITICAL', 'EXAMPLE'))):
                     continue
                     
                 # Look for numbered lines: "1. текст" or "1) текст"
@@ -271,34 +343,84 @@ class FallbackLLMClient:
                 if numbered_match:
                     text = numbered_match.group(1).strip()
                     # Filter out very short or instruction-like text
-                    if len(text) > 15 and not any(skip in text.lower() for skip in ['важно', 'пример', 'суммар', 'верни', 'json']):
+                    if len(text) > 15 and not any(skip in text.lower() for skip in skip_keywords):
                         post_texts.append(text)
+                # Also capture non-numbered content lines in content section
+                elif in_content_section and len(line_stripped) > 20:
+                    # Skip lines that are clearly instructions
+                    if not any(skip in line_lower for skip in skip_keywords):
+                        # Check if line looks like actual content (not instruction)
+                        if not line_stripped.lower().startswith(('задача:', 'task:', 'пример:', 'example:', 'критич', 'critical')):
+                            # Extract meaningful content (avoid repeating same text)
+                            # Check if similar content already in recent posts
+                            is_duplicate = False
+                            if post_texts:
+                                for recent_post in post_texts[-3:]:
+                                    if line_stripped[:50].lower() in recent_post.lower()[:50] or recent_post.lower()[:50] in line_stripped[:50].lower():
+                                        is_duplicate = True
+                                        break
+                            if not is_duplicate:
+                                post_texts.append(line_stripped[:300])  # Limit length
             
             if post_texts:
-                # Simple concatenation fallback - join first few posts
-                summary = '. '.join(post_texts[:min(3, len(post_texts))])
-                if not summary.endswith('.'):
+                # Use more posts and create better summary
+                # Take up to 5 posts, but ensure variety
+                unique_posts = []
+                seen_content = set()
+                for post in post_texts:
+                    # Simple deduplication - check if similar content already seen
+                    post_lower = post.lower()[:50]  # First 50 chars for comparison
+                    if post_lower not in seen_content:
+                        seen_content.add(post_lower)
+                        unique_posts.append(post)
+                        if len(unique_posts) >= 5:
+                            break
+                
+                # Create summary from unique posts
+                # Filter out instruction-like text that might have been captured
+                filtered_posts = []
+                for post in unique_posts:
+                    post_lower = post.lower()
+                    # Skip posts that look like instructions
+                    if not any(instr in post_lower for instr in [
+                        'не используй', 'не нумеруй', 'только предложения', 'верни только',
+                        'do not use', 'do not number', 'only sentences', 'return only',
+                        'важно:', 'important:', 'пример:', 'example:'
+                    ]):
+                        filtered_posts.append(post)
+                
+                if not filtered_posts:
+                    # If all filtered, use original but clean
+                    filtered_posts = unique_posts[:3]
+                
+                summary = '. '.join(filtered_posts)
+                if len(summary) > 500:
+                    summary = summary[:500] + '...'
+                if not summary.endswith(('.', '!', '?', '...')):
                     summary += '.'
                 return summary
             else:
-                # Generic fallback for summarization - extract first sentences from prompt
-                # Try to find actual content in prompt
-                lines = prompt.split('\n')
+                # Generic fallback - extract meaningful content from prompt
                 content_lines = []
                 for line in lines:
                     line_stripped = line.strip()
-                    if len(line_stripped) > 20 and not any(skip in line_stripped.lower() for skip in 
-                        ['важно', 'пример', 'суммар', 'верни', 'json', 'задача', 'task', 'фрагмент', 'fragment']):
-                        # Skip lines that are clearly instructions
-                        if not line_stripped.lower().startswith(('задача:', 'task:', 'пример:', 'example:')):
-                            content_lines.append(line_stripped[:200])  # Limit length
+                    if (len(line_stripped) > 20 and 
+                        not any(skip in line_stripped.lower() for skip in skip_keywords) and
+                        not line_stripped.lower().startswith(('задача:', 'task:', 'пример:', 'example:', 'критич', 'critical', 'важно'))):
+                        content_lines.append(line_stripped[:200])  # Limit length
+                        if len(content_lines) >= 3:
+                            break
                 if content_lines:
-                    summary = '. '.join(content_lines[:2])
-                    if not summary.endswith('.'):
+                    summary = '. '.join(content_lines)
+                    if len(summary) > 500:
+                        summary = summary[:500] + '...'
+                    if not summary.endswith(('.', '!', '?', '...')):
                         summary += '.'
                     return summary
-                # Last resort: generic message
-                return "Обсуждаются основные темы и новости."
+                # Last resort: generic message with prompt hash for debugging
+                import hashlib
+                prompt_hash = hashlib.md5(prompt.encode()[:100]).hexdigest()[:8]
+                return f"Обсуждаются основные темы канала. [fallback:{prompt_hash}]"
         else:
             # Default to intent parsing JSON format
             return (
@@ -307,7 +429,7 @@ class FallbackLLMClient:
             )
 
 
-def get_llm_client(url: str | None = None) -> LLMClient:
+def get_llm_client(url: str | None = None, timeout: float = 120.0) -> LLMClient:
     """Get appropriate LLM client based on configuration.
 
     Purpose:
@@ -315,16 +437,22 @@ def get_llm_client(url: str | None = None) -> LLMClient:
 
     Args:
         url: LLM service URL (from env var LLM_URL if not provided)
+        timeout: Request timeout in seconds (default: 120.0 for summarization)
 
     Returns:
         LLMClient instance
     """
     if url:
-        return HTTPLLMClient(url=url)
+        logger.info(f"Using provided LLM URL: {url}")
+        return HTTPLLMClient(url=url, timeout=timeout)
     llm_url = os.getenv("LLM_URL", "")
     if llm_url and llm_url.strip():
-        return HTTPLLMClient(url=llm_url)
-    logger.warning("LLM_URL not configured, using FallbackLLMClient")
+        logger.info(f"Using LLM URL from env: {llm_url}")
+        return HTTPLLMClient(url=llm_url, timeout=timeout)
+    logger.warning(
+        f"LLM_URL not configured (value='{llm_url}'), using FallbackLLMClient. "
+        f"This will result in poor summarization quality."
+    )
     return FallbackLLMClient()
 
 

@@ -13,6 +13,16 @@ from aiogram import Bot
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.database.mongo import get_db
 from src.infrastructure.logging import get_logger
+from src.infrastructure.monitoring.agent_metrics import (
+    long_tasks_total,
+    long_tasks_duration,
+    long_tasks_queue_size,
+)
+from src.infrastructure.notifiers.telegram_notifier import TelegramNotifier
+from src.infrastructure.repositories.long_tasks_repository import LongTasksRepository
+from src.application.use_cases.process_long_summarization_task import (
+    ProcessLongSummarizationTaskUseCase,
+)
 from src.presentation.mcp.client import get_mcp_client
 from src.workers.data_fetchers import get_digest_texts, get_summary_text
 from src.workers.message_sender import send_with_retry
@@ -44,10 +54,11 @@ class SummaryWorker:
         mcp_url = mcp_url or os.getenv("MCP_SERVER_URL")
         self.mcp = get_mcp_client(server_url=mcp_url)
         self.settings = get_settings()
-        logger.info("Worker settings loaded",
-                   debug_interval=self.settings.debug_notification_interval_minutes,
-                   morning_time=self.settings.morning_summary_time,
-                   evening_time=self.settings.evening_digest_time)
+        logger.info(
+            f"Worker settings loaded: debug_interval={self.settings.debug_notification_interval_minutes}, "
+            f"morning_time={self.settings.morning_summary_time}, "
+            f"evening_time={self.settings.evening_digest_time}"
+        )
         self._running = False
         self._last_debug_send: Optional[datetime] = None
         self._setup_signal_handlers()
@@ -55,7 +66,7 @@ class SummaryWorker:
     def _setup_signal_handlers(self) -> None:
         """Register signal handlers for graceful shutdown."""
         def signal_handler(signum, frame):
-            logger.info("Received shutdown signal", signal=signum)
+            logger.info(f"Received shutdown signal: {signum}")
             self.stop()
 
         signal.signal(signal.SIGTERM, signal_handler)
@@ -69,11 +80,12 @@ class SummaryWorker:
             while self._running:
                 try:
                     await self._check_and_send()
+                    # Process long tasks if enabled
+                    if self.settings.enable_async_long_summarization:
+                        await self._process_long_tasks()
                     await asyncio.sleep(CHECK_INTERVAL_SECONDS)
                 except Exception as e:
-                    logger.error("Worker error in main loop", 
-                               error=str(e), 
-                               exc_info=True)
+                    logger.error(f"Worker error in main loop: {e}", exc_info=True)
                     await asyncio.sleep(300)  # Wait 5 min on error
         finally:
             await self._cleanup()
@@ -88,6 +100,90 @@ class SummaryWorker:
         logger.info("Stopping worker")
         self._running = False
 
+    async def _process_long_tasks(self) -> None:
+        """Process long summarization tasks from queue.
+
+        Purpose:
+            Polls for queued long tasks, processes them with extended timeout,
+            and sends results via Telegram.
+        """
+        if not self.settings.enable_async_long_summarization:
+            return
+
+        try:
+            db = await get_db()
+            long_tasks_repo = LongTasksRepository(db)
+            notifier = TelegramNotifier(self.bot)
+
+            # Update queue size metric (count all queued tasks)
+            from src.domain.value_objects.task_status import TaskStatus
+            queued_count = await db.long_tasks.count_documents({"status": TaskStatus.QUEUED.value})
+            long_tasks_queue_size.set(queued_count)
+
+            # Pick next queued task (atomic operation)
+            task = await long_tasks_repo.pick_next_queued()
+
+            if not task:
+                return  # No tasks to process
+
+            import time
+            start_time = time.time()
+
+            logger.info(
+                f"Processing long task: task_id={task.task_id}, user_id={task.user_id}, "
+                f"channel={task.channel_username}"
+            )
+
+            # Record metric
+            long_tasks_total.labels(status="running").inc()
+
+            # Process task
+            process_use_case = ProcessLongSummarizationTaskUseCase(
+                long_tasks_repository=long_tasks_repo,
+            )
+
+            try:
+                result_text = await process_use_case.execute(task)
+                duration = time.time() - start_time
+
+                # Send result to user
+                if task.channel_username:
+                    message = f"📋 Дайджест канала {task.channel_username}:\n\n{result_text}"
+                else:
+                    message = f"📋 Дайджест по всем каналам:\n\n{result_text}"
+
+                await notifier.send_message(task.chat_id, message)
+                logger.info(
+                    f"Long task completed and sent: task_id={task.task_id}, "
+                    f"user_id={task.user_id}, result_length={len(result_text)}, "
+                    f"duration={duration:.2f}s"
+                )
+
+            except Exception as e:
+                duration = time.time() - start_time
+                error_msg = f"Ошибка при создании дайджеста: {str(e)[:200]}"
+                logger.error(
+                    f"Long task failed: task_id={task.task_id}, error={error_msg}, "
+                    f"duration={duration:.2f}s",
+                    exc_info=True,
+                )
+
+                # Send error message to user
+                try:
+                    await notifier.send_message(
+                        task.chat_id,
+                        f"❌ {error_msg}\n\nTask ID: {task.task_id}",
+                    )
+                except Exception as notify_error:
+                    logger.error(
+                        f"Failed to send error notification: task_id={task.task_id}, "
+                        f"error={notify_error}",
+                        exc_info=True,
+                    )
+
+        except Exception as e:
+            logger.error(f"Error processing long tasks: {e}", exc_info=True)
+
     async def _check_and_send(self) -> None:
         """Check if it's time to send notifications."""
         now = datetime.utcnow()
@@ -98,12 +194,10 @@ class SummaryWorker:
             should_send = False
             if self._last_debug_send is None:
                 should_send = True
-                logger.info("Debug mode: first run, sending notifications immediately", 
-                          interval_minutes=debug_interval)
+                logger.info(f"Debug mode: first run, sending notifications immediately (interval={debug_interval} min)")
             elif (now - self._last_debug_send).total_seconds() >= (debug_interval * 60):
                 should_send = True
-                logger.info("Debug mode: sending notifications", 
-                          interval_minutes=debug_interval)
+                logger.info(f"Debug mode: sending notifications (interval={debug_interval} min)")
 
             if should_send:
                 await self._send_debug_notifications()
@@ -129,7 +223,7 @@ class SummaryWorker:
         """Send morning task summary to all users."""
         db = await get_db()
         user_ids = await db.tasks.distinct("user_id")
-        logger.info("Sending morning summaries", user_count=len(user_ids))
+        logger.info(f"Sending morning summaries to {len(user_ids)} users")
 
         for user_id in user_ids:
             async def get_text(uid: int) -> Optional[str]:
@@ -142,7 +236,7 @@ class SummaryWorker:
         db = await get_db()
         channel_docs = await db.channels.find({"active": True}).to_list(length=None)
         user_ids = set(doc["user_id"] for doc in channel_docs)
-        logger.info("Sending evening digests", user_count=len(user_ids))
+        logger.info(f"Sending evening digests to {len(user_ids)} users")
 
         for user_id in user_ids:
             try:
@@ -157,10 +251,7 @@ class SummaryWorker:
                             # Small delay between messages to avoid rate limiting
                             await asyncio.sleep(0.5)
             except Exception as e:
-                logger.error("Error sending evening digests", 
-                           user_id=user_id, 
-                           error=str(e), 
-                           exc_info=True)
+                logger.error(f"Error sending evening digests for user {user_id}: {e}", exc_info=True)
 
     async def _send_debug_notifications(self) -> None:
         """Send debug notifications (summary + digest) to all users.
@@ -173,53 +264,47 @@ class SummaryWorker:
         channel_user_ids = set(doc["user_id"] for doc in channel_docs)
         user_ids = set(task_user_ids) | channel_user_ids
 
-        logger.info("Debug mode: sending notifications",
-                   user_count=len(user_ids),
-                   users_with_tasks=len(task_user_ids),
-                   users_with_channels=len(channel_user_ids))
+        logger.info(
+            f"Debug mode: sending notifications to {len(user_ids)} users "
+            f"(tasks: {len(task_user_ids)}, channels: {len(channel_user_ids)})"
+        )
 
         summary_count = 0
         digest_count = 0
 
         for user_id in user_ids:
-            logger.info("Processing user", 
-                       user_id=user_id, 
-                       has_tasks=user_id in task_user_ids, 
-                       has_channels=user_id in channel_user_ids)
+            logger.info(
+                f"Processing user {user_id} (has_tasks={user_id in task_user_ids}, "
+                f"has_channels={user_id in channel_user_ids})"
+            )
 
             # Send task summary for last 24 hours
             if user_id in task_user_ids:
-                logger.info("Sending debug summary", user_id=user_id)
+                logger.info(f"Sending debug summary for user {user_id}")
                 try:
                     text = await get_summary_text(
                         self.mcp, user_id, timeframe="last_24h", debug=True
                     )
-                    logger.info("Got summary text", 
-                               user_id=user_id, 
-                               text_length=len(text) if text else 0, 
-                               has_text=text is not None)
+                    logger.info(
+                        f"Got summary text for user {user_id}: "
+                        f"length={len(text) if text else 0}, has_text={text is not None}"
+                    )
                     if text:
                         await send_with_retry(
                             self.bot, user_id, text, "debug summary"
                         )
                         summary_count += 1
                     else:
-                        logger.warning("No summary text to send, skipping", 
-                                     user_id=user_id)
+                        logger.warning(f"No summary text to send for user {user_id}, skipping")
                 except Exception as e:
-                    logger.error("Error getting summary text", 
-                               user_id=user_id, 
-                               error=str(e), 
-                               exc_info=True)
+                    logger.error(f"Error getting summary text for user {user_id}: {e}", exc_info=True)
 
             # Send channel digests - one message per channel
             if user_id in channel_user_ids:
-                logger.info("Sending debug digests", user_id=user_id)
+                logger.info(f"Sending debug digests for user {user_id}")
                 try:
                     digest_texts = await get_digest_texts(self.mcp, user_id, debug=True)
-                    logger.info("Got digest texts", 
-                               user_id=user_id, 
-                               digest_count=len(digest_texts))
+                    logger.info(f"Got {len(digest_texts)} digest texts for user {user_id}")
                     if digest_texts:
                         for digest_text in digest_texts:
                             if digest_text:
@@ -229,17 +314,11 @@ class SummaryWorker:
                                 digest_count += 1
                                 await asyncio.sleep(0.5)
                     else:
-                        logger.warning("No digest texts to send, skipping", 
-                                     user_id=user_id)
+                        logger.warning(f"No digest texts to send for user {user_id}, skipping")
                 except Exception as e:
-                    logger.error("Error getting digest texts", 
-                               user_id=user_id, 
-                               error=str(e), 
-                               exc_info=True)
+                    logger.error(f"Error getting digest texts for user {user_id}: {e}", exc_info=True)
 
-        logger.info("Debug notifications sent",
-                   summaries_sent=summary_count,
-                   digests_sent=digest_count)
+        logger.info(f"Debug notifications sent: {summary_count} summaries, {digest_count} digests")
 
     @staticmethod
     def _parse_time(time_str: str) -> Optional[time]:
