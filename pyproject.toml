@@ -28,26 +28,36 @@ weasyprint = "^59.0"
 markdown = "^3.4"
 prometheus-client = "^0.20.0"
 tenacity = "^8.2.3"
-# Linters and formatters (needed for code review)
+dependency-injector = "^4.41.0"
+rapidfuzz = "^3.5.2"
+transliterate = "^1.10.2"
+# Fine-tuning dependencies (optional, required for automatic fine-tuning)
+transformers = {version = "^4.35.0", optional = true}
+datasets = {version = "^2.14.0", optional = true}
+torch = {version = "^2.1.0", optional = true}
+
+[tool.poetry.extras]
+finetuning = ["transformers", "datasets", "torch"]
+
+[tool.poetry.group.dev.dependencies]
 black = "^23.11.0"
 flake8 = "^6.1.0"
 pylint = "^4.0.2"
 mypy = "^1.7.1"
 isort = "^5.13.0"
-
-[tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"
 pytest-asyncio = "^0.21.1"
 pytest-cov = "^4.1.0"
-black = "^23.11.0"
-mypy = "^1.7.1"
-flake8 = "^6.1.0"
 bandit = "^1.7.5"
 vulture = "^2.14"
 autoflake = "^2.3.1"
 freezegun = "^1.5.1"
 radon = "^6.0.1"
-pylint = "^4.0.2"
+pydocstyle = "^6.3.0"
+interrogate = "^1.7.0"
+codespell = "^2.2.6"
+safety = "^2.3.5"
+pre-commit = "^3.5.0"
 
 [tool.black]
 line-length = 88

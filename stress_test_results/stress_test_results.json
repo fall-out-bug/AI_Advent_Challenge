@@ -1,0 +1,98 @@
+{
+  "file_path": "docs/AUDIT_REPORT_CODE_REVIEW.md",
+  "file_size_chars": 25747,
+  "configs": [
+    {
+      "config": {
+        "name": "max_sentences_5",
+        "max_sentences": 5,
+        "chunk_size": 3000
+      },
+      "result": {
+        "success": false,
+        "error": "Sentence 1 has 3085 tokens, exceeds max 3000.",
+        "elapsed_time": 0.02368617057800293,
+        "total_tokens": 9048
+      }
+    },
+    {
+      "config": {
+        "name": "max_sentences_8",
+        "max_sentences": 8,
+        "chunk_size": 3000
+      },
+      "result": {
+        "success": false,
+        "error": "Sentence 1 has 3085 tokens, exceeds max 3000.",
+        "elapsed_time": 0.01954507827758789,
+        "total_tokens": 9048
+      }
+    },
+    {
+      "config": {
+        "name": "max_sentences_10",
+        "max_sentences": 10,
+        "chunk_size": 3000
+      },
+      "result": {
+        "success": false,
+        "error": "Sentence 1 has 3085 tokens, exceeds max 3000.",
+        "elapsed_time": 0.019219398498535156,
+        "total_tokens": 9048
+      }
+    },
+    {
+      "config": {
+        "name": "max_sentences_15",
+        "max_sentences": 15,
+        "chunk_size": 3000
+      },
+      "result": {
+        "success": false,
+        "error": "Sentence 1 has 3085 tokens, exceeds max 3000.",
+        "elapsed_time": 0.021267414093017578,
+        "total_tokens": 9048
+      }
+    },
+    {
+      "config": {
+        "name": "chunk_size_3000",
+        "max_sentences": 8,
+        "chunk_size": 3000
+      },
+      "result": {
+        "success": false,
+        "error": "Sentence 1 has 3085 tokens, exceeds max 3000.",
+        "elapsed_time": 0.022458553314208984,
+        "total_tokens": 9048
+      }
+    },
+    {
+      "config": {
+        "name": "chunk_size_5000",
+        "max_sentences": 8,
+        "chunk_size": 5000
+      },
+      "result": {
+        "success": false,
+        "error": "Sentence 1 has 3085 tokens, exceeds max 3000.",
+        "elapsed_time": 0.018984556198120117,
+        "total_tokens": 9048
+      }
+    },
+    {
+      "config": {
+        "name": "chunk_size_8000",
+        "max_sentences": 8,
+        "chunk_size": 8000
+      },
+      "result": {
+        "success": false,
+        "error": "Sentence 1 has 3085 tokens, exceeds max 3000.",
+        "elapsed_time": 0.027264118194580078,
+        "total_tokens": 9048
+      }
+    }
+  ],
+  "timestamp": "2025-11-04 23:35:47"
+}

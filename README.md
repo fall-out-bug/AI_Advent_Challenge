@@ -8,19 +8,20 @@
 
 This repository contains daily challenges building AI-powered systems with language models. Each day introduces new concepts and builds upon previous challenges.
 
-**Current Status:** ✅ Day 14 Complete - Multi-Pass Code Review & MCP Homework Review
+**Current Status:** ✅ Day 15 Complete - Self-Improving LLM System with Quality Assessment & Fine-tuning
 
 **Project Status:**
-- ✅ 14 daily challenges completed
+- ✅ 15 daily challenges completed
 - ✅ Clean Architecture fully implemented
-- ✅ 400+ tests with 80%+ coverage
-- ✅ Production-ready multi-agent system
+- ✅ 420+ tests with 80%+ coverage
+- ✅ Production-ready multi-agent system with self-improvement
+- ✅ Automatic quality evaluation and fine-tuning
 - ✅ Comprehensive documentation for AI assistants
 
 **Key Features:**
-- ✅ 14 daily challenges from simple chat to production-ready multi-agent systems
+- ✅ 15 daily challenges from simple chat to self-improving AI systems
 - ✅ Clean Architecture with SOLID principles
-- ✅ 400+ tests with 80%+ coverage
+- ✅ 420+ tests with 80%+ coverage
 - ✅ Multi-model support (StarCoder, Mistral, Qwen, TinyLlama)
 - ✅ MCP (Model Context Protocol) integration with HTTP server
 - ✅ MCP-aware agent with automatic tool discovery and execution
@@ -34,6 +35,9 @@ This repository contains daily challenges building AI-powered systems with langu
 - ✅ Health monitoring and metrics dashboard
 - ✅ Hotreload for development (uvicorn --reload + watchdog)
 - ✅ **Multi-Pass Code Review** (3-pass architecture for homework analysis)
+- ✅ **LLM-as-Judge Quality Assessment** (automatic evaluation of summaries)
+- ✅ **Self-Improving System** (automatic fine-tuning on high-quality data)
+- ✅ **Async Long Summarization** (queue-based processing with 600s timeout)
 
 ## Quick Start
 
@@ -88,6 +92,7 @@ AI_Challenge/
 | Day 12 | PDF Digest System | MongoDB, PDF Generation, MCP Tools | ✅ Complete |
 | Day 13 | Butler Agent Refactoring | Hybrid Intent Recognition, HW Checker, Metadata | ✅ Complete |
 | Day 14 | Multi-Pass Code Review | MCP Homework Review, 3-Pass Analysis | ✅ Complete |
+| Day 15 | Quality Assessment & Fine-tuning | LLM-as-Judge, Self-Improving System, Hugging Face | ✅ Complete |
 
 ## Core Infrastructure
 
@@ -111,23 +116,34 @@ response = await client.chat("Hello, world!")
 The project uses multiple docker-compose files for different scenarios:
 
 - **`docker-compose.yml`** - Main/default services (MongoDB, basic setup)
+- **`docker-compose.butler.yml`** - **Production system** with quality assessment & fine-tuning (Day 15)
 - **`docker-compose.day11.yml`** - Butler Bot system (Telegram bot, MCP server, Mistral)
-- **`docker-compose.day12.yml`** - Full system with Post Fetcher & PDF Digest (Day 12 features)
 - **`docker-compose.mcp-demo.yml`** - MCP demo services for testing
 
 **Quick Start:**
 ```bash
-# Day 12 (current production setup)
-make day-12-up
+# Butler (production system with self-improvement)
+make butler-up
 
 # Day 11 (Butler Bot only)
 make day-11-up
 
 # MCP Demo
 make mcp-demo-start
+
+# Legacy aliases (maintained for compatibility)
+make day-12-up  # Same as make butler-up
 ```
 
-## Current Features (Day 14)
+## Current Features (Day 15)
+
+**Self-Improving LLM System:**
+- **LLM-as-Judge**: Automatic quality assessment using Mistral (coverage, accuracy, coherence, informativeness)
+- **Automatic Fine-tuning**: Self-improvement by training on high-quality samples (100+ samples trigger)
+- **Asynchronous Evaluation**: Fire-and-forget pattern, no blocking of main flow
+- **Extensible Architecture**: Support for multiple fine-tuning tasks (summarization, classification, Q&A)
+- **Docker-based ML**: Full Hugging Face Transformers integration in containers
+- **Dataset Management**: Automatic JSONL export for fine-tuning datasets
 
 **Butler Agent System:**
 - **Hybrid Intent Recognition**: Two-layer architecture (rule-based + LLM fallback) with caching
@@ -193,11 +209,11 @@ These files help AI coding assistants understand the project structure, patterns
 
 **Core**: Python 3.10+, Poetry, Docker, FastAPI, Pydantic, pytest
 
-**AI/ML**: HuggingFace Transformers, NVIDIA CUDA, 4-bit Quantization, Local Models
+**AI/ML**: HuggingFace Transformers, PyTorch, NVIDIA CUDA, 4-bit Quantization, Local Models, Fine-tuning
 
-**Architecture**: Clean Architecture, Domain-Driven Design, SOLID Principles
+**Architecture**: Clean Architecture, Domain-Driven Design, SOLID Principles, LLM-as-Judge Pattern
 
-**Infrastructure**: Traefik, NVIDIA Container Toolkit, Multi-stage Docker builds
+**Infrastructure**: Traefik, NVIDIA Container Toolkit, Multi-stage Docker builds, MongoDB, Prometheus
 
 ## Documentation
 
@@ -210,6 +226,11 @@ Main documentation:
 - [MONITORING.md](docs/MONITORING.md) - Monitoring setup and Grafana dashboards
 - [SECURITY.md](docs/SECURITY.md) - Security policies and practices
 
+Day 15 documentation (current):
+- [Quality Assessment & Fine-tuning Guide](docs/day15/README.md)
+- [API Documentation](docs/day15/api.md)
+- [Migration from Day 12](docs/day15/MIGRATION_FROM_DAY12.md)
+
 Day 12 documentation:
 - [PDF Digest User Guide](docs/day12/USER_GUIDE.md)
 - [PDF Digest API](docs/day12/api.md)
@@ -221,7 +242,7 @@ See [docs/INDEX.md](docs/INDEX.md) for complete documentation index.
 
 ```bash
 # Start monitoring stack (Prometheus + Grafana)
-docker-compose -f docker-compose.day12.yml up -d prometheus grafana
+docker-compose -f docker-compose.butler.yml up -d prometheus grafana
 
 # Access Grafana: http://localhost:3000 (admin/admin)
 # Access Prometheus: http://localhost:9090
@@ -231,6 +252,7 @@ Available dashboards:
 1. **App Health** - System resources, HTTP metrics, latency, availability
 2. **ML Service Metrics** - LLM inference latency, token usage, model versioning
 3. **Post Fetcher & PDF Metrics** - Post collection and PDF generation metrics
+4. **Quality Assessment Metrics** - Evaluation scores, fine-tuning runs, dataset growth
 
 See [MONITORING.md](docs/MONITORING.md) for detailed setup.
 

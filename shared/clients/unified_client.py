@@ -9,23 +9,51 @@ import asyncio
 from typing import Dict, List, Optional
 import httpx
 
-from .base_client import BaseModelClient, ModelResponse
-from ..config.models import MODEL_CONFIGS, ModelType, get_model_config, is_local_model
-from ..config.constants import (
-    DEFAULT_TIMEOUT, 
-    DEFAULT_MAX_TOKENS, 
-    DEFAULT_TEMPERATURE,
-    TEST_MAX_TOKENS
-)
-from ..config.api_keys import get_api_key, is_api_key_configured
-from ..validation.models import ModelRequest, ValidationError, sanitize_input
-from ..exceptions.model_errors import (
-    ModelConnectionError, 
-    ModelRequestError, 
-    ModelTimeoutError,
-    ModelConfigurationError,
-    ModelNotAvailableError
-)
+try:
+    from shared_package.clients.base_client import BaseModelClient, ModelResponse
+    from shared_package.config.models import MODEL_CONFIGS, ModelType, get_model_config, is_local_model
+    from shared_package.config.constants import (
+        DEFAULT_TIMEOUT, 
+        DEFAULT_MAX_TOKENS, 
+        DEFAULT_TEMPERATURE,
+        TEST_MAX_TOKENS
+    )
+    from shared_package.config.api_keys import get_api_key, is_api_key_configured
+    from shared_package.validation.models import ModelRequest, ValidationError, sanitize_input
+    from shared_package.exceptions.model_errors import (
+        ModelConnectionError, 
+        ModelRequestError, 
+        ModelTimeoutError,
+        ModelConfigurationError,
+    )
+except ImportError:
+    # Fallback for different import paths
+    import sys
+    from pathlib import Path
+    _root = Path(__file__).parent.parent
+    _shared_package = _root / "shared_package"
+    if _shared_package.exists():
+        sys.path.insert(0, str(_root))
+        from shared_package.clients.base_client import BaseModelClient, ModelResponse
+        from shared_package.config.models import MODEL_CONFIGS, ModelType, get_model_config, is_local_model
+        from shared_package.config.constants import (
+            DEFAULT_TIMEOUT, 
+            DEFAULT_MAX_TOKENS, 
+            DEFAULT_TEMPERATURE,
+            TEST_MAX_TOKENS
+        )
+        from shared_package.config.api_keys import get_api_key, is_api_key_configured
+        from shared_package.validation.models import ModelRequest, ValidationError, sanitize_input
+        from shared_package.exceptions.model_errors import (
+            ModelConnectionError, 
+            ModelRequestError, 
+            ModelTimeoutError,
+            ModelConfigurationError,
+            ModelNotAvailableError
+        )
+    else:
+        # For base_client, we still need shared_package
+        raise ImportError("shared_package not found")
 
 
 class UnifiedModelClient(BaseModelClient):

@@ -22,6 +22,11 @@
 - [MONITORING.md](MONITORING.md) - Monitoring setup and Grafana dashboards
 - [ML_MONITORING.md](ML_MONITORING.md) - ML-specific monitoring and metrics
 
+### Day 15 - Quality Assessment & Fine-tuning (Current)
+- [README](day15/README.md) - Self-improving LLM system overview
+- [API Documentation](day15/api.md) - Evaluation and fine-tuning API reference
+- [Migration Guide](day15/MIGRATION_FROM_DAY12.md) - Migration from Day 12 to Day 15
+
 ### Day 12 - PDF Digest System
 - [User Guide](day12/USER_GUIDE.md) - PDF digest usage guide
 - [API Documentation](day12/api.md) - MCP tools API reference
@@ -66,6 +71,7 @@
 - API Reference: [API_DOCUMENTATION.md](API_DOCUMENTATION.md) (general API) | [API.md](API.md) (Butler Agent API)
 - MCP Integration: [MCP_GUIDE.md](MCP_GUIDE.md)
 - Butler Agent: [API.md](API.md) | [Deployment](DEPLOYMENT.md) | [Contributing](../CONTRIBUTING.md#butler-agent-development-guidelines)
+- **Day 15 - Quality & Fine-tuning**: [README](day15/README.md) | [API](day15/api.md) | [Migration](day15/MIGRATION_FROM_DAY12.md)
 - **AI Assistant Support**: [AI_CONTEXT.md](../AI_CONTEXT.md) - Complete project context | [.cursorrules](../.cursorrules) - Coding standards
 
 ### For Users

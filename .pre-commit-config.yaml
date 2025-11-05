@@ -63,6 +63,45 @@ repos:
         types: [python]
         exclude: ^(tests/|src/tests/)
 
+  # Docstring style
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        name: pydocstyle
+        args: [--convention=google, --add-ignore=D100,D104]
+        types: [python]
+        exclude: ^(tests/|src/tests/)
+
+  # Docstring coverage
+  - repo: https://github.com/econchick/interrogate
+    rev: 1.7.0
+    hooks:
+      - id: interrogate
+        name: interrogate docstring coverage
+        args: [-c, 100, --ignore-init-module, --ignore-init-method, src/]
+        types: [python]
+
+  # Spell checking
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.6
+    hooks:
+      - id: codespell
+        name: codespell
+        args: [--ignore-words-list=ba,nd,te,datas,minify,unset,teh,fo,hist,whitespace,alot,ser,recur,doctests]
+        types: [text, markdown]
+
+  # Markdown link checking (optional, can be slow)
+  - repo: local
+    hooks:
+      - id: markdown-link-check
+        name: Markdown link checker
+        entry: bash -c 'command -v markdown-link-check >/dev/null && find . -name "*.md" -not -path "./.venv/*" -not -path "./node_modules/*" -exec markdown-link-check {} \; || echo "markdown-link-check not installed, skipping"'
+        language: system
+        pass_filenames: true
+        always_run: false
+        stages: [commit]
+
   # Unit tests (quick check)
   - repo: local
     hooks:

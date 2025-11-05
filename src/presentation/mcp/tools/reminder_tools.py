@@ -8,9 +8,12 @@ from src.presentation.mcp.server import mcp
 from src.infrastructure.database.mongo import get_db
 from src.infrastructure.logging import get_logger
 from src.infrastructure.repositories.task_repository import TaskRepository
+from src.infrastructure.config.settings import get_settings
+from src.infrastructure.di.factories import create_task_summary_use_case
 from ._summary_helpers import _build_summary_query, _compute_task_stats
 
 logger = get_logger("mcp.reminder_tools")
+_settings = get_settings()
 
 
 async def _repo() -> TaskRepository:
@@ -202,7 +205,58 @@ async def delete_task(task_id: str) -> Dict[str, str]:
 
 @mcp.tool()
 async def get_summary(user_id: int, timeframe: str = "today") -> Dict[str, Any]:
-    """Get a summary of tasks for a timeframe."""
+    """Get a summary of tasks for a timeframe.
+
+    Purpose:
+        Fetch tasks for user within timeframe and compute statistics.
+        Supports both old and new summarization implementations via feature flag.
+
+    Args:
+        user_id: Telegram user ID.
+        timeframe: Timeframe for filtering (today/week/all/last_24h).
+
+    Returns:
+        Dictionary with tasks list and statistics.
+    """
+    # Check feature flag
+    if _settings.use_new_summarization:
+        try:
+            logger.info(
+                "Using new summarization system",
+                user_id=user_id,
+                timeframe=timeframe,
+            )
+            use_case = create_task_summary_use_case()
+            result = await use_case.execute(user_id=user_id, timeframe=timeframe)
+            
+            # Convert to expected format (backward compatibility)
+            # Ensure tasks have 'id' field instead of '_id'
+            tasks = []
+            for task in result.tasks:
+                task_dict = dict(task)
+                if "_id" in task_dict:
+                    task_dict["id"] = str(task_dict.pop("_id"))
+                tasks.append(task_dict)
+            
+            return {
+                "tasks": tasks,
+                "stats": result.stats,
+                "_metadata": {
+                    "method": "new",
+                    "generated_at": result.generated_at.isoformat(),
+                },
+            }
+        except Exception as e:
+            logger.error(
+                "Error in new summarization, falling back to old",
+                user_id=user_id,
+                error=str(e),
+                exc_info=True,
+            )
+            # Fall through to old implementation
+    
+    # Old implementation (fallback or feature flag disabled)
+    logger.debug("Using old summarization system", user_id=user_id, timeframe=timeframe)
     db = await get_db()
     now = datetime.now(timezone.utc)
 

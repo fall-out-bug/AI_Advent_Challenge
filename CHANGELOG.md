@@ -5,6 +5,65 @@ All notable changes to the AI Challenge project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Day 15] - 2025-11-05
+
+### Added
+- **LLM-as-Judge Quality Assessment**: Automatic evaluation of summarization quality using Mistral LLM
+  - Metrics: Coverage, Accuracy, Coherence, Informativeness (0.0-1.0 scale)
+  - Fire-and-forget pattern: Asynchronous evaluation that doesn't block main flow
+  - Implementation: `src/infrastructure/llm/evaluation/summarization_evaluator.py`
+- **Automatic Fine-tuning System**: Self-improving system that fine-tunes models on high-quality samples
+  - Trigger: 100+ high-quality samples (>0.8 average score)
+  - Docker-based fine-tuning with Hugging Face Transformers
+  - JSONL dataset export for training data
+  - Implementation: `src/infrastructure/finetuning/finetuning_service.py`, `src/workers/finetuning_worker.py`
+- **Advanced Summarization Strategies**:
+  - **Map-Reduce Summarizer**: For texts >4000 tokens, uses hierarchical summarization
+  - **Adaptive Summarizer**: For medium texts (1000-4000 tokens), single-pass with optimized prompts
+  - **Semantic Chunking**: Smart text splitting that preserves semantic boundaries
+- **Async Long Summarization**: Queue-based processing for large digests with 600s timeout
+- **New Modules**:
+  - `src/infrastructure/llm/evaluation/` - Quality assessment infrastructure
+  - `src/infrastructure/llm/chunking/` - Text chunking strategies
+  - `src/infrastructure/llm/summarizers/` - Multiple summarization implementations
+  - `src/infrastructure/finetuning/` - Fine-tuning service
+  - `src/domain/services/summary_quality_checker.py` - Quality validation
+  - `src/domain/services/text_cleaner.py` - Text cleaning utilities
+- **Testing Coverage**: 24 new test files (E2E, integration, unit tests)
+- **Documentation**:
+  - `docs/day15/README.md` - Day 15 overview and guide
+  - `docs/day15/api.md` - API documentation for evaluation and fine-tuning
+  - `docs/day15/MIGRATION_FROM_DAY12.md` - Migration guide
+  - `docs/architecture/SUMMARIZATION_CURRENT_STATE.md` - Comprehensive architecture (1,623 lines)
+  - Module-level READMEs for llm, finetuning, and mcp tools channels
+- **Infrastructure**:
+  - Enhanced `docker-compose.butler.yml` with fine-tuning support
+  - Grafana dashboard for quality metrics
+  - Stress test results documented
+- **Configuration Files**:
+  - `.editorconfig` - Editor configuration
+  - `.gitattributes` - Git attributes for line endings
+  - `.importlinter` - Import linting for Clean Architecture
+  - Enhanced `.pre-commit-config.yaml` with docstring coverage, spell checking, markdown link checking
+
+### Changed
+- Updated `AI_CONTEXT.md` to Day 15 status with new modules and features
+- Updated `README.md` and `README.ru.md` with Day 15 completion status
+- Enhanced tag extraction in channel digests (hashtag extraction implemented)
+- Added language toggle headers to bilingual documentation
+- Improved Makefile with new automation targets (`make check-all`, `make security`, etc.)
+
+### Fixed
+- Resolved TODO comments in `generate_channel_digest_by_name.py` (tag extraction)
+- Fixed import organization and code quality standards
+
+### Performance
+- Async processing for long summarization tasks
+- Queue-based processing prevents blocking
+- Stress test results documented
+
+See [docs/release_notes/day_15.md](docs/release_notes/day_15.md) for complete release notes.
+
 ## [Day 14] - 2025-11-04
 
 ### Added

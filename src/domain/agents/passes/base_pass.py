@@ -17,7 +17,36 @@ sys.path.insert(0, str(_root))
 shared_path = _root / "shared"
 sys.path.insert(0, str(shared_path))
 
-from shared_package.clients.unified_client import UnifiedModelClient
+# Try to import UnifiedModelClient with fallbacks
+_UNIFIED_CLIENT_AVAILABLE = False
+try:
+    from shared_package.clients.unified_client import UnifiedModelClient
+    _UNIFIED_CLIENT_AVAILABLE = True
+except ImportError:
+    # Fallback: try shared.clients.unified_client
+    try:
+        from shared.clients.unified_client import UnifiedModelClient
+        _UNIFIED_CLIENT_AVAILABLE = True
+    except ImportError:
+        # Last resort: try to add shared_package to path
+        import sys
+        from pathlib import Path
+        _root = Path(__file__).parent.parent.parent.parent.parent
+        shared_package_path = _root / "shared" / "shared_package"
+        if shared_package_path.exists():
+            sys.path.insert(0, str(shared_package_path.parent))
+            try:
+                from shared_package.clients.unified_client import UnifiedModelClient
+                _UNIFIED_CLIENT_AVAILABLE = True
+            except ImportError:
+                pass
+
+# If UnifiedModelClient is not available, create a dummy class
+if not _UNIFIED_CLIENT_AVAILABLE:
+    # Create a dummy UnifiedModelClient to prevent NameError
+    class UnifiedModelClient:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError("UnifiedModelClient not available. Shared package not installed.")
 
 from src.domain.agents.session_manager import SessionManager
 from src.domain.models.code_review_models import PassFindings

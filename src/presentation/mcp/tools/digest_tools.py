@@ -16,6 +16,7 @@ from src.presentation.mcp.tools.channels import (
     get_channel_metadata,
     get_channel_digest,
     get_channel_digest_by_name,
+    request_channel_digest_async,
     get_posts,
     collect_posts,
     save_posts_to_db,

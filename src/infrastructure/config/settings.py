@@ -45,12 +45,67 @@ class Settings(BaseSettings):
     # Debug settings
     debug_notification_interval_minutes: int = Field(default=0, description="Debug mode: send notifications every N minutes (0 = disabled)")
     # Digest summarization settings
-    digest_summary_sentences: int = Field(default=8, description="Number of sentences per channel in digest")
+    digest_summary_sentences: int = Field(default=25, description="Number of sentences per channel in digest")
     digest_max_channels: int = Field(default=10, description="Maximum channels to show in digest")
-    digest_summary_max_chars: int = Field(default=3900, description="Maximum characters per channel summary (Telegram limit is 4096)")
+    digest_summary_max_chars: int = Field(default=3500, description="Maximum characters per channel summary (Telegram limit is 4096)")
+    
+    # Evaluation settings
+    enable_quality_evaluation: bool = Field(
+        default=True,
+        description="Enable automatic quality evaluation of summaries"
+    )
+    evaluation_min_score_for_dataset: float = Field(
+        default=0.7,
+        description="Minimum score to include in fine-tuning dataset"
+    )
+    
+    # Fine-tuning settings
+    enable_auto_finetuning: bool = Field(
+        default=True,
+        description="Enable automatic fine-tuning when threshold reached"
+    )
+    finetuning_min_samples: int = Field(
+        default=100,
+        description="Minimum number of high-quality samples to trigger fine-tuning"
+    )
+    finetuning_model_output_dir: str = Field(
+        default="/models/fine_tuned",
+        description="Base directory for storing fine-tuned models"
+    )
+    finetuning_base_model: str = Field(
+        default="mistralai/Mistral-7B-Instruct-v0.2",
+        description="Base model name for fine-tuning"
+    )
+    finetuning_num_epochs: int = Field(
+        default=3,
+        description="Number of training epochs"
+    )
+    finetuning_batch_size: int = Field(
+        default=4,
+        description="Training batch size"
+    )
+    finetuning_learning_rate: float = Field(
+        default=2e-5,
+        description="Learning rate for fine-tuning"
+    )
     summarizer_language: str = Field(default="ru", description="Language for summaries (ru/en)")
-    summarizer_temperature: float = Field(default=0.5, description="Temperature for summarization (higher = more creative)")
-    summarizer_max_tokens: int = Field(default=2000, description="Max tokens for summarization (more = longer summaries)")
+    summarizer_temperature: float = Field(default=0.7, description="Temperature for summarization (higher = more creative)")
+    summarizer_max_tokens: int = Field(default=3000, description="Max tokens for summarization (more = longer summaries)")
+    summarizer_timeout_seconds: float = Field(default=180.0, description="Timeout in seconds for LLM summarization requests (longer for large texts)")
+    summarizer_timeout_seconds_long: float = Field(default=600.0, description="Timeout in seconds for long async summarization tasks")
+    # Long tasks settings
+    long_tasks_poll_interval_seconds: int = Field(default=5, description="Polling interval for long tasks worker in seconds")
+    long_tasks_max_retries: int = Field(default=1, description="Maximum retry attempts for failed long tasks")
+    enable_async_long_summarization: bool = Field(default=True, description="Enable async long summarization feature")
+    # Channel search settings
+    bot_api_fallback_enabled: bool = Field(
+        default=True,
+        description="Enable Bot API fallback for channel search when dialogs search fails"
+    )
+    llm_fallback_enabled: bool = Field(
+        default=False,
+        description="Enable LLM fallback for ambiguous channel search queries"
+    )
     # FSM conversation settings
     conversation_timeout_minutes: int = Field(default=5, description="Timeout in minutes for abandoned FSM conversations")
     max_clarification_attempts: int = Field(default=3, description="Maximum clarification questions before giving up")
@@ -93,6 +148,56 @@ class Settings(BaseSettings):
     intent_llm_timeout_seconds: float = Field(
         default=5.0,
         description="Timeout in seconds for LLM intent classification requests"
+    )
+    # Channel resolution settings
+    channel_resolution_exact_username_weight: float = Field(
+        default=1.0,
+        description="Weight for exact username match in channel resolution"
+    )
+    channel_resolution_exact_title_weight: float = Field(
+        default=0.9,
+        description="Weight for exact title match in channel resolution"
+    )
+    channel_resolution_prefix_username_weight: float = Field(
+        default=0.7,
+        description="Weight for prefix username match in channel resolution"
+    )
+    channel_resolution_prefix_title_weight: float = Field(
+        default=0.6,
+        description="Weight for prefix title match in channel resolution"
+    )
+    channel_resolution_token_overlap_weight: float = Field(
+        default=0.5,
+        description="Weight for token overlap match in channel resolution"
+    )
+    channel_resolution_levenshtein_username_weight: float = Field(
+        default=0.4,
+        description="Weight for Levenshtein distance on username"
+    )
+    channel_resolution_levenshtein_title_weight: float = Field(
+        default=0.3,
+        description="Weight for Levenshtein distance on title"
+    )
+    channel_resolution_description_mention_weight: float = Field(
+        default=0.2,
+        description="Weight for description mention match"
+    )
+    channel_resolution_threshold: float = Field(
+        default=0.6,
+        description="Minimum score threshold for channel match (0.0-1.0)"
+    )
+    channel_discovery_max_candidates: int = Field(
+        default=5,
+        description="Maximum number of candidates to return for channel discovery"
+    )
+    enable_llm_rerank: bool = Field(
+        default=True,
+        description="Enable LLM re-ranking for close matches (scores 0.6-0.8)"
+    )
+    # Feature flags
+    use_new_summarization: bool = Field(
+        default=False,
+        description="Use refactored summarization system (Phase 6 migration)"
     )
 
     @field_validator("post_fetch_interval_hours")
@@ -167,6 +272,22 @@ class Settings(BaseSettings):
         """Validate intent LLM timeout is positive."""
         if v <= 0:
             raise ValueError("intent_llm_timeout_seconds must be positive")
+        return v
+
+    @field_validator("channel_resolution_threshold")
+    @classmethod
+    def validate_channel_resolution_threshold(cls, v: float) -> float:
+        """Validate channel resolution threshold is in valid range."""
+        if not 0.0 <= v <= 1.0:
+            raise ValueError("channel_resolution_threshold must be between 0.0 and 1.0")
+        return v
+
+    @field_validator("channel_discovery_max_candidates")
+    @classmethod
+    def validate_channel_discovery_max_candidates(cls, v: int) -> int:
+        """Validate channel discovery max candidates is positive."""
+        if v <= 0:
+            raise ValueError("channel_discovery_max_candidates must be positive")
         return v
 
     class Config:

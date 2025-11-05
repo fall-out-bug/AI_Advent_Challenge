@@ -2,9 +2,9 @@
 
 ## Project Overview
 
-**AI Challenge** is a 14-day learning project exploring AI-powered systems with language models and multi-agent architectures. The project demonstrates Clean Architecture principles, Domain-Driven Design, and production-ready patterns for building AI applications.
+**AI Challenge** is a 15-day learning project exploring AI-powered systems with language models and multi-agent architectures. The project demonstrates Clean Architecture principles, Domain-Driven Design, and production-ready patterns for building AI applications.
 
-**Current Status**: Day 14 complete - Multi-Pass Code Review & MCP Homework Review
+**Current Status**: Day 15 complete - Self-Improving LLM System with Quality Assessment & Fine-tuning
 
 ## Architecture
 
@@ -65,6 +65,8 @@ The project follows strict Clean Architecture with 4 layers:
 - **Local Models**: Mistral-7B, Qwen-4B, TinyLlama, StarCoder
 - **External APIs**: Perplexity, ChadGPT (optional)
 - **UnifiedModelClient**: Abstraction over all model providers
+- **LLM-as-Judge**: Automatic quality evaluation for summarization
+- **Fine-tuning**: Self-improving system with Hugging Face Transformers
 
 ### Infrastructure
 - **Docker** & **Docker Compose** for deployment
@@ -98,7 +100,13 @@ AI_Challenge/
 │   │   ├── linters/             # Code quality checkers
 │   │   ├── reporting/           # Report generators
 │   │   ├── repositories/        # MongoDB repositories
-│   │   └── clients/             # External API clients
+│   │   ├── clients/             # External API clients
+│   │   ├── llm/                 # LLM infrastructure
+│   │   │   ├── evaluation/     # Quality assessment (LLM-as-Judge)
+│   │   │   ├── chunking/        # Semantic text chunking
+│   │   │   ├── summarizers/     # Summarization strategies (map-reduce, adaptive)
+│   │   │   └── prompts/         # Prompt builders and templates
+│   │   └── finetuning/          # Fine-tuning service
 │   └── presentation/            # Interfaces
 │       ├── bot/                  # Telegram bot
 │       ├── mcp/                  # MCP server & tools
@@ -107,6 +115,9 @@ AI_Challenge/
 │   └── shared_package/
 │       ├── clients/             # UnifiedModelClient
 │       └── config/               # API key management
+├── workers/                      # Background workers
+│   ├── post_fetcher_worker.py   # Post collection worker
+│   └── finetuning_worker.py     # Fine-tuning worker
 ├── tests/                        # Test suite
 │   ├── unit/                     # Unit tests
 │   ├── integration/             # Integration tests
@@ -183,6 +194,53 @@ Agent that automatically discovers and uses MCP tools:
 4. Format result for user
 
 **Implementation**: `src/domain/agents/mcp_aware_agent.py`
+
+### 5. LLM-as-Judge Quality Assessment
+
+Automatic evaluation of summarization quality using LLM:
+
+**Metrics**:
+- Coverage (information completeness)
+- Accuracy (factual correctness)
+- Coherence (logical flow)
+- Informativeness (usefulness)
+
+**Implementation**: `src/infrastructure/llm/evaluation/summarization_evaluator.py`
+
+### 6. Self-Improving Fine-tuning System
+
+Automatic model improvement on high-quality samples:
+
+**Flow**:
+1. Quality assessment marks high-quality samples (>0.8 average score)
+2. Dataset accumulates in MongoDB
+3. When threshold reached (100+ samples), trigger fine-tuning
+4. Fine-tuning runs in Docker container with Hugging Face
+5. New model version saved and integrated
+
+**Implementation**: `src/infrastructure/finetuning/finetuning_service.py`, `src/workers/finetuning_worker.py`
+
+### 7. Advanced Summarization Strategies
+
+Multiple summarization approaches for different content lengths:
+
+**Map-Reduce**: For very long texts (>4000 tokens)
+- Split into chunks
+- Summarize each chunk
+- Combine summaries hierarchically
+
+**Adaptive**: For medium texts (1000-4000 tokens)
+- Single-pass with optimized prompts
+- Dynamic token budgeting
+
+**Semantic Chunking**: Smart text splitting
+- Preserves semantic boundaries
+- Avoids splitting sentences/paragraphs
+
+**Implementation**: 
+- `src/infrastructure/llm/summarizers/map_reduce_summarizer.py`
+- `src/infrastructure/llm/summarizers/adaptive_summarizer.py`
+- `src/infrastructure/llm/chunking/semantic_chunker.py`
 
 ## Key Abstractions
 
@@ -535,6 +593,10 @@ make mcp-demo          # Run MCP demo
 - `src/infrastructure/hw_checker/client.py` - HW Checker API
 - `src/infrastructure/reporting/homework_report_generator.py` - Report generation
 - `src/infrastructure/linters/code_quality_checker.py` - Code quality
+- `src/infrastructure/llm/evaluation/summarization_evaluator.py` - Quality assessment
+- `src/infrastructure/llm/chunking/semantic_chunker.py` - Semantic chunking
+- `src/infrastructure/llm/summarizers/` - Summarization strategies
+- `src/infrastructure/finetuning/finetuning_service.py` - Fine-tuning orchestration
 
 ### Presentation
 - `src/presentation/bot/butler_bot.py` - Telegram bot
@@ -543,6 +605,10 @@ make mcp-demo          # Run MCP demo
 
 ### Shared
 - `shared/shared_package/clients/unified_client.py` - Unified LLM client
+
+### Workers
+- `src/workers/post_fetcher_worker.py` - Post collection worker
+- `src/workers/finetuning_worker.py` - Fine-tuning worker
 
 ## When Working on This Codebase
 
