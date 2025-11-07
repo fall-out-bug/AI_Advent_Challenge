@@ -117,8 +117,13 @@ def get_model_config(model_name: str) -> Dict[str, Any]:
     config = MODEL_CONFIGS[model_name].copy()
     
     # Override URL if environment variable is set (for Docker containers)
+    # Priority: 1) Model-specific URL (e.g., MISTRAL_URL), 2) Generic LLM_URL
     env_var_name = f"{model_name.upper()}_URL"
     env_url = os.getenv(env_var_name)
+    if not env_url:
+        # Fallback to generic LLM_URL if model-specific URL is not set
+        env_url = os.getenv("LLM_URL")
+    
     if env_url:
         config["url"] = env_url
     

@@ -12,20 +12,20 @@ The project follows a testing pyramid approach:
 
 ```
          /\
-        /E2E\       ← End-to-end tests (9 tests)
+        /E2E\       ← End-to-end tests (bot + review pipelines)
        /------\
-      /Integration\ ← Integration tests (9 tests)
+      /Integration\ ← API + worker integration suites
      /------------\
-    /    Unit      \ ← Unit tests (223 tests)
+    /    Unit      \ ← Core domain/application coverage
    /----------------\
 ```
 
 ### Test Distribution
 
-- **Unit Tests**: 223 tests - Fast, isolated, test individual components
-- **Integration Tests**: 9 tests - Test component interactions
-- **E2E Tests**: 9 tests - Test complete workflows
-- **Total**: 241 tests
+- **Unit Tests**: Fast, isolated checks covering domain, application, and infrastructure layers
+- **Integration Tests**: Validate interactions between API, worker, repositories, and MCP clients
+- **E2E Tests**: Exercise complete user workflows (Telegram bot, review queue, publishing)
+- **Contract Tests**: Ensure OpenAPI/JSON schema compatibility with external systems
 
 ## Test Organization (Phase 5)
 
@@ -103,6 +103,18 @@ pytest --cov=src --cov-report=html --cov-report=term
 ### Run Specific Test
 ```bash
 pytest src/tests/unit/application/test_multi_agent_orchestrator.py -v
+```
+
+### Targeted Suites (Day 17)
+```bash
+# Pass 4 log analysis
+pytest tests/unit/application/use_cases/test_review_submission_pass4.py -v
+
+# MCP publishing & fallback
+pytest tests/unit/application/use_cases/test_review_submission_llm_mcp.py -v
+
+# Integration contracts (OpenAPI + JSON schema)
+pytest tests/contracts/ -v
 ```
 
 ## Coverage Targets (Phase 5)

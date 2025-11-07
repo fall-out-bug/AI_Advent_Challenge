@@ -190,6 +190,104 @@ List all tasks with optional filtering.
 curl "http://localhost:8000/api/agents/tasks?status=completed&limit=10"
 ```
 
+### Reviews
+
+#### Create Review Task
+
+Submit a new homework review by uploading the latest archive (and optional context).
+
+**POST** `/api/v1/reviews`
+
+**Request**: `multipart/form-data`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `student_id` | string | ✅ | Student identifier (text) |
+| `assignment_id` | string | ✅ | Homework identifier |
+| `new_commit` | string | ✅ | Commit hash of the new submission (minLength 1) |
+| `new_zip` | file | ✅ | ZIP archive with the latest submission |
+| `old_zip` | file | ❌ | ZIP archive with previous submission |
+| `logs_zip` | file | ❌ | ZIP archive with runtime logs (see [log archive spec](../contracts/log_archive_format.md)) |
+| `old_commit` | string | ❌ | Previous commit hash |
+
+**Response** `201 Created`:
+
+```json
+{
+  "task_id": "task_abc123",
+  "status": "queued",
+  "student_id": "student_123",
+  "assignment_id": "HW2",
+  "created_at": "2025-11-07T09:30:00Z"
+}
+```
+
+#### Get Review Status
+
+Retrieve the state of a review task (queued → running → completed/failed).
+
+**GET** `/api/v1/reviews/{task_id}`
+
+**Response** `200 OK`:
+
+```json
+{
+  "task_id": "task_abc123",
+  "status": "completed",
+  "student_id": "student_123",
+  "assignment_id": "HW2",
+  "created_at": "2025-11-07T09:30:00Z",
+  "finished_at": "2025-11-07T09:34:42Z",
+  "result": {
+    "session_id": "session_xyz789",
+    "overall_score": 88,
+    "published_via": "mcp",
+    "report": {
+      "markdown": "# Review\n...",
+      "static_analysis_results": [
+        {
+          "tool": "flake8",
+          "summary": "2 issues",
+          "entries": [
+            "app/main.py:12 E501 line too long",
+            "utils/helpers.py:45 W292 no newline at end of file"
+          ]
+        }
+      ],
+      "pass_4_logs": {
+        "status": "completed",
+        "results": [
+          {
+            "component": "docker",
+            "classification": "ERROR",
+            "description": "Container exited with status 1",
+            "root_cause": "Missing ENV VAR FOO",
+            "recommendations": "Add FOO=... to compose file",
+            "confidence": 0.82,
+            "count": 3
+          }
+        ]
+      },
+      "haiku": "Code finds balance\nLogs whisper of hidden faults\nFix blooms in review"
+    }
+  }
+}
+```
+
+`status` values: `queued`, `running`, `completed`, `failed`.
+
+#### MCP Publishing
+
+1. The reviewer LLM discovers `submit_review_result` via MCP (`HW_CHECKER_MCP_URL`).
+2. On success, the response includes `published_via: "mcp"`.
+3. Failure or disabled MCP triggers HTTP fallback (`published_via: "fallback"`).
+
+Environment variables:
+
+- `HW_CHECKER_MCP_URL` (default `http://mcp-server:8005`)
+- `HW_CHECKER_MCP_ENABLED` (default `true`)
+- Optional fallback: `EXTERNAL_API_URL`, `EXTERNAL_API_KEY`, `EXTERNAL_API_TIMEOUT`
+
 ### Health
 
 #### Health Check

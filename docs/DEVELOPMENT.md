@@ -54,21 +54,26 @@ Docker provides isolation and consistent behavior across systems.
 #### Start Services
 
 ```bash
-# Build image
-docker-compose build
+# Build images
+docker compose -f docker-compose.butler.yml build
 
-# Start services
-docker-compose up -d
+# Start full Day 17 stack
+docker compose -f docker-compose.butler.yml up -d
+
+# Or use Make target
+make butler-up
 
 # Check status
-docker ps
+docker compose -f docker-compose.butler.yml ps
 
 # View logs
-docker-compose logs -f
+docker compose -f docker-compose.butler.yml logs -f unified-task-worker
 
 # Stop services
-docker-compose down
+make butler-down  # or: docker compose -f docker-compose.butler.yml down
 ```
+
+Legacy manifests (Day 11/12 demos, full GPU stacks) are archived under `archive/docker-compose/`. Existing Make targets (`make day-11-up`, etc.) continue to reference those files for backward compatibility.
 
 #### Verify Deployment
 
@@ -104,7 +109,19 @@ export MODEL_MAX_TOKENS=4096
 export MODEL_TEMPERATURE=0.7
 export PORT=8000
 export LOG_LEVEL=INFO
+# Review publishing
+export HW_CHECKER_MCP_URL=http://mcp-server:8005
+export HW_CHECKER_MCP_ENABLED=true
+export EXTERNAL_API_URL=
+export EXTERNAL_API_KEY=
+export EXTERNAL_API_TIMEOUT=30
+# Log analysis
+export LOG_ANALYSIS_MIN_SEVERITY=WARNING
+export LOG_ANALYSIS_MAX_GROUPS=20
+export LOG_ANALYSIS_TIMEOUT=60
 ```
+
+> Tip: copy `.env.example` to `.env` and update the values above. `make butler-up` reads from `.env` automatically.
 
 ### Configuration Files
 
