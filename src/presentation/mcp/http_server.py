@@ -2,6 +2,7 @@
 import asyncio
 import logging
 import os
+from contextlib import asynccontextmanager
 from typing import Any, Dict, List, Optional
 from pathlib import Path
 import sys
@@ -29,11 +30,15 @@ from src.infrastructure.logging import get_logger
 # Configure logging
 logger = get_logger(__name__)
 
+# Create app first
 app = FastAPI(
     title="AI Challenge MCP Server",
     description="HTTP wrapper for MCP protocol",
     version="1.0.0",
 )
+
+# Review routes initialization flag
+_review_routes_initialized = False
 
 
 class ToolCallRequest(BaseModel):
@@ -209,9 +214,50 @@ async def root():
             "/tools": "List available tools",
             "/call": "Call a tool (POST)",
             "/metrics": "Prometheus metrics",
-            "/docs": "API documentation"
+            "/docs": "API documentation",
+            "/api/v1/reviews": "Code review API"
         }
     }
+
+
+
+
+# Review routes initialization function
+async def _init_review_routes_async():
+    """Initialize review routes with async dependencies."""
+    logger.info("Starting review routes initialization...")
+    try:
+        from src.application.use_cases.enqueue_review_task_use_case import (
+            EnqueueReviewTaskUseCase,
+        )
+        from src.application.use_cases.get_review_status_use_case import (
+            GetReviewStatusUseCase,
+        )
+        from src.infrastructure.database.mongo import get_db
+        from src.infrastructure.repositories.homework_review_repository import (
+            HomeworkReviewRepository,
+        )
+        from src.infrastructure.repositories.long_tasks_repository import (
+            LongTasksRepository,
+        )
+        from src.presentation.api.review_routes import create_review_router
+
+        db = await get_db()
+        tasks_repo = LongTasksRepository(db)
+        review_repo = HomeworkReviewRepository(db)
+        enqueue_use_case = EnqueueReviewTaskUseCase(tasks_repo)
+        get_status_use_case = GetReviewStatusUseCase(tasks_repo, review_repo)
+
+        from src.infrastructure.config.settings import get_settings
+        settings = get_settings()
+        review_router = create_review_router(enqueue_use_case, get_status_use_case, settings)
+        app.include_router(review_router)
+        logger.info("Review routes initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize review routes: {e}", exc_info=True)
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise
 
 
 @app.get("/metrics")
@@ -259,6 +305,18 @@ def start_server(host: str = "0.0.0.0", port: int = 8004):
     logger.info(f"Starting MCP HTTP server on {host}:{port}")
     logger.info(f"Server config: DB_NAME={settings.db_name}, MONGODB_URL={settings.mongodb_url}")
     
+    # Initialize review routes before starting server
+    logger.info("Initializing review routes before server start...")
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(_init_review_routes_async())
+        loop.close()
+        logger.info("Review routes initialized successfully before server start")
+    except Exception as e:
+        logger.warning(f"Failed to initialize review routes before server start: {e}", exc_info=True)
+        logger.warning("Review routes will be initialized on first request")
+    
     run(
         app, 
         host=host, 
@@ -267,6 +325,8 @@ def start_server(host: str = "0.0.0.0", port: int = 8004):
         timeout_keep_alive=300,  # Keep connections alive for long-running requests
         timeout_graceful_shutdown=60,
     )
+
+
 
 
 if __name__ == "__main__":

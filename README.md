@@ -8,10 +8,10 @@
 
 This repository contains daily challenges building AI-powered systems with language models. Each day introduces new concepts and builds upon previous challenges.
 
-**Current Status:** ✅ Day 15 Complete - Self-Improving LLM System with Quality Assessment & Fine-tuning
+**Current Status:** ✅ Day 17 Complete – Multi-Pass Code Review with MCP Publishing & Log Analysis
 
 **Project Status:**
-- ✅ 15 daily challenges completed
+- ✅ 17 daily challenges completed
 - ✅ Clean Architecture fully implemented
 - ✅ 420+ tests with 80%+ coverage
 - ✅ Production-ready multi-agent system with self-improvement
@@ -38,6 +38,12 @@ This repository contains daily challenges building AI-powered systems with langu
 - ✅ **LLM-as-Judge Quality Assessment** (automatic evaluation of summaries)
 - ✅ **Self-Improving System** (automatic fine-tuning on high-quality data)
 - ✅ **Async Long Summarization** (queue-based processing with 600s timeout)
+- ✅ **Code Review Queue System** (Day 17 - async review pipeline with diff analysis)
+- ✅ **Pass 4 Log Analysis** (LLM-powered grouping, classification, and RCA for runtime logs)
+- ✅ **Static Analysis Integration** (Flake8, Pylint, MyPy, Black, isort in the review loop)
+- ✅ **MCP-first Publishing** (LLM calls external HW Checker MCP tool with automatic HTTP fallback)
+- ✅ **Haiku Generation** (poetic postscript highlighting review sentiment)
+- ✅ **Integration Contracts** (OpenAPI spec, JSON schema, cURL/Python examples for partners)
 
 ## Quick Start
 
@@ -93,6 +99,7 @@ AI_Challenge/
 | Day 13 | Butler Agent Refactoring | Hybrid Intent Recognition, HW Checker, Metadata | ✅ Complete |
 | Day 14 | Multi-Pass Code Review | MCP Homework Review, 3-Pass Analysis | ✅ Complete |
 | Day 15 | Quality Assessment & Fine-tuning | LLM-as-Judge, Self-Improving System, Hugging Face | ✅ Complete |
+| Day 17 | Code Review Platform & MCP Publishing | Async queue, static analysis, log diagnostics, MCP tool calls | ✅ Complete |
 
 ## Core Infrastructure
 
@@ -111,31 +118,38 @@ client = ModelClient(provider="perplexity")
 response = await client.chat("Hello, world!")
 ```
 
+## Code Review System
+
+- **Five-pass insight pipeline**: Architecture overview → Component deep dives → Synthesis → Static analysis (Flake8, Pylint, MyPy, Black, isort) → Pass 4 log analysis with LLM-generated classification, root-cause, and remediation tips.
+- **Archive-aware diffing**: ZIP ingestion, semantic diff analysis, and repository persistence via `ReviewSubmissionUseCase`.
+- **Runtime diagnostics**: `LogParserImpl` + `LogNormalizer` feed curated groups into `LLMLogAnalyzer` with severity thresholds and configurable timeouts.
+- **Creative postscript**: Automatic haiku summarises review tone and highlights key risks.
+- **Publishing workflow**: LLM invokes the external HW Checker MCP tool (`submit_review_result`) through `MCPHTTPClient`; resilient fallback reuses `ExternalAPIClient` when needed.
+- **Integration assets**: Contracts live in `contracts/` (OpenAPI spec, JSON schema, examples) with deep-dive docs under `docs/day17/` and `docs/review_system_architecture.md`.
+- **Observability-first**: Structured review logs, Prometheus metrics, and MongoDB audit trail for every session.
+
 ## Docker Compose Files
 
-The project uses multiple docker-compose files for different scenarios:
+Primary entry points:
 
-- **`docker-compose.yml`** - Main/default services (MongoDB, basic setup)
-- **`docker-compose.butler.yml`** - **Production system** with quality assessment & fine-tuning (Day 15)
-- **`docker-compose.day11.yml`** - Butler Bot system (Telegram bot, MCP server, Mistral)
-- **`docker-compose.mcp-demo.yml`** - MCP demo services for testing
+- **`docker-compose.butler.yml`** – production stack (MongoDB, MCP server, workers, bot, Prometheus, Grafana).
+- **`docker-compose.butler.dev.yml`** – development variant with hot reload and lightweight defaults.
+
+Legacy configurations (Day 11/12 demos, full GPU stacks, experimental layouts) now live under `archive/docker-compose/`. Existing `make` targets keep working and reference the archived manifests.
 
 **Quick Start:**
 ```bash
-# Butler (production system with self-improvement)
+# Run the full Butler/Day 17 stack
 make butler-up
 
-# Day 11 (Butler Bot only)
+# Tear down when finished
+make butler-down
+
+# Explore the legacy Day 11 demo (still available via archive files)
 make day-11-up
-
-# MCP Demo
-make mcp-demo-start
-
-# Legacy aliases (maintained for compatibility)
-make day-12-up  # Same as make butler-up
 ```
 
-## Current Features (Day 15)
+## Current Features
 
 **Self-Improving LLM System:**
 - **LLM-as-Judge**: Automatic quality assessment using Mistral (coverage, accuracy, coherence, informativeness)
@@ -149,7 +163,10 @@ make day-12-up  # Same as make butler-up
 - **Hybrid Intent Recognition**: Two-layer architecture (rule-based + LLM fallback) with caching
 - **HW Checker Integration**: Full status monitoring, queue management, and retry functionality
 - **Homework Review**: List recent commits and perform code review via Telegram bot
-- **Multi-Pass Code Review**: 3-pass architecture (Architecture → Component → Synthesis) for comprehensive code analysis
+- **Multi-Pass Code Review Platform**: Architecture → Components → Synthesis → Static Analysis → Pass 4 Log Insights + Haiku
+- **LLM-driven MCP Publishing**: Tool calling against external HW Checker MCP with resilient HTTP fallback
+- **Static Analysis Bundle**: Flake8, Pylint, MyPy, Black, isort results embedded into review reports
+- **Runtime Log Triage**: Grouping, classification, and remediation tips generated by the LLM
 - **Channel Metadata**: Automatic title and description fetching from Telegram API
 - **Enhanced Digests**: Adaptive summary length based on post count, time-aware prompts
 - **Markdown Escaping**: Safe Telegram message formatting
@@ -186,12 +203,12 @@ make run-bot
 - `Сделай ревью {commit_hash}` - Download archive and perform code review
 - Review results are sent as Markdown files via Telegram
 
-**Day 14 - Multi-Pass Code Review:**
-- 3-pass architecture for comprehensive code analysis
-- Automatic component detection (Airflow, Spark, MLflow, Docker)
-- Technology-specific deep-dive analysis
-- Integration synthesis and recommendations
-- Markdown report generation with haiku summaries
+**Day 17 - Code Review Platform Enhancements:**
+- Static analysis (Flake8, Pylint, MyPy, Black, isort) bundled into every report
+- Pass 4 log analysis with severity filtering, grouping, and LLM-derived root causes
+- External MCP publishing invoked directly by the reviewer LLM (with HTTP fallback)
+- Integration contracts (OpenAPI, JSON schema, cURL/Python) for external consumers
+- Markdown report enriched with consolidated findings, log diagnostics, and haiku postscript
 
 See [docs/day12/USER_GUIDE.md](docs/day12/USER_GUIDE.md) for user guide and [docs/day12/api.md](docs/day12/api.md) for API documentation.
 
