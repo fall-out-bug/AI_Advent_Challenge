@@ -1,0 +1,194 @@
+openapi: 3.0.3
+info:
+  title: Code Review API
+  description: |
+    API for submitting code reviews and retrieving review status.
+    Supports multipart/form-data file uploads for code archives and logs.
+  version: 1.0.0
+  contact:
+    name: AI Challenge Team
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://api.example.com
+    description: Production server
+
+paths:
+  /api/v1/reviews:
+    post:
+      summary: Create a new code review task
+      description: |
+        Submits code archives and optional logs for review.
+        Returns task ID and initial status.
+      operationId: createReview
+      tags:
+        - reviews
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - student_id
+                - assignment_id
+                - new_commit
+                - new_zip
+              properties:
+                student_id:
+                  type: string
+                  description: Student identifier
+                  example: "student_123"
+                assignment_id:
+                  type: string
+                  description: Assignment identifier
+                  example: "HW2"
+                new_commit:
+                  type: string
+                  description: Commit hash for new submission
+                  example: "abc123def456"
+                  minLength: 1
+                old_commit:
+                  type: string
+                  nullable: true
+                  description: Commit hash for previous submission
+                  example: "xyz789uvw012"
+                new_zip:
+                  type: string
+                  format: binary
+                  description: ZIP archive containing new submission code
+                old_zip:
+                  type: string
+                  format: binary
+                  nullable: true
+                  description: ZIP archive containing previous submission code (optional)
+                logs_zip:
+                  type: string
+                  format: binary
+                  nullable: true
+                  description: ZIP archive containing runtime logs (optional)
+            encoding:
+              new_zip:
+                contentType: application/zip
+              old_zip:
+                contentType: application/zip
+              logs_zip:
+                contentType: application/zip
+      responses:
+        '201':
+          description: Review task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewStatusResponse'
+        '400':
+          description: Bad request (validation error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: Request entity too large (archive exceeds size limit)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/reviews/{task_id}:
+    get:
+      summary: Get review task status
+      description: |
+        Retrieves the current status and results of a review task.
+      operationId: getReviewStatus
+      tags:
+        - reviews
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          description: Task identifier
+          schema:
+            type: string
+          example: "task_abc123"
+      responses:
+        '200':
+          description: Review task status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewStatusResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ReviewStatusResponse:
+      type: object
+      required:
+        - task_id
+        - status
+      properties:
+        task_id:
+          type: string
+          description: Unique task identifier
+          example: "task_abc123"
+        status:
+          type: string
+          enum: [queued, running, completed, failed]
+          description: Current task status
+          example: "completed"
+        student_id:
+          type: string
+          nullable: true
+          description: Student identifier
+          example: "student_123"
+        assignment_id:
+          type: string
+          nullable: true
+          description: Assignment identifier
+          example: "HW2"
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Task creation timestamp (ISO 8601)
+          example: "2025-01-15T10:30:00Z"
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Task completion timestamp (ISO 8601)
+          example: "2025-01-15T10:35:00Z"
+        result:
+          type: object
+          nullable: true
+          description: Review result data (available when status is 'completed')
+          additionalProperties: true
+        error:
+          type: string
+          nullable: true
+          description: Error message (available when status is 'failed')
+          example: "Archive extraction failed"
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Error message
+          example: "new_zip exceeds size limit: 100MB"
+

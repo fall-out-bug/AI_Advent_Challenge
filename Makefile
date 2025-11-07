@@ -62,6 +62,12 @@ help:
 	@echo "  make butler-test       - Run Butler tests"
 	@echo "  make butler-metrics    - View Prometheus metrics"
 	@echo ""
+	@echo "Day 17 - Code Review Queue & API:"
+	@echo "  make review-worker     - Start review worker (processes review tasks)"
+	@echo "  make review-test       - Run review system unit tests"
+	@echo "  make review-e2e        - Run review E2E tests with real ZIP archives"
+	@echo "  make review-health-check - Run comprehensive health check (all components)"
+	@echo ""
 	@echo "  (Legacy: make butler-* still works but deprecated, use butler-* instead)"
 	@echo ""
 	@echo "  make day-07           - Run Day 07 multi-agent workflow"
@@ -216,40 +222,39 @@ day-11-up:
 		echo "Edit .env and set your Telegram bot token"; \
 		exit 1; \
 	fi
-	docker-compose -f docker-compose.day11.yml up -d
+	docker compose -f archive/docker-compose/docker-compose.day11.yml up -d
 	@echo "Waiting for services to be healthy..."
 	@sleep 5
-	@docker-compose -f docker-compose.day11.yml ps
+	@docker compose -f archive/docker-compose/docker-compose.day11.yml ps
 
 day-11-down:
-	docker-compose -f docker-compose.day11.yml down
+	docker compose -f archive/docker-compose/docker-compose.day11.yml down
 
 day-11-build:
-	docker-compose -f docker-compose.day11.yml build --no-cache
+	docker compose -f archive/docker-compose/docker-compose.day11.yml build --no-cache
 
 day-11-logs:
-	docker-compose -f docker-compose.day11.yml logs -f
+	docker compose -f archive/docker-compose/docker-compose.day11.yml logs -f
 
 day-11-logs-bot:
-	docker-compose -f docker-compose.day11.yml logs -f telegram-bot
+	docker compose -f archive/docker-compose/docker-compose.day11.yml logs -f telegram-bot
 
 day-11-logs-worker:
-	docker-compose -f docker-compose.day11.yml logs -f summary-worker
+	docker compose -f archive/docker-compose/docker-compose.day11.yml logs -f summary-worker
 
 day-11-logs-mcp:
-	docker-compose -f docker-compose.day11.yml logs -f mcp-server
+	docker compose -f archive/docker-compose/docker-compose.day11.yml logs -f mcp-server
 
 day-11-logs-mistral:
-	docker-compose -f docker-compose.day11.yml logs -f mistral-chat
+	docker compose -f archive/docker-compose/docker-compose.day11.yml logs -f mistral-chat
 
 day-11-ps:
-	docker-compose -f docker-compose.day11.yml ps
+	docker compose -f archive/docker-compose/docker-compose.day11.yml ps
 
 day-11-restart:
-	docker-compose -f docker-compose.day11.yml restart
+	docker compose -f archive/docker-compose/docker-compose.day11.yml restart
 
-day-11-clean:
-	docker-compose -f docker-compose.day11.yml down -v
+	docker compose -f archive/docker-compose/docker-compose.day11.yml down -v
 	@echo "All Day 11 containers and volumes removed"
 
 day-11-setup:
@@ -391,3 +396,29 @@ hook-update:
 hook-run:
 	@echo "Running pre-commit hooks on all files..."
 	poetry run pre-commit run --all-files
+
+# Day 17: Code Review Queue & API
+review-worker:
+	@echo "Note: Review tasks are now processed by unified-task-worker"
+	@echo "Use: make unified-task-worker or docker-compose up unified-task-worker"
+
+unified-task-worker:
+	@echo "Starting unified task worker (summarization + review)..."
+	poetry run python -m src.workers
+
+review-test:
+	@echo "Running review system tests..."
+	poetry run pytest tests/unit/domain/test_review*.py tests/unit/domain/test_code_diff.py tests/unit/domain/test_submission_archive.py tests/unit/application/test_enqueue_review_task.py -v
+
+review-e2e:
+	@echo "Running review E2E tests..."
+	@echo "Note: Requires MongoDB running (docker-compose up -d mongodb)"
+	@echo "Note: Requires LLM_URL environment variable set"
+	@echo "Tests will be skipped if MongoDB is unavailable"
+	poetry run pytest tests/e2e/test_review_pipeline.py -v -m e2e
+
+review-health-check:
+	@echo "Running review system health check..."
+	@echo "This will test all components: MongoDB, archives, diff, use cases, pipeline"
+	@echo "Note: Full pipeline test requires LLM_URL environment variable"
+	poetry run python scripts/test_review_system.py

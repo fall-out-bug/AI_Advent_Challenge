@@ -19,11 +19,13 @@ from src.infrastructure.monitoring.agent_metrics import (
     long_tasks_queue_size,
 )
 from src.infrastructure.notifiers.telegram_notifier import TelegramNotifier
+from src.domain.value_objects.task_type import TaskType
 from src.infrastructure.repositories.long_tasks_repository import LongTasksRepository
 from src.application.use_cases.process_long_summarization_task import (
     ProcessLongSummarizationTaskUseCase,
 )
 from src.presentation.mcp.client import get_mcp_client
+from src.presentation.mcp.http_client import MCPHTTPClient
 from src.workers.data_fetchers import get_digest_texts, get_summary_text
 from src.workers.message_sender import send_with_retry
 from src.workers.schedulers import is_quiet_hours, is_time_to_send
@@ -75,14 +77,16 @@ class SummaryWorker:
     async def run(self) -> None:
         """Main worker loop."""
         self._running = True
-        logger.info("Summary worker started")
+        logger.info("Unified task worker started (summarization + review)")
         try:
             while self._running:
                 try:
                     await self._check_and_send()
-                    # Process long tasks if enabled
+                    # Process summarization tasks if enabled
                     if self.settings.enable_async_long_summarization:
                         await self._process_long_tasks()
+                    # Process review tasks
+                    await self._process_review_tasks()
                     await asyncio.sleep(CHECK_INTERVAL_SECONDS)
                 except Exception as e:
                     logger.error(f"Worker error in main loop: {e}", exc_info=True)
@@ -120,8 +124,8 @@ class SummaryWorker:
             queued_count = await db.long_tasks.count_documents({"status": TaskStatus.QUEUED.value})
             long_tasks_queue_size.set(queued_count)
 
-            # Pick next queued task (atomic operation)
-            task = await long_tasks_repo.pick_next_queued()
+            # Pick next queued summarization task (filter by type)
+            task = await long_tasks_repo.pick_next_queued(task_type=TaskType.SUMMARIZATION)
 
             if not task:
                 return  # No tasks to process
@@ -130,14 +134,14 @@ class SummaryWorker:
             start_time = time.time()
 
             logger.info(
-                f"Processing long task: task_id={task.task_id}, user_id={task.user_id}, "
+                f"Processing summarization task: task_id={task.task_id}, user_id={task.user_id}, "
                 f"channel={task.channel_username}"
             )
 
             # Record metric
             long_tasks_total.labels(status="running").inc()
 
-            # Process task
+            # Process summarization task
             process_use_case = ProcessLongSummarizationTaskUseCase(
                 long_tasks_repository=long_tasks_repo,
             )
@@ -154,7 +158,7 @@ class SummaryWorker:
 
                 await notifier.send_message(task.chat_id, message)
                 logger.info(
-                    f"Long task completed and sent: task_id={task.task_id}, "
+                    f"Summarization task completed and sent: task_id={task.task_id}, "
                     f"user_id={task.user_id}, result_length={len(result_text)}, "
                     f"duration={duration:.2f}s"
                 )
@@ -163,7 +167,7 @@ class SummaryWorker:
                 duration = time.time() - start_time
                 error_msg = f"Ошибка при создании дайджеста: {str(e)[:200]}"
                 logger.error(
-                    f"Long task failed: task_id={task.task_id}, error={error_msg}, "
+                    f"Summarization task failed: task_id={task.task_id}, error={error_msg}, "
                     f"duration={duration:.2f}s",
                     exc_info=True,
                 )
@@ -182,7 +186,152 @@ class SummaryWorker:
                     )
 
         except Exception as e:
-            logger.error(f"Error processing long tasks: {e}", exc_info=True)
+            logger.error(f"Error processing summarization tasks: {e}", exc_info=True)
+
+    async def _process_review_tasks(self) -> None:
+        """Process code review tasks from queue.
+
+        Purpose:
+            Polls for queued code review tasks, processes them using
+            ReviewSubmissionUseCase, and updates task status.
+        """
+        try:
+            db = await get_db()
+            long_tasks_repo = LongTasksRepository(db)
+
+            # Update queue size metric for review tasks
+            from src.domain.value_objects.task_status import TaskStatus
+            queued_count = await long_tasks_repo.get_queue_size(task_type=TaskType.CODE_REVIEW)
+            # Note: We could add a separate metric for review tasks if needed
+
+            # Pick next queued review task (filter by type)
+            task = await long_tasks_repo.pick_next_queued(task_type=TaskType.CODE_REVIEW)
+
+            if not task:
+                return  # No tasks to process
+
+            import time
+            start_time = time.time()
+
+            logger.info(
+                f"Processing review task: task_id={task.task_id}, user_id={task.user_id}"
+            )
+
+            # Record metric (reuse existing metric for now)
+            long_tasks_total.labels(status="running").inc()
+
+            # Process review task
+            # Import here to avoid circular dependencies
+            from src.application.use_cases.review_submission_use_case import (
+                ReviewSubmissionUseCase,
+            )
+            from src.infrastructure.archive.archive_service import ZipArchiveService
+            from src.domain.services.diff_analyzer import DiffAnalyzer
+            from src.infrastructure.repositories.homework_review_repository import (
+                HomeworkReviewRepository,
+            )
+            from src.infrastructure.clients.external_api_client import ExternalAPIClient
+            from src.infrastructure.clients.external_api_mock import ExternalAPIClientMock
+            import sys
+            from pathlib import Path
+
+            # Add shared to path for UnifiedModelClient
+            _root = Path(__file__).parent.parent.parent.parent
+            sys.path.insert(0, str(_root))
+            shared_path = _root / "shared"
+            sys.path.insert(0, str(shared_path))
+
+            try:
+                from shared_package.clients.unified_client import UnifiedModelClient
+            except ImportError:
+                try:
+                    from shared.clients.unified_client import UnifiedModelClient
+                except ImportError:
+                    shared_package_path = _root / "shared" / "shared_package"
+                    if shared_package_path.exists():
+                        sys.path.insert(0, str(shared_package_path.parent))
+                        from shared_package.clients.unified_client import UnifiedModelClient
+                    else:
+                        raise RuntimeError("UnifiedModelClient not available")
+
+            # Initialize dependencies
+            archive_service = ZipArchiveService(self.settings)
+            diff_analyzer = DiffAnalyzer()
+            review_repo = HomeworkReviewRepository(db)
+
+            # UnifiedModelClient reads LLM_URL from environment or settings
+            # Ensure LLM_URL is set in environment for UnifiedModelClient
+            llm_url = self.settings.llm_url or os.getenv("LLM_URL")
+            if not llm_url:
+                raise ValueError("LLM_URL must be configured for code review")
+            
+            # Set LLM_URL in environment if not already set (UnifiedModelClient reads from env)
+            if not os.getenv("LLM_URL"):
+                os.environ["LLM_URL"] = llm_url
+
+            unified_client = UnifiedModelClient(timeout=self.settings.review_llm_timeout)
+
+            # Use real client if enabled, otherwise mock
+            if self.settings.external_api_enabled and self.settings.external_api_url:
+                publisher = ExternalAPIClient(self.settings)
+            else:
+                publisher = ExternalAPIClientMock(self.settings)
+
+            mcp_client_instance = None
+            if self.settings.hw_checker_mcp_enabled:
+                mcp_client_instance = MCPHTTPClient(
+                    base_url=self.settings.hw_checker_mcp_url,
+                )
+
+            # Initialize log analysis components
+            from src.infrastructure.logs.log_parser_impl import LogParserImpl
+            from src.infrastructure.logs.log_normalizer import LogNormalizer
+            from src.infrastructure.logs.llm_log_analyzer import LLMLogAnalyzer
+
+            log_parser = LogParserImpl()
+            log_normalizer = LogNormalizer()
+            log_analyzer = LLMLogAnalyzer(
+                unified_client=unified_client,
+                timeout=self.settings.log_analysis_timeout,
+                retries=self.settings.review_max_retries,
+            )
+
+            review_use_case = ReviewSubmissionUseCase(
+                archive_reader=archive_service,
+                diff_analyzer=diff_analyzer,
+                unified_client=unified_client,
+                review_repository=review_repo,
+                tasks_repository=long_tasks_repo,
+                publisher=publisher,
+                log_parser=log_parser,
+                log_normalizer=log_normalizer,
+                log_analyzer=log_analyzer,
+                settings=self.settings,
+                mcp_client=mcp_client_instance,
+                fallback_publisher=publisher,
+            )
+
+            try:
+                session_id = await review_use_case.execute(task)
+                duration = time.time() - start_time
+                long_tasks_duration.observe(duration)
+                long_tasks_total.labels(status="succeeded").inc()
+                logger.info(
+                    f"Review task completed: task_id={task.task_id}, "
+                    f"session_id={session_id}, duration={duration:.2f}s"
+                )
+            except Exception as e:
+                duration = time.time() - start_time
+                long_tasks_duration.observe(duration)
+                long_tasks_total.labels(status="failed").inc()
+                logger.error(
+                    f"Review task failed: task_id={task.task_id}, error={e}",
+                    exc_info=True,
+                )
+                raise
+
+        except Exception as e:
+            logger.error(f"Error processing review tasks: {e}", exc_info=True)
 
     async def _check_and_send(self) -> None:
         """Check if it's time to send notifications."""

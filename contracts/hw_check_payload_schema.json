@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Homework Check API Payload",
+  "description": "JSON schema for the payload sent to external homework check API when a review is completed",
+  "type": "object",
+  "required": [
+    "task_id",
+    "student_id",
+    "assignment_id",
+    "session_id",
+    "overall_score",
+    "new_commit"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "Unique identifier for the review task",
+      "example": "task_abc123"
+    },
+    "student_id": {
+      "type": "string",
+      "description": "Student identifier",
+      "example": "student_123"
+    },
+    "assignment_id": {
+      "type": "string",
+      "description": "Assignment identifier",
+      "example": "HW2"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Review session identifier (used for retrieving full report)",
+      "example": "session_xyz789"
+    },
+    "overall_score": {
+      "type": "integer",
+      "description": "Overall score (0-100) based on code review findings",
+      "minimum": 0,
+      "maximum": 100,
+      "example": 75
+    },
+    "new_commit": {
+      "type": "string",
+      "description": "Commit hash for the new submission",
+      "example": "abc123def456",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": false
+}
+
