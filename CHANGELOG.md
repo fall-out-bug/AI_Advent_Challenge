@@ -5,6 +5,38 @@ All notable changes to the AI Challenge project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Day 17] - 2025-11-07
+
+### Added
+- **Pass 4 Log Analysis**: End-to-end pipeline (parsers, normalizer, `LLMLogAnalyzer`) with severity thresholds and grouped RCA output.
+- **Static Analysis Bundle**: Flake8, Pylint, MyPy, Black, isort executed during reviews and embedded into `MultiPassReport`.
+- **MCP-first Publishing Flow**: LLM-triggered tool call (`submit_review_result`) via `MCPHTTPClient` plus resilient fallback to `ExternalAPIClient`.
+- **Review Haiku Enhancements**: Unified haiku generation across passes with default fallback text.
+- **Integration Contracts**: OpenAPI spec, JSON schema, cURL/Python examples, and contract tests reflecting mandatory `new_commit` field.
+- **Documentation**: Updated README (EN/RU), new Day 17 architecture notes, expanded review system docs.
+- **Tests**: Unit coverage for MCP publishing helpers (`test_review_submission_llm_mcp.py`) and log-analysis execution (`test_review_submission_pass4.py`).
+
+### Changed
+- **ReviewSubmissionUseCase**: Stores unified client, orchestrates static analysis + Pass 4 logs, enriches publish payloads, and routes MCP publishing with fallback.
+- **SummaryWorker**: Wires `MCPHTTPClient`, fallback publisher, and new log-analysis dependencies.
+- **Settings**: Added `hw_checker_mcp_url` and `hw_checker_mcp_enabled` flags for configuration.
+- **Docker Compose Layout**: Archived legacy manifests to `archive/docker-compose/`; active stacks consolidated in `docker-compose.butler.yml` / `.butler.dev.yml`.
+- **Makefile**: Legacy Day 11 targets continue to function via archived compose files (no runtime regressions).
+- **Contracts & Guides**: `review_api_v1.yaml`, `hw_check_payload_schema.json`, `INTEGRATION_GUIDE.md` updated with mandatory `new_commit`, Pass 4 content, and haiku fields.
+
+### Fixed
+- Ensured `_extract_overall_score` handles mocked reports during tests.
+- Improved resiliency around MCP tool discovery and JSON parsing of LLM responses.
+
+### Removed
+- Top-level docker compose variants (`docker-compose.yml`, `day11`, `day12`, `full`, `mcp`, `mcp-demo`) moved to archive for historical reference.
+
+### Performance
+- Reduced duplicate MCP client instantiation; reuse within `ReviewSubmissionUseCase`.
+- Log analysis capped by configurable group count for predictable LLM usage.
+
+See `docs/day17/` (architecture & integration) for deep dives and migration notes.
+
 ## [Day 15] - 2025-11-05
 
 ### Added

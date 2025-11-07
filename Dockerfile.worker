@@ -36,12 +36,17 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Install static analysis tools for code quality checking
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install flake8 pylint mypy black isort
+
 # Copy Python dependencies from builder
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy application code
 COPY --chown=worker:worker src/ ./src/
+COPY --chown=worker:worker shared/ ./shared/
 COPY --chown=worker:worker pyproject.toml ./
 
 # Install application in development mode with pip cache

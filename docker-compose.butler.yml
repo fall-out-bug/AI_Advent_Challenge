@@ -103,8 +103,18 @@ services:
       - FINETUNING_NUM_EPOCHS=${FINETUNING_NUM_EPOCHS:-3}
       - FINETUNING_BATCH_SIZE=${FINETUNING_BATCH_SIZE:-4}
       - FINETUNING_LEARNING_RATE=${FINETUNING_LEARNING_RATE:-2e-5}
+      # Review API settings
+      - EXTERNAL_API_URL=${EXTERNAL_API_URL:-}
+      - EXTERNAL_API_KEY=${EXTERNAL_API_KEY:-}
+      - EXTERNAL_API_ENABLED=${EXTERNAL_API_ENABLED:-false}
+      - EXTERNAL_API_TIMEOUT=${EXTERNAL_API_TIMEOUT:-30}
+      - HW_CHECKER_MCP_URL=${HW_CHECKER_MCP_URL:-http://mcp-server:8005}
+      - HW_CHECKER_MCP_ENABLED=${HW_CHECKER_MCP_ENABLED:-true}
+      - REVIEW_LLM_TIMEOUT=${REVIEW_LLM_TIMEOUT:-120}
+      - REVIEW_MAX_RETRIES=${REVIEW_MAX_RETRIES:-3}
+      - ARCHIVE_MAX_TOTAL_SIZE_MB=${ARCHIVE_MAX_TOTAL_SIZE_MB:-100}
     ports:
-      - "8004:8004"
+      - "8004:8004"  # Review API will be on /api/v1/reviews
     volumes:
       # Mount Pyrogram session directory (created by init_pyrogram.py)
       - ./sessions:/app/sessions:rw
@@ -112,6 +122,8 @@ services:
       - ./models:/models/fine_tuned:rw
       # Mount data directory for datasets
       - ./data:/app/data:rw
+      # Volume for review archives (read-only for security)
+      - ./review_archives:/app/review_archives:ro
       # Source code volumes for hotreload (can be overridden by dev compose)
       # - ./src:/app/src:ro  # Uncomment for development hotreload
       # - ./shared:/app/shared:ro  # Uncomment for development hotreload
@@ -202,14 +214,15 @@ services:
       - "component=butler-agent"
 
   # =============================================
-  # Summary Worker (Digest Generation)
+  # Unified Task Worker (Summarization + Code Review)
   # =============================================
-  summary-worker:
+  unified-task-worker:
     build:
       context: .
       dockerfile: Dockerfile.worker
     image: ai-challenge-worker:latest
-    container_name: summary-worker
+    container_name: unified-task-worker
+    command: ["python", "-m", "src.workers"]  # Uses unified_task_worker_main via __main__.py
     env_file:
       - .env
     environment:
@@ -219,13 +232,30 @@ services:
       - LLM_URL=http://mistral-chat:8000
       - MONGODB_URL=mongodb://mongodb:27017
       - DB_NAME=butler
+      # Summary-specific
       - MORNING_SUMMARY_TIME=${MORNING_SUMMARY_TIME:-09:00}
       - EVENING_DIGEST_TIME=${EVENING_DIGEST_TIME:-20:00}
       - QUIET_HOURS_START=${QUIET_HOURS_START:-22}
       - QUIET_HOURS_END=${QUIET_HOURS_END:-8}
       - DEBUG_NOTIFICATION_INTERVAL_MINUTES=${DEBUG_NOTIFICATION_INTERVAL_MINUTES:-0}
+      - ENABLE_ASYNC_LONG_SUMMARIZATION=${ENABLE_ASYNC_LONG_SUMMARIZATION:-true}
+      # Review-specific
+      - EXTERNAL_API_URL=${EXTERNAL_API_URL:-}
+      - EXTERNAL_API_KEY=${EXTERNAL_API_KEY:-}
+      - EXTERNAL_API_ENABLED=${EXTERNAL_API_ENABLED:-false}
+      - EXTERNAL_API_TIMEOUT=${EXTERNAL_API_TIMEOUT:-30}
+      - HW_CHECKER_MCP_URL=${HW_CHECKER_MCP_URL:-http://mcp-server:8005}
+      - HW_CHECKER_MCP_ENABLED=${HW_CHECKER_MCP_ENABLED:-true}
+      - REVIEW_LLM_TIMEOUT=${REVIEW_LLM_TIMEOUT:-120}
+      - REVIEW_MAX_RETRIES=${REVIEW_MAX_RETRIES:-3}
+      - REVIEW_WORKER_POLL_INTERVAL=${REVIEW_WORKER_POLL_INTERVAL:-5}
+      - REVIEW_WORKER_MAX_BACKOFF=${REVIEW_WORKER_MAX_BACKOFF:-60}
+      - ARCHIVE_MAX_TOTAL_SIZE_MB=${ARCHIVE_MAX_TOTAL_SIZE_MB:-100}
       - PYTHONUNBUFFERED=1
       - LOG_LEVEL=INFO
+    volumes:
+      # Volume for review archives (read-only for security)
+      - ./review_archives:/app/review_archives:ro
     depends_on:
       mongodb:
         condition: service_healthy
@@ -242,6 +272,7 @@ services:
     restart: unless-stopped
     networks:
       - butler-network
+      - ai-challenge-network  # For external API access
     deploy:
       resources:
         limits:

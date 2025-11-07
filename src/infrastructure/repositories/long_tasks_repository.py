@@ -1,4 +1,4 @@
-"""Repository for long summarization tasks with idempotent operations."""
+"""Repository for long-running tasks (summarization and code review) with idempotent operations."""
 
 from __future__ import annotations
 
@@ -8,20 +8,22 @@ from typing import Any
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo import ReturnDocument
 
-from src.domain.value_objects.long_summarization_task import LongSummarizationTask
+from src.domain.value_objects.long_summarization_task import LongTask
 from src.domain.value_objects.task_status import TaskStatus
+from src.domain.value_objects.task_type import TaskType
 from src.infrastructure.logging import get_logger
 
 logger = get_logger("long_tasks_repository")
 
 
 class LongTasksRepository:
-    """Async repository for long summarization tasks.
+    """Async repository for long-running tasks (summarization and code review).
 
     Purpose:
-        Encapsulate CRUD operations for long-running summarization tasks.
+        Encapsulate CRUD operations for long-running tasks of all types.
         Provides idempotent operations to prevent double-processing.
         Uses MongoDB for persistence with atomic updates.
+        Supports filtering by task type for unified worker processing.
 
     Exceptions:
         ValueError: If provided inputs are invalid
@@ -42,13 +44,23 @@ class LongTasksRepository:
             return
 
         collection = self._db.long_tasks
+        # Index for picking next queued task by type
+        await collection.create_index(
+            [("task_type", 1), ("status", 1), ("created_at", 1)]
+        )
+        # Index for status and created_at (backward compatibility)
         await collection.create_index([("status", 1), ("created_at", 1)])
+        # Index for user queries
         await collection.create_index([("user_id", 1), ("created_at", -1)])
+        # Unique index on task_id
         await collection.create_index([("task_id", 1)], unique=True)
-        await collection.create_index([("created_at", 1)], expireAfterSeconds=604800)  # 7 days TTL
+        # TTL index for automatic cleanup
+        await collection.create_index(
+            [("created_at", 1)], expireAfterSeconds=604800
+        )  # 7 days TTL
         self._indexes_created = True
 
-    async def create(self, task: LongSummarizationTask) -> str:
+    async def create(self, task: LongTask) -> str:
         """Create new task.
 
         Purpose:
@@ -56,7 +68,7 @@ class LongTasksRepository:
             If task with same task_id exists, returns existing task_id.
 
         Args:
-            task: LongSummarizationTask to create
+            task: LongTask to create
 
         Returns:
             Task ID
@@ -71,34 +83,49 @@ class LongTasksRepository:
 
         try:
             result = await collection.insert_one(task_dict)
-            logger.info(f"Created long task: task_id={task.task_id}, user_id={task.user_id}")
+            logger.info(
+                f"Created long task: task_id={task.task_id}, "
+                f"type={task.task_type.value}, user_id={task.user_id}"
+            )
             return task.task_id
         except Exception as e:
             # Check if it's a duplicate key error
             if "duplicate key" in str(e).lower() or "E11000" in str(e):
                 logger.warning(
-                    f"Task already exists (idempotent): task_id={task.task_id}, user_id={task.user_id}"
+                    f"Task already exists (idempotent): task_id={task.task_id}, "
+                    f"type={task.task_type.value}, user_id={task.user_id}"
                 )
                 return task.task_id
             raise
 
-    async def pick_next_queued(self) -> LongSummarizationTask | None:
+    async def pick_next_queued(
+        self, task_type: TaskType | None = None
+    ) -> LongTask | None:
         """Pick next queued task for processing.
 
         Purpose:
             Atomically finds and marks a queued task as running.
             Prevents double-processing by using atomic update.
+            Optionally filters by task type.
+
+        Args:
+            task_type: Optional task type filter. If None, picks any queued task.
 
         Returns:
-            LongSummarizationTask if found, None otherwise
+            LongTask if found, None otherwise
         """
         await self._ensure_indexes()
 
         collection = self._db.long_tasks
 
+        # Build query with optional task type filter
+        query: dict[str, Any] = {"status": TaskStatus.QUEUED.value}
+        if task_type:
+            query["task_type"] = task_type.value
+
         # Atomic find and update to prevent race conditions
         result = await collection.find_one_and_update(
-            {"status": TaskStatus.QUEUED.value},
+            query,
             {
                 "$set": {
                     "status": TaskStatus.RUNNING.value,
@@ -113,8 +140,11 @@ class LongTasksRepository:
             return None
 
         try:
-            task = LongSummarizationTask.from_dict(result)
-            logger.info(f"Picked queued task: task_id={task.task_id}, user_id={task.user_id}")
+            task = LongTask.from_dict(result)
+            logger.info(
+                f"Picked queued task: task_id={task.task_id}, "
+                f"type={task.task_type.value}, user_id={task.user_id}"
+            )
             return task
         except Exception as e:
             logger.error(
@@ -163,7 +193,7 @@ class LongTasksRepository:
 
         Args:
             task_id: Task ID
-            result_text: Generated summary text
+            result_text: Generated summary text or session_id
         """
         await self._ensure_indexes()
 
@@ -180,7 +210,10 @@ class LongTasksRepository:
         )
 
         if result.modified_count > 0:
-            logger.info(f"Marked task as succeeded: task_id={task_id}, result_length={len(result_text)}")
+            logger.info(
+                f"Marked task as succeeded: task_id={task_id}, "
+                f"result_length={len(result_text)}"
+            )
         else:
             logger.warning(f"Task not found or already completed: task_id={task_id}")
 
@@ -210,14 +243,14 @@ class LongTasksRepository:
         else:
             logger.warning(f"Task not found: task_id={task_id}")
 
-    async def get_by_id(self, task_id: str) -> LongSummarizationTask | None:
+    async def get_by_id(self, task_id: str) -> LongTask | None:
         """Get task by ID.
 
         Args:
             task_id: Task ID
 
         Returns:
-            LongSummarizationTask if found, None otherwise
+            LongTask if found, None otherwise
         """
         await self._ensure_indexes()
 
@@ -228,23 +261,31 @@ class LongTasksRepository:
             return None
 
         try:
-            return LongSummarizationTask.from_dict(result)
+            return LongTask.from_dict(result)
         except Exception as e:
-            logger.error(f"Failed to deserialize task: task_id={task_id}, error={e}", exc_info=True)
+            logger.error(
+                f"Failed to deserialize task: task_id={task_id}, error={e}",
+                exc_info=True,
+            )
             return None
 
     async def get_by_user(
-        self, user_id: int, limit: int = 10, status: TaskStatus | None = None
-    ) -> list[LongSummarizationTask]:
+        self,
+        user_id: int,
+        limit: int = 10,
+        status: TaskStatus | None = None,
+        task_type: TaskType | None = None,
+    ) -> list[LongTask]:
         """Get tasks by user ID.
 
         Args:
             user_id: User ID
             limit: Maximum number of tasks to return
             status: Optional status filter
+            task_type: Optional task type filter
 
         Returns:
-            List of LongSummarizationTask
+            List of LongTask
         """
         await self._ensure_indexes()
 
@@ -252,16 +293,38 @@ class LongTasksRepository:
         query: dict[str, Any] = {"user_id": user_id}
         if status:
             query["status"] = status.value
+        if task_type:
+            query["task_type"] = task_type.value
 
         cursor = collection.find(query).sort("created_at", -1).limit(limit)
         tasks = []
 
         async for doc in cursor:
             try:
-                task = LongSummarizationTask.from_dict(doc)
+                task = LongTask.from_dict(doc)
                 tasks.append(task)
             except Exception as e:
                 logger.error(f"Failed to deserialize task: error={e}", exc_info=True)
 
         return tasks
+
+    async def get_queue_size(self, task_type: TaskType | None = None) -> int:
+        """Get number of queued tasks.
+
+        Purpose:
+            Returns count of tasks with QUEUED status.
+            Optionally filters by task type.
+
+        Args:
+            task_type: Optional task type filter
+
+        Returns:
+            Number of queued tasks
+        """
+        await self._ensure_indexes()
+        collection = self._db.long_tasks
+        query: dict[str, Any] = {"status": TaskStatus.QUEUED.value}
+        if task_type:
+            query["task_type"] = task_type.value
+        return await collection.count_documents(query)
 

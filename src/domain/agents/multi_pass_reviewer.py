@@ -49,10 +49,13 @@ from src.domain.agents.passes.architecture_pass import (
 from src.domain.agents.passes.component_pass import ComponentDeepDivePass
 from src.domain.agents.passes.synthesis_pass import SynthesisPass
 from src.domain.agents.session_manager import SessionManager
+from src.domain.interfaces.archive_reader import ArchiveReader
 from src.domain.models.code_review_models import (
     MultiPassReport,
     PassFindings,
 )
+from src.domain.services.diff_analyzer import DiffAnalyzer
+from src.domain.value_objects.code_diff import CodeDiff
 from src.infrastructure.logging.review_logger import ReviewLogger
 
 logger = logging.getLogger(__name__)
@@ -339,6 +342,152 @@ class MultiPassReviewerAgent:
         except Exception as e:
             self.logger.error(f"Failed to load report for session {session_id}: {e}")
             return None
+
+    async def review_from_archives(
+        self,
+        archive_reader: ArchiveReader,
+        diff_analyzer: DiffAnalyzer,
+        new_archive_path: str,
+        previous_archive_path: str | None = None,
+        assignment_id: str = "unknown",
+        student_id: str | None = None,
+    ) -> MultiPassReport:
+        """Review code from ZIP archives.
+
+        Purpose:
+            Extracts archives, analyzes diff, combines code files,
+            and runs multi-pass review. Uses dependency injection
+            to avoid importing infrastructure layer.
+
+        Args:
+            archive_reader: Archive extraction service (injected)
+            diff_analyzer: Code diff analyzer (injected)
+            new_archive_path: Path to new submission ZIP
+            previous_archive_path: Optional path to previous submission
+            assignment_id: Assignment identifier
+            student_id: Optional student identifier
+
+        Returns:
+            MultiPassReport with review findings
+
+        Raises:
+            Exception: On archive extraction or review failure
+
+        Example:
+            report = await agent.review_from_archives(
+                archive_reader=zip_service,
+                diff_analyzer=diff_analyzer,
+                new_archive_path="/path/to/new.zip",
+                previous_archive_path="/path/to/old.zip",
+                assignment_id="HW2",
+                student_id="student123"
+            )
+        """
+        self.logger.info(
+            f"Starting review from archives: new={new_archive_path}, "
+            f"old={previous_archive_path}, assignment={assignment_id}"
+        )
+
+        # 1. Extract new archive
+        new_archive = archive_reader.extract_submission(
+            new_archive_path, f"new_{assignment_id}"
+        )
+        self.logger.info(
+            f"Extracted new archive: {len(new_archive.code_files)} files, "
+            f"total_size={new_archive.get_total_code_size()} bytes"
+        )
+
+        # 2. Extract old archive if provided
+        old_archive = None
+        if previous_archive_path:
+            old_archive = archive_reader.extract_submission(
+                previous_archive_path, f"old_{assignment_id}"
+            )
+            self.logger.info(
+                f"Extracted old archive: {len(old_archive.code_files)} files"
+            )
+
+        # 3. Combine code files into strings
+        def _combine_code_files(code_files: dict[str, str]) -> str:
+            """Combine code files into single string."""
+            parts = []
+            for file_path, content in code_files.items():
+                parts.append(f"# {file_path}\n{content}\n")
+            return "\n".join(parts)
+
+        old_code = (
+            _combine_code_files(old_archive.code_files) if old_archive else ""
+        )
+        new_code = _combine_code_files(new_archive.code_files)
+
+        # 4. Analyze diff (for context, not used directly in review)
+        diff: CodeDiff | None = None
+        if old_archive:
+            diff = diff_analyzer.analyze(old_code, new_code)
+            self.logger.info(
+                f"Diff analysis: +{diff.lines_added} -{diff.lines_removed}, "
+                f"change_ratio={diff.change_ratio:.1f}%, "
+                f"refactor={diff.has_refactor}"
+            )
+
+        # 4.5. Run static analysis on extracted files
+        static_analysis_results = None
+        try:
+            import tempfile
+            from pathlib import Path
+            from src.infrastructure.linters.code_quality_checker import CodeQualityChecker
+            
+            # Create temporary directory for extracted files
+            with tempfile.TemporaryDirectory(prefix="review_static_analysis_") as tmpdir:
+                tmp_path = Path(tmpdir)
+                
+                # Write extracted code files to temporary directory
+                for file_path, file_content in new_archive.code_files.items():
+                    # Create directory structure
+                    full_path = tmp_path / file_path
+                    full_path.parent.mkdir(parents=True, exist_ok=True)
+                    
+                    # Write file content
+                    full_path.write_text(file_content, encoding='utf-8')
+                
+                # Run static analysis
+                self.logger.info(f"Running static analysis on {len(new_archive.code_files)} files")
+                checker = CodeQualityChecker(tmp_path)
+                static_analysis_results = checker.run_all_checks()
+                self.logger.info(
+                    f"Static analysis complete: {static_analysis_results.get('summary', {}).get('total_issues', 0)} issues found"
+                )
+        except Exception as e:
+            self.logger.warning(f"Static analysis failed: {e}", exc_info=True)
+            # Continue without static analysis - it's not critical
+
+# 5. Run multi-pass review on combined code
+        repo_name = f"{student_id}_{assignment_id}" if student_id else assignment_id
+        report = await self.process_multi_pass(code=new_code, repo_name=repo_name)
+        
+        # 5.5. Add static analysis results to report
+        if static_analysis_results:
+            report.static_analysis_results = static_analysis_results
+
+        # 6. Add diff metadata to report if available
+        if diff and report.pass_1:
+            # Store diff metrics in pass_1 metadata for context
+            report.pass_1.metadata["diff_metrics"] = {
+                "lines_added": diff.lines_added,
+                "lines_removed": diff.lines_removed,
+                "change_ratio": diff.change_ratio,
+                "functions_added": diff.functions_added,
+                "functions_removed": diff.functions_removed,
+                "classes_changed": diff.classes_changed,
+                "has_refactor": diff.has_refactor,
+            }
+
+        self.logger.info(
+            f"Review from archives complete: session_id={report.session_id}, "
+            f"findings={report.total_findings}"
+        )
+
+        return report
 
     def export_report(
         self, report: MultiPassReport, format: str = "markdown"

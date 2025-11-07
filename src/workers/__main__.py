@@ -1,4 +1,4 @@
-"""Entry point for summary worker."""
+"""Entry point for unified task worker (summarization + code review)."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ logger = get_logger("worker_main")
 
 
 async def main() -> None:
-    """Start the summary worker."""
+    """Start the unified task worker."""
     bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not bot_token:
         logger.error("TELEGRAM_BOT_TOKEN not set")
@@ -24,7 +24,7 @@ async def main() -> None:
     worker = SummaryWorker(bot_token=bot_token, mcp_url=mcp_url)
 
     try:
-        logger.info("Starting summary worker...")
+        logger.info("Starting unified task worker...")
         await worker.run()
     except KeyboardInterrupt:
         logger.info("Worker interrupted by user")

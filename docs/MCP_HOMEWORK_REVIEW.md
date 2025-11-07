@@ -2,11 +2,14 @@
 
 ## Overview
 
-The `review_homework_archive` MCP tool provides automated multi-pass code review for student homework submissions. It analyzes code archives using a three-pass review approach:
+The `review_homework_archive` MCP tool provides automated multi-pass code review for student homework submissions. It now executes a five-stage pipeline:
 
-1. **Pass 1: Architecture Overview** - Detects project structure and component types
-2. **Pass 2: Component Deep-Dive** - Analyzes each detected component in detail
-3. **Pass 3: Synthesis & Integration** - Generates final report with recommendations
+1. **Pass 1: Architecture Overview** – Detects project structure and component types
+2. **Pass 2: Component Deep-Dive** – Analyzes each detected component in detail
+3. **Pass 3: Synthesis & Integration** – Generates final architecture/conclusion summary
+4. **Static Analysis Stage** – Runs Flake8, Pylint, MyPy, Black, isort and aggregates results
+5. **Pass 4: Log Analysis** – Parses runtime logs, groups issues, and provides remediation tips
+6. **Publishing & Haiku** – Produces markdown + haiku and publishes via HW Checker MCP (with fallback)
 
 ## Tool Discovery
 
@@ -86,8 +89,33 @@ print(f"Execution time: {result['execution_time_seconds']}s")
     "pass_1_completed": True,
     "pass_2_components": ["docker", "spark"],
     "pass_3_completed": True,
-    "markdown_report": "# Code Review Report: Detailed Analysis\n\n...",
-    "json_report": "{ ... }",
+"markdown_report": "# Code Review Report: Detailed Analysis\n\n...",
+"static_analysis_results": [
+    {
+        "tool": "flake8",
+        "summary": "2 issues",
+        "entries": [
+            "app/main.py:12 E501 line too long",
+            "utils/helpers.py:45 W292 no newline at end of file"
+        ]
+    }
+],
+"pass_4_logs": {
+    "status": "completed",
+    "results": [
+        {
+            "component": "docker",
+            "classification": "ERROR",
+            "description": "Container exited with status 1",
+            "root_cause": "Missing ENV VAR FOO",
+            "recommendations": "Add FOO=... to compose file",
+            "confidence": 0.82,
+            "count": 3
+        }
+    ]
+},
+"haiku": "Code finds balance\nLogs whisper of hidden faults\nFix blooms in review",
+"json_report": "{ ... }",
     "logs_saved": True,
     "report_saved_to_mongodb": True
 }
@@ -118,6 +146,27 @@ Generates final comprehensive report:
 - Prioritized recommendations
 - Integration issues and patterns
 - Overall project quality assessment
+
+### Static Analysis Stage
+
+Runs linting and formatting tools to surface style, type, and formatting issues:
+- Flake8, Pylint, MyPy, Black, isort executed inside the review workspace.
+- Results are grouped by tool with severity and snippet context.
+- Findings appear in both markdown and JSON reports under `static_analysis_results`.
+
+### Pass 4: Log Analysis
+
+Analyzes runtime logs to uncover execution issues:
+- `LogParserImpl` ingests checker logs, Docker stdout/stderr, compose logs.
+- `LogNormalizer` filters by severity and groups recurring messages.
+- `LLMLogAnalyzer` classifies groups, identifies root causes, and suggests remediation.
+- Output stored in `pass_4_logs` with counts, classifications, and recommendations.
+
+### Publishing & Haiku
+
+- Every review concludes with an LLM-generated haiku summarising tone and key risks.
+- Results are published via the external HW Checker MCP tool (`submit_review_result`).
+- When MCP is unavailable or disabled, publishing falls back to the HTTP API (`ExternalAPIClient`).
 
 ## Accessing Review Reports
 
@@ -210,6 +259,12 @@ result = await client.call_tool("review_homework_archive", {
 
 - `"mistral"`: Best quality, slower (recommended for production)
 - Other models available via UnifiedModelClient configuration
+
+### Static Analysis & Logs
+
+- Добавляйте `logs_zip`, чтобы Pass 4 мог диагностировать рантайм-проблемы.
+- Используйте поля `static_analysis_results` и `pass_4_logs` для обратной связи студентам.
+- Сохраняйте `haiku` в интерфейсе как краткое резюме ревью.
 
 ## Troubleshooting
 

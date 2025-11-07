@@ -199,6 +199,95 @@ class Settings(BaseSettings):
         default=False,
         description="Use refactored summarization system (Phase 6 migration)"
     )
+    # Review system settings
+    review_llm_timeout: float = Field(
+        default=180.0,
+        description="Timeout in seconds for LLM review requests"
+    )
+    review_max_retries: int = Field(
+        default=3,
+        description="Maximum retry attempts for review LLM calls"
+    )
+    # Archive extraction settings
+    archive_max_total_size_mb: int = Field(
+        default=50,
+        description="Maximum total size of extracted archive in MB"
+    )
+    archive_allowed_globs: list[str] = Field(
+        default_factory=lambda: [
+            "*.py",
+            "**/*.py",
+            "*.ipynb",
+            "**/*.ipynb",
+            "*.md",
+            "**/*.md",
+            "*.yml",
+            "**/*.yml",
+            "*.yaml",
+            "**/*.yaml",
+            "*.json",
+            "**/*.json",
+            "*.txt",
+            "**/*.txt",
+        ],
+        description="Allowed file patterns for archive extraction"
+    )
+    # External API settings
+    external_api_url: str = Field(
+        default="",
+        description="External API URL for publishing reviews"
+    )
+    external_api_key: str = Field(
+        default="",
+        description="External API key for authentication"
+    )
+    external_api_timeout: int = Field(
+        default=30,
+        description="Timeout in seconds for external API requests"
+    )
+    external_api_enabled: bool = Field(
+        default=False,
+        description="Enable external API publishing (default: mock only)"
+    )
+    # HW Checker MCP integration
+    hw_checker_mcp_url: str = Field(
+        default="http://mcp-server:8005",
+        description="Base URL of HW Checker MCP HTTP server",
+    )
+    hw_checker_mcp_enabled: bool = Field(
+        default=True,
+        description="Enable publishing via HW Checker MCP server",
+    )
+    # Review worker settings
+    review_worker_poll_interval: int = Field(
+        default=5,
+        description="Polling interval in seconds for review worker"
+    )
+    review_worker_max_backoff: int = Field(
+        default=60,
+        description="Maximum backoff delay in seconds when queue is empty"
+    )
+    # Log analysis settings
+    enable_log_analysis: bool = Field(
+        default=True,
+        description="Enable runtime log analysis (Pass 4)"
+    )
+    log_analysis_min_severity: str = Field(
+        default="WARNING",
+        description="Minimum log severity to analyze (ERROR, WARNING, INFO, DEBUG)"
+    )
+    log_analysis_max_groups: int = Field(
+        default=20,
+        ge=1,
+        le=100,
+        description="Maximum number of log groups to analyze per submission"
+    )
+    log_analysis_timeout: int = Field(
+        default=60,
+        ge=10,
+        le=300,
+        description="Timeout in seconds for LLM log analysis requests"
+    )
 
     @field_validator("post_fetch_interval_hours")
     @classmethod
@@ -288,6 +377,71 @@ class Settings(BaseSettings):
         """Validate channel discovery max candidates is positive."""
         if v <= 0:
             raise ValueError("channel_discovery_max_candidates must be positive")
+        return v
+
+    @field_validator("review_llm_timeout")
+    @classmethod
+    def validate_review_llm_timeout(cls, v: float) -> float:
+        """Validate review LLM timeout is positive."""
+        if v <= 0:
+            raise ValueError("review_llm_timeout must be positive")
+        return v
+
+    @field_validator("review_max_retries")
+    @classmethod
+    def validate_review_max_retries(cls, v: int) -> int:
+        """Validate review max retries is positive."""
+        if v <= 0:
+            raise ValueError("review_max_retries must be positive")
+        return v
+
+    @field_validator("archive_max_total_size_mb")
+    @classmethod
+    def validate_archive_max_total_size_mb(cls, v: int) -> int:
+        """Validate archive max total size is positive."""
+        if v <= 0:
+            raise ValueError("archive_max_total_size_mb must be positive")
+        return v
+
+    @field_validator("external_api_timeout")
+    @classmethod
+    def validate_external_api_timeout(cls, v: int) -> int:
+        """Validate external API timeout is positive."""
+        if v <= 0:
+            raise ValueError("external_api_timeout must be positive")
+        return v
+
+    @field_validator("review_worker_poll_interval")
+    @classmethod
+    def validate_review_worker_poll_interval(cls, v: int) -> int:
+        """Validate review worker poll interval is positive."""
+        if v <= 0:
+            raise ValueError("review_worker_poll_interval must be positive")
+        return v
+
+    @field_validator("review_worker_max_backoff")
+    @classmethod
+    def validate_review_worker_max_backoff(cls, v: int) -> int:
+        """Validate review worker max backoff is positive."""
+        if v <= 0:
+            raise ValueError("review_worker_max_backoff must be positive")
+        return v
+
+    @field_validator("log_analysis_min_severity")
+    @classmethod
+    def validate_log_analysis_min_severity(cls, v: str) -> str:
+        """Validate log analysis min severity is valid."""
+        valid_levels = ["ERROR", "WARNING", "INFO", "DEBUG"]
+        if v not in valid_levels:
+            raise ValueError(f"log_analysis_min_severity must be one of {valid_levels}")
+        return v
+
+    @field_validator("log_analysis_timeout")
+    @classmethod
+    def validate_log_analysis_timeout(cls, v: int) -> int:
+        """Validate log analysis timeout is in valid range."""
+        if not 10 <= v <= 300:
+            raise ValueError("log_analysis_timeout must be between 10 and 300 seconds")
         return v
 
     class Config:
