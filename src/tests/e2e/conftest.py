@@ -1,12 +1,12 @@
 """Shared fixtures for E2E tests."""
 
-import os
 import asyncio
+import os
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.infrastructure.database.mongo import get_db, close_client
+from src.infrastructure.database.mongo import close_client, get_db
 
 
 @pytest.fixture(scope="module")
@@ -21,7 +21,9 @@ def event_loop():
 def _set_test_db_env(monkeypatch):
     """Set test database environment variables."""
     monkeypatch.setenv("DB_NAME", "butler_test")
-    monkeypatch.setenv("MONGODB_URL", os.getenv("MONGODB_URL", "mongodb://localhost:27017"))
+    monkeypatch.setenv(
+        "MONGODB_URL", os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+    )
 
 
 @pytest.fixture(autouse=True)
@@ -55,12 +57,14 @@ def mock_telegram_bot():
 def unique_user_id():
     """Generate unique user ID for test isolation."""
     import random
+
     return random.randint(100000, 999999)
 
 
 @pytest.fixture
 def task_factory():
     """Factory function for creating test tasks."""
+
     def _create_task(user_id: int, title: str = "Test Task", **kwargs):
         return {
             "user_id": user_id,
@@ -69,21 +73,23 @@ def task_factory():
             "deadline": kwargs.get("deadline"),
             "priority": kwargs.get("priority", "medium"),
             "tags": kwargs.get("tags", []),
-            **kwargs
+            **kwargs,
         }
+
     return _create_task
 
 
 @pytest.fixture
 def channel_factory():
     """Factory function for creating test channels."""
+
     def _create_channel(user_id: int, channel_username: str = "test_channel", **kwargs):
         return {
             "user_id": user_id,
             "channel_username": channel_username,
             "tags": kwargs.get("tags", []),
             "active": kwargs.get("active", True),
-            **kwargs
+            **kwargs,
         }
-    return _create_channel
 
+    return _create_channel

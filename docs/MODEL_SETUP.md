@@ -1,11 +1,14 @@
 # Local Model Setup Guide
 
+> ⚠️ Local container manifests moved to `archive/legacy/local_models/`.
+> Shared infrastructure supersedes this workflow; steps below are archival.
+
 ## Quick Start
 
 ### 1. Start Mistral Container
 
 ```bash
-cd local_models
+cd archive/legacy/local_models
 docker-compose up -d mistral-chat
 ```
 

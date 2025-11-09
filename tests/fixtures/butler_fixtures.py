@@ -49,7 +49,7 @@ async def mock_tool_client_protocol() -> ToolClientProtocol:
         Mock ToolClientProtocol with discover_tools and call_tool methods.
     """
     mock_client = AsyncMock(spec=ToolClientProtocol)
-    
+
     # Default tool discovery response
     mock_client.discover_tools = AsyncMock(
         return_value=[
@@ -60,55 +60,46 @@ async def mock_tool_client_protocol() -> ToolClientProtocol:
                     "type": "object",
                     "properties": {
                         "title": {"type": "string"},
-                        "description": {"type": "string"}
+                        "description": {"type": "string"},
                     },
-                    "required": ["title"]
-                }
+                    "required": ["title"],
+                },
             },
             {
                 "name": "get_channels_digest",
                 "description": "Get channel digests",
                 "input_schema": {
                     "type": "object",
-                    "properties": {
-                        "user_id": {"type": "string"}
-                    },
-                    "required": ["user_id"]
-                }
+                    "properties": {"user_id": {"type": "string"}},
+                    "required": ["user_id"],
+                },
             },
             {
                 "name": "get_student_stats",
                 "description": "Get student statistics",
                 "input_schema": {
                     "type": "object",
-                    "properties": {
-                        "teacher_id": {"type": "string"}
-                    },
-                    "required": ["teacher_id"]
-                }
+                    "properties": {"teacher_id": {"type": "string"}},
+                    "required": ["teacher_id"],
+                },
             },
             {
                 "name": "list_reminders",
                 "description": "List active reminders",
                 "input_schema": {
                     "type": "object",
-                    "properties": {
-                        "user_id": {"type": "string"}
-                    },
-                    "required": ["user_id"]
-                }
-            }
+                    "properties": {"user_id": {"type": "string"}},
+                    "required": ["user_id"],
+                },
+            },
         ]
     )
-    
+
     # Default tool call response
     mock_client.call_tool = AsyncMock(
-        return_value={
-            "success": True,
-            "data": {"id": "task_123", "title": "Test Task"}
-        }
+        return_value={"success": True, "data": {"id": "task_123", "title": "Test Task"}}
     )
-    
+
     return mock_client
 
 
@@ -120,37 +111,41 @@ async def mock_mongodb() -> AsyncIOMotorDatabase:
         Mock AsyncIOMotorDatabase with dialog_contexts collection.
     """
     db = MagicMock(spec=AsyncIOMotorDatabase)
-    
+
     # Mock dialog_contexts collection
     dialog_contexts = MagicMock()
-    
+
     # Mock find_one (returns None by default - no existing context)
     async def find_one_mock(filter: Dict[str, Any]) -> Dict[str, Any] | None:
         return None
-    
+
     # Mock insert_one (creates new context)
     async def insert_one_mock(doc: Dict[str, Any]) -> MagicMock:
         result = MagicMock()
         result.inserted_id = "test_context_id"
         return result
-    
+
     # Mock update_one (updates existing context)
-    async def update_one_mock(filter: Dict[str, Any], update: Dict[str, Any], **kwargs) -> MagicMock:
+    async def update_one_mock(
+        filter: Dict[str, Any], update: Dict[str, Any], **kwargs
+    ) -> MagicMock:
         result = MagicMock()
         result.modified_count = 1
         return result
-    
+
     dialog_contexts.find_one = AsyncMock(side_effect=find_one_mock)
     dialog_contexts.insert_one = AsyncMock(side_effect=insert_one_mock)
     dialog_contexts.update_one = AsyncMock(side_effect=update_one_mock)
-    
+
     db.dialog_contexts = dialog_contexts
-    
+
     return db
 
 
 @pytest.fixture
-async def mock_mode_classifier(mock_llm_client_protocol: LLMClientProtocol) -> ModeClassifier:
+async def mock_mode_classifier(
+    mock_llm_client_protocol: LLMClientProtocol,
+) -> ModeClassifier:
     """Create ModeClassifier with mocked LLM client.
 
     Args:
@@ -159,10 +154,7 @@ async def mock_mode_classifier(mock_llm_client_protocol: LLMClientProtocol) -> M
     Returns:
         ModeClassifier instance.
     """
-    return ModeClassifier(
-        llm_client=mock_llm_client_protocol,
-        default_model="mistral"
-    )
+    return ModeClassifier(llm_client=mock_llm_client_protocol, default_model="mistral")
 
 
 @pytest.fixture
@@ -178,7 +170,10 @@ def mock_intent_orchestrator() -> IntentOrchestrator:
             needs_clarification=False,
             title="Test Task",
             description="Test Description",
-            to_mcp_params=lambda: {"title": "Test Task", "description": "Test Description"}
+            to_mcp_params=lambda: {
+                "title": "Test Task",
+                "description": "Test Description",
+            },
         )
     )
     return mock_orch
@@ -187,7 +182,7 @@ def mock_intent_orchestrator() -> IntentOrchestrator:
 @pytest.fixture
 def mock_task_handler(
     mock_intent_orchestrator: IntentOrchestrator,
-    mock_tool_client_protocol: ToolClientProtocol
+    mock_tool_client_protocol: ToolClientProtocol,
 ) -> TaskHandler:
     """Create TaskHandler with mocked dependencies.
 
@@ -200,14 +195,12 @@ def mock_task_handler(
     """
     return TaskHandler(
         intent_orchestrator=mock_intent_orchestrator,
-        tool_client=mock_tool_client_protocol
+        tool_client=mock_tool_client_protocol,
     )
 
 
 @pytest.fixture
-def mock_data_handler(
-    mock_tool_client_protocol: ToolClientProtocol
-) -> DataHandler:
+def mock_data_handler(mock_tool_client_protocol: ToolClientProtocol) -> DataHandler:
     """Create DataHandler with mocked dependencies.
 
     Args:
@@ -221,7 +214,7 @@ def mock_data_handler(
 
 @pytest.fixture
 def mock_reminders_handler(
-    mock_tool_client_protocol: ToolClientProtocol
+    mock_tool_client_protocol: ToolClientProtocol,
 ) -> RemindersHandler:
     """Create RemindersHandler with mocked dependencies.
 
@@ -235,9 +228,7 @@ def mock_reminders_handler(
 
 
 @pytest.fixture
-def mock_chat_handler(
-    mock_llm_client_protocol: LLMClientProtocol
-) -> ChatHandler:
+def mock_chat_handler(mock_llm_client_protocol: LLMClientProtocol) -> ChatHandler:
     """Create ChatHandler with mocked dependencies.
 
     Args:
@@ -246,10 +237,7 @@ def mock_chat_handler(
     Returns:
         ChatHandler instance.
     """
-    return ChatHandler(
-        llm_client=mock_llm_client_protocol,
-        default_model="mistral"
-    )
+    return ChatHandler(llm_client=mock_llm_client_protocol, default_model="mistral")
 
 
 @pytest.fixture
@@ -259,7 +247,7 @@ async def butler_orchestrator(
     mock_data_handler: DataHandler,
     mock_reminders_handler: RemindersHandler,
     mock_chat_handler: ChatHandler,
-    mock_mongodb: AsyncIOMotorDatabase
+    mock_mongodb: AsyncIOMotorDatabase,
 ) -> ButlerOrchestrator:
     """Create ButlerOrchestrator with all mocked dependencies.
 
@@ -283,7 +271,7 @@ async def butler_orchestrator(
         data_handler=mock_data_handler,
         reminders_handler=mock_reminders_handler,
         chat_handler=mock_chat_handler,
-        mongodb=mock_mongodb
+        mongodb=mock_mongodb,
     )
 
 
@@ -299,7 +287,7 @@ def sample_dialog_context() -> DialogContext:
         session_id="test_session_456",
         state=DialogState.IDLE,
         data={},
-        step_count=0
+        step_count=0,
     )
 
 
@@ -403,4 +391,3 @@ def sample_session_id() -> str:
         Session ID string.
     """
     return "session_12345"
-

@@ -80,6 +80,13 @@ Implements use cases and orchestrates workflows between domain entities.
 - `GenerateCodeUseCase` - Code generation workflow
 - `ReviewCodeUseCase` - Code review workflow
 
+#### Modular Review Flow
+- `ModularReviewService` adapts the reusable `multipass-reviewer` package to existing repositories and loggers
+- `ReviewSubmissionUseCase` now depends on the service via feature flag (`USE_MODULAR_REVIEWER`) and enforces rate limits through `ReviewRateLimiter`
+- Pass execution is resilient: failures are converted into partial results with `status`/`error` metadata, logged with a shared `trace_id`, and still persisted in `MultiPassReport`
+- Tenacity retry policy wraps all LLM calls; Prometheus metrics record checker/pass runtimes and LLM token usage
+- Integration points are covered by `tests/integration/test_modular_review_service.py` (real archives + optional live LLM) and negative tests in `tests/unit/application/services/test_modular_review_service.py`
+
 ## Infrastructure Layer
 
 ### Purpose
@@ -98,6 +105,12 @@ Handles external integrations and implementation details.
 #### Configuration
 - `ModelSelector` - YAML-based model selection
 - `ExperimentTemplate` - Experiment template loading
+
+#### Modular Reviewer Integration
+- `multipass_reviewer` package (domain/application/infrastructure/presentation) published in `packages/multipass-reviewer`
+- Adapters: `_ZipArchiveReaderAdapter`, `_LLMClientAliasAdapter`, and the bridge service described above
+- Monitoring: `src/infrastructure/monitoring/checker_metrics.py` exports checker/pass counters; `ReviewLogger` includes `trace_id` for correlation
+- External dependencies now include `tenacity` for retry logic and `prometheus-client` 0.20 for unified metrics
 
 ## Presentation Layer
 
@@ -235,6 +248,8 @@ High-level modules depend on abstractions, not implementations.
 - Request batching
 - Connection pooling
 - Async/await throughout
+- Latency benchmarks tracked for modular reviewer (0.00068s with dummy LLM vs 4.08s against Qwen on infra_shared)
+- Prometheus metrics export checker/runtime counters and LLM token usage
 
 ## Butler Agent Architecture (Day 13 Refactoring)
 

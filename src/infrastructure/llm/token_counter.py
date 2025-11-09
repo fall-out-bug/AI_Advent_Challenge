@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import os
 from functools import lru_cache
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 # Check if transformers is available at module import time
 _transformers_available = False
@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 else:
     try:
         from transformers import AutoTokenizer  # type: ignore
+
         _transformers_available = True
     except ImportError:
         _transformers_available = False
@@ -162,4 +163,3 @@ class TokenCounter:
         # Weighted average
         avg_chars_per_token = 4.0 * (1 - russian_ratio) + 3.0 * russian_ratio
         return int(char_count / avg_chars_per_token)
-

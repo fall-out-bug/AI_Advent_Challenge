@@ -1,14 +1,10 @@
 """Tests for error handling scenarios."""
-import pytest
-from unittest.mock import Mock, AsyncMock
-from typing import Any
 
 from src.presentation.mcp.exceptions import (
-    MCPModelError,
     MCPAgentError,
+    MCPModelError,
     MCPOrchestrationError,
     MCPValidationError,
-    MCPAdapterError,
 )
 
 
@@ -18,7 +14,7 @@ class TestMCPBaseException:
     def test_exception_without_context(self):
         """Test exception with message only."""
         exc = MCPModelError("Something went wrong")
-        
+
         assert str(exc) == "Something went wrong"
         assert exc.context == {}
 
@@ -26,14 +22,14 @@ class TestMCPBaseException:
         """Test exception with context."""
         context = {"model_name": "mistral", "error_code": 500}
         exc = MCPModelError("Model failed", model_name="mistral", context=context)
-        
+
         assert str(exc) == "Model failed"
         assert exc.context["model_name"] == "mistral"
 
     def test_exception_inheritance(self):
         """Test exception inheritance."""
         exc = MCPModelError("Test error")
-        
+
         assert isinstance(exc, MCPBaseException)
         assert isinstance(exc, Exception)
 
@@ -44,7 +40,7 @@ class TestModelError:
     def test_model_error_with_model_name(self):
         """Test model error includes model name in context."""
         exc = MCPModelError("Connection failed", model_name="mistral")
-        
+
         assert "model_name" in exc.context
         assert exc.context["model_name"] == "mistral"
 
@@ -56,7 +52,7 @@ class TestModelError:
             model_name="mistral",
             context=context,
         )
-        
+
         assert exc.context["model_name"] == "mistral"
         assert exc.context["retry_count"] == 3
 
@@ -67,7 +63,7 @@ class TestAgentError:
     def test_agent_error_with_agent_type(self):
         """Test agent error includes agent type."""
         exc = MCPAgentError("Processing failed", agent_type="generator")
-        
+
         assert "agent_type" in exc.context
         assert exc.context["agent_type"] == "generator"
 
@@ -79,7 +75,7 @@ class TestAgentError:
             agent_type="reviewer",
             context=context,
         )
-        
+
         assert exc.context["agent_type"] == "reviewer"
         assert exc.context["step"] == "generation"
 
@@ -90,7 +86,7 @@ class TestOrchestrationError:
     def test_orchestration_error_with_stage(self):
         """Test orchestration error includes stage."""
         exc = MCPOrchestrationError("Workflow failed", stage="generation")
-        
+
         assert "stage" in exc.context
         assert exc.context["stage"] == "generation"
 
@@ -102,7 +98,7 @@ class TestOrchestrationError:
             stage="review",
             context=context,
         )
-        
+
         assert exc.context["stage"] == "review"
         assert exc.context["attempt"] == 2
 
@@ -113,7 +109,7 @@ class TestValidationError:
     def test_validation_error_with_field(self):
         """Test validation error includes field."""
         exc = MCPValidationError("Invalid input", field="description")
-        
+
         assert "field" in exc.context
         assert exc.context["field"] == "description"
 
@@ -124,7 +120,7 @@ class TestValidationError:
             field="description",
             value="A" * 1000,
         )
-        
+
         assert exc.context["field"] == "description"
         assert exc.context["value"] == "A" * 1000
 
@@ -136,7 +132,7 @@ class TestValidationError:
             value="",
             context={"max_length": 100},
         )
-        
+
         assert exc.context["field"] == "code"
         assert exc.context["value"] == ""
         assert exc.context["max_length"] == 100

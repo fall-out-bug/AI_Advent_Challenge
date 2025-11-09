@@ -6,15 +6,13 @@ Following the Zen of Python:
 - Readability counts
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
-from rich.console import Console
+from unittest.mock import MagicMock, patch
 
 from src.presentation.cli.commands.health_cmd import (
-    check_health,
     _check_configuration,
     _check_storage,
     _check_yaml_config,
+    check_health,
 )
 
 

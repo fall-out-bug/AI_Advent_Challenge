@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any
 
 
 class TextCleanerService:
@@ -83,12 +82,12 @@ class TextCleanerService:
         cleaned = re.sub(r"\[[^\[\]]*\]", "", cleaned)  # Remove JSON arrays
 
         # Remove JSON-like field patterns: "key": "value"
-        cleaned = re.sub(
-            r'["\']?\w+["\']?\s*:\s*["\']?([^"\']+)["\']?', r"\1", cleaned
-        )
+        cleaned = re.sub(r'["\']?\w+["\']?\s*:\s*["\']?([^"\']+)["\']?', r"\1", cleaned)
 
         # Remove common JSON artifacts
-        cleaned = cleaned.replace("{", "").replace("}", "").replace("[", "").replace("]", "")
+        cleaned = (
+            cleaned.replace("{", "").replace("}", "").replace("[", "").replace("]", "")
+        )
         cleaned = re.sub(r'["\']', "", cleaned)  # Remove quotes
 
         # Remove numbering patterns (1., 2., First post, Second post, etc.)
@@ -113,7 +112,9 @@ class TextCleanerService:
 
         # Normalize quotes (smart quotes to regular)
         cleaned = (
-            cleaned.replace('"', '"').replace('"', '"').replace(''', "'").replace(''', "'")
+            cleaned.replace('"', '"')
+            .replace('"', '"')
+            .replace(""", "'").replace(""", "'")
         )
 
         # Normalize whitespace
@@ -179,7 +180,8 @@ class TextCleanerService:
             for existing in unique_sentences:
                 existing_words = set(existing.lower().split())
                 overlap = (
-                    len(sent_words & existing_words) / max(len(sent_words), len(existing_words))
+                    len(sent_words & existing_words)
+                    / max(len(sent_words), len(existing_words))
                     if (sent_words or existing_words)
                     else 0
                 )

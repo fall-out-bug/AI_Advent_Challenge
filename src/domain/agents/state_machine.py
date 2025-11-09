@@ -5,9 +5,9 @@ Following Python Zen:
 - Explicit is better than implicit
 """
 
-from enum import Enum
 from dataclasses import dataclass, field
-from typing import Dict, Any
+from enum import Enum
+from typing import Any, Dict
 
 
 class DialogState(Enum):
@@ -101,4 +101,3 @@ class DialogContext:
             'My task'
         """
         self.data[key] = value
-

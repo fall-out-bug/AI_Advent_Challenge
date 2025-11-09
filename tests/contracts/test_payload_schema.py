@@ -149,4 +149,3 @@ class TestPayloadSchemaCompliance:
             "new_commit": "abc123def456",
         }
         validate(instance=payload, schema=payload_schema)
-

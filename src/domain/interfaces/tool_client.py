@@ -4,7 +4,7 @@ This protocol defines the interface for MCP tool clients.
 Infrastructure layer implementations must conform to this protocol.
 """
 
-from typing import Protocol, List, Dict, Any
+from typing import Any, Dict, List, Protocol
 
 
 class ToolClientProtocol(Protocol):
@@ -48,4 +48,3 @@ class ToolClientProtocol(Protocol):
             Exception: If tool execution fails
         """
         ...
-

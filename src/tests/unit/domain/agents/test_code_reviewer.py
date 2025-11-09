@@ -3,9 +3,10 @@
 Following TDD principles and the Zen of Python.
 """
 
-import pytest
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from src.domain.agents.base_agent import BaseAgent
 from src.domain.agents.code_reviewer import CodeReviewerAgent, ReviewerPrompts
@@ -40,7 +41,7 @@ class MockCodeReviewer(BaseAgent):
 
     async def _parse_review_response(self, response: dict) -> dict:
         """Parse review response."""
-        response_text = response.get("response", "")
+        response.get("response", "")
 
         # Mock parsed data
         return {

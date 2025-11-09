@@ -1,143 +1,91 @@
 #!/usr/bin/env python3
-"""Script to test multi-pass code review on real homework archives.
+"""Smoke-test script for the modular homework review service."""
 
-Usage:
-    python scripts/test_homework_review.py <archive_path> [--model mistral] [--token-budget 8000]
-"""
-
-import asyncio
 import argparse
+import asyncio
 import sys
 import zipfile
-import tempfile
 from pathlib import Path
-from typing import Optional
 
-# Add root to path
 _root = Path(__file__).parent.parent
 sys.path.insert(0, str(_root))
 shared_path = _root / "shared"
 sys.path.insert(0, str(shared_path))
 
+from multipass_reviewer.application.config import ReviewConfig
+
 from shared_package.clients.unified_client import UnifiedModelClient
 
-from src.domain.agents.multi_pass_reviewer import MultiPassReviewerAgent
-
-
-def load_all_files_as_string(directory: Path, extensions: Optional[list] = None) -> str:
-    """Load all files from directory as single string.
-
-    Args:
-        directory: Path to directory with files
-        extensions: List of file extensions to include (None = all)
-
-    Returns:
-        Concatenated file contents
-    """
-    if extensions is None:
-        extensions = [".py", ".yml", ".yaml", ".sh", ".txt", ".md", "Dockerfile"]
-
-    content_parts = []
-    for file_path in directory.rglob("*"):
-        if file_path.is_file():
-            if any(
-                file_path.suffix in ext or ext in str(file_path.name)
-                for ext in extensions
-            ):
-                try:
-                    rel_path = file_path.relative_to(directory)
-                    content_parts.append(f"\n# File: {rel_path}\n")
-                    content_parts.append(
-                        file_path.read_text(encoding="utf-8", errors="ignore")
-                    )
-                    content_parts.append("\n\n")
-                except Exception as e:
-                    content_parts.append(f"# Error reading {file_path}: {e}\n\n")
-
-    return "".join(content_parts)
-
-
-def extract_archive(archive_path: str) -> Path:
-    """Extract ZIP archive to temporary directory.
-
-    Args:
-        archive_path: Path to ZIP archive
-
-    Returns:
-        Path to temporary directory with extracted files
-    """
-    temp_dir = tempfile.mkdtemp(prefix="homework_review_")
-
-    with zipfile.ZipFile(archive_path, "r") as zip_ref:
-        zip_ref.extractall(temp_dir)
-
-    return Path(temp_dir)
+from src.application.services.modular_review_service import ModularReviewService
+from src.domain.services.diff_analyzer import DiffAnalyzer
+from src.infrastructure.archive.archive_service import ZipArchiveService
+from src.infrastructure.config.settings import get_settings
+from src.infrastructure.logging.review_logger import ReviewLogger
 
 
 async def test_homework_review(
     archive_path: str, model_name: str = "mistral", token_budget: int = 8000
 ):
-    """Test multi-pass review on homework archive.
+    """Test modular review on homework archive."""
 
-    Args:
-        archive_path: Path to ZIP archive
-        model_name: Model name to use (default: mistral)
-        token_budget: Token budget for review
-    """
-    print(f"📦 Extracting archive: {archive_path}")
-    temp_dir = extract_archive(archive_path)
+    archive_path_obj = Path(archive_path)
+    if not archive_path_obj.exists():
+        raise FileNotFoundError(f"Archive not found: {archive_path}")
+
+    print(f"📦 Archive: {archive_path}")
+    with zipfile.ZipFile(archive_path, "r") as zip_ref:
+        files = [name for name in zip_ref.namelist() if not name.endswith("/")]
+        print(f"🗂  Files inside archive: {len(files)}")
+
+    settings = get_settings()
+    archive_service = ZipArchiveService(settings)
+    diff_analyzer = DiffAnalyzer()
+    review_config = ReviewConfig(token_budget=token_budget)
+    review_logger = ReviewLogger(enabled=True)
+
+    unified_client = UnifiedModelClient(timeout=settings.review_llm_timeout)
+    service = ModularReviewService(
+        archive_service=archive_service,
+        diff_analyzer=diff_analyzer,
+        llm_client=unified_client,
+        review_config=review_config,
+        review_logger=review_logger,
+        settings=settings,
+    )
+
+    repo_name = archive_path_obj.stem
+    student_id = f"smoke::{repo_name}"
+
+    print(f"🤖 Model alias: {model_name}")
+    print(f"💰 Token budget: {token_budget}")
+    print("\n🚀 Starting modular review...\n" + "=" * 60)
 
     try:
-        # Find root project directory
-        root_dir = temp_dir
-        # Check if there's a single subdirectory (common in student archives)
-        subdirs = [d for d in temp_dir.iterdir() if d.is_dir()]
-        if len(subdirs) == 1:
-            root_dir = subdirs[0]
-
-        print(f"📁 Loading files from: {root_dir}")
-        code = load_all_files_as_string(root_dir)
-
-        print(f"📝 Loaded {len(code)} characters of code")
-        print(f"🤖 Using model: {model_name}")
-        print(f"💰 Token budget: {token_budget}")
-
-        # Initialize client and agent
-        client = UnifiedModelClient(timeout=300.0)
-        agent = MultiPassReviewerAgent(client, token_budget=token_budget)
-
-        # Determine repo name from archive
-        repo_name = Path(archive_path).stem
-
-        print("\n🚀 Starting multi-pass review...")
-        print("=" * 60)
-
-        report = await agent.process_multi_pass(code, repo_name=repo_name)
-
-        print("=" * 60)
-        print("\n✅ Review complete!")
-        print(f"\n📊 Results:")
-        print(f"  - Session ID: {report.session_id}")
-        print(f"  - Detected Components: {', '.join(report.detected_components)}")
-        print(f"  - Total Findings: {report.total_findings}")
-        print(f"  - Execution Time: {report.execution_time_seconds:.2f}s")
-        print(f"  - Pass 1: {'✅' if report.pass_1 else '❌'}")
-        print(f"  - Pass 2: {len(report.pass_2_results)} components")
-        print(f"  - Pass 3: {'✅' if report.pass_3 else '❌'}")
-
-        # Save report
-        output_file = Path(archive_path).parent / f"{repo_name}_review.md"
-        with open(output_file, "w", encoding="utf-8") as f:
-            f.write(report.to_markdown())
-        print(f"\n💾 Report saved to: {output_file}")
-
-        return report
-
+        report = await service.review_submission(
+            new_archive_path=str(archive_path_obj),
+            previous_archive_path=None,
+            assignment_id=repo_name,
+            student_id=student_id,
+        )
     finally:
-        # Cleanup
-        import shutil
+        await unified_client.close()
 
-        shutil.rmtree(temp_dir, ignore_errors=True)
+    print("=" * 60)
+    print("\n✅ Review complete!")
+    print("\n📊 Results:")
+    print(f"  - Session ID: {report.session_id}")
+    print(f"  - Detected Components: {', '.join(report.detected_components)}")
+    print(f"  - Total Findings: {report.total_findings}")
+    print(f"  - Execution Time: {report.execution_time_seconds:.2f}s")
+    print(f"  - Pass 1: {'✅' if report.pass_1 else '❌'}")
+    print(f"  - Pass 2 components: {list(report.pass_2_results.keys())}")
+    print(f"  - Pass 3: {'✅' if report.pass_3 else '❌'}")
+
+    output_file = archive_path_obj.parent / f"{repo_name}_review.md"
+    output_file.write_text(report.to_markdown(), encoding="utf-8")
+    print(f"\n💾 Report saved to: {output_file}")
+
+    return report
 
 
 async def main():

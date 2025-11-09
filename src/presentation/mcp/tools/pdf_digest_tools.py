@@ -3,23 +3,24 @@
 from __future__ import annotations
 
 import base64
-from datetime import datetime, timedelta
+import time
+from datetime import datetime
 from typing import Any, Dict, List
 
-from src.presentation.mcp.server import mcp
-from src.infrastructure.database.mongo import get_db
-from src.infrastructure.repositories.post_repository import PostRepository
 from src.infrastructure.config.settings import get_settings
+from src.infrastructure.database.mongo import get_db
+
 # Lazy import to avoid transformers dependency issues at module load time
 # from src.infrastructure.llm.summarizer import summarize_posts as llm_summarize_posts
 from src.infrastructure.logging import get_logger
 from src.infrastructure.monitoring.prometheus_metrics import (
+    pdf_file_size_bytes,
     pdf_generation_duration_seconds,
     pdf_generation_errors_total,
-    pdf_file_size_bytes,
     pdf_pages_total,
 )
-import time
+from src.infrastructure.repositories.post_repository import PostRepository
+from src.presentation.mcp.server import mcp
 
 logger = get_logger("pdf_digest_tools")
 
@@ -50,7 +51,9 @@ async def get_posts_from_db(user_id: int, hours: int = 24) -> Dict[str, Any]:
 
     try:
         # Get posts for user's subscriptions
-        all_posts = await repository.get_posts_by_user_subscriptions(user_id, hours=hours)
+        all_posts = await repository.get_posts_by_user_subscriptions(
+            user_id, hours=hours
+        )
 
         # Group posts by channel
         posts_by_channel: Dict[str, List[dict]] = {}
@@ -82,12 +85,19 @@ async def get_posts_from_db(user_id: int, hours: int = 24) -> Dict[str, Any]:
             "channels_count": len(limited_channels),
         }
     except Exception as e:
-        logger.error("Error retrieving posts from database", user_id=user_id, error=str(e), exc_info=True)
+        logger.error(
+            "Error retrieving posts from database",
+            user_id=user_id,
+            error=str(e),
+            exc_info=True,
+        )
         return {"posts_by_channel": {}, "total_posts": 0, "channels_count": 0}
 
 
 @mcp.tool()
-async def summarize_posts(posts: List[dict], channel_username: str, max_sentences: int = 5) -> Dict[str, Any]:
+async def summarize_posts(
+    posts: List[dict], channel_username: str, max_sentences: int = 5
+) -> Dict[str, Any]:
     """Generate summary for posts from single channel using LLM.
 
     Purpose:
@@ -119,8 +129,10 @@ async def summarize_posts(posts: List[dict], channel_username: str, max_sentence
 
     try:
         # Lazy import to avoid transformers dependency issues at module load time
-        from src.infrastructure.llm.summarizer import summarize_posts as llm_summarize_posts
-        
+        from src.infrastructure.llm.summarizer import (
+            summarize_posts as llm_summarize_posts,
+        )
+
         # Use existing summarizer with PDF-specific settings
         summary_text = await llm_summarize_posts(
             limited_posts,
@@ -129,7 +141,9 @@ async def summarize_posts(posts: List[dict], channel_username: str, max_sentence
 
         # Enforce max characters limit
         if len(summary_text) > settings.pdf_summary_max_chars:
-            summary_text = summary_text[: settings.pdf_summary_max_chars].rsplit(".", 1)[0] + "."
+            summary_text = (
+                summary_text[: settings.pdf_summary_max_chars].rsplit(".", 1)[0] + "."
+            )
 
         return {
             "summary": summary_text,
@@ -147,13 +161,17 @@ async def summarize_posts(posts: List[dict], channel_username: str, max_sentence
         # Fallback summary
         fallback = ". ".join([p.get("text", "")[:200] for p in limited_posts[:5]])
         return {
-            "summary": fallback[: settings.pdf_summary_max_chars] if fallback else "Ошибка создания саммари.",
+            "summary": fallback[: settings.pdf_summary_max_chars]
+            if fallback
+            else "Ошибка создания саммари.",
             "post_count": len(limited_posts),
             "channel": channel_username,
         }
 
 
-def _render_markdown_template(summaries: List[Dict[str, Any]], metadata: Dict[str, Any]) -> str:
+def _render_markdown_template(
+    summaries: List[Dict[str, Any]], metadata: Dict[str, Any]
+) -> str:
     """Render markdown template for digest sections.
 
     Args:
@@ -189,7 +207,9 @@ def _render_markdown_template(summaries: List[Dict[str, Any]], metadata: Dict[st
 
 
 @mcp.tool()
-async def format_digest_markdown(summaries: List[Dict[str, Any]], metadata: Dict[str, Any]) -> Dict[str, Any]:
+async def format_digest_markdown(
+    summaries: List[Dict[str, Any]], metadata: Dict[str, Any]
+) -> Dict[str, Any]:
     """Format channel summaries into markdown section.
 
     Purpose:
@@ -212,7 +232,10 @@ async def format_digest_markdown(summaries: List[Dict[str, Any]], metadata: Dict
         }
     except Exception as e:
         logger.error("Error formatting markdown", error=str(e), exc_info=True)
-        return {"markdown": "# Channel Digest\n\nError formatting digest.", "sections_count": 0}
+        return {
+            "markdown": "# Channel Digest\n\nError formatting digest.",
+            "sections_count": 0,
+        }
 
 
 def _load_template(template_name: str) -> str:
@@ -242,7 +265,9 @@ Generated: {date}
 
 
 @mcp.tool()
-async def combine_markdown_sections(sections: List[str], template: str = "default") -> Dict[str, Any]:
+async def combine_markdown_sections(
+    sections: List[str], template: str = "default"
+) -> Dict[str, Any]:
     """Combine multiple markdown sections into single document with template.
 
     Purpose:
@@ -326,7 +351,7 @@ async def _convert_to_pdf(markdown_text: str, css: str) -> bytes:
         Exception: If conversion fails
     """
     import markdown as md
-    from weasyprint import HTML, CSS
+    from weasyprint import HTML
 
     # Convert markdown to HTML
     html_content = md.markdown(markdown_text, extensions=["extra", "nl2br"])
@@ -397,7 +422,9 @@ async def convert_markdown_to_pdf(
     except Exception as e:
         error_type = type(e).__name__
         pdf_generation_errors_total.labels(error_type=error_type).inc()
-        logger.error("Error converting markdown to PDF", error=str(e), style=style, exc_info=True)
+        logger.error(
+            "Error converting markdown to PDF", error=str(e), style=style, exc_info=True
+        )
         return {
             "pdf_bytes": "",
             "file_size": 0,

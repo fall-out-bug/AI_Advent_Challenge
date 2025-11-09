@@ -1,6 +1,7 @@
 """Intent parsing domain models."""
 
-from typing import List, Optional
+from typing import List, Literal, Optional, Union
+
 from pydantic import BaseModel, Field
 
 
@@ -47,10 +48,23 @@ class IntentParseResult(BaseModel):
     title: str = Field(..., description="Task title")
     description: Optional[str] = Field(None, description="Task description")
     deadline_iso: Optional[str] = Field(None, description="ISO8601 deadline")
-    priority: str = Field("medium", description='Priority: "low"|"medium"|"high"')
+    priority: Literal["low", "medium", "high"] = Field(
+        "medium", description='Priority: "low"|"medium"|"high"'
+    )
     tags: List[str] = Field(default_factory=list, description="Task tags")
 
     needs_clarification: bool = Field(False, description="Whether more info is needed")
-    questions: List[str] = Field(default_factory=list, description="Clarifying questions")
+    questions: List[Union[str, ClarificationQuestion]] = Field(
+        default_factory=list,
+        description="Clarifying questions or structured objects during refinement",
+    )
 
+    @property
+    def deadline(self) -> Optional[str]:
+        """Backward-compatible accessor for deadline."""
+        return self.deadline_iso
 
+    @deadline.setter
+    def deadline(self, value: Optional[str]) -> None:
+        """Backward-compatible setter for deadline."""
+        self.deadline_iso = value

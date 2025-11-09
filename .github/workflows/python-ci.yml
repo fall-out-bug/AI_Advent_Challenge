@@ -17,14 +17,17 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install -e .
+          pip install -e packages/multipass-reviewer
           pip install -r requirements.txt || true
           pip install pytest pytest-asyncio pytest-cov black isort flake8 mypy transformers
       - name: Lint
         run: |
-          black --check src/ tests/
-          isort --check-only src/ tests/
-          flake8 src/ tests/ --max-line-length=100
+          black --check src/ tests/ packages/multipass-reviewer/multipass_reviewer
+          isort --check-only src/ tests/ packages/multipass-reviewer/multipass_reviewer
+          flake8 src/ tests/ packages/multipass-reviewer/multipass_reviewer --max-line-length=100
           mypy src/ --ignore-missing-imports
+          mypy packages/multipass-reviewer/multipass_reviewer --strict
       - name: Test
         run: |
           pytest -q tests/ --cov=src --cov-report=term

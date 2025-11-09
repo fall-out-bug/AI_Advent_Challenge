@@ -1,6 +1,3 @@
-import pytest
-
-
 def test_build_tasks_menu():
     from src.presentation.bot.handlers.tasks import build_tasks_menu
 
@@ -15,4 +12,3 @@ def test_format_task_summary():
     summary = _format_task_summary(task)
     assert "Buy milk" in summary
     assert "🔴" in summary  # high priority
-

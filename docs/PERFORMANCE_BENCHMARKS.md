@@ -88,3 +88,12 @@ All benchmarks were conducted with:
 - 8 CPU cores
 - Docker Desktop with 4GB memory allocation
 
+
+## Day 18 Modular Reviewer Latency (2025-11-08)
+
+### Review Pipeline
+
+- **Dummy LLM (no external call)**: avg 0.00068s over 3 runs (perf helper script)
+- **Qwen/Qwen1.5-4B-Chat via `/v1/chat/completions`**: avg 4.08s over 5 runs
+- Benchmark script: see inline helper in `docs/USER_GUIDE.md` (custom `RealLLMClient` hitting OpenAI-compatible endpoint)
+- Metrics exported via Prometheus for pass/checker runtimes and LLM token usage

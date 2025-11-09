@@ -42,5 +42,3 @@ AGENT_CONFIG: Dict[str, Any] = {
     "formatting_temperature": _float_from_env("AGENT_FORMATTING_TEMPERATURE", 0.7),
     "formatting_max_tokens": _int_from_env("AGENT_FORMATTING_MAX_TOKENS", 1024),
 }
-
-

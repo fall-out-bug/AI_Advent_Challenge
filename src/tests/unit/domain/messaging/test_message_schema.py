@@ -6,8 +6,9 @@ Following TDD principles and the Zen of Python:
 - Clear assertions
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 from src.domain.messaging.message_schema import (
     AgentHealthResponse,

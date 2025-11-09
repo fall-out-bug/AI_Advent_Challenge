@@ -7,15 +7,15 @@ import hashlib
 import json
 import logging
 import time
-from typing import Any, Dict, Optional
 from threading import Lock
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class ResultCache:
     """Thread-safe cache for tool execution results with TTL.
-    
+
     The cache stores results of tool executions keyed by tool name
     and a hash of the arguments. Results expire after a TTL period.
     """
@@ -34,43 +34,43 @@ class ResultCache:
 
     def get(self, tool_name: str, args: Dict[str, Any]) -> Optional[Any]:
         """Get cached result if available and not expired.
-        
+
         Args:
             tool_name: Name of the tool
             args: Tool arguments
-            
+
         Returns:
             Cached result or None if not found/expired
         """
         cache_key = self._make_key(tool_name, args)
-        
+
         with self._lock:
             if cache_key not in self._cache:
                 return None
-            
+
             entry = self._cache[cache_key]
             if self._is_expired(entry):
                 del self._cache[cache_key]
                 logger.debug(f"Cache entry expired: {cache_key}")
                 return None
-            
+
             return entry["result"]
 
     def set(self, tool_name: str, args: Dict[str, Any], result: Any) -> None:
         """Store result in cache.
-        
+
         Args:
             tool_name: Name of the tool
             args: Tool arguments
             result: Result to cache
         """
         cache_key = self._make_key(tool_name, args)
-        
+
         with self._lock:
             # Evict oldest entry if cache is full
             if len(self._cache) >= self.max_size:
                 self._evict_oldest()
-            
+
             self._cache[cache_key] = {
                 "result": result,
                 "timestamp": time.time(),
@@ -84,7 +84,7 @@ class ResultCache:
 
     def stats(self) -> Dict[str, Any]:
         """Get cache statistics.
-        
+
         Returns:
             Dictionary with cache stats
         """
@@ -98,11 +98,11 @@ class ResultCache:
 
     def _make_key(self, tool_name: str, args: Dict[str, Any]) -> str:
         """Create cache key from tool name and args.
-        
+
         Args:
             tool_name: Name of the tool
             args: Tool arguments
-            
+
         Returns:
             Cache key string
         """
@@ -112,10 +112,10 @@ class ResultCache:
 
     def _is_expired(self, entry: Dict[str, Any]) -> bool:
         """Check if cache entry is expired.
-        
+
         Args:
             entry: Cache entry
-            
+
         Returns:
             True if expired
         """
@@ -126,19 +126,15 @@ class ResultCache:
         """Evict oldest cache entry."""
         if not self._cache:
             return
-        
-        oldest_key = min(
-            self._cache.keys(),
-            key=lambda k: self._cache[k]["timestamp"]
-        )
+
+        oldest_key = min(self._cache.keys(), key=lambda k: self._cache[k]["timestamp"])
         del self._cache[oldest_key]
         logger.debug(f"Evicted cache entry: {oldest_key}")
 
     def _get_entry_keys(self) -> list[str]:
         """Get list of cache entry keys.
-        
+
         Returns:
             List of cache keys
         """
         return list(self._cache.keys())
-

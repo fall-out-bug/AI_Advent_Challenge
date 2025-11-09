@@ -16,14 +16,16 @@ def mock_llm_client():
     """Mock LLM client."""
     client = AsyncMock()
     client.generate = AsyncMock(
-        return_value=json.dumps({
-            "coverage": 0.85,
-            "accuracy": 0.95,
-            "coherence": 0.90,
-            "informativeness": 0.80,
-            "overall": 0.87,
-            "explanation": "Good summary",
-        })
+        return_value=json.dumps(
+            {
+                "coverage": 0.85,
+                "accuracy": 0.95,
+                "coherence": 0.90,
+                "informativeness": 0.80,
+                "overall": 0.87,
+                "explanation": "Good summary",
+            }
+        )
     )
     return client
 
@@ -117,18 +119,22 @@ async def test_evaluate_truncates_long_text(evaluator, context, mock_token_count
     # Mock token counter to return high token count
     mock_token_counter.count_tokens = MagicMock(return_value=5000)
 
-    with patch("src.infrastructure.llm.evaluation.summarization_evaluator.get_evaluation_prompt") as mock_prompt:
+    with patch(
+        "src.infrastructure.llm.evaluation.summarization_evaluator.get_evaluation_prompt"
+    ) as mock_prompt:
         mock_prompt.return_value = "Prompt"
-        
+
         mock_llm = AsyncMock()
         mock_llm.generate = AsyncMock(
-            return_value=json.dumps({
-                "coverage": 0.8,
-                "accuracy": 0.9,
-                "coherence": 0.85,
-                "informativeness": 0.75,
-                "overall": 0.82,
-            })
+            return_value=json.dumps(
+                {
+                    "coverage": 0.8,
+                    "accuracy": 0.9,
+                    "coherence": 0.85,
+                    "informativeness": 0.75,
+                    "overall": 0.82,
+                }
+            )
         )
 
         evaluator._llm_client = mock_llm

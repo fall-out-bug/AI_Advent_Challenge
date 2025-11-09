@@ -56,7 +56,7 @@ class TestHybridIntentClassifier:
     async def test_classify_high_confidence_rule(self, hybrid_classifier):
         """Test high confidence rule-based result is returned directly."""
         result = await hybrid_classifier.classify("Дай мои подписки")
-        
+
         assert result.intent == IntentType.DATA_SUBSCRIPTION_LIST
         assert result.confidence >= 0.7
         assert result.source == "rule"
@@ -68,7 +68,7 @@ class TestHybridIntentClassifier:
     ):
         """Test fallback to cache when rule confidence is low."""
         message = "ambiguous message that matches rule with low confidence"
-        
+
         # Pre-populate cache with LLM result
         cached_result = IntentResult(
             intent=IntentType.TASK_CREATE,
@@ -78,11 +78,11 @@ class TestHybridIntentClassifier:
             latency_ms=2000.0,
         )
         await cache.set(message, cached_result)
-        
+
         # Create rule result with low confidence
         # (We'll use a message that doesn't match rules well)
         result = await hybrid_classifier.classify(message)
-        
+
         # Should get cached result
         assert result.source == "cached"
         assert result.intent == IntentType.TASK_CREATE
@@ -93,38 +93,40 @@ class TestHybridIntentClassifier:
     ):
         """Test fallback to LLM when rule confidence is low and cache miss."""
         message = "some ambiguous request that needs LLM"
-        
+
         # Mock LLM response
-        mock_llm_client.make_request.return_value = '''{
+        mock_llm_client.make_request.return_value = """{
             "intent": "GENERAL_CHAT",
             "confidence": 0.8,
             "entities": {}
-        }'''
-        
+        }"""
+
         result = await hybrid_classifier.classify(message)
-        
+
         # Should use LLM result
         assert result.intent == IntentType.GENERAL_CHAT
         assert result.source == "llm"
         assert result.confidence == 0.8
-        
+
         # Should be cached for next time
         cached = await hybrid_classifier.cache.get(message)
         assert cached is not None
         assert cached.intent == IntentType.GENERAL_CHAT
 
     @pytest.mark.asyncio
-    async def test_classify_llm_failure_fallback_to_rule(self, hybrid_classifier, mock_llm_client):
+    async def test_classify_llm_failure_fallback_to_rule(
+        self, hybrid_classifier, mock_llm_client
+    ):
         """Test fallback to rule result when LLM fails."""
         message = "Дай дайджест"
-        
+
         # Rule should match with high confidence
         rule_result = hybrid_classifier.rule_classifier.classify(message)
         assert rule_result.confidence >= 0.7
-        
+
         # But mock LLM failure
         mock_llm_client.make_request.side_effect = Exception("LLM error")
-        
+
         # Hybrid should still work (fallback to rule)
         result = await hybrid_classifier.classify(message)
         assert result.intent in [IntentType.DATA_DIGEST, IntentType.DATA]
@@ -143,16 +145,16 @@ class TestHybridIntentClassifier:
     ):
         """Test that meaningful LLM results are cached."""
         message = "ambiguous message"
-        
-        mock_llm_client.make_request.return_value = '''{
+
+        mock_llm_client.make_request.return_value = """{
             "intent": "TASK_CREATE",
             "confidence": 0.85,
             "entities": {"title": "test"}
-        }'''
-        
+        }"""
+
         result1 = await hybrid_classifier.classify(message)
         assert result1.source == "llm"
-        
+
         # Second call should use cache
         result2 = await hybrid_classifier.classify(message)
         assert result2.source == "cached"
@@ -164,16 +166,15 @@ class TestHybridIntentClassifier:
     ):
         """Test that IDLE results with low confidence are not cached."""
         message = "random text"
-        
-        mock_llm_client.make_request.return_value = '''{
+
+        mock_llm_client.make_request.return_value = """{
             "intent": "IDLE",
             "confidence": 0.3,
             "entities": {}
-        }'''
-        
+        }"""
+
         result = await hybrid_classifier.classify(message)
-        
+
         # Should not be cached (low confidence IDLE)
         cached = await hybrid_classifier.cache.get(message)
         assert cached is None
-

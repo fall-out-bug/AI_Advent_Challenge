@@ -4,6 +4,8 @@
 
 - [Introduction](#introduction)
 - [Quick Start](#quick-start)
+- [Shared Infrastructure Setup](#shared-infrastructure-setup)
+- [Modular Multi-Pass Reviewer](#modular-multi-pass-reviewer)
 - [Using the CLI](#using-the-cli)
 - [Using the API](#using-the-api)
 - [Models](#models)
@@ -12,542 +14,242 @@
 
 ## Introduction
 
-The AI Challenge project is a Clean Architecture system for AI-powered code generation and review. It provides both a command-line interface (CLI) and a REST API for interacting with AI agents.
+The AI Challenge platform is a Clean Architecture system for AI-assisted code
+review, summarisation, and automation. It exposes a command-line interface
+(CLI), REST API, and reusable reviewer package that can run against a shared
+LLM/MongoDB infrastructure.
 
 ### Key Features
 
-- **Multi-Agent Orchestration**: Coordinate code generation and review workflows
-- **Multiple Models**: Support for StarCoder, Mistral, Qwen, and TinyLlama
-- **Token Management**: Automatic token counting and compression
-- **Health Monitoring**: Built-in health checks and metrics
-- **Experiment Tracking**: Track and manage experiments
+- **Modular Multi-Pass Reviewer**: Architecture, component, and synthesis passes
+  with configurable checker presets
+- **Shared Infrastructure Ready**: Works with the cross-project `infra_shared`
+  network for MongoDB, Prometheus, Grafana, and Mistral
+- **Multi-Agent Orchestration**: Coordinate code generation and review
+  workflows
+- **Token Management**: Automatic token budgeting and compression helpers
+- **Observability**: Built-in health checks, structured logging, and metrics
 
 ## Quick Start
 
-### Installation
+### 1. Install dependencies
 
 ```bash
-# Install dependencies
 make install
 
 # Or with Poetry
-poetry install
+echo "POETRY_VIRTUALENVS_CREATE=false" >> ~/.bashrc
+poetry install --with dev
 ```
 
-### Start the API
+### 2. Configure environment variables
+
+Copy `.env.example` to `.env` and provide shared infrastructure URLs:
 
 ```bash
-# Start API server
-make run-api
-
-# Or with Poetry
-poetry run uvicorn src.presentation.api.__main__:create_app --reload
+cp .env.example .env
+cat >> .env <<'EOF'
+MONGODB_URL=mongodb://admin:***@shared-mongo:27017/butler?authSource=admin
+LLM_URL=http://llm-api:8000
+LLM_MODEL=qwen
+PROMETHEUS_URL=http://shared-prometheus:9090
+USE_MODULAR_REVIEWER=1
+EOF
 ```
 
-The API will be available at `http://localhost:8000`
+### 3. Run migrations and services
 
-### Start the CLI
+MongoDB migrations are orchestrated from `/home/fall_out_bug/work/infra`. After
+running the shared scripts and confirming the transfer, start the local stack
+(without bundled databases):
 
 ```bash
-# Run CLI
-make run-cli
-
-# Or directly
-poetry run python -m src.presentation.cli.main_cli
+make day-12-up
 ```
+
+The compose file expects the external `infra_shared` network to exist.
+
+### 4. Run health checks and smoke tests
+
+```bash
+poetry run python scripts/test_review_system.py --smoke
+poetry run pytest tests/integration/shared_infra -q
+```
+
+### 5. Run end-to-end review pipeline
+
+```bash
+USE_MODULAR_REVIEWER=1 \
+TEST_MONGODB_URL="$MONGODB_URL" \
+LLM_URL="$LLM_URL" \
+LLM_MODEL="${LLM_MODEL:-qwen}" \
+poetry run pytest tests/e2e/test_review_pipeline.py
+```
+
+All three scenarios should pass. If MongoDB or the LLM is unreachable the tests
+skip with a helpful message.
+
+## Shared Infrastructure Setup
+
+The project consumes shared MongoDB, Prometheus, Grafana, and Mistral services.
+
+1. Join containers to the external Docker networks:
+   - `infra_shared_network` (application layer, Grafana/Prometheus/LLM)
+   - `infra_infra_db-network` (MongoDB/Redis/Postgres)
+2. Update `.env` and compose files to reference the shared hostnames.
+3. Use `tests/integration/shared_infra/test_shared_infra_connectivity.py` to
+   verify reachability.
+4. Coordinate data transfer with the infra team (see `docs/shared_infra_cutover.md`).
+
+## Modular Multi-Pass Reviewer
+
+The modular reviewer lives in `packages/multipass-reviewer`. It can be consumed
+internally or packaged for other projects.
+
+### Enabling in AI Challenge
+
+1. Set `USE_MODULAR_REVIEWER=1` in the environment or `.env`.
+2. Ensure `ZipArchiveService` is wired in the review use case (default).
+3. Optionally customise the review configuration via
+   `ReviewConfigBuilder` in `src/application/services/modular_review_service.py`.
+
+### Observability and Failover
+- Pass and checker metrics are exported via `src/infrastructure/monitoring/checker_metrics.py`
+- `ReviewLogger` now attaches a `trace_id` to every structured event for cross-service correlation
+- Each pass returns status/error metadata; partial failures are reported but do not block report generation
+- Tenacity-based retries wrap every LLM call with exponential backoff; failures are logged with the trace identifier
+
+### Integration Tests
+Run the dedicated suites when modifying the reviewer integration:
+```bash
+poetry run pytest tests/integration/test_modular_review_service.py -v
+poetry run pytest tests/unit/application/services/test_modular_review_service.py -v
+```
+
+### Running a targeted review
+
+```python
+from multipass_reviewer.application.config import ReviewConfigBuilder
+from src.application.services.modular_review_service import ModularReviewService
+
+config = (
+    ReviewConfigBuilder()
+    .with_language("python")
+    .with_static_analysis(["linter", "type_checker"])
+    .with_framework("airflow")
+    .enable_haiku()
+    .build()
+)
+
+service = ModularReviewService(
+    archive_service=zip_archive_service,
+    diff_analyzer=diff_analyzer,
+    llm_client=unified_client,
+    review_config=config,
+)
+
+report = await service.review_submission(
+    new_archive_path="/tmp/submissions/new.zip",
+    previous_archive_path=None,
+    assignment_id="HW_MODULAR",
+    student_id="student-1",
+)
+print(report.to_markdown())
+```
+
+The modular path records Prometheus metrics for every pass and checker via
+`src/infrastructure/monitoring/checker_metrics.py`.
+
+### Packaging for reuse
+
+```bash
+cd packages/multipass-reviewer
+poetry build
+poetry publish --repository <private-repo>
+```
+
+A companion Docker image exposes a REST API; see `packages/multipass-reviewer/README.md`.
 
 ## Using the CLI
 
 ### Available Commands
 
-#### Generate Code
+CLI commands are unchanged and can operate against the shared services.
 
-Generate Python code from a description:
+#### Generate Code
 
 ```bash
 python -m src.presentation.cli.main_cli generate "Create a fibonacci function"
 ```
 
-**Options:**
+Options:
 - `--agent-name NAME`: Specify agent name
 - `--model MODEL`: Specify model to use
 
-**Example:**
-```bash
-python -m src.presentation.cli.main_cli generate "Create a REST API for task management" --model starcoder
-```
-
 #### Review Code
-
-Review existing code for quality:
 
 ```bash
 python -m src.presentation.cli.main_cli review "<code_file.py>"
 ```
 
-#### Status Check
-
-Check system status:
+#### System Status
 
 ```bash
 python -m src.presentation.cli.main_cli status
 ```
 
-**Output includes:**
-- API health status
-- Model availability
-- Storage status
-- Configuration info
-
-#### Health Check
-
-Detailed health information:
-
-```bash
-python -m src.presentation.cli.main_cli health
-```
-
-**Components checked:**
-- Storage health
-- Model endpoints
-- Configuration validity
-
-#### Metrics
-
-View and export metrics:
-
-```bash
-# View metrics
-python -m src.presentation.cli.main_cli metrics
-
-# Export to JSON
-python -m src.presentation.cli.main_cli metrics export json metrics.json
-
-# Export to CSV
-python -m src.presentation.cli.main_cli metrics export csv metrics.csv
-```
-
-#### Configuration
-
-View and manage configuration:
-
-```bash
-# View current configuration
-python -m src.presentation.cli.main_cli config
-
-# Validate configuration
-python -m src.presentation.cli.main_cli config validate
-
-# List available experiments
-python -m src.presentation.cli.main_cli config experiments
-```
+Outputs API health, model availability, storage status, and configuration info.
 
 ## Using the API
 
-### Base URL
+Base URL defaults to `http://localhost:8000`; when deployed alongside the shared
+stack use the ingress defined in `docker-compose.butler.yml`.
 
-```
-http://localhost:8000
-```
+Key endpoints:
 
-### Generate Code Endpoint
+- `POST /api/agents/generate` – create code from a prompt
+- `POST /api/agents/review` – run a review task (automatically dispatches to the
+  modular reviewer when the feature flag is enabled)
+- `GET /api/review-sessions/{session_id}` – fetch stored review results
 
-**POST** `/api/agents/generate`
-
-Generate code from a description.
-
-**Request Body:**
-```json
-{
-  "prompt": "Create a fibonacci function",
-  "agent_name": "generator",
-  "model_name": "starcoder"
-}
-```
-
-**Response:**
-```json
-{
-  "task_id": "uuid",
-  "status": "completed",
-  "code": "def fibonacci(n): ...",
-  "metrics": {
-    "complexity": "low",
-    "lines_of_code": 15
-  }
-}
-```
-
-**Example with curl:**
-```bash
-curl -X POST http://localhost:8000/api/agents/generate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "prompt": "Create a function to calculate factorial",
-    "model_name": "starcoder"
-  }'
-```
-
-### Review Code Endpoint
-
-**POST** `/api/agents/review`
-
-Review code for quality.
-
-**Request Body:**
-```json
-{
-  "code": "def fibonacci(n): ...",
-  "agent_name": "reviewer",
-  "model_name": "mistral"
-}
-```
-
-**Response:**
-```json
-{
-  "task_id": "uuid",
-  "status": "completed",
-  "review": "Overall quality assessment...",
-  "quality_metrics": {
-    "pep8_score": 9.5,
-    "complexity": "low",
-    "test_coverage": "high"
-  }
-}
-```
-
-**Example with curl:**
-```bash
-curl -X POST http://localhost:8000/api/agents/review \
-  -H "Content-Type: application/json" \
-  -d '{
-    "code": "def fibonacci(n): return n if n < 2 else fibonacci(n-1) + fibonacci(n-2)",
-    "model_name": "mistral"
-  }'
-```
-
-### Health Endpoints
-
-#### Simple Health Check
-
-**GET** `/health/`
-
-Returns basic health status.
-
-```bash
-curl http://localhost:8000/health/
-```
-
-**Response:**
-```json
-{
-  "status": "ok"
-}
-```
-
-#### Detailed Readiness Check
-
-**GET** `/health/ready`
-
-Returns detailed health status for all components.
-
-```bash
-curl http://localhost:8000/health/ready
-```
-
-**Response:**
-```json
-{
-  "overall": "ready",
-  "checks": {
-    "storage": {
-      "status": "healthy",
-      "message": "Storage is accessible",
-      "response_time_ms": 2.5
-    },
-    "models": {
-      "status": "healthy",
-      "message": "All models are available",
-      "response_time_ms": 45.2
-    }
-  }
-}
-```
-
-#### Model Health Check
-
-**GET** `/health/models`
-
-Check individual model availability.
-
-```bash
-curl http://localhost:8000/health/models
-```
-
-#### Storage Health Check
-
-**GET** `/health/storage`
-
-Check storage accessibility.
-
-```bash
-curl http://localhost:8000/health/storage
-```
-
-### Dashboard
-
-**GET** `/dashboard/`
-
-Access the metrics dashboard.
-
-```bash
-# Open in browser
-open http://localhost:8000/dashboard/
-
-# Or with curl
-curl http://localhost:8000/dashboard/data
-```
-
-### API Documentation
-
-Interactive API documentation is available at:
-
-```
-http://localhost:8000/docs
-```
+Interactive docs: `http://localhost:8000/docs`.
 
 ## Models
 
-### Available Models
+The shared infra exposes the `llm-api` container on `http://llm-api:8000`, serving Qwen/Qwen1.5-4B-Chat via an OpenAI-compatible `/v1/chat/completions` endpoint. The unified client also supports aliases for Mistral, TinyLlama, and StarCoder; when working with the reviewer service set `LLM_MODEL=qwen` (or another alias) and `LLM_URL` to the exposed host. Legacy `/chat` remains for backward compatibility, but new tooling should prefer the OpenAI route.
 
-#### StarCoder (Recommended for Code Generation)
 
-- **Port**: 9000
-- **Specialty**: Code generation
-- **VRAM**: ~14GB (full precision) / ~7GB (GPTQ)
-- **Best for**: Python, JavaScript, TypeScript
+## Performance Benchmarks
 
+Use the inline benchmarking helper to measure review latency against local or shared models:
 ```bash
-# Use StarCoder
-python -m src.presentation.cli.main_cli generate "Create a REST API" --model starcoder
+LLM_URL=http://127.0.0.1:8000 \
+LLM_MODEL=qwen poetry run python - <<'PY'
+# (see docs/PERFORMANCE_BENCHMARKS.md for the full script)
+PY
 ```
 
-#### Mistral
+Latest measurements (Qwen/Qwen1.5-4B-Chat on infra_shared):
+- Dummy LLM (no external call): avg **0.00068s** over 3 runs
+- Real LLM via `/v1/chat/completions`: avg **4.08s** over 5 runs
 
-- **Port**: 9001
-- **Specialty**: General purpose, high quality
-- **VRAM**: ~14GB
-- **Best for**: Code review, documentation
-
-```bash
-# Use Mistral
-python -m src.presentation.cli.main_cli review "<code>" --model mistral
-```
-
-#### Qwen
-
-- **Port**: 9002
-- **Specialty**: Fast responses
-- **VRAM**: ~8GB
-- **Best for**: Quick prototypes, simple tasks
-
-```bash
-# Use Qwen
-python -m src.presentation.cli.main_cli generate "Simple function" --model qwen
-```
-
-#### TinyLlama
-
-- **Port**: 9003
-- **Specialty**: Compact and fast
-- **VRAM**: ~4GB
-- **Best for**: Lightweight tasks, testing
-
-```bash
-# Use TinyLlama
-python -m src.presentation.cli.main_cli generate "Hello world function" --model tinyllama
-```
-
-### Model Selection
-
-Models can be specified via:
-
-**CLI:**
-```bash
---model <model_name>
-```
-
-**API:**
-```json
-{
-  "model_name": "starcoder"
-}
-```
-
-**Environment Variable:**
-```bash
-export MODEL_NAME=starcoder
-```
+Benchmarks are captured in `docs/PERFORMANCE_BENCHMARKS.md`.
 
 ## Examples
 
-### Example 1: Generate and Review Code
-
-```bash
-# Generate code
-python -m src.presentation.cli.main_cli generate "Create a binary search function" > result.txt
-
-# Review the generated code
-cat result.txt | python -m src.presentation.cli.main_cli review
-```
-
-### Example 2: Batch Generation
-
-```python
-#!/usr/bin/env python3
-from src.application.use_cases.generate_code import GenerateCodeUseCase
-
-# Create use case instance
-use_case = GenerateCodeUseCase(...)
-
-# Generate multiple functions
-prompts = [
-    "Create a fibonacci function",
-    "Create a factorial function",
-    "Create a bubble sort function"
-]
-
-for prompt in prompts:
-    task = await use_case.execute(prompt, "generator")
-    print(f"Generated: {task.task_id}")
-    print(f"Code: {task.result}")
-```
-
-### Example 3: Custom Workflow
-
-```python
-#!/usr/bin/env python3
-from src.application.orchestrators.multi_agent_orchestrator import MultiAgentOrchestrator
-from src.domain.messaging.message_schema import OrchestratorRequest
-
-# Create orchestrator
-orchestrator = MultiAgentOrchestrator()
-
-# Create request
-request = OrchestratorRequest(
-    task_description="Create a REST API for task management",
-    model_name="starcoder",
-    reviewer_model_name="mistral"
-)
-
-# Process task
-response = await orchestrator.process_task(request)
-
-# Print results
-print(f"Code:\n{response.generated_code}")
-print(f"Review:\n{response.review}")
-print(f"Quality Score: {response.quality_metrics.overall_score}")
-```
+- `examples/review` – scripts for running multi-pass reviews against sample
+  archives
+- `scripts/test_review_system.py` – orchestrated smoke test that exercises the
+  feature flag, Mongo connectivity, and metrics endpoints
 
 ## Troubleshooting
 
-### Common Issues
-
-#### 1. Port Already in Use
-
-**Problem**: `Address already in use`
-
-**Solution**:
-```bash
-# Change port
-export PORT=8001
-poetry run uvicorn src.presentation.api.__main__:create_app --port 8001
-```
-
-#### 2. Models Not Available
-
-**Problem**: Health checks report model failures
-
-**Solution**:
-```bash
-# Check model endpoints
-curl http://localhost:9000/health  # StarCoder
-curl http://localhost:9001/health  # Mistral
-
-# Restart Docker containers
-cd local_models
-docker-compose restart
-```
-
-#### 3. Import Errors
-
-**Problem**: `ModuleNotFoundError`
-
-**Solution**:
-```bash
-# Reinstall dependencies
-poetry install
-
-# Check Python path
-poetry run python -c "import src"
-```
-
-#### 4. Slow Performance
-
-**Problem**: Slow responses
-
-**Solution**:
-- Check GPU availability
-- Use TinyLlama for testing
-- Monitor system resources
-
-```bash
-# Check system resources
-docker stats
-
-# Use faster model
-export MODEL_NAME=tinyllama
-```
-
-### Getting Help
-
-1. Check logs:
-```bash
-# Docker logs
-docker-compose logs api
-
-# Application logs
-tail -f logs/app.log
-```
-
-2. Health check:
-```bash
-python -m src.presentation.cli.main_cli health
-```
-
-3. View documentation:
-```bash
-# API docs
-open http://localhost:8000/docs
-
-# Project docs
-cat docs/OPERATIONS.md
-```
-
-## Best Practices
-
-1. **Start Simple**: Begin with TinyLlama for testing
-2. **Monitor Resources**: Check GPU/RAM usage before heavy workloads
-3. **Health Checks**: Run health checks regularly
-4. **Backup Data**: Backup important results
-5. **Use Appropriate Models**: Use StarCoder for code, Mistral for review
-
-## Additional Resources
-
-- [Architecture Documentation](ARCHITECTURE.md)
-- [Testing Guide](TESTING.md)
-- [Operations Guide](OPERATIONS.md)
-- [Local Deployment](LOCAL_DEPLOYMENT.md)
-- [API Reference](http://localhost:8000/docs)
+| Symptom | Possible Cause | Fix |
+| --- | --- | --- |
+| `MongoDB unavailable` skips in tests | Container not connected to `infra_infra_db-network` | Attach test runner container to the network or update `TEST_MONGODB_URL` |
+| `Unknown model: summary` | Unified client not using alias adapter | Ensure you run the latest `ModularReviewService` with `USE_MODULAR_REVIEWER=1` |
+| `Input validation failed: model_name` | Raw model name contains version suffix | Use aliases (`mistral`, `qwen`, etc.) or rely on automatic normalisation |
+| `HTTP 422` on `/chat` | Server expects OpenAI payload | Configure `LLM_MODEL` alias and prefer `/v1/chat/completions` |
+| Review pipeline hangs >90s | Shared LLM offline or slow | Check `http://llm-api:8000/health` and Prometheus metrics |
+| Prometheus counters absent | Metrics endpoint not scraped | Confirm `PROMETHEUS_URL` in `.env` and that `infra_shared` Prometheus includes the job |
 

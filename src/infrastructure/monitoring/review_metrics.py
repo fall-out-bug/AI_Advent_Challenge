@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from prometheus_client import Counter, Histogram, Gauge
+from prometheus_client import Counter, Gauge, Histogram
 
 # Review task metrics
 review_tasks_total = Counter(
@@ -51,4 +51,3 @@ review_external_api_publishes_total = Counter(
     "Total number of external API publishes",
     ["status"],  # success, failure
 )
-

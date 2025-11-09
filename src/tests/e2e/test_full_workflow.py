@@ -5,31 +5,28 @@ Following TDD principles and the Zen of Python:
 - Readability counts
 """
 
-import pytest
-from pathlib import Path
 import tempfile
+from datetime import datetime
+from pathlib import Path
 from unittest.mock import AsyncMock
 
-from src.application.use_cases.generate_code import GenerateCodeUseCase
-from src.application.use_cases.review_code import ReviewCodeUseCase
+import pytest
+
 from src.application.orchestrators.multi_agent_orchestrator import (
     MultiAgentOrchestrator,
 )
-from src.infrastructure.repositories.json_agent_repository import (
-    JsonAgentRepository,
-)
-from src.infrastructure.repositories.model_repository import (
-    InMemoryModelRepository,
-)
-from src.infrastructure.clients.simple_model_client import SimpleModelClient
+from src.application.use_cases.generate_code import GenerateCodeUseCase
+from src.application.use_cases.review_code import ReviewCodeUseCase
 from src.domain.messaging.message_schema import (
     CodeGenerationResponse,
-    CodeReviewResponse,
     CodeQualityMetrics,
-    TaskMetadata,
+    CodeReviewResponse,
     OrchestratorRequest,
+    TaskMetadata,
 )
-from datetime import datetime
+from src.infrastructure.clients.simple_model_client import SimpleModelClient
+from src.infrastructure.repositories.json_agent_repository import JsonAgentRepository
+from src.infrastructure.repositories.model_repository import InMemoryModelRepository
 
 
 @pytest.fixture

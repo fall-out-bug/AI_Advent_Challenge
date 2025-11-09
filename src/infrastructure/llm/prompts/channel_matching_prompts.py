@@ -149,4 +149,3 @@ def get_channel_matching_prompt_ru(input_name: str, channels_list: List[dict]) -
 }}"""
 
     return prompt
-

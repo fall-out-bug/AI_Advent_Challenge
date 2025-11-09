@@ -148,4 +148,3 @@ class RequestChannelDigestAsyncUseCase:
             "task_id": task_id,
             "ack_message": ack_message,
         }
-

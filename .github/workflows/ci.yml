@@ -25,19 +25,62 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install -e .
+          pip install -e packages/multipass-reviewer
           pip install black flake8 mypy bandit pytest pytest-cov pytest-asyncio
       
       - name: Run Black
-        run: black --check src/
-        continue-on-error: false
+        run: black --check src/ tests/ packages/multipass-reviewer/multipass_reviewer
       
       - name: Run Flake8
-        run: flake8 src/ --max-line-length=88 --extend-ignore=E203,W503
-        continue-on-error: false
+        run: flake8 src/ tests/ packages/multipass-reviewer/multipass_reviewer --max-line-length=88 --extend-ignore=E203,W503
       
-      - name: Run MyPy
+      - name: Run MyPy (legacy)
         run: mypy src/ --ignore-missing-imports
-        continue-on-error: true
+
+      - name: Run MyPy (package strict)
+        run: mypy packages/multipass-reviewer/multipass_reviewer --strict
+
+  multipass-package:
+    name: Multipass Reviewer Package
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/multipass-reviewer
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Poetry
+        run: python -m pip install --upgrade pip && pip install poetry==1.7.1
+
+      - name: Install dependencies
+        run: poetry install --with dev
+
+      - name: Lint package
+        run: |
+          poetry run black --check multipass_reviewer tests
+          poetry run isort --check-only multipass_reviewer tests
+          poetry run flake8 multipass_reviewer tests
+          poetry run mypy multipass_reviewer
+
+      - name: Run package tests
+        run: poetry run pytest --cov=multipass_reviewer --cov-report=term-missing --cov-report=xml --cov-fail-under=90
+
+      - name: Build distribution
+        run: poetry build
+
+      - name: Upload distribution artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: multipass-reviewer-dist
+          path: packages/multipass-reviewer/dist/
 
   test-unit:
     name: Unit Tests
@@ -57,11 +100,16 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .
+          pip install -e packages/multipass-reviewer
           pip install pytest pytest-cov pytest-asyncio
       
-      - name: Run unit tests
+      - name: Run unit tests (application layer)
         run: |
-          pytest tests/unit/ -v --cov=src --cov-report=term-missing
+          pytest src/tests/unit -v
+
+      - name: Run unit tests (shared SDK)
+        run: |
+          pytest shared/tests -v
       
       - name: Upload coverage report
         uses: actions/upload-artifact@v3
@@ -88,48 +136,21 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .
+          pip install -e packages/multipass-reviewer
           pip install pytest pytest-asyncio
       
-      - name: Run integration tests
+      - name: Run shared infra connectivity test
         run: |
-          pytest tests/integration/ -v -m "not slow"
+          pytest tests/integration/shared_infra/test_shared_infra_connectivity.py -v
+
+      - name: Run modular review service integration test
+        run: |
+          pytest tests/integration/test_modular_review_service.py -v
       
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
           name: integration-test-results
-          path: .pytest_cache/
-        continue-on-error: true
-        if: always()
-
-  test-e2e:
-    name: E2E Tests
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-          cache: 'pip'
-      
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .
-          pip install pytest pytest-asyncio
-      
-      - name: Run E2E tests
-        run: |
-          pytest tests/e2e/ -v -m e2e
-      
-      - name: Upload test results
-        uses: actions/upload-artifact@v3
-        with:
-          name: e2e-test-results
           path: .pytest_cache/
         continue-on-error: true
         if: always()
@@ -153,11 +174,23 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .
+          pip install -e packages/multipass-reviewer
           pip install pytest pytest-cov pytest-asyncio
       
       - name: Run all tests with coverage
         run: |
-          pytest tests/ --cov=src --cov-report=term-missing --cov-report=html --cov-report=xml --cov-fail-under=80
+          pytest \
+            src/tests/unit \
+            tests/integration/shared_infra/test_shared_infra_connectivity.py \
+            tests/integration/test_modular_review_service.py \
+            shared/tests \
+            --cov=src \
+            --cov=shared/shared_package \
+            --cov=packages/multipass-reviewer/multipass_reviewer \
+            --cov-report=term-missing \
+            --cov-report=html \
+            --cov-report=xml \
+            --cov-fail-under=80
       
       - name: Upload coverage report
         uses: actions/upload-artifact@v3

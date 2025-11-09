@@ -6,7 +6,6 @@ import asyncio
 import os
 import sys
 
-from src.infrastructure.config.settings import get_settings
 from src.infrastructure.logging import get_logger
 from src.workers.summary_worker import SummaryWorker
 
@@ -37,4 +36,3 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
-

@@ -26,30 +26,32 @@ def clean_markdown(text: str) -> str:
     """
     # Remove all Markdown characters multiple times to catch nested/escaped ones
     # First pass: remove standard Markdown chars
-    text = re.sub(r'[*_`]', '', text)
-    text = re.sub(r'\[', '', text)
-    text = re.sub(r'\]', '', text)
-    text = re.sub(r'\(', '', text)
-    text = re.sub(r'\)', '', text)
-    text = re.sub(r'\\', '', text)  # Remove backslashes
+    text = re.sub(r"[*_`]", "", text)
+    text = re.sub(r"\[", "", text)
+    text = re.sub(r"\]", "", text)
+    text = re.sub(r"\(", "", text)
+    text = re.sub(r"\)", "", text)
+    text = re.sub(r"\\", "", text)  # Remove backslashes
 
     # Second pass: remove any remaining patterns
-    text = re.sub(r'\*+', '', text)  # Remove any asterisks (single or multiple)
-    text = re.sub(r'_+', '', text)   # Remove any underscores
-    text = re.sub(r'`+', '', text)   # Remove any backticks
+    text = re.sub(r"\*+", "", text)  # Remove any asterisks (single or multiple)
+    text = re.sub(r"_+", "", text)  # Remove any underscores
+    text = re.sub(r"`+", "", text)  # Remove any backticks
 
     # Remove escaped characters explicitly
-    text = text.replace('\\*', '').replace('\\_', '').replace('\\`', '')
-    text = text.replace('\\[', '').replace('\\]', '')
+    text = text.replace("\\*", "").replace("\\_", "").replace("\\`", "")
+    text = text.replace("\\[", "").replace("\\]", "")
 
     # Preserve newlines for readability, but clean them
-    text = re.sub(r'\n\n+', '\n\n', text)  # Max 2 newlines
+    text = re.sub(r"\n\n+", "\n\n", text)  # Max 2 newlines
     text = text.strip()
 
     return text
 
 
-def format_summary(tasks: list[dict[str, Any]], stats: dict[str, Any], debug: bool = False) -> str:
+def format_summary(
+    tasks: list[dict[str, Any]], stats: dict[str, Any], debug: bool = False
+) -> str:
     """Format task summary message.
 
     Purpose:
@@ -64,34 +66,38 @@ def format_summary(tasks: list[dict[str, Any]], stats: dict[str, Any], debug: bo
     Returns:
         Formatted summary message text
     """
-    logger.info("format_summary called", 
-                tasks_count=len(tasks) if tasks else 0, 
-                stats_total=stats.get('total', 0), 
-                debug=debug)
+    logger.info(
+        "format_summary called",
+        tasks_count=len(tasks) if tasks else 0,
+        stats_total=stats.get("total", 0),
+        debug=debug,
+    )
 
     if not tasks or len(tasks) == 0:
         if debug:
-            return (f"🔍 *Debug Summary (Last 24h)*\n\n"
-                    f"📊 No active tasks found (checked {stats.get('total', 0)} tasks).")
+            return (
+                f"🔍 *Debug Summary (Last 24h)*\n\n"
+                f"📊 No active tasks found (checked {stats.get('total', 0)} tasks)."
+            )
         header = "🌅 *Good morning!*\n\n"
         return f"{header}No tasks found. Enjoy your day!"
 
-    header = ("🔍 *Debug Summary (Last 24h)*\n\n" 
-              if debug else "🌅 *Good morning!*\n\n")
+    header = "🔍 *Debug Summary (Last 24h)*\n\n" if debug else "🌅 *Good morning!*\n\n"
     text = f"{header}📊 Tasks: {stats.get('total', 0)}\n"
-    
+
     if stats.get("high_priority", 0) > 0:
         text += f"🔴 High priority: {stats['high_priority']}\n"
-    
+
     text += "\n*Your tasks:*\n\n"
     for task in tasks[:5]:
         emoji = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(
-            task.get("priority", "medium"), "⚪")
+            task.get("priority", "medium"), "⚪"
+        )
         text += f"{emoji} {task.get('title', 'Untitled')}\n"
-    
+
     if len(tasks) > 5:
         text += f"\n_...and {len(tasks) - 5} more_"
-    
+
     return text
 
 
@@ -113,12 +119,12 @@ def format_single_digest(digest: dict[str, Any], debug: bool = False) -> str:
     summary_clean = _prepare_summary(summary)
     tags_str = _format_tags(tags)
     header = _build_digest_header(debug)
-    
+
     text = f"{header}📌 {channel}\n📊 Постов: {post_count}"
     if tags_str:
         text += tags_str
     text += f"\n\n{summary_clean}\n"
-    
+
     return clean_markdown(text)
 
 
@@ -127,18 +133,20 @@ def _prepare_summary(summary: str) -> str:
     settings = get_settings()
     summary_clean = clean_markdown(summary)
     absolute_max = min(settings.digest_summary_max_chars, 2500)
-    
+
     if len(summary_clean) <= absolute_max:
         return summary_clean
-    
+
     truncated = summary_clean[:absolute_max]
-    last_period = truncated.rfind('.')
+    last_period = truncated.rfind(".")
     if last_period > absolute_max * 0.7:
-        return truncated[:last_period + 1]
-    
-    logger.warning("Summary truncated at hard limit", 
-                  original_length=len(summary), 
-                  truncated_length=len(truncated) + 3)
+        return truncated[: last_period + 1]
+
+    logger.warning(
+        "Summary truncated at hard limit",
+        original_length=len(summary),
+        truncated_length=len(truncated) + 3,
+    )
     return truncated + "..."
 
 
@@ -172,8 +180,7 @@ def format_digest(digests: list[dict[str, Any]], debug: bool = False) -> str:
     """
     settings = get_settings()
 
-    header = ("📰 Debug Digest (Last 24 hours)\n\n" 
-              if debug else "📰 Дайджест каналов\n\n")
+    header = "📰 Debug Digest (Last 24 hours)\n\n" if debug else "📰 Дайджест каналов\n\n"
     text = header
 
     # Use configurable max channels
@@ -182,9 +189,7 @@ def format_digest(digests: list[dict[str, Any]], debug: bool = False) -> str:
 
     # Sort by post_count descending (most active first)
     sorted_digests = sorted(
-        digests, 
-        key=lambda x: x.get("post_count", 0), 
-        reverse=True
+        digests, key=lambda x: x.get("post_count", 0), reverse=True
     )[:max_channels]
 
     for digest in sorted_digests:
@@ -198,7 +203,7 @@ def format_digest(digests: list[dict[str, Any]], debug: bool = False) -> str:
 
         # Truncate if too long
         if len(summary_clean) > max_chars:
-            summary_clean = summary_clean[:max_chars - 3] + "..."
+            summary_clean = summary_clean[: max_chars - 3] + "..."
 
         # Format with tags if available (no Markdown)
         tags_str = ""
@@ -215,4 +220,3 @@ def format_digest(digests: list[dict[str, Any]], debug: bool = False) -> str:
     text = clean_markdown(text)
 
     return text
-

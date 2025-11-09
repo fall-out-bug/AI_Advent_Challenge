@@ -4,7 +4,7 @@ This protocol defines the interface for configuration access.
 Infrastructure layer implementations must conform to this protocol.
 """
 
-from typing import Protocol, Any, Optional
+from typing import Any, Protocol
 
 
 class ConfigProviderProtocol(Protocol):
@@ -80,4 +80,3 @@ class ConfigProviderProtocol(Protocol):
             String configuration value
         """
         ...
-

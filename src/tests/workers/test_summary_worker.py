@@ -1,4 +1,3 @@
-import pytest
 from datetime import time
 
 from src.workers.formatters import format_summary
@@ -26,4 +25,3 @@ def test_parse_time_valid():
 def test_parse_time_invalid():
     t = SummaryWorker._parse_time("invalid")
     assert t is None
-

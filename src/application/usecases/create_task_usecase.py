@@ -5,7 +5,7 @@ Following TDD: Implementation after tests.
 """
 
 import logging
-from typing import Dict, Optional, Any
+from typing import Any, Dict, Optional
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
@@ -75,7 +75,9 @@ class CreateTaskUseCase:
 
     def _build_clarification_result(self, intent_result: Any) -> TaskCreationResult:
         """Build clarification result."""
-        question = intent_result.questions[0] if intent_result.questions else "Need more info"
+        question = (
+            intent_result.questions[0] if intent_result.questions else "Need more info"
+        )
         return TaskCreationResult(created=False, clarification=question)
 
     async def _create_task_via_mcp(
@@ -108,7 +110,9 @@ class CreateTaskUseCase:
     def _process_mcp_result(self, result: Dict[str, Any]) -> TaskCreationResult:
         """Process MCP tool response."""
         if result.get("status") == "error":
-            return TaskCreationResult(created=False, error=result.get("error", "Unknown error"))
+            return TaskCreationResult(
+                created=False, error=result.get("error", "Unknown error")
+            )
         task_id = result.get("task_id")
         if task_id:
             return TaskCreationResult(created=True, task_id=str(task_id))
@@ -116,5 +120,6 @@ class CreateTaskUseCase:
 
     def _build_error_result(self, error_msg: str) -> TaskCreationResult:
         """Build error result."""
-        return TaskCreationResult(created=False, error=f"Task creation failed: {error_msg}")
-
+        return TaskCreationResult(
+            created=False, error=f"Task creation failed: {error_msg}"
+        )

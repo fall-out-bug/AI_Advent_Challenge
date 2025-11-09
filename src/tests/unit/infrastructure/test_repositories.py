@@ -1,14 +1,12 @@
 """Unit tests for infrastructure repositories."""
 
-import pytest
-from pathlib import Path
 import tempfile
-import json
+from pathlib import Path
 
-from src.infrastructure.repositories.json_agent_repository import (
-    JsonAgentRepository,
-)
+import pytest
+
 from src.domain.entities.agent_task import AgentTask, TaskStatus, TaskType
+from src.infrastructure.repositories.json_agent_repository import JsonAgentRepository
 
 
 @pytest.fixture

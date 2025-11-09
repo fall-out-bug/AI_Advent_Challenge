@@ -5,4 +5,3 @@ from src.infrastructure.reporting.homework_report_generator import (
 )
 
 __all__ = ["generate_detailed_markdown_report"]
-

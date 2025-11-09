@@ -73,7 +73,7 @@ AI_Challenge/
 │   ├── infrastructure/ # External integrations
 │   └── presentation/   # API and CLI
 ├── tasks/           # Daily Challenges (day_01 - day_12)
-├── local_models/    # Local model infrastructure
+├── archive/legacy/local_models/    # Archived local model infrastructure (deprecated)
 ├── shared/          # Unified SDK for model interaction
 ├── scripts/         # Utility scripts
 ├── config/          # Configuration files
@@ -103,11 +103,9 @@ AI_Challenge/
 
 ## Core Infrastructure
 
-### Local Models
-- **Qwen-4B** (port 8000) - Fast responses, ~8GB RAM
-- **Mistral-7B** (port 8001) - High quality, ~14GB RAM  
-- **TinyLlama-1.1B** (port 8002) - Compact, ~4GB RAM
-- **StarCoder-7B** (port 9000) - Specialized for code generation
+### Local Models (archived)
+- Local model containers are deprecated in favor of shared infrastructure.
+- Legacy manifests are preserved under `archive/legacy/local_models/`.
 
 ### Shared SDK
 Unified SDK for model interaction across all challenges.

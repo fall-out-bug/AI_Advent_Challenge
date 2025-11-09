@@ -6,9 +6,10 @@ Following the Zen of Python:
 - Explicit is better than implicit
 """
 
-import yaml
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
+
+import yaml
 
 from src.domain.entities.model_config import ModelConfig
 
@@ -51,10 +52,10 @@ class ModelSelector:
         """
         # Start from current file location
         current = Path(__file__).resolve()
-        
+
         # Marker files that indicate project root
         project_markers = ["pyproject.toml", "setup.py", "setup.cfg", ".git"]
-        
+
         # Walk up the directory tree to find project root
         for parent in current.parents:
             for marker in project_markers:
@@ -62,7 +63,7 @@ class ModelSelector:
                     config_path = parent / "config" / "models.yml"
                     if config_path.exists():
                         return config_path
-        
+
         # Fallback: assume we're in src/infrastructure/config
         # and go up to project root
         fallback_root = Path(__file__).resolve().parents[3]

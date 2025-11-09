@@ -92,4 +92,3 @@ class EnqueueReviewTaskUseCase:
 
         await self.repository.create(task)
         return task
-

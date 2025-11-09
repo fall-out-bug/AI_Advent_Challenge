@@ -4,13 +4,14 @@ Following TDD principles and AAA pattern (Arrange-Act-Assert).
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.e2e]
 
 
 @pytest.mark.e2e
-async def test_nl_task_creation_to_completion_flow(unique_user_id, mock_mcp_client, _cleanup_db):
+async def test_nl_task_creation_to_completion_flow(
+    unique_user_id, mock_mcp_client, _cleanup_db
+):
     """Test complete flow: NL task creation → list → complete → delete.
 
     Arrange:
@@ -24,7 +25,10 @@ async def test_nl_task_creation_to_completion_flow(unique_user_id, mock_mcp_clie
         - Each step succeeds with expected data
     """
     from src.presentation.mcp.tools.reminder_tools import (
-        add_task, list_tasks, update_task, delete_task
+        add_task,
+        delete_task,
+        list_tasks,
+        update_task,
     )
 
     # Arrange: Setup mock responses
@@ -37,7 +41,7 @@ async def test_nl_task_creation_to_completion_flow(unique_user_id, mock_mcp_clie
         description="milk, bread, eggs",
         deadline=deadline,
         priority="high",
-        tags=["shopping"]
+        tags=["shopping"],
     )
     assert create_res["status"] == "created"
     task_id = create_res["task_id"]
@@ -166,7 +170,7 @@ async def test_edge_case_unicode_in_task_title(unique_user_id, _cleanup_db):
     assert result["status"] == "created"
 
     tasks = await list_tasks(user_id=unique_user_id, status="active", limit=10)
-    
+
     # Assert
     assert tasks["tasks"][0]["title"] == title
 
@@ -191,14 +195,15 @@ async def test_edge_case_max_length_task_title(unique_user_id, _cleanup_db):
 
     # Act
     result = await add_task(user_id=unique_user_id, title=long_title)
-    
+
     # Assert
     assert result["status"] == "created"
     # Title should be truncated to 256
-    from src.infrastructure.database.mongo import get_db
     from bson import ObjectId
+
+    from src.infrastructure.database.mongo import get_db
+
     db = await get_db()
     task = await db.tasks.find_one({"_id": ObjectId(result["task_id"])})
     assert task is not None
     assert len(task["title"]) <= 256
-

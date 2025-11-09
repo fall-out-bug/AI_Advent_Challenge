@@ -3,14 +3,12 @@
 Following TDD principles and Zen of Python.
 """
 
-import pytest
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from src.presentation.cli.commands.config_cmd import (
     display_configuration,
-    validate_configuration,
     list_experiments,
+    validate_configuration,
 )
 
 

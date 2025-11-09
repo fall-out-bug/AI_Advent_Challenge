@@ -1,19 +1,14 @@
 """Adapter for test generation."""
-import sys
-from pathlib import Path
-from typing import Any, Dict
 import re
+from typing import Any, Dict
 
-_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(_root))
-sys.path.insert(0, str(_root / "shared"))
-
-from src.presentation.mcp.exceptions import MCPValidationError, MCPAgentError
+from src.presentation.mcp.exceptions import MCPAgentError, MCPValidationError
 
 
 def _get_model_client_adapter():
     """Import ModelClientAdapter at runtime to avoid circular imports."""
     from src.presentation.mcp.adapters.model_client_adapter import ModelClientAdapter
+
     return ModelClientAdapter
 
 
@@ -25,15 +20,21 @@ class TestGenerationAdapter:
         self.unified_client = unified_client
         self.model_name = model_name
 
-    async def generate_tests(self, code: str, test_framework: str = "pytest", coverage_target: int = 80) -> Dict[str, Any]:
+    async def generate_tests(
+        self, code: str, test_framework: str = "pytest", coverage_target: int = 80
+    ) -> Dict[str, Any]:
         """Generate tests for provided code."""
         self._validate_inputs(code, test_framework)
 
         try:
             ModelClientAdapter = _get_model_client_adapter()
-            adapter = ModelClientAdapter(self.unified_client, model_name=self.model_name)
+            adapter = ModelClientAdapter(
+                self.unified_client, model_name=self.model_name
+            )
             prompt = self._build_prompt(code, test_framework, coverage_target)
-            result = await adapter.generate(prompt=prompt, max_tokens=1500, temperature=0.2)
+            result = await adapter.generate(
+                prompt=prompt, max_tokens=1500, temperature=0.2
+            )
 
             return self._parse_response(result.get("response", ""), test_framework)
         except (MCPValidationError, MCPAgentError):
@@ -48,7 +49,7 @@ class TestGenerationAdapter:
         if test_framework not in ["pytest", "unittest", "nose"]:
             raise MCPValidationError(
                 f"test_framework must be pytest/unittest/nose, got {test_framework}",
-                field="test_framework"
+                field="test_framework",
             )
 
     def _build_prompt(
@@ -109,5 +110,6 @@ Return ONLY the test code, no explanations."""
             pattern = r"def test\w+"
 
         matches = re.findall(pattern, code)
-        return matches if isinstance(matches, list) else list(matches) if matches else []
-
+        return (
+            matches if isinstance(matches, list) else list(matches) if matches else []
+        )

@@ -40,7 +40,13 @@ VALID_COMPLEXITY_LEVELS = {"low", "medium", "high"}
 class TaskMetadata:
     """Metadata about a task."""
 
-    def __init__(self, complexity: str = "medium", lines_of_code: int = 0, estimated_time: Optional[str] = None, dependencies: Optional[list[str]] = None):
+    def __init__(
+        self,
+        complexity: str = "medium",
+        lines_of_code: int = 0,
+        estimated_time: Optional[str] = None,
+        dependencies: Optional[list[str]] = None,
+    ):
         """Initialize task metadata."""
         # Validate complexity level
         if complexity not in VALID_COMPLEXITY_LEVELS:
@@ -49,7 +55,7 @@ class TaskMetadata:
                 f"Expected one of {VALID_COMPLEXITY_LEVELS}. Defaulting to 'medium'."
             )
             complexity = "medium"
-        
+
         self.complexity = complexity
         self.lines_of_code = lines_of_code
         self.estimated_time = estimated_time
@@ -78,7 +84,14 @@ class TaskMetadata:
 class BaseAgent(ABC):
     """Base class for all agents with model integration."""
 
-    def __init__(self, model_name: str = "starcoder", agent_type: str = "base", max_tokens: int = DEFAULT_MAX_TOKENS, temperature: float = DEFAULT_TEMPERATURE, model_client: Optional[Any] = None):
+    def __init__(
+        self,
+        model_name: str = "starcoder",
+        agent_type: str = "base",
+        max_tokens: int = DEFAULT_MAX_TOKENS,
+        temperature: float = DEFAULT_TEMPERATURE,
+        model_client: Optional[Any] = None,
+    ):
         """Initialize the base agent."""
         self.model_name = model_name
         self.agent_type = agent_type
@@ -95,7 +108,12 @@ class BaseAgent(ABC):
             "response_times": [],
         }
 
-    async def _call_model(self, prompt: str, max_tokens: Optional[int] = None, temperature: Optional[float] = None) -> Dict[str, Any]:
+    async def _call_model(
+        self,
+        prompt: str,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
+    ) -> Dict[str, Any]:
         """Call model with the given prompt."""
         start_time = datetime.now()
 
@@ -127,7 +145,9 @@ class BaseAgent(ABC):
             logger.error(f"Model call failed: {str(e)}")
             raise
 
-    async def _make_model_request(self, prompt: str, max_tokens: int, temperature: float) -> Dict[str, Any]:
+    async def _make_model_request(
+        self, prompt: str, max_tokens: int, temperature: float
+    ) -> Dict[str, Any]:
         """Make model request - abstract to be implemented by subclasses."""
         if self.model_client is None:
             raise NotImplementedError("Model client not provided")
@@ -183,7 +203,7 @@ class BaseAgent(ABC):
         # Extract complexity
         complexity_match = re.search(COMPLEXITY_PATTERN, response)
         complexity = complexity_match.group(1).lower() if complexity_match else "medium"
-        
+
         # Validate complexity level
         if complexity not in VALID_COMPLEXITY_LEVELS:
             logger.warning(
@@ -253,4 +273,3 @@ class BaseAgent(ABC):
     @abstractmethod
     async def process(self, *args, **kwargs) -> Any:
         """Process a request. Must be implemented by subclasses."""
-        pass

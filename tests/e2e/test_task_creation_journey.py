@@ -65,7 +65,7 @@ async def test_task_creation_journey_with_clarification() -> None:
     state1 = FakeState()
     msg1 = FakeMessage("Remind me to call mom")
     result1 = orchestrator.parse_task_intent(msg1.text or "", {})
-    
+
     if result1.needs_clarification:
         await tasks_mod.handle_task_input(msg1, state1)  # type: ignore[arg-type]
         assert state1.state == TaskCreation.waiting_for_clarification
@@ -77,4 +77,3 @@ async def test_task_creation_journey_with_clarification() -> None:
         msg2 = FakeMessage("2025-12-01 15:00")
         await tasks_mod.handle_clarification(msg2, state2)  # type: ignore[arg-type]
         assert any("✅ Task added" in s for s in msg2.sent)
-

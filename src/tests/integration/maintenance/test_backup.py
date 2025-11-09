@@ -7,12 +7,11 @@ Following TDD principles:
 """
 
 import tempfile
-import tarfile
 from pathlib import Path
 
 import pytest
 
-from scripts.maintenance.backup import create_backup, list_backups, restore_backup
+from scripts.maintenance.backup import create_backup, list_backups
 from src.infrastructure.config.settings import Settings
 
 

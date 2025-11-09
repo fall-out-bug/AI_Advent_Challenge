@@ -4,7 +4,7 @@ This protocol defines the interface for LLM clients.
 Infrastructure layer implementations must conform to this protocol.
 """
 
-from typing import Protocol, Optional
+from typing import Optional, Protocol
 
 
 class LLMClientProtocol(Protocol):
@@ -59,4 +59,3 @@ class LLMClientProtocol(Protocol):
         Cleanup any open connections or resources.
         """
         ...
-

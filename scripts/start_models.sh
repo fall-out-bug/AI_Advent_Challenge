@@ -3,7 +3,17 @@
 
 set -e
 
-cd "$(dirname "$0")/../local_models" || exit 1
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+LEGACY_DIR="${ROOT_DIR}/archive/legacy/local_models"
+
+if [ ! -d "$LEGACY_DIR" ]; then
+    echo "❌ Legacy local model manifests not found at: ${LEGACY_DIR}"
+    echo "   Please verify that the repository includes archived assets."
+    exit 1
+fi
+
+cd "${LEGACY_DIR}" || exit 1
+export COMPOSE_PROJECT_NAME=local_models
 
 echo "🚀 Starting local model containers..."
 echo ""

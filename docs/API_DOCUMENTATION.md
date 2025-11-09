@@ -2,19 +2,24 @@
 
 ## Overview
 
-The AI Challenge API provides REST endpoints for code generation, review, and orchestration workflows.
+The AI Challenge API provides REST endpoints for code generation, review, and
+observability. When `USE_MODULAR_REVIEWER=1` the review pipeline is powered by
+`packages/multipass-reviewer` and executes against the shared Mongo/LLM
+infrastructure.
 
-**Base URL**: `http://localhost:8000`
+**Base URL**: `http://localhost:8000` (or the ingress configured in
+`docker-compose.butler.yml`)
 
-**Interactive Documentation**: `http://localhost:8000/docs`
+**Interactive Docs**: `http://localhost:8000/docs`
 
 ## Authentication
 
-Currently, no authentication is required for local development.
+No authentication is required for local development. Downstream deployments can
+add FastAPI dependencies or ingress rules.
 
 ## Rate Limiting
 
-No rate limiting is enforced in local development.
+No rate limits are enforced in local or staging environments.
 
 ## Error Handling
 
@@ -29,535 +34,159 @@ No rate limiting is enforced in local development.
 ### HTTP Status Codes
 
 - `200 OK`: Successful request
-- `400 Bad Request`: Invalid request parameters
+- `201 Created`: Resource created (review task)
+- `202 Accepted`: Asynchronous task accepted (not currently used)
+- `400 Bad Request`: Invalid request parameters or validation failure
 - `404 Not Found`: Resource not found
-- `500 Internal Server Error`: Server error
-- `503 Service Unavailable`: Service temporarily unavailable
+- `413 Payload Too Large`: Uploaded archive exceeded size limit
+- `500 Internal Server Error`: Unhandled exception
+- `503 Service Unavailable`: Downstream service unavailable
 
-## Endpoints
+## Agents
 
-### Agents
-
-#### Generate Code
-
-Generate Python code from a natural language description.
+### Generate Code
 
 **POST** `/api/agents/generate`
 
-**Request Body:**
+Generate code from a natural language prompt.
+
+Request body:
+
 ```json
 {
-  "prompt": "string (required)",
-  "agent_name": "string (optional, default: 'generator')",
-  "model_config_id": "string (optional)",
-  "model_name": "string (optional, default: 'starcoder')",
-  "max_tokens": "integer (optional, default: 1000)",
-  "temperature": "float (optional, default: 0.7)"
+  "prompt": "Create a REST API for task management",
+  "agent_name": "generator",
+  "model_name": "starcoder",
+  "max_tokens": 1200,
+  "temperature": 0.6
 }
 ```
 
-**Response:**
+Response:
+
 ```json
 {
-  "task_id": "string",
+  "task_id": "gen_123",
   "status": "completed",
-  "result": "def fibonacci(n): ...",
-  "quality_metrics": {
-    "complexity": "low|medium|high",
-    "lines_of_code": 15,
-    "estimated_time": "5 minutes"
-  },
+  "result": "def handler(...): ...",
   "token_info": {
-    "input_tokens": 50,
-    "output_tokens": 150,
-    "total_tokens": 200
+    "input_tokens": 120,
+    "output_tokens": 280,
+    "total_tokens": 400
   }
 }
 ```
 
-**Example:**
-```bash
-curl -X POST http://localhost:8000/api/agents/generate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "prompt": "Create a function to calculate the factorial of a number",
-    "model_name": "starcoder"
-  }'
-```
-
-#### Review Code
-
-Review code and provide quality feedback.
+### Review Code (inline)
 
 **POST** `/api/agents/review`
 
-**Request Body:**
-```json
-{
-  "code": "string (required)",
-  "agent_name": "string (optional, default: 'reviewer')",
-  "model_config_id": "string (optional)",
-  "model_name": "string (optional, default: 'mistral')"
-}
-```
+Review a code snippet with the selected model. Use when archives are not
+required. Response mirrors `generate` with review content.
 
-**Response:**
-```json
-{
-  "task_id": "string",
-  "status": "completed",
-  "result": "Code review feedback...",
-  "quality_metrics": {
-    "pep8_score": 9.5,
-    "complexity": "low",
-    "test_coverage": "high",
-    "security_score": 8.0
-  },
-  "token_info": {
-    "input_tokens": 200,
-    "output_tokens": 300,
-    "total_tokens": 500
-  }
-}
-```
+## Review Pipeline
 
-**Example:**
-```bash
-curl -X POST http://localhost:8000/api/agents/review \
-  -H "Content-Type: application/json" \
-  -d '{
-    "code": "def fibonacci(n): return n if n < 2 else fibonacci(n-1) + fibonacci(n-2)",
-    "model_name": "mistral"
-  }'
-```
+All archive-based reviews use the `/api/v1/reviews` namespace.
 
-#### Get Task Status
-
-Get status of a previously submitted task.
-
-**GET** `/api/agents/tasks/{task_id}`
-
-**Parameters:**
-- `task_id` (path): Task identifier
-
-**Response:**
-```json
-{
-  "task_id": "string",
-  "status": "completed|in_progress|failed",
-  "result": "string",
-  "created_at": "2024-01-01T00:00:00Z",
-  "updated_at": "2024-01-01T00:00:01Z",
-  "metadata": {}
-}
-```
-
-**Example:**
-```bash
-curl http://localhost:8000/api/agents/tasks/abc-123-def-456
-```
-
-#### List Tasks
-
-List all tasks with optional filtering.
-
-**GET** `/api/agents/tasks`
-
-**Query Parameters:**
-- `status` (optional): Filter by status
-- `agent_name` (optional): Filter by agent name
-- `limit` (optional): Maximum number of results (default: 100)
-- `offset` (optional): Pagination offset (default: 0)
-
-**Response:**
-```json
-{
-  "tasks": [
-    {
-      "task_id": "string",
-      "status": "completed",
-      "created_at": "2024-01-01T00:00:00Z"
-    }
-  ],
-  "total": 100,
-  "limit": 10,
-  "offset": 0
-}
-```
-
-**Example:**
-```bash
-curl "http://localhost:8000/api/agents/tasks?status=completed&limit=10"
-```
-
-### Reviews
-
-#### Create Review Task
-
-Submit a new homework review by uploading the latest archive (and optional context).
+### Create Review Task
 
 **POST** `/api/v1/reviews`
 
-**Request**: `multipart/form-data`
+Content type: `multipart/form-data`
+
+Form fields:
 
 | Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `student_id` | string | ✅ | Student identifier (text) |
-| `assignment_id` | string | ✅ | Homework identifier |
-| `new_commit` | string | ✅ | Commit hash of the new submission (minLength 1) |
-| `new_zip` | file | ✅ | ZIP archive with the latest submission |
-| `old_zip` | file | ❌ | ZIP archive with previous submission |
-| `logs_zip` | file | ❌ | ZIP archive with runtime logs (see [log archive spec](../contracts/log_archive_format.md)) |
-| `old_commit` | string | ❌ | Previous commit hash |
+| --- | --- | --- | --- |
+| `student_id` | string | yes | Author identifier |
+| `assignment_id` | string | yes | Assignment slug |
+| `new_commit` | string | yes | Commit SHA for new submission |
+| `old_commit` | string | no | Previous commit SHA |
+| `new_zip` | file | yes | ZIP archive of current submission |
+| `old_zip` | file | no | ZIP archive of previous submission |
+| `logs_zip` | file | no | Optional logs for pass 4 analysis |
 
-**Response** `201 Created`:
+Example `curl`:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/reviews \
+  -F student_id=student-1 \
+  -F assignment_id=HW_MODULAR \
+  -F new_commit=abc123 \
+  -F new_zip=@new_submission.zip \
+  -F logs_zip=@logs.zip
+```
+
+Response (`201 Created`):
 
 ```json
 {
-  "task_id": "task_abc123",
-  "status": "queued",
-  "student_id": "student_123",
-  "assignment_id": "HW2",
-  "created_at": "2025-11-07T09:30:00Z"
+  "task_id": "rev_c0ffee",
+  "status": "pending",
+  "student_id": "student-1",
+  "assignment_id": "HW_MODULAR",
+  "created_at": "2025-11-07T18:55:31.123456"
 }
 ```
 
-#### Get Review Status
+Tasks are processed asynchronously by the unified task worker. When the modular
+reviewer flag is enabled the worker delegates to `ModularReviewService`, which
+uses the shared LLM and shared MongoDB.
 
-Retrieve the state of a review task (queued → running → completed/failed).
+### Get Review Status
 
 **GET** `/api/v1/reviews/{task_id}`
 
-**Response** `200 OK`:
+Returns the current status and, when completed, the review report summary.
+
+Response example:
 
 ```json
 {
-  "task_id": "task_abc123",
+  "task_id": "rev_c0ffee",
   "status": "completed",
-  "student_id": "student_123",
-  "assignment_id": "HW2",
-  "created_at": "2025-11-07T09:30:00Z",
-  "finished_at": "2025-11-07T09:34:42Z",
+  "student_id": "student-1",
+  "assignment_id": "HW_MODULAR",
+  "created_at": "2025-11-07T18:55:31.123456",
+  "completed_at": "2025-11-07T18:57:02.654321",
   "result": {
-    "session_id": "session_xyz789",
-    "overall_score": 88,
-    "published_via": "mcp",
-    "report": {
-      "markdown": "# Review\n...",
-      "static_analysis_results": [
-        {
-          "tool": "flake8",
-          "summary": "2 issues",
-          "entries": [
-            "app/main.py:12 E501 line too long",
-            "utils/helpers.py:45 W292 no newline at end of file"
-          ]
-        }
-      ],
-      "pass_4_logs": {
-        "status": "completed",
-        "results": [
-          {
-            "component": "docker",
-            "classification": "ERROR",
-            "description": "Container exited with status 1",
-            "root_cause": "Missing ENV VAR FOO",
-            "recommendations": "Add FOO=... to compose file",
-            "confidence": 0.82,
-            "count": 3
-          }
-        ]
-      },
-      "haiku": "Code finds balance\nLogs whisper of hidden faults\nFix blooms in review"
-    }
+    "session_id": "session_student-1",
+    "total_findings": 5,
+    "haiku": "Code flows like rivers..."
   }
 }
 ```
 
-`status` values: `queued`, `running`, `completed`, `failed`.
+If the task ID is unknown the API returns `404`.
 
-#### MCP Publishing
+## Health & Metrics
 
-1. The reviewer LLM discovers `submit_review_result` via MCP (`HW_CHECKER_MCP_URL`).
-2. On success, the response includes `published_via: "mcp"`.
-3. Failure or disabled MCP triggers HTTP fallback (`published_via: "fallback"`).
+### Healthcheck
 
-Environment variables:
+**GET** `/health`
 
-- `HW_CHECKER_MCP_URL` (default `http://mcp-server:8005`)
-- `HW_CHECKER_MCP_ENABLED` (default `true`)
-- Optional fallback: `EXTERNAL_API_URL`, `EXTERNAL_API_KEY`, `EXTERNAL_API_TIMEOUT`
+Aggregates MongoDB connectivity, LLM reachability, and background worker health.
 
-### Health
+### Metrics
 
-#### Health Check
+**GET** `/metrics`
 
-Simple health status check.
+Prometheus-formatted metrics, including modular reviewer counters/histograms
+when the feature flag is active:
 
-**GET** `/health/`
+- `review_checker_findings_total{checker_name="python_style",severity="major"}`
+- `review_checker_runtime_seconds_bucket{checker_name="component",le="0.5"}`
 
-**Response:**
-```json
-{
-  "status": "ok"
-}
-```
+## Deployment Notes
 
-#### Readiness Check
+- The API expects the shared networks to be present; see
+  `docs/DEVELOPMENT.md` for docker commands.
+- Archive uploads are written to `review_archives/` within the API container.
+  Ensure persistent storage if running outside development.
+- Large reviews can be tuned via `archive_max_total_size_mb` in settings.
 
-Detailed readiness check for all components.
+## Versioning & Changelog
 
-**GET** `/health/ready`
-
-**Response:**
-```json
-{
-  "overall": "ready|degraded",
-  "checks": {
-    "storage": {
-      "status": "healthy",
-      "message": "Storage is accessible",
-      "response_time_ms": 2.5,
-      "details": {}
-    },
-    "models": {
-      "status": "healthy",
-      "message": "All models available",
-      "response_time_ms": 45.2,
-      "details": {
-        "starcoder": "available",
-        "mistral": "available"
-      }
-    }
-  }
-}
-```
-
-#### Model Health
-
-Check health status of individual models.
-
-**GET** `/health/models`
-
-**Response:**
-```json
-{
-  "overall": "healthy",
-  "models": {
-    "starcoder": {
-      "status": "available",
-      "response_time_ms": 45.2
-    },
-    "mistral": {
-      "status": "available",
-      "response_time_ms": 38.7
-    },
-    "qwen": {
-      "status": "unavailable",
-      "response_time_ms": null,
-      "error": "Connection timeout"
-    }
-  }
-}
-```
-
-#### Storage Health
-
-Check storage accessibility and status.
-
-**GET** `/health/storage`
-
-**Response:**
-```json
-{
-  "status": "healthy",
-  "message": "Storage is accessible",
-  "response_time_ms": 2.5,
-  "details": {
-    "data_directory": "/path/to/data",
-    "writable": true,
-    "disk_usage_percent": 45.2
-  }
-}
-```
-
-### Dashboard
-
-#### Get Dashboard HTML
-
-Retrieve the dashboard HTML page.
-
-**GET** `/dashboard/`
-
-**Response:** HTML page
-
-**Example:**
-```bash
-curl http://localhost:8000/dashboard/
-```
-
-#### Get Dashboard Data
-
-Get metrics data for the dashboard.
-
-**GET** `/dashboard/data`
-
-**Response:**
-```json
-{
-  "metrics": {
-    "total_requests": 1000,
-    "successful_requests": 950,
-    "failed_requests": 50,
-    "average_response_time_ms": 123.45,
-    "models": {
-      "starcoder": {
-        "requests": 500,
-        "success_rate": 0.95,
-        "avg_response_time_ms": 125.0
-      }
-    }
-  },
-  "recent_operations": [
-    {
-      "task_id": "abc-123",
-      "agent": "generator",
-      "status": "completed",
-      "timestamp": "2024-01-01T00:00:00Z"
-    }
-  ]
-}
-```
-
-### Experiments (Deprecated)
-
-**Note**: These endpoints are deprecated. Use the agent endpoints instead.
-
-#### Run Experiment
-
-**POST** `/api/experiments/run`
-
-**Status**: Deprecated (returns 501)
-
-**Response:**
-```json
-{
-  "detail": "Legacy adapter-based experiments are deprecated. Please use the new Phase 2 API endpoints."
-}
-```
-
-#### Get Experiment Status
-
-**GET** `/api/experiments/status`
-
-**Response:**
-```json
-{
-  "status": "deprecated",
-  "message": "Legacy adapter-based experiments are deprecated. Please use the new Phase 2 API endpoints."
-}
-```
-
-## Data Models
-
-### Task Status
-
-Enum values:
-- `pending`: Task is pending
-- `in_progress`: Task is being processed
-- `completed`: Task completed successfully
-- `failed`: Task failed
-- `cancelled`: Task was cancelled
-
-### Task Type
-
-Enum values:
-- `code_generation`: Code generation task
-- `code_review`: Code review task
-- `token_analysis`: Token analysis task
-
-### Quality Metrics
-
-```json
-{
-  "complexity": "string (low|medium|high)",
-  "lines_of_code": "integer",
-  "estimated_time": "string",
-  "dependencies": ["string"],
-  "pep8_score": "float (0-10)",
-  "test_coverage": "string (low|medium|high)",
-  "security_score": "float (0-10)",
-  "overall_score": "float (0-10)"
-}
-```
-
-### Token Info
-
-```json
-{
-  "input_tokens": "integer",
-  "output_tokens": "integer",
-  "total_tokens": "integer",
-  "model_name": "string",
-  "compression_applied": "boolean",
-  "compression_ratio": "float (optional)"
-}
-```
-
-## SDK Usage
-
-### Python SDK
-
-```python
-from src.infrastructure.clients.simple_model_client import SimpleModelClient
-
-# Create client
-client = SimpleModelClient()
-
-# Generate code
-result = await client.generate(
-    prompt="Create a fibonacci function",
-    config=None
-)
-```
-
-### TypeScript SDK
-
-```typescript
-import { ModelClient } from '@ai-challenge/sdk';
-
-const client = new ModelClient('http://localhost:8000');
-
-const result = await client.generate({
-  prompt: 'Create a fibonacci function',
-  modelName: 'starcoder'
-});
-```
-
-## Webhooks
-
-Webhooks are not currently supported but planned for future releases.
-
-## Rate Limits
-
-Rate limiting is not enforced in local development. For production deployments, configure appropriate rate limiting.
-
-## Best Practices
-
-1. **Use Appropriate Models**: Use StarCoder for code generation, Mistral for review
-2. **Handle Errors**: Always check status codes and handle errors appropriately
-3. **Monitor Health**: Use health endpoints before critical operations
-4. **Optimize Prompts**: Provide clear, specific prompts for better results
-5. **Monitor Tokens**: Use token info to optimize model selection
-
-## Support
-
-For API issues:
-1. Check health endpoints: `GET /health/ready`
-2. Review logs: `docker-compose logs api`
-3. See [Troubleshooting Guide](OPERATIONS.md)
-
-## Changelog
-
-See [CHANGELOG.md](../CHANGELOG.md) for API changes.
+Refer to the repository `CHANGELOG.md` and `packages/multipass-reviewer/CHANGELOG.md`
+for endpoint or behaviour updates tied to releases.
 

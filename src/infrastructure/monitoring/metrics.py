@@ -7,9 +7,7 @@ Following the Zen of Python:
 """
 
 import json
-import statistics
 import threading
-import time
 from collections import defaultdict, deque
 from datetime import datetime
 from pathlib import Path

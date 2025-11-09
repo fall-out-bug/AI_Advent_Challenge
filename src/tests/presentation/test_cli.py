@@ -1,13 +1,8 @@
 """Tests for presentation CLI layer."""
 
-import pytest
-import sys
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import patch
 
-from src.presentation.cli.main_cli import (
-    print_usage,
-    handle_status,
-)
+from src.presentation.cli.main_cli import handle_status, print_usage
 
 
 def test_print_usage(capsys) -> None:

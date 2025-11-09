@@ -2,15 +2,11 @@
 
 from __future__ import annotations
 
-import json
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
-from src.domain.value_objects.finetuning.finetuning_result import (
-    FineTuningResult,
-)
+from src.domain.value_objects.finetuning.finetuning_result import FineTuningResult
 from src.domain.value_objects.finetuning.finetuning_task import FineTuningTask
 from src.infrastructure.logging import get_logger
 
@@ -22,10 +18,11 @@ try:
     from transformers import (
         AutoModelForCausalLM,
         AutoTokenizer,
+        DataCollatorForLanguageModeling,
         Trainer,
         TrainingArguments,
-        DataCollatorForLanguageModeling,
     )
+
     TRANSFORMERS_AVAILABLE = True
 except ImportError:
     TRANSFORMERS_AVAILABLE = False
@@ -51,8 +48,7 @@ class FineTuningService:
         """
         if not TRANSFORMERS_AVAILABLE:
             raise RuntimeError(
-                "Hugging Face Transformers not installed. "
-                "Required for fine-tuning."
+                "Hugging Face Transformers not installed. " "Required for fine-tuning."
             )
 
         self._output_base_dir = Path(output_base_dir)
@@ -105,7 +101,9 @@ class FineTuningService:
             def format_prompts(examples):
                 """Format prompts for Mistral instruct format."""
                 prompts = []
-                for prompt, completion in zip(examples["prompt"], examples["completion"]):
+                for prompt, completion in zip(
+                    examples["prompt"], examples["completion"]
+                ):
                     formatted = f"<s>[INST] {prompt} [/INST] {completion} </s>"
                     prompts.append(formatted)
                 return {"text": prompts}

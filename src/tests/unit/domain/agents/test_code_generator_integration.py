@@ -4,7 +4,6 @@ Testing with real-like scenarios following the Zen of Python.
 """
 
 import pytest
-from unittest.mock import AsyncMock
 
 from src.domain.messaging.message_schema import CodeGenerationRequest
 
@@ -14,7 +13,6 @@ async def test_end_to_end_generation():
     """Test end-to-end code generation workflow."""
     # This would test the full integration once we implement
     # the actual code generator agent
-    pass
 
 
 @pytest.mark.asyncio

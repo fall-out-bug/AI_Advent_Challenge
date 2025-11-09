@@ -6,14 +6,14 @@ Following TDD principles:
 - One test per assertion where possible
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from rich.console import Console
 
 from src.presentation.cli.commands.status_cmd import (
-    display_status,
     _display_recent_operations,
     _display_token_usage,
+    display_status,
 )
 
 

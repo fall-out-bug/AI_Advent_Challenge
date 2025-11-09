@@ -83,11 +83,14 @@ make test-coverage
 pytest src/tests/unit/domain/test_agent_task.py -v
 ```
 
-### 4. Start Local Models (Optional)
+### 4. Start Local Models (Legacy)
+
+Local containers are deprecated; manifests remain in `archive/legacy/local_models/`
+for reference only.
 
 ```bash
-cd local_models
-docker-compose up -d
+cd archive/legacy/local_models
+docker-compose up -d mistral-chat
 
 # Verify models are running
 curl http://localhost:8000/health

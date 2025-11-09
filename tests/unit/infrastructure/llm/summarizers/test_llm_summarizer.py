@@ -75,13 +75,13 @@ def summarizer(mock_llm_client, mock_token_counter, text_cleaner, quality_checke
 async def test_summarize_text_success(summarizer, mock_llm_client):
     """Test successful text summarization."""
     text = "This is a test post. It contains multiple sentences. Each sentence has meaning."
-    
+
     result = await summarizer.summarize_text(
         text=text,
         max_sentences=2,
         language="ru",
     )
-    
+
     assert isinstance(result, SummaryResult)
     assert result.method == "direct"
     assert len(result.text) > 0
@@ -94,18 +94,18 @@ async def test_summarize_text_success(summarizer, mock_llm_client):
 async def test_summarize_posts(summarizer, mock_llm_client):
     """Test summarizing multiple posts."""
     from src.domain.value_objects.post_content import PostContent
-    
+
     posts = [
         PostContent(text="Post 1 text. " * 5, channel_username="test"),  # Longer posts
         PostContent(text="Post 2 text. " * 5, channel_username="test"),
     ]
-    
+
     result = await summarizer.summarize_posts(
         posts=posts,
         max_sentences=3,
         language="ru",
     )
-    
+
     assert isinstance(result, SummaryResult)
     assert result.method == "direct"
     # May be called multiple times due to retry logic, so check at least once
@@ -120,14 +120,14 @@ async def test_summarize_with_context(summarizer, mock_llm_client):
         time_period_hours=24,
         source_type="telegram_posts",
     )
-    
+
     result = await summarizer.summarize_text(
         text=text,
         max_sentences=5,
         language="ru",
         context=context,
     )
-    
+
     assert result is not None
     assert result.method == "direct"
 
@@ -155,18 +155,18 @@ async def test_quality_check_retry(summarizer, mock_llm_client, quality_checker)
         ),
     ]
     quality_checker.should_retry = MagicMock(side_effect=[True, False])
-    
+
     mock_llm_client.generate.side_effect = [
         "Short",
         "First sentence. Second sentence. Third sentence.",
     ]
-    
+
     result = await summarizer.summarize_text(
         text="Test text",
         max_sentences=3,
         language="ru",
     )
-    
+
     assert result is not None
     # Should have retried
     assert mock_llm_client.generate.call_count >= 2
@@ -176,13 +176,13 @@ async def test_quality_check_retry(summarizer, mock_llm_client, quality_checker)
 async def test_fallback_on_llm_error(summarizer, mock_llm_client):
     """Test fallback summary on LLM error."""
     mock_llm_client.generate.side_effect = Exception("LLM error")
-    
+
     result = await summarizer.summarize_text(
         text="Test text",
         max_sentences=3,
         language="ru",
     )
-    
+
     assert result is not None
     assert len(result.text) > 0
     assert result.method == "direct"
@@ -192,9 +192,9 @@ async def test_fallback_on_llm_error(summarizer, mock_llm_client):
 async def test_finalize_summary_sentence_count(summarizer):
     """Test finalize summary respects max_sentences."""
     summary = "First. Second. Third. Fourth. Fifth. Sixth."
-    
+
     finalized = summarizer._finalize_summary(summary, max_sentences=3, language="ru")
-    
+
     sentences = finalized.split(".")
     # Should have max 3 sentences (plus empty after last period)
     assert len([s for s in sentences if s.strip()]) <= 3

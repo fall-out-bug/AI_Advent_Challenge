@@ -37,9 +37,7 @@ class DiffAnalyzer:
         text_diff = self._compute_text_diff(old_code, new_code)
         ast_changes = self._analyze_ast_changes(old_code, new_code)
 
-        total_lines = max(
-            len(old_code.splitlines()), len(new_code.splitlines()), 1
-        )
+        total_lines = max(len(old_code.splitlines()), len(new_code.splitlines()), 1)
         change_ratio = (text_diff.lines_changed / total_lines) * 100.0
 
         return CodeDiff(
@@ -57,9 +55,7 @@ class DiffAnalyzer:
             has_new_imports=len(ast_changes.imports_added) > 0,
         )
 
-    def _compute_text_diff(
-        self, old_code: str, new_code: str
-    ) -> _TextDiffResult:
+    def _compute_text_diff(self, old_code: str, new_code: str) -> _TextDiffResult:
         """Compute textual diff using difflib.
 
         Args:
@@ -74,14 +70,10 @@ class DiffAnalyzer:
         diff = list(difflib.unified_diff(old_lines, new_lines, lineterm=""))
 
         lines_added = sum(
-            1
-            for line in diff
-            if line.startswith("+") and not line.startswith("+++")
+            1 for line in diff if line.startswith("+") and not line.startswith("+++")
         )
         lines_removed = sum(
-            1
-            for line in diff
-            if line.startswith("-") and not line.startswith("---")
+            1 for line in diff if line.startswith("-") and not line.startswith("---")
         )
         lines_changed = max(lines_added, lines_removed)
 
@@ -91,9 +83,7 @@ class DiffAnalyzer:
             lines_changed=lines_changed,
         )
 
-    def _analyze_ast_changes(
-        self, old_code: str, new_code: str
-    ) -> _ASTChanges:
+    def _analyze_ast_changes(self, old_code: str, new_code: str) -> _ASTChanges:
         """Analyze AST-level changes for Python code.
 
         Args:
@@ -116,9 +106,7 @@ class DiffAnalyzer:
         old_imports = self._extract_imports(old_ast)
         new_imports = self._extract_imports(new_ast)
 
-        functions_added = [
-            name for name in new_functions if name not in old_functions
-        ]
+        functions_added = [name for name in new_functions if name not in old_functions]
         functions_removed = [
             name for name in old_functions if name not in new_functions
         ]
@@ -127,12 +115,8 @@ class DiffAnalyzer:
             for name in new_classes
             if name in old_classes and new_classes[name] != old_classes[name]
         ]
-        imports_added = [
-            imp for imp in new_imports if imp not in old_imports
-        ]
-        imports_removed = [
-            imp for imp in old_imports if imp not in new_imports
-        ]
+        imports_added = [imp for imp in new_imports if imp not in old_imports]
+        imports_removed = [imp for imp in old_imports if imp not in new_imports]
 
         has_refactor = (
             len(functions_added) > 0
@@ -140,9 +124,7 @@ class DiffAnalyzer:
             or len(classes_changed) > 0
         )
 
-        complexity_delta = self._estimate_complexity_delta(
-            old_ast, new_ast
-        )
+        complexity_delta = self._estimate_complexity_delta(old_ast, new_ast)
 
         return _ASTChanges(
             functions_added=functions_added,
@@ -199,9 +181,7 @@ class DiffAnalyzer:
         for item in ast.walk(node):
             if isinstance(item, ast.ClassDef):
                 method_count = sum(
-                    1
-                    for child in ast.walk(item)
-                    if isinstance(child, ast.FunctionDef)
+                    1 for child in ast.walk(item) if isinstance(child, ast.FunctionDef)
                 )
                 classes[item.name] = method_count
         return classes
@@ -272,9 +252,7 @@ class DiffAnalyzer:
 class _TextDiffResult:
     """Internal result from text diff computation."""
 
-    def __init__(
-        self, lines_added: int, lines_removed: int, lines_changed: int
-    ):
+    def __init__(self, lines_added: int, lines_removed: int, lines_changed: int):
         self.lines_added = lines_added
         self.lines_removed = lines_removed
         self.lines_changed = lines_changed
@@ -300,4 +278,3 @@ class _ASTChanges:
         self.imports_removed = imports_removed or []
         self.complexity_delta = complexity_delta
         self.has_refactor = has_refactor
-

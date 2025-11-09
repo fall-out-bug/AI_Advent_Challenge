@@ -32,8 +32,6 @@ class PDFTemplateError(PDFGenerationError):
     Raised when template rendering fails.
     """
 
-    pass
-
 
 class PDFRenderError(PDFGenerationError):
     """Error during PDF rendering.
@@ -41,14 +39,9 @@ class PDFRenderError(PDFGenerationError):
     Raised when PDF rendering fails (e.g., WeasyPrint errors).
     """
 
-    pass
-
 
 class PDFCacheError(PDFGenerationError):
     """Error during PDF caching operations.
 
     Raised when caching operations fail.
     """
-
-    pass
-

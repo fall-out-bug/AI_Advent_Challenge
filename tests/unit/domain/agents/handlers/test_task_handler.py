@@ -86,9 +86,7 @@ class TestTaskHandler:
         assert "?" in response or "clarif" in response.lower()
 
     @pytest.mark.asyncio
-    async def test_handle_handles_error(
-        self, handler, mock_intent_orchestrator
-    ):
+    async def test_handle_handles_error(self, handler, mock_intent_orchestrator):
         """Test error handling."""
         context = DialogContext(
             state=DialogState.IDLE,
@@ -100,4 +98,3 @@ class TestTaskHandler:
         )
         response = await handler.handle(context, "Create task")
         assert "sorry" in response.lower() or "error" in response.lower()
-

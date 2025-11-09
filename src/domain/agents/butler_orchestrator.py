@@ -9,7 +9,6 @@ from typing import Any, Optional
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from src.application.orchestration.intent_orchestrator import IntentOrchestrator
 from src.domain.agents.handlers.chat_handler import ChatHandler
 from src.domain.agents.handlers.data_handler import DataHandler
 from src.domain.agents.handlers.homework_handler import HomeworkHandler
@@ -17,8 +16,6 @@ from src.domain.agents.handlers.reminders_handler import RemindersHandler
 from src.domain.agents.handlers.task_handler import TaskHandler
 from src.domain.agents.services.mode_classifier import DialogMode, ModeClassifier
 from src.domain.agents.state_machine import DialogContext, DialogState
-from src.domain.interfaces.llm_client import LLMClientProtocol
-from src.domain.interfaces.tool_client import ToolClientProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +68,11 @@ class ButlerOrchestrator:
         self.context_collection = mongodb.dialog_contexts
 
     async def handle_user_message(
-        self, user_id: str, message: str, session_id: str, force_mode: Optional[DialogMode] = None
+        self,
+        user_id: str,
+        message: str,
+        session_id: str,
+        force_mode: Optional[DialogMode] = None,
     ) -> str:
         """Handle user message - main entry point.
 
@@ -200,4 +201,3 @@ class ButlerOrchestrator:
             data=doc.get("data", {}),
             step_count=doc.get("step_count", 0),
         )
-

@@ -6,11 +6,7 @@ import asyncio
 import time
 from typing import Any
 
-from src.domain.services.summarizer import SummarizerService
-from src.domain.services.summary_quality_checker import (
-    QualityScore,
-    SummaryQualityChecker,
-)
+from src.domain.services.summary_quality_checker import SummaryQualityChecker
 from src.domain.services.text_cleaner import TextCleanerService
 from src.domain.value_objects.post_content import PostContent
 from src.domain.value_objects.summarization_context import SummarizationContext
@@ -108,7 +104,9 @@ class MapReduceSummarizer:
         start_time = time.time()
 
         # Clean input
-        cleaned_text = self.text_cleaner.clean_for_summarization(text, max_length_per_item=10000)
+        cleaned_text = self.text_cleaner.clean_for_summarization(
+            text, max_length_per_item=10000
+        )
 
         # Chunk text
         chunks = self.chunker.chunk_text(cleaned_text)
@@ -161,8 +159,8 @@ class MapReduceSummarizer:
             [f"Fragment {i+1}:\n{s}" for i, s in enumerate(chunk_summaries)]
         )
         # Pass channel context to reduce prompt for better isolation
-        channel_username = context.channel_username if context else None
-        channel_title = context.channel_title if context else None
+        context.channel_username if context else None
+        context.channel_title if context else None
         reduce_prompt = get_reduce_prompt(
             summaries=combined, language=language, max_sentences=max_sentences
         )
@@ -238,32 +236,37 @@ class MapReduceSummarizer:
             if cleaned and len(cleaned) > 20:
                 # Increased limit to 1000 chars per post for better context
                 cleaned_posts.append(cleaned[:1000])
-        
+
         # Verify all posts belong to the same channel (if context provided)
         if context and context.channel_username:
             wrong_channel_posts = [
-                i for i, post in enumerate(posts)
-                if post.channel_username and post.channel_username != context.channel_username
+                i
+                for i, post in enumerate(posts)
+                if post.channel_username
+                and post.channel_username != context.channel_username
             ]
             if wrong_channel_posts:
                 from src.infrastructure.logging import get_logger
+
                 logger = get_logger("map_reduce_summarizer")
                 logger.warning(
                     f"Found {len(wrong_channel_posts)} posts from different channel in MapReduceSummarizer. "
                     f"Expected: {context.channel_username}, filtering them out."
                 )
                 cleaned_posts = [
-                    cleaned for i, cleaned in enumerate(cleaned_posts)
+                    cleaned
+                    for i, cleaned in enumerate(cleaned_posts)
                     if i not in wrong_channel_posts
                 ]
                 posts = [
-                    post for i, post in enumerate(posts)
-                    if i not in wrong_channel_posts
+                    post for i, post in enumerate(posts) if i not in wrong_channel_posts
                 ]
 
         if not cleaned_posts:
             return SummaryResult(
-                text="Нет пригодных постов для суммаризации." if language == "ru" else "No suitable posts.",
+                text="Нет пригодных постов для суммаризации."
+                if language == "ru"
+                else "No suitable posts.",
                 sentences_count=0,
                 method="map_reduce",
                 confidence=0.0,
@@ -272,12 +275,13 @@ class MapReduceSummarizer:
 
         combined_text = "\n\n".join(cleaned_posts)
         return await self.summarize_text(
-            combined_text, max_sentences=max_sentences, language=language, context=context
+            combined_text,
+            max_sentences=max_sentences,
+            language=language,
+            context=context,
         )
 
-    async def _summarize_chunk(
-        self, chunk, max_sentences: int, language: str
-    ) -> str:
+    async def _summarize_chunk(self, chunk, max_sentences: int, language: str) -> str:
         """Summarize a single chunk (Map phase).
 
         Args:
@@ -302,9 +306,7 @@ class MapReduceSummarizer:
         cleaned = self.text_cleaner.clean_llm_response(response)
         return cleaned
 
-    def _finalize_summary(
-        self, summary: str, max_sentences: int, language: str
-    ) -> str:
+    def _finalize_summary(self, summary: str, max_sentences: int, language: str) -> str:
         """Finalize summary: ensure proper sentence count and format.
 
         Args:

@@ -94,10 +94,16 @@ async def test_clarification_flow_moves_states_correctly() -> None:
         )
 
     import unittest.mock
-    with unittest.mock.patch.object(IntentOrchestrator, "parse_task_intent", mock_parse):
+
+    with unittest.mock.patch.object(
+        IntentOrchestrator, "parse_task_intent", mock_parse
+    ):
         # First message: needs clarification
         await tasks_mod.handle_task_input(msg, state)  # type: ignore[arg-type]
-        assert state.storage.data.get(f"{state.key}_state") == TaskCreation.waiting_for_clarification
+        assert (
+            state.storage.data.get(f"{state.key}_state")
+            == TaskCreation.waiting_for_clarification
+        )
         assert any("deadline" in s.lower() for s in msg.sent)
 
         # Second message: provides clarification
@@ -112,7 +118,9 @@ async def test_clarification_flow_moves_states_correctly() -> None:
 
 
 @pytest.mark.asyncio
-async def test_bot_mcp_integration_with_mocked_client(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_bot_mcp_integration_with_mocked_client(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Bot handlers calling MCP tools with error handling."""
     import src.presentation.bot.handlers.menu as menu_mod
 
@@ -123,7 +131,12 @@ async def test_bot_mcp_integration_with_mocked_client(monkeypatch: pytest.Monkey
             call_count["count"] += 1
             if tool_name == "get_summary":
                 return {
-                    "stats": {"total": 3, "completed": 1, "overdue": 1, "high_priority": 1},
+                    "stats": {
+                        "total": 3,
+                        "completed": 1,
+                        "overdue": 1,
+                        "high_priority": 1,
+                    },
                     "tasks": [],
                 }
             return {}
@@ -142,4 +155,3 @@ async def test_bot_mcp_integration_with_mocked_client(monkeypatch: pytest.Monkey
     await menu_mod.callback_summary(call)  # type: ignore[arg-type]
 
     assert call_count["count"] == 1
-

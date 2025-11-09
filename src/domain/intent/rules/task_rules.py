@@ -25,13 +25,19 @@ def extract_task_title(match: re.Match) -> str:
 TASK_RULES: list[Tuple[re.Pattern, IntentType, float, Dict[str, Callable]]] = [
     # Task creation patterns
     (
-        re.compile(r"(создай|добавь|create|add)\s+(задачу|задач|task)\s+(?:на|to|для|for)?\s*(.+)?", re.IGNORECASE),
+        re.compile(
+            r"(создай|добавь|create|add)\s+(задачу|задач|task)\s+(?:на|to|для|for)?\s*(.+)?",
+            re.IGNORECASE,
+        ),
         IntentType.TASK_CREATE,
         0.95,
         {"title": extract_task_title},
     ),
     (
-        re.compile(r"(нужно|надо|need|must)\s+(.+?)(?:сделать|do|выполнить|execute)", re.IGNORECASE),
+        re.compile(
+            r"(нужно|надо|need|must)\s+(.+?)(?:сделать|do|выполнить|execute)",
+            re.IGNORECASE,
+        ),
         IntentType.TASK_CREATE,
         0.85,
         {"title": extract_task_title},
@@ -44,7 +50,9 @@ TASK_RULES: list[Tuple[re.Pattern, IntentType, float, Dict[str, Callable]]] = [
     ),
     # Task listing patterns
     (
-        re.compile(r"(какие|мои|show|list|покажи)\s+(задач|task|дел|todos)", re.IGNORECASE),
+        re.compile(
+            r"(какие|мои|show|list|покажи)\s+(задач|task|дел|todos)", re.IGNORECASE
+        ),
         IntentType.TASK_LIST,
         0.95,
         {},
@@ -57,7 +65,10 @@ TASK_RULES: list[Tuple[re.Pattern, IntentType, float, Dict[str, Callable]]] = [
     ),
     # Task update patterns
     (
-        re.compile(r"(измени|update|change|изменя|редактир|edit)\s+(задачу|task)", re.IGNORECASE),
+        re.compile(
+            r"(измени|update|change|изменя|редактир|edit)\s+(задачу|task)",
+            re.IGNORECASE,
+        ),
         IntentType.TASK_UPDATE,
         0.90,
         {},
@@ -70,4 +81,3 @@ TASK_RULES: list[Tuple[re.Pattern, IntentType, float, Dict[str, Callable]]] = [
         {},
     ),
 ]
-

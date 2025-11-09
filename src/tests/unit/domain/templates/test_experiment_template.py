@@ -3,9 +3,10 @@
 Following TDD principles and the Zen of Python.
 """
 
-import pytest
 import tempfile
 from pathlib import Path
+
+import pytest
 import yaml
 
 from src.domain.templates.experiment_template import (

@@ -10,14 +10,12 @@ from typing import Any, Dict, Optional
 
 import httpx
 from tenacity import (
+    RetryError,
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
-    RetryError,
 )
-
-from src.domain.interfaces.llm_client import LLMClientProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -25,19 +23,13 @@ logger = logging.getLogger(__name__)
 class MistralClientError(Exception):
     """Base exception for Mistral client errors."""
 
-    pass
-
 
 class MistralTimeoutError(MistralClientError):
     """Timeout error for Mistral client."""
 
-    pass
-
 
 class MistralConnectionError(MistralClientError):
     """Connection error for Mistral client."""
-
-    pass
 
 
 class MistralClient:
@@ -396,4 +388,3 @@ class MistralClient:
             await self._client.aclose()
             self._client = None
             logger.debug("Mistral client closed")
-

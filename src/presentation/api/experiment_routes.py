@@ -4,9 +4,10 @@ Note: Legacy adapter routes have been removed in Phase 2.
 Use the new Phase 2 API endpoints instead.
 """
 
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional
 
 
 class RunExperimentRequest(BaseModel):

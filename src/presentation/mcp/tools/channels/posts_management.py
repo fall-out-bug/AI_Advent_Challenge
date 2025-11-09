@@ -6,24 +6,24 @@ Following Python Zen:
 """
 
 import os
-import re
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from src.presentation.mcp.server import mcp
-from src.presentation.mcp.tools.channels.utils import get_database, guess_usernames_from_human_name
-from src.infrastructure.repositories.post_repository import PostRepository
 from src.infrastructure.logging import get_logger
+from src.infrastructure.repositories.post_repository import PostRepository
+from src.presentation.mcp.server import mcp
 from src.presentation.mcp.tools.channels.channel_metadata import get_channel_metadata
+from src.presentation.mcp.tools.channels.utils import (
+    get_database,
+    guess_usernames_from_human_name,
+)
 
 logger = get_logger("posts_management")
 
 
 @mcp.tool()
 async def get_posts(
-    channel_username: str,
-    hours: int = 24,
-    user_id: Optional[int] = None
+    channel_username: str, hours: int = 24, user_id: Optional[int] = None
 ) -> Dict[str, Any]:
     """Get posts for a specific channel from MongoDB for the last N hours.
 
@@ -40,15 +40,19 @@ async def get_posts(
     now = datetime.now(tz=timezone.utc)
     date_from = now - timedelta(hours=max(0, int(hours)))
 
-    cursor = db.posts.find({
-        "channel_username": channel_username.lstrip("@"),
-        "date": {"$gte": date_from.isoformat()}
-    }).sort("date", -1)
+    cursor = db.posts.find(
+        {
+            "channel_username": channel_username.lstrip("@"),
+            "date": {"$gte": date_from.isoformat()},
+        }
+    ).sort("date", -1)
 
     posts = await cursor.to_list(length=1000)
     posts_count = len(posts)
 
-    logger.debug(f"get_posts: channel={channel_username}, hours={hours}, posts_count={posts_count}")
+    logger.debug(
+        f"get_posts: channel={channel_username}, hours={hours}, posts_count={posts_count}"
+    )
     return {
         "status": "success",
         "channel_username": channel_username,
@@ -62,16 +66,16 @@ async def _fetch_and_save_posts(
     client: "Client",  # Pyrogram Client - lazy import
     channel_username: str,
     user_id: Optional[int],
-    window_hours: int
+    window_hours: int,
 ) -> int:
     """Fetch posts from Telegram and save to database.
-    
+
     Args:
         client: Pyrogram client instance
         channel_username: Channel username
         user_id: User ID for posts
         window_hours: Hours to look back
-        
+
     Returns:
         Number of posts saved
     """
@@ -155,10 +159,11 @@ async def collect_posts(
             }
 
         # Lazy import to avoid event loop issues at module load time
-        from pyrogram import Client
-        
         # Use unique client name to avoid conflicts with concurrent requests
         import uuid
+
+        from pyrogram import Client
+
         client_name = f"butler_posts_{uuid.uuid4().hex[:8]}"
 
         client = Client(
@@ -185,17 +190,21 @@ async def collect_posts(
             if any(ord(ch) > 127 for ch in channel_username):
                 for cand in guess_usernames_from_human_name(channel_username):
                     try:
-                        chat = await client.get_chat(cand)
+                        await client.get_chat(cand)
                         channel_username = cand
                         break
                     except Exception:
                         continue
 
-            collected = await _fetch_and_save_posts(client, channel_username, user_id, hours)
+            collected = await _fetch_and_save_posts(
+                client, channel_username, user_id, hours
+            )
             collected_total += collected
-            
+
             if collected == 0 and fallback_to_7_days and hours < 168:
-                collected = await _fetch_and_save_posts(client, channel_username, user_id, 168)
+                collected = await _fetch_and_save_posts(
+                    client, channel_username, user_id, 168
+                )
                 collected_total += collected
 
         finally:
@@ -209,12 +218,21 @@ async def collect_posts(
             "hours": hours if collected_total else 168 if fallback_to_7_days else hours,
         }
     except Exception as e:
-        logger.error(f"collect_posts failed: channel={channel_username}, error={str(e)}", exc_info=True)
-        return {"status": "error", "error": str(e), "channel_username": channel_username}
+        logger.error(
+            f"collect_posts failed: channel={channel_username}, error={str(e)}",
+            exc_info=True,
+        )
+        return {
+            "status": "error",
+            "error": str(e),
+            "channel_username": channel_username,
+        }
 
 
 @mcp.tool()
-async def save_posts_to_db(posts: List[dict], channel_username: str, user_id: int) -> Dict[str, Any]:
+async def save_posts_to_db(
+    posts: List[dict], channel_username: str, user_id: int
+) -> Dict[str, Any]:
     """Save fetched posts to MongoDB via repository with deduplication.
 
     Args:
@@ -239,8 +257,10 @@ async def save_posts_to_db(posts: List[dict], channel_username: str, user_id: in
             # Handle both "channel" and "channel_username" fields
             # Posts from telegram_utils have "channel" field with actual username
             # Posts from other sources may have "channel_username" field
-            post_channel = post.get("channel") or post.get("channel_username") or channel_username
-            
+            post_channel = (
+                post.get("channel") or post.get("channel_username") or channel_username
+            )
+
             post_with_metadata = {
                 "channel_username": post_channel,  # Use actual username from post if available
                 "message_id": post.get("message_id", ""),
@@ -253,7 +273,9 @@ async def save_posts_to_db(posts: List[dict], channel_username: str, user_id: in
 
             if isinstance(post_with_metadata["date"], str):
                 try:
-                    post_with_metadata["date"] = datetime.fromisoformat(post_with_metadata["date"])
+                    post_with_metadata["date"] = datetime.fromisoformat(
+                        post_with_metadata["date"]
+                    )
                 except (ValueError, AttributeError):
                     post_with_metadata["date"] = datetime.utcnow()
 
@@ -263,11 +285,15 @@ async def save_posts_to_db(posts: List[dict], channel_username: str, user_id: in
             else:
                 skipped_count += 1
         except ValueError as e:
-            logger.warning(f"Invalid post skipped: channel={channel_username}, error={str(e)}")
+            logger.warning(
+                f"Invalid post skipped: channel={channel_username}, error={str(e)}"
+            )
             skipped_count += 1
         except Exception as e:
-            logger.error(f"Error saving post: channel={channel_username}, error={str(e)}", exc_info=True)
+            logger.error(
+                f"Error saving post: channel={channel_username}, error={str(e)}",
+                exc_info=True,
+            )
             skipped_count += 1
 
     return {"saved": saved_count, "skipped": skipped_count, "total": len(posts)}
-

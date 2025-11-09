@@ -22,9 +22,7 @@ class TestCollectDataUseCase:
         return CollectDataUseCase(tool_client=mock_tool_client)
 
     @pytest.mark.asyncio
-    async def test_get_channels_digest_success(
-        self, usecase, mock_tool_client
-    ):
+    async def test_get_channels_digest_success(self, usecase, mock_tool_client):
         """Test successful channel digest retrieval."""
         digests = [
             {
@@ -54,9 +52,7 @@ class TestCollectDataUseCase:
         )
 
     @pytest.mark.asyncio
-    async def test_get_channels_digest_empty(
-        self, usecase, mock_tool_client
-    ):
+    async def test_get_channels_digest_empty(self, usecase, mock_tool_client):
         """Test empty channel digest result."""
         mock_tool_client.call_tool.return_value = {
             "digests": [],
@@ -70,9 +66,7 @@ class TestCollectDataUseCase:
         assert result.error is None
 
     @pytest.mark.asyncio
-    async def test_get_channels_digest_error(
-        self, usecase, mock_tool_client
-    ):
+    async def test_get_channels_digest_error(self, usecase, mock_tool_client):
         """Test error handling for channel digest."""
         mock_tool_client.call_tool.side_effect = Exception("MCP error")
 
@@ -84,9 +78,7 @@ class TestCollectDataUseCase:
         assert "MCP error" in result.error
 
     @pytest.mark.asyncio
-    async def test_get_student_stats_success(
-        self, usecase, mock_tool_client
-    ):
+    async def test_get_student_stats_success(self, usecase, mock_tool_client):
         """Test successful student stats retrieval."""
         stats = {
             "total_students": 25,
@@ -106,9 +98,7 @@ class TestCollectDataUseCase:
         )
 
     @pytest.mark.asyncio
-    async def test_get_student_stats_empty(
-        self, usecase, mock_tool_client
-    ):
+    async def test_get_student_stats_empty(self, usecase, mock_tool_client):
         """Test empty student stats result."""
         mock_tool_client.call_tool.return_value = {"stats": {}}
 
@@ -119,9 +109,7 @@ class TestCollectDataUseCase:
         assert result.error is None
 
     @pytest.mark.asyncio
-    async def test_get_student_stats_error(
-        self, usecase, mock_tool_client
-    ):
+    async def test_get_student_stats_error(self, usecase, mock_tool_client):
         """Test error handling for student stats."""
         mock_tool_client.call_tool.side_effect = Exception("MCP error")
 
@@ -133,9 +121,7 @@ class TestCollectDataUseCase:
         assert "MCP error" in result.error
 
     @pytest.mark.asyncio
-    async def test_get_student_stats_tool_not_found(
-        self, usecase, mock_tool_client
-    ):
+    async def test_get_student_stats_tool_not_found(self, usecase, mock_tool_client):
         """Test when student stats tool doesn't exist."""
         # Tool might not exist, return empty result
         mock_tool_client.call_tool.side_effect = Exception("Tool not found")
@@ -144,4 +130,3 @@ class TestCollectDataUseCase:
 
         assert isinstance(result, StatsResult)
         assert result.error is not None
-

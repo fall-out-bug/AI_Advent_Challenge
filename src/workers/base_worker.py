@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import signal
 from abc import ABC, abstractmethod
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -48,9 +46,7 @@ class BaseWorker(ABC):
         """Register signal handlers for graceful shutdown."""
 
         def signal_handler(signum, frame):
-            logger.info(
-                f"{self.worker_name} received shutdown signal: {signum}"
-            )
+            logger.info(f"{self.worker_name} received shutdown signal: {signum}")
             self.stop()
 
         signal.signal(signal.SIGTERM, signal_handler)
@@ -80,7 +76,6 @@ class BaseWorker(ABC):
         Purpose:
             Override in subclasses to perform initialization.
         """
-        pass
 
     async def on_stop(self) -> None:
         """Hook called after worker stops.
@@ -88,7 +83,6 @@ class BaseWorker(ABC):
         Purpose:
             Override in subclasses to perform cleanup.
         """
-        pass
 
     @abstractmethod
     async def run(self) -> None:
@@ -125,4 +119,3 @@ class BaseWorker(ABC):
             self._running = False
             await self.on_stop()
             logger.info(f"{self.worker_name} stopped")
-

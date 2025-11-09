@@ -47,12 +47,12 @@ async def get_db() -> AsyncIOMotorDatabase:
     # This is important for tests where DB_NAME might change
     settings = get_settings()
     db_name = settings.db_name
-    
+
     global _db
     # Reset DB if name changed (important for tests)
     if _db is not None and _db.name != db_name:
         _db = None
-    
+
     if _db is not None:
         return _db
 
@@ -69,5 +69,3 @@ async def close_client() -> None:
         _client.close()
     _client = None
     _db = None
-
-

@@ -9,15 +9,14 @@ MINIO_KEY = os.getenv("MINIO_ROOT_USER", "minioadmin")
 MINIO_SECRET = os.getenv("MINIO_ROOT_PASSWORD", "minioadmin")
 
 RATINGS_PATH = os.getenv("RATINGS_PATH", "s3a://movielens/latest/ratings.csv")
-MOVIES_PATH  = os.getenv("MOVIES_PATH",  "s3a://movielens/latest/movies.csv")
-OUT_PATH     = os.getenv("OUT_PATH",     "s3a://features/users")
+MOVIES_PATH = os.getenv("MOVIES_PATH", "s3a://movielens/latest/movies.csv")
+OUT_PATH = os.getenv("OUT_PATH", "s3a://features/users")
 
 OUT_PARTS = int(os.getenv("FE_OUT_PARTITIONS", "200"))  # разумное число файлов
 SHUFFLE_PARTS = int(os.getenv("SPARK_SHUFFLE_PARTITIONS", "400"))
 
 builder = (
-    SparkSession.builder
-    .appName("hw2_features_engineering")
+    SparkSession.builder.appName("hw2_features_engineering")
     # S3A / MinIO
     .config("spark.hadoop.fs.s3a.endpoint", MINIO_ENDPOINT)
     .config("spark.hadoop.fs.s3a.access.key", MINIO_KEY)
@@ -46,7 +45,7 @@ ratings = (
         F.col("userId").cast("int").alias("userId"),
         F.col("movieId").cast("int").alias("movieId"),
         F.col("rating").cast("double").alias("rating"),
-        F.col("timestamp").cast("long").alias("ts")
+        F.col("timestamp").cast("long").alias("ts"),
     )
 )
 
@@ -56,20 +55,17 @@ movies = (
     .select(
         F.col("movieId").cast("int").alias("movieId"),
         F.col("title").alias("title"),
-        F.col("genres").alias("genres")
+        F.col("genres").alias("genres"),
     )
 )
 
 # Базовая статистика по пользователю (без тяжёлых списков)
-user_stats = (
-    ratings.groupBy("userId")
-    .agg(
-        F.count("*").alias("ratings_cnt"),
-        F.mean("rating").alias("rating_mean"),
-        F.expr("percentile_approx(rating, 0.5)").alias("rating_median"),
-        F.stddev_pop("rating").alias("rating_std"),
-        F.max("ts").alias("last_ts")
-    )
+user_stats = ratings.groupBy("userId").agg(
+    F.count("*").alias("ratings_cnt"),
+    F.mean("rating").alias("rating_mean"),
+    F.expr("percentile_approx(rating, 0.5)").alias("rating_median"),
+    F.stddev_pop("rating").alias("rating_std"),
+    F.max("ts").alias("last_ts"),
 )
 
 # Любимый жанр: explode -> count -> top1 per user
@@ -89,21 +85,16 @@ fav_genre = (
     .select(
         "userId",
         F.col("genre").alias("fav_genre"),
-        F.col("count").alias("fav_genre_cnt")
+        F.col("count").alias("fav_genre_cnt"),
     )
 )
 
-features = (
-    user_stats.alias("u")
-    .join(fav_genre.alias("g"), "userId", "left")
-)
+features = user_stats.alias("u").join(fav_genre.alias("g"), "userId", "left")
 
 # Пишем компактно: без репартиции по ключу, просто укрупняем число файлов
 (
-    features
-    .coalesce(OUT_PARTS)
-    .write
-    .mode("overwrite")
+    features.coalesce(OUT_PARTS)
+    .write.mode("overwrite")
     .option("maxRecordsPerFile", 100_000)
     .parquet(OUT_PATH)
 )

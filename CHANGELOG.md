@@ -5,6 +5,58 @@ All notable changes to the AI Challenge project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Day 19] - 2025-11-08
+
+### Added
+- Tenacity-backed retry policy for all modular reviewer LLM calls (shared package + bridge service)
+- Partial-failure handling in `MultiPassReport` with status/error metadata and trace-aware logging
+- Negative test suites for modular reviewer integration (`tests/unit/application/services/test_modular_review_service.py`)
+- Latency benchmarking helper for Qwen (`/v1/chat/completions`) and documentation updates (`docs/USER_GUIDE.md`, `docs/PERFORMANCE_BENCHMARKS.md`)
+
+### Changed
+- `ModularReviewService` wires Prometheus checker/pass metrics and trace-aware logging end-to-end
+- UnifiedModelClient alias handling tightened; OpenAI-compatible endpoint recommended for shared `llm-api`
+- Documentation refreshed to cover new environment variables (`LLM_URL`, `LLM_MODEL=qwen`) and failover guidance
+
+### Fixed
+- Reviewer integration now skips checker metrics when a pass fails and surfaces package errors in legacy reports
+- Health script instructions clarified for authenticated Mongo URLs pointing at shared infra
+
+### Performance
+- Dummy LLM review averages 0.00068s; Qwen via `/v1/chat/completions` averages 4.08s across 5 runs (see docs/PERFORMANCE_BENCHMARKS.md)
+
+## [Day 18] - 2025-11-07
+
+### Added
+- **Shared Infra Cutover**: Application connects to `infra_shared`/`infra_infra_db-network`
+  services (MongoDB, Prometheus, Grafana, Mistral) with integration and e2e tests.
+- **Reusable Multipass Reviewer Package**: `packages/multipass-reviewer` published with
+  Clean Architecture layout, prompt embedding, configurable passes, Spark/Airflow and
+  MLOps/Data checkers, plus metrics wiring.
+- **Bridge Service**: `ModularReviewService` adapts the new package to existing
+  repositories, adds checker-level Prometheus counters and structured logging.
+- **Documentation Refresh**: Updated user guide, development guide, API docs, and new
+  troubleshooting matrix for shared infra scenarios.
+
+### Changed
+- **ReviewSubmissionUseCase**: Optional dependencies default to production-grade log
+  parser/normalizer/analyzer, uses feature flag to switch to modular reviewer, and reuses
+  shared logger.
+- **LLM Client Integration**: Added alias adapter translating package model names to shared
+  infrastructure identifiers (normalises `mistral-7b-instruct-v0.2` → `mistral`).
+- **E2E Pipeline**: Runs inside a dual-network container, exercising shared services,
+  modular reviewer flag, and haiku generation.
+- **Compose & Env**: Docker stack and `.env` defaults updated to drop local Mongo/LLM and
+  rely on shared services.
+
+### Fixed
+- Prevented `Unknown model: summary` and Pydantic validation errors by normalising model
+  aliases before delegating to `UnifiedModelClient`.
+- Eliminated flaky e2e skips by ensuring tests attach to shared networks and supplying
+  authenticated Mongo URLs.
+
+---
+
 ## [Day 17] - 2025-11-07
 
 ### Added

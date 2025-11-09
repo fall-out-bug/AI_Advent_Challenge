@@ -1,6 +1,3 @@
-import pytest
-
-
 def test_build_main_menu():
     from src.presentation.bot.handlers.menu import build_main_menu
 
@@ -16,4 +13,3 @@ def test_menu_navigation_flow():
     tasks = build_tasks_menu()
     assert main is not None
     assert tasks is not None
-

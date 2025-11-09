@@ -55,9 +55,7 @@ class MistralChatUseCase:
 
         return response
 
-    async def get_conversation_history(
-        self, conversation_id: str, limit: int = 10
-    ):
+    async def get_conversation_history(self, conversation_id: str, limit: int = 10):
         """Get conversation history.
 
         Args:
@@ -68,4 +66,3 @@ class MistralChatUseCase:
             List of messages
         """
         return await self.conversation_repo.get_recent_messages(conversation_id, limit)
-

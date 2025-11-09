@@ -1,8 +1,9 @@
 """Dashboard API routes for real-time metrics visualization."""
 
+from pathlib import Path
+
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
-from pathlib import Path
 
 from src.infrastructure.monitoring.metrics import get_metrics
 

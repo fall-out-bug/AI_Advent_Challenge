@@ -132,4 +132,3 @@ class TestModeClassifier:
         await classifier.classify("Create task")
         # Verify make_request was called
         assert mock_llm.call_count == 1
-

@@ -10,7 +10,7 @@ import re
 import time
 from typing import Optional
 
-from src.domain.intent.intent_classifier import IntentClassifierProtocol, IntentResult, IntentType
+from src.domain.intent.intent_classifier import IntentResult, IntentType
 from src.domain.interfaces.llm_client import LLMClientProtocol
 from src.infrastructure.logging import get_logger
 
@@ -203,14 +203,21 @@ class LLMClassifier:
         # Try to find matching IntentType
         intent_str_upper = intent_str.strip().upper()
         for intent_type in IntentType:
-            if intent_type.name == intent_str_upper or intent_type.value.upper() == intent_str_upper:
+            if (
+                intent_type.name == intent_str_upper
+                or intent_type.value.upper() == intent_str_upper
+            ):
                 return intent_type
 
         # Try partial matching
         for intent_type in IntentType:
-            if intent_str_upper in intent_type.name or intent_str_upper in intent_type.value.upper():
+            if (
+                intent_str_upper in intent_type.name
+                or intent_str_upper in intent_type.value.upper()
+            ):
                 return intent_type
 
-        logger.warning(f"Unknown intent type from LLM: {intent_str}, defaulting to IDLE")
+        logger.warning(
+            f"Unknown intent type from LLM: {intent_str}, defaulting to IDLE"
+        )
         return IntentType.IDLE
-

@@ -24,7 +24,7 @@ async def send_with_retry(
     bot: Bot,
     user_id: int,
     get_text_fn_or_str: Union[str, Callable[..., Any]],
-    notification_type: str
+    notification_type: str,
 ) -> None:
     """Send message with exponential backoff retry.
 
@@ -43,93 +43,110 @@ async def send_with_retry(
         None (raises exception if all retries fail)
     """
     delay = INITIAL_RETRY_DELAY
-    
+
     for attempt in range(MAX_RETRIES):
         try:
             text = await _resolve_text(get_text_fn_or_str, user_id)
-            
+
             if not text:
-                logger.warning("No text to send, skipping", 
-                             user_id=user_id, 
-                             type=notification_type)
+                logger.warning(
+                    "No text to send, skipping", user_id=user_id, type=notification_type
+                )
                 return
-            
+
             # Check if this is a digest (always plain text)
             is_digest = "digest" in notification_type.lower()
-            
+
             # For digests: clean Markdown before sending
             if is_digest:
                 original_length = len(text)
                 text = clean_markdown(text)
-                logger.info("Cleaned digest text", 
-                          user_id=user_id, 
-                          original_length=original_length, 
-                          cleaned_length=len(text))
-            
-            logger.info("Attempting to send message", 
-                       user_id=user_id, 
-                       type=notification_type, 
-                       text_preview=text[:150] if text else None, 
-                       is_digest=is_digest, 
-                       text_length=len(text) if text else 0)
-            
+                logger.info(
+                    "Cleaned digest text",
+                    user_id=user_id,
+                    original_length=original_length,
+                    cleaned_length=len(text),
+                )
+
+            logger.info(
+                "Attempting to send message",
+                user_id=user_id,
+                type=notification_type,
+                text_preview=text[:150] if text else None,
+                is_digest=is_digest,
+                text_length=len(text) if text else 0,
+            )
+
             # Check message length (Telegram limit is 4096 chars)
             if len(text) > SAFE_MESSAGE_LIMIT:
-                logger.warning("Message too long, truncating", 
-                             user_id=user_id, 
-                             type=notification_type, 
-                             length=len(text))
+                logger.warning(
+                    "Message too long, truncating",
+                    user_id=user_id,
+                    type=notification_type,
+                    length=len(text),
+                )
                 text = text[:3950] + "\n...message truncated..."
-            
+
             # Send message with appropriate parse mode
             use_markdown = not is_digest and notification_type != "debug summary"
-            await _send_message_safe(bot, user_id, text, use_markdown, notification_type)
-            
+            await _send_message_safe(
+                bot, user_id, text, use_markdown, notification_type
+            )
+
             if attempt > 0:
-                logger.info("Successfully sent after retry", 
-                          user_id=user_id, 
-                          type=notification_type,
-                          attempt=attempt + 1)
+                logger.info(
+                    "Successfully sent after retry",
+                    user_id=user_id,
+                    type=notification_type,
+                    attempt=attempt + 1,
+                )
             else:
-                logger.info("Successfully sent notification",
-                          user_id=user_id,
-                          type=notification_type)
+                logger.info(
+                    "Successfully sent notification",
+                    user_id=user_id,
+                    type=notification_type,
+                )
             return
-            
+
         except TelegramBadRequest as e:
             if not await _handle_telegram_error(
                 bot, user_id, text, e, notification_type, attempt
             ):
                 return  # Permanent error, don't retry
-                
+
         except (TelegramNetworkError, ConnectionError, TimeoutError) as e:
             if attempt < MAX_RETRIES - 1:
-                logger.warning("Network error, retrying",
-                             user_id=user_id,
-                             type=notification_type,
-                             attempt=attempt + 1,
-                             error=str(e))
+                logger.warning(
+                    "Network error, retrying",
+                    user_id=user_id,
+                    type=notification_type,
+                    attempt=attempt + 1,
+                    error=str(e),
+                )
                 await asyncio.sleep(delay)
                 delay *= 2  # Exponential backoff
             else:
-                logger.error("Failed after all retries",
-                           user_id=user_id,
-                           type=notification_type,
-                           attempts=MAX_RETRIES,
-                           error=str(e))
+                logger.error(
+                    "Failed after all retries",
+                    user_id=user_id,
+                    type=notification_type,
+                    attempts=MAX_RETRIES,
+                    error=str(e),
+                )
                 raise
-                
+
         except Exception as e:
-            logger.error("Unexpected error sending notification",
-                       user_id=user_id,
-                       type=notification_type,
-                       error=str(e))
+            logger.error(
+                "Unexpected error sending notification",
+                user_id=user_id,
+                type=notification_type,
+                error=str(e),
+            )
             return  # Don't retry on unexpected errors
 
 
 async def _resolve_text(
-    get_text_fn_or_str: Union[str, Callable[..., Any]], 
-    user_id: int
+    get_text_fn_or_str: Union[str, Callable[..., Any]], user_id: int
 ) -> str | None:
     """Resolve text from string or callable.
 
@@ -142,28 +159,24 @@ async def _resolve_text(
     """
     if isinstance(get_text_fn_or_str, str):
         return get_text_fn_or_str
-    
+
     if not callable(get_text_fn_or_str):
         return str(get_text_fn_or_str) if get_text_fn_or_str else None
-    
+
     # Check if it's a coroutine function (needs await) or regular function
     if inspect.iscoroutinefunction(get_text_fn_or_str):
         return await get_text_fn_or_str(user_id)
-    
+
     # It's a regular function, but might return coroutine
     result = get_text_fn_or_str(user_id)
     if inspect.iscoroutine(result):
         return await result
-    
+
     return result
 
 
 async def _send_message_safe(
-    bot: Bot,
-    user_id: int,
-    text: str,
-    use_markdown: bool,
-    notification_type: str
+    bot: Bot, user_id: int, text: str, use_markdown: bool, notification_type: str
 ) -> None:
     """Send message with Markdown error handling.
 
@@ -185,10 +198,12 @@ async def _send_message_safe(
     except TelegramBadRequest as md_error:
         error_msg = str(md_error)
         if _is_markdown_parse_error(error_msg):
-            logger.warning("Markdown parse error, retrying without formatting", 
-                         user_id=user_id, 
-                         type=notification_type, 
-                         error=error_msg)
+            logger.warning(
+                "Markdown parse error, retrying without formatting",
+                user_id=user_id,
+                type=notification_type,
+                error=error_msg,
+            )
             plain_text = _normalize_text(text)
             await bot.send_message(user_id, plain_text, parse_mode=None)
         else:
@@ -205,8 +220,9 @@ def _is_markdown_parse_error(error_msg: str) -> bool:
         True if Markdown parse error
     """
     error_lower = error_msg.lower()
-    return ("can't parse entities" in error_lower or 
-            ("parse" in error_lower and "entity" in error_lower))
+    return "can't parse entities" in error_lower or (
+        "parse" in error_lower and "entity" in error_lower
+    )
 
 
 def _normalize_text(text: str) -> str:
@@ -219,17 +235,17 @@ def _normalize_text(text: str) -> str:
         Normalized plain text
     """
     import re
-    
+
     # Remove Markdown
     plain_text = clean_markdown(text)
-    
+
     # Normalize quotes
     plain_text = plain_text.replace('"', '"').replace('"', '"')
-    plain_text = plain_text.replace(''', "'").replace(''', "'")
-    
+    plain_text = plain_text.replace(""", "'").replace(""", "'")
+
     # Clean extra whitespace
-    plain_text = re.sub(r'\s+', ' ', plain_text).strip()
-    
+    plain_text = re.sub(r"\s+", " ", plain_text).strip()
+
     return plain_text
 
 
@@ -239,7 +255,7 @@ async def _handle_telegram_error(
     text: str,
     error: TelegramBadRequest,
     notification_type: str,
-    attempt: int
+    attempt: int,
 ) -> bool:
     """Handle Telegram errors and decide if retry is needed.
 
@@ -255,36 +271,39 @@ async def _handle_telegram_error(
         True if should retry, False if permanent error
     """
     error_msg = str(error)
-    
+
     # Check if this is a Markdown parse error
     if _is_markdown_parse_error(error_msg):
-        logger.warning("Markdown parse error in outer handler, trying plain text fallback", 
-                     user_id=user_id, 
-                     type=notification_type, 
-                     error=error_msg, 
-                     attempt=attempt)
+        logger.warning(
+            "Markdown parse error in outer handler, trying plain text fallback",
+            user_id=user_id,
+            type=notification_type,
+            error=error_msg,
+            attempt=attempt,
+        )
         plain_text = _normalize_text(text)
         try:
             await bot.send_message(user_id, plain_text, parse_mode=None)
-            logger.info("Successfully sent as plain text after Markdown error (outer handler)", 
-                       user_id=user_id, 
-                       type=notification_type)
+            logger.info(
+                "Successfully sent as plain text after Markdown error (outer handler)",
+                user_id=user_id,
+                type=notification_type,
+            )
             return False  # Success, don't retry
         except Exception as plain_err:
-            logger.error("Failed to send plain text fallback in outer handler", 
-                       user_id=user_id, 
-                       type=notification_type, 
-                       error=str(plain_err))
-    
-    logger.warning("Cannot send to user", 
-                 user_id=user_id, 
-                 type=notification_type, 
-                 error=error_msg)
-    
-    # Don't retry on permanent errors
-    if ("chat not found" in error_msg.lower() or 
-        "blocked" in error_msg.lower()):
-        return False  # Permanent error, don't retry
-    
-    return True  # May retry
+            logger.error(
+                "Failed to send plain text fallback in outer handler",
+                user_id=user_id,
+                type=notification_type,
+                error=str(plain_err),
+            )
 
+    logger.warning(
+        "Cannot send to user", user_id=user_id, type=notification_type, error=error_msg
+    )
+
+    # Don't retry on permanent errors
+    if "chat not found" in error_msg.lower() or "blocked" in error_msg.lower():
+        return False  # Permanent error, don't retry
+
+    return True  # May retry

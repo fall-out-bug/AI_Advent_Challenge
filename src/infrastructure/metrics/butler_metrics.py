@@ -13,7 +13,7 @@ import time
 from contextlib import contextmanager
 from typing import Optional
 
-from prometheus_client import Counter, Histogram, Gauge, CollectorRegistry, REGISTRY
+from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 
 from src.infrastructure.logging import get_logger
 
@@ -117,9 +117,7 @@ class ButlerMetrics:
         self.registry = _butler_registry
 
     @contextmanager
-    def record_message_processing(
-        self, mode: str, handler_type: str
-    ) -> None:
+    def record_message_processing(self, mode: str, handler_type: str) -> None:
         """Record message processing duration and success/error.
 
         Args:
@@ -188,9 +186,9 @@ class ButlerMetrics:
             yield
         finally:
             duration = time.time() - start_time
-            butler_mongodb_query_duration_seconds.labels(
-                operation=operation
-            ).observe(duration)
+            butler_mongodb_query_duration_seconds.labels(operation=operation).observe(
+                duration
+            )
 
     def record_error(self, error_type: str, handler: str) -> None:
         """Record an error.
@@ -240,4 +238,3 @@ def get_butler_metrics() -> ButlerMetrics:
     if _butler_metrics_instance is None:
         _butler_metrics_instance = ButlerMetrics()
     return _butler_metrics_instance
-

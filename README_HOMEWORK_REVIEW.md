@@ -1,5 +1,7 @@
 # Homework Review System - Quick Start
 
+> ⚠️ Local model containers are deprecated in favor of shared infrastructure. Legacy manifests now live in `archive/legacy/local_models/`; commands below are kept for reference.
+
 ## 🚀 Быстрый старт
 
 ### 1. Запустить модель Mistral
@@ -9,7 +11,7 @@
 ./scripts/start_models.sh
 
 # Вариант 2: Вручную
-cd local_models
+cd archive/legacy/local_models
 docker-compose up -d mistral-chat
 ```
 
@@ -96,7 +98,7 @@ print(result["markdown_report"])
 docker logs local_models-mistral-chat-1
 
 # Перезапустить
-cd local_models
+cd archive/legacy/local_models
 docker-compose restart mistral-chat
 ```
 
@@ -111,7 +113,7 @@ docker logs -f local_models-mistral-chat-1
 
 ### Порт 8001 занят
 
-Измените порт в `local_models/docker-compose.yml`:
+Измените порт в `archive/legacy/local_models/docker-compose.yml`:
 ```yaml
 ports:
   - "8002:8000"  # Изменить 8001 на 8002

@@ -37,7 +37,7 @@ class ExecutionOptimizer:
         steps = plan.steps.copy()
         optimized_steps = self._remove_redundant_steps(steps)
         optimized_steps = self._reorder_for_parallelization(optimized_steps)
-        
+
         # Detect circular dependencies
         has_cycles = self._detect_circular_dependencies(optimized_steps)
         if has_cycles:
@@ -48,7 +48,9 @@ class ExecutionOptimizer:
             estimated_time=self._estimate_time(optimized_steps),
         )
 
-    def _remove_redundant_steps(self, steps: List[ExecutionStep]) -> List[ExecutionStep]:
+    def _remove_redundant_steps(
+        self, steps: List[ExecutionStep]
+    ) -> List[ExecutionStep]:
         """Remove redundant tool calls.
 
         Args:
@@ -70,7 +72,9 @@ class ExecutionOptimizer:
 
         return unique_steps
 
-    def _reorder_for_parallelization(self, steps: List[ExecutionStep]) -> List[ExecutionStep]:
+    def _reorder_for_parallelization(
+        self, steps: List[ExecutionStep]
+    ) -> List[ExecutionStep]:
         """Reorder steps to enable parallel execution where possible.
 
         Args:
@@ -95,7 +99,7 @@ class ExecutionOptimizer:
         # Simple check: if format_code appears after generate_code with same args
         # and format_code output is used as input to generate_code
         code_related = {"generate_code", "review_code", "format_code", "generate_tests"}
-        
+
         code_args = {}
         for step in steps:
             if step.tool in code_related:
@@ -154,11 +158,11 @@ class ExecutionOptimizer:
         """
         groups = []
         current_group = []
-        
+
         for step in plan.steps:
             # Check if step has dependencies on previous rends
             deps = self.tool_dependencies.get(step.tool, [])
-            
+
             # If no dependencies on current group, add to group
             if not any(prev.tool in deps for prev in current_group):
                 current_group.append(step)
@@ -172,4 +176,3 @@ class ExecutionOptimizer:
             groups.append(current_group)
 
         return groups
-

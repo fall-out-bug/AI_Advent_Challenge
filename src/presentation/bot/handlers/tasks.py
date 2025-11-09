@@ -2,19 +2,17 @@
 
 from __future__ import annotations
 
-from aiogram import Router, F
+from aiogram import F, Router
+from aiogram.enums import ChatAction
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery
-from aiogram.enums import ChatAction
+from aiogram.types import CallbackQuery, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.exceptions import TelegramBadRequest
 
-from src.presentation.mcp.client import get_mcp_client
+from src.application.orchestration.intent_orchestrator import IntentOrchestrator
 from src.infrastructure.logging import get_logger
 from src.presentation.bot.states import TaskCreation
-from src.application.orchestration.intent_orchestrator import IntentOrchestrator
-
+from src.presentation.mcp.client import get_mcp_client
 
 logger = get_logger("butler_bot.tasks")
 
@@ -54,20 +52,27 @@ async def callback_list_tasks(callback: CallbackQuery) -> None:
     """List user tasks."""
     user_id = callback.from_user.id
     try:
-        tasks_res = await _mcp.call_tool("list_tasks", {"user_id": user_id, "status": "active", "limit": MAX_ITEMS_PER_PAGE})
+        tasks_res = await _mcp.call_tool(
+            "list_tasks",
+            {"user_id": user_id, "status": "active", "limit": MAX_ITEMS_PER_PAGE},
+        )
         tasks = tasks_res.get("tasks", [])
-        
+
         if not tasks:
             keyboard = InlineKeyboardBuilder()
             keyboard.button(text="🔙 Back", callback_data="menu:tasks")
-            await callback.message.edit_text("No active tasks.", reply_markup=keyboard.as_markup())
+            await callback.message.edit_text(
+                "No active tasks.", reply_markup=keyboard.as_markup()
+            )
             await callback.answer()
             return
 
         builder = InlineKeyboardBuilder()
         for task in tasks:
             task_id = task.get("id", "")
-            builder.button(text=_format_task_summary(task), callback_data=f"task:detail:{task_id}")
+            builder.button(
+                text=_format_task_summary(task), callback_data=f"task:detail:{task_id}"
+            )
         builder.button(text="🔙 Back", callback_data="menu:tasks")
         builder.adjust(1)
 
@@ -76,7 +81,9 @@ async def callback_list_tasks(callback: CallbackQuery) -> None:
         await callback.answer()
     except Exception as e:
         logger.error("Failed to list tasks", user_id=user_id, error=str(e))
-        await callback.answer("❌ Failed to load tasks. Please try again.", show_alert=True)
+        await callback.answer(
+            "❌ Failed to load tasks. Please try again.", show_alert=True
+        )
 
 
 @router.callback_query(F.data.startswith("task:detail:"))
@@ -86,8 +93,12 @@ async def callback_task_detail(callback: CallbackQuery) -> None:
     user_id = callback.from_user.id
 
     try:
-        tasks_res = await _mcp.call_tool("list_tasks", {"user_id": user_id, "status": "all", "limit": 100})
-        task = next((t for t in tasks_res.get("tasks", []) if t.get("id") == task_id), None)
+        tasks_res = await _mcp.call_tool(
+            "list_tasks", {"user_id": user_id, "status": "all", "limit": 100}
+        )
+        task = next(
+            (t for t in tasks_res.get("tasks", []) if t.get("id") == task_id), None
+        )
 
         if not task:
             await callback.answer("Task not found", show_alert=True)
@@ -109,11 +120,17 @@ async def callback_task_detail(callback: CallbackQuery) -> None:
         builder.button(text="🔙 Back", callback_data="tasks:list")
         builder.adjust(1)
 
-        await callback.message.edit_text(text, reply_markup=builder.as_markup(), parse_mode="Markdown")
+        await callback.message.edit_text(
+            text, reply_markup=builder.as_markup(), parse_mode="Markdown"
+        )
         await callback.answer()
     except Exception as e:
-        logger.error("Failed to show task detail", user_id=user_id, task_id=task_id, error=str(e))
-        await callback.answer("❌ Failed to load task. Please try again.", show_alert=True)
+        logger.error(
+            "Failed to show task detail", user_id=user_id, task_id=task_id, error=str(e)
+        )
+        await callback.answer(
+            "❌ Failed to load task. Please try again.", show_alert=True
+        )
 
 
 @router.callback_query(F.data.startswith("task:complete:"))
@@ -121,16 +138,20 @@ async def callback_task_complete(callback: CallbackQuery) -> None:
     """Mark task as completed."""
     task_id = callback.data.split(":")[-1]
     user_id = callback.from_user.id
-    
+
     try:
-        result = await _mcp.call_tool("update_task", {"task_id": task_id, "updates": {"completed": True}})
+        result = await _mcp.call_tool(
+            "update_task", {"task_id": task_id, "updates": {"completed": True}}
+        )
         if result.get("status") == "updated":
             await callback.answer("Task completed ✅")
             await callback_task_detail(callback)
         else:
             await callback.answer("❌ Failed to complete task", show_alert=True)
     except Exception as e:
-        logger.error("Failed to complete task", user_id=user_id, task_id=task_id, error=str(e))
+        logger.error(
+            "Failed to complete task", user_id=user_id, task_id=task_id, error=str(e)
+        )
         await callback.answer("❌ Failed to complete task", show_alert=True)
 
 
@@ -139,7 +160,7 @@ async def callback_task_delete(callback: CallbackQuery) -> None:
     """Delete a task."""
     task_id = callback.data.split(":")[-1]
     user_id = callback.from_user.id
-    
+
     try:
         result = await _mcp.call_tool("delete_task", {"task_id": task_id})
         if result.get("status") == "deleted":
@@ -148,7 +169,9 @@ async def callback_task_delete(callback: CallbackQuery) -> None:
         else:
             await callback.answer("❌ Failed to delete task", show_alert=True)
     except Exception as e:
-        logger.error("Failed to delete task", user_id=user_id, task_id=task_id, error=str(e))
+        logger.error(
+            "Failed to delete task", user_id=user_id, task_id=task_id, error=str(e)
+        )
         await callback.answer("❌ Failed to delete task", show_alert=True)
 
 
@@ -198,7 +221,9 @@ async def handle_task_input(message: Message, state: FSMContext) -> None:
         logger.error(f"Intent parsing failed: {e}")
         # Keep waiting_for_task state and notify the user
         await state.set_state(TaskCreation.waiting_for_task)
-        await message.answer("Sorry, parsing is temporarily unavailable. Please try again.")
+        await message.answer(
+            "Sorry, parsing is temporarily unavailable. Please try again."
+        )
         return
 
     # Persist partial intent
@@ -226,4 +251,3 @@ async def handle_clarification(message: Message, state: FSMContext) -> None:
 
     await state.clear()
     await message.answer(f"✅ Task added: {partial.get('title', 'Task')}")
-

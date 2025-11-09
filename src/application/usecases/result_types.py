@@ -4,7 +4,8 @@ Following Clean Architecture: Use case results are typed, not raw dictionaries.
 All result classes use Pydantic for validation and documentation.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -84,4 +85,3 @@ class StatsResult(BaseModel):
         default_factory=dict, description="Dictionary with student statistics"
     )
     error: Optional[str] = Field(None, description="Error message if operation failed")
-

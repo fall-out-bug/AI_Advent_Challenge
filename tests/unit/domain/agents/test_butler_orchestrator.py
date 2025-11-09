@@ -151,4 +151,3 @@ class TestButlerOrchestrator:
             user_id="123", message="Hi", session_id="456"
         )
         assert "error" in response.lower() or "sorry" in response.lower()
-

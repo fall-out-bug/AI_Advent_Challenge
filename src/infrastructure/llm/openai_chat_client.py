@@ -33,7 +33,11 @@ class OpenAIChatClient:
         api_key: Optional[str] = None,
         timeout: float = 120.0,
     ) -> None:
-        self.base_url = (base_url or os.environ.get("LLM_CHAT_BASE_URL") or "http://localhost:8001/v1").rstrip("/")
+        self.base_url = (
+            base_url
+            or os.environ.get("LLM_CHAT_BASE_URL")
+            or "http://localhost:8001/v1"
+        ).rstrip("/")
         self.api_key = api_key or os.environ.get("LLM_CHAT_API_KEY", "")
         self._client = httpx.AsyncClient(timeout=timeout)
 
@@ -92,9 +96,9 @@ class OpenAIChatClient:
             "object": data.get("object"),
             "model": data.get("model"),
             "message": message,
-            "tool_calls": message.get("tool_calls", []) if isinstance(message, dict) else [],
+            "tool_calls": message.get("tool_calls", [])
+            if isinstance(message, dict)
+            else [],
             "usage": data.get("usage", {}),
             "raw": data,
         }
-
-

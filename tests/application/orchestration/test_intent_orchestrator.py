@@ -11,7 +11,9 @@ def orchestrator() -> IntentOrchestrator:
 
 
 @pytest.mark.asyncio
-async def test_parse_clear_intent_no_clarification(orchestrator: IntentOrchestrator) -> None:
+async def test_parse_clear_intent_no_clarification(
+    orchestrator: IntentOrchestrator,
+) -> None:
     text = "Call mom on 2025-12-01 15:00 high"
     result = await orchestrator.parse_task_intent(text=text, context={})
 
@@ -23,7 +25,9 @@ async def test_parse_clear_intent_no_clarification(orchestrator: IntentOrchestra
 
 
 @pytest.mark.asyncio
-async def test_parse_ambiguous_intent_needs_clarification(orchestrator: IntentOrchestrator) -> None:
+async def test_parse_ambiguous_intent_needs_clarification(
+    orchestrator: IntentOrchestrator,
+) -> None:
     text = "Remind me to call mom tomorrow"
     result = await orchestrator.parse_task_intent(text=text, context={})
 
@@ -39,9 +43,13 @@ async def test_parse_russian_time_expression(orchestrator: IntentOrchestrator) -
     result = await orchestrator.parse_task_intent(text=text, context={})
 
     assert isinstance(result, IntentParseResult)
-    assert result.needs_clarification is False, "Should not need clarification when time is specified"
+    assert (
+        result.needs_clarification is False
+    ), "Should not need clarification when time is specified"
     assert result.deadline_iso is not None, "Should extract deadline from 'завтра в 9'"
-    assert "09:00" in result.deadline_iso or "9:00" in result.deadline_iso, "Should parse 9 o'clock"
+    assert (
+        "09:00" in result.deadline_iso or "9:00" in result.deadline_iso
+    ), "Should parse 9 o'clock"
 
 
 @pytest.mark.asyncio
@@ -57,7 +65,15 @@ async def test_parse_russian_time_with_am_pm(orchestrator: IntentOrchestrator) -
 
 def test_validate_intent_completeness(orchestrator: IntentOrchestrator) -> None:
     # Missing deadline should be incomplete
-    partial = IntentParseResult(title="Buy milk", description=None, deadline_iso=None, priority="low", tags=[], needs_clarification=False, questions=[])
+    partial = IntentParseResult(
+        title="Buy milk",
+        description=None,
+        deadline_iso=None,
+        priority="low",
+        tags=[],
+        needs_clarification=False,
+        questions=[],
+    )
     complete, missing = orchestrator.validate_intent_completeness(partial)
     assert complete is False
     assert any(m in missing for m in ["deadline", "time", "date"])

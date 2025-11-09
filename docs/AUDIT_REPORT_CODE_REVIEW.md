@@ -44,7 +44,7 @@
 
 **What works:**
 - ✅ Mistral развёрнут через Docker (vLLM): `docker-compose.yml` с `vllm/vllm-openai:latest`
-- ✅ Quantization используется: 4-bit quantization (BitsAndBytesConfig) в `local_models/chat_api.py`
+- ✅ Quantization используется: 4-bit quantization (BitsAndBytesConfig) в `archive/legacy/local_models/chat_api.py`
 - ✅ Context window: 32K tokens (`--max-model-len=32768`)
 - ✅ Multiple models support: Qwen (8000), Mistral (8001), TinyLlama (8002), StarCoder (8003)
 - ✅ Docker-based deployment с health checks

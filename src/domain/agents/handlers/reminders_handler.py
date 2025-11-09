@@ -56,7 +56,7 @@ class RemindersHandler(Handler):
                     f"RemindersHandler: intent={intent_result.intent.value}, "
                     f"confidence={intent_result.confidence:.2f}, entities={intent_result.entities}"
                 )
-                
+
                 # Route based on intent type
                 if intent_result.intent == IntentType.REMINDER_SET:
                     reminder_text = intent_result.entities.get("reminder_text")
@@ -75,21 +75,27 @@ class RemindersHandler(Handler):
                             else:
                                 return f"❌ Не удалось создать напоминание."
                         except Exception as e:
-                            logger.error(f"Failed to create reminder: {e}", exc_info=True)
+                            logger.error(
+                                f"Failed to create reminder: {e}", exc_info=True
+                            )
                             return "❌ Не удалось создать напоминание. Попробуйте позже."
                     else:
-                        return "❓ Что именно нужно напомнить? Укажите текст напоминания."
-                
+                        return (
+                            "❓ Что именно нужно напомнить? Укажите текст напоминания."
+                        )
+
                 elif intent_result.intent == IntentType.REMINDER_LIST:
                     # List reminders (fall through to default behavior)
                     pass
-                
+
                 elif intent_result.intent == IntentType.REMINDER_DELETE:
                     # Delete reminder - would need reminder_id from entities
                     # For now, just show message
                     return "❌ Удаление напоминаний через бота пока не поддерживается."
             except Exception as e:
-                logger.warning(f"Hybrid classifier failed in RemindersHandler: {e}, falling back to listing")
+                logger.warning(
+                    f"Hybrid classifier failed in RemindersHandler: {e}, falling back to listing"
+                )
 
         # Default: list reminders
         try:
@@ -119,4 +125,3 @@ class RemindersHandler(Handler):
             time = reminder.get("time", "Unknown time")
             lines.append(f"• {text} - {time}")
         return "\n".join(lines)
-

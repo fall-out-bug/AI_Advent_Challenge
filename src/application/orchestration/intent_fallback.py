@@ -5,7 +5,7 @@ Following the Zen of Python: Simple is better than complex.
 """
 
 import re
-from datetime import datetime, timedelta, time
+from datetime import datetime, time, timedelta
 from typing import Optional
 
 from src.domain.entities.intent import IntentParseResult
@@ -74,7 +74,9 @@ class IntentFallbackParser:
                 questions=questions,
             )
         except Exception as e:
-            raise FallbackParseError(f"Fallback parsing failed: {e}", original_error=e) from e
+            raise FallbackParseError(
+                f"Fallback parsing failed: {e}", original_error=e
+            ) from e
 
     def _extract_task_title(self, text: str) -> str:
         """Extract task title by removing command words and time expressions.
@@ -222,7 +224,9 @@ class IntentFallbackParser:
             match = re.search(pattern, text_lower)
             if match:
                 hour_str = match.group(1)
-                minute_str = match.group(2) if match.lastindex and match.lastindex >= 2 else "00"
+                minute_str = (
+                    match.group(2) if match.lastindex and match.lastindex >= 2 else "00"
+                )
 
                 try:
                     hour = int(hour_str)
@@ -252,7 +256,7 @@ class IntentFallbackParser:
         Returns:
             True if PM, False if AM
         """
-        text_after_match = text_lower[match.end():]
+        text_after_match = text_lower[match.end() :]
 
         pm_indicators = [
             "pm",
@@ -291,4 +295,3 @@ class IntentFallbackParser:
             if any(k in lowered for k in keywords):
                 return level
         return "medium"
-

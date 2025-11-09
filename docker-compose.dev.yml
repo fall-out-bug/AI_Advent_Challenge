@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    command: bash
+    volumes:
+      - .:/workspace
+      - poetry-cache:/root/.cache/pypoetry
+    environment:
+      - MONGODB_URL=${MONGODB_URL:-mongodb://shared-mongo:27017/butler?authSource=admin}
+      - TEST_MONGODB_URL=${TEST_MONGODB_URL:-}
+      - TEST_MONGODB_DB=${TEST_MONGODB_DB:-ai_challenge_test}
+      - MONGODB_HOST=${MONGODB_HOST:-shared-mongo}
+      - MONGODB_PORT=${MONGODB_PORT:-27017}
+      - MONGODB_USERNAME=${MONGODB_USERNAME:-}
+      - MONGODB_PASSWORD=${MONGODB_PASSWORD:-}
+      - MONGODB_AUTH_SOURCE=${MONGODB_AUTH_SOURCE:-admin}
+      - MISTRAL_API_URL=${MISTRAL_API_URL:-http://mistral-chat:8001}
+      - USE_MODULAR_REVIEWER=${USE_MODULAR_REVIEWER:-1}
+    networks:
+      - infra_app
+      - infra_db
+
+networks:
+  infra_app:
+    external: true
+    name: infra_infra_app-network
+  infra_db:
+    external: true
+    name: infra_infra_db-network
+
+volumes:
+  poetry-cache:
+

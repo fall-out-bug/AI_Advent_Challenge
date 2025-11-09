@@ -35,9 +35,7 @@ class TestDataHandler:
         return DataHandler(tool_client=mock_tool_client)
 
     @pytest.mark.asyncio
-    async def test_handle_gets_channels_digest(
-        self, handler, mock_tool_client
-    ):
+    async def test_handle_gets_channels_digest(self, handler, mock_tool_client):
         """Test getting channels digest."""
         context = DialogContext(
             state=DialogState.IDLE,
@@ -52,9 +50,7 @@ class TestDataHandler:
         mock_tool_client.call_tool.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_handle_gets_student_stats(
-        self, handler, mock_tool_client
-    ):
+    async def test_handle_gets_student_stats(self, handler, mock_tool_client):
         """Test getting student stats."""
         context = DialogContext(
             state=DialogState.IDLE,
@@ -69,9 +65,7 @@ class TestDataHandler:
         mock_tool_client.call_tool.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_handle_handles_empty_digest(
-        self, handler, mock_tool_client
-    ):
+    async def test_handle_handles_empty_digest(self, handler, mock_tool_client):
         """Test handling empty digest."""
         context = DialogContext(
             state=DialogState.IDLE,
@@ -83,9 +77,7 @@ class TestDataHandler:
         assert "no" in response.lower() or "available" in response.lower()
 
     @pytest.mark.asyncio
-    async def test_handle_handles_error(
-        self, handler, mock_tool_client
-    ):
+    async def test_handle_handles_error(self, handler, mock_tool_client):
         """Test error handling."""
         context = DialogContext(
             state=DialogState.IDLE,
@@ -95,4 +87,3 @@ class TestDataHandler:
         mock_tool_client.call_tool = AsyncMock(side_effect=Exception("Error"))
         response = await handler.handle(context, "Show data")
         assert "failed" in response.lower() or "error" in response.lower()
-

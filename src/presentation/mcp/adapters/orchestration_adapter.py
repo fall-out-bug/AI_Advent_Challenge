@@ -1,15 +1,12 @@
 """Adapter for multi-agent orchestration operations."""
-import sys
-from pathlib import Path
-from typing import Any, Optional
 
-_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(_root))
-sys.path.insert(0, str(_root / "shared"))
+from typing import Any
 
+from src.application.orchestrators.multi_agent_orchestrator import (
+    MultiAgentOrchestrator,
+)
 from src.domain.agents.code_generator import CodeGeneratorAgent
 from src.domain.agents.code_reviewer import CodeReviewerAgent
-from src.application.orchestrators.multi_agent_orchestrator import MultiAgentOrchestrator
 from src.domain.messaging.message_schema import OrchestratorRequest
 from src.presentation.mcp.exceptions import MCPOrchestrationError, MCPValidationError
 
@@ -17,6 +14,7 @@ from src.presentation.mcp.exceptions import MCPOrchestrationError, MCPValidation
 def _get_model_client_adapter():
     """Import ModelClientAdapter at runtime to avoid circular imports."""
     from src.presentation.mcp.adapters.model_client_adapter import ModelClientAdapter
+
     return ModelClientAdapter
 
 
@@ -27,7 +25,9 @@ class OrchestrationAdapter:
         """Initialize orchestration adapter."""
         self.unified_client = unified_client
 
-    async def orchestrate_generation_and_review(self, description: str, gen_model: str, review_model: str) -> dict[str, Any]:
+    async def orchestrate_generation_and_review(
+        self, description: str, gen_model: str, review_model: str
+    ) -> dict[str, Any]:
         """Execute full workflow via MultiAgentOrchestrator."""
         try:
             self._validate_inputs(description, gen_model, review_model)
@@ -37,16 +37,24 @@ class OrchestrationAdapter:
         except Exception as e:
             raise MCPOrchestrationError(f"Orchestration failed: {e}")
 
-    def _validate_inputs(self, description: str, gen_model: str, review_model: str) -> None:
+    def _validate_inputs(
+        self, description: str, gen_model: str, review_model: str
+    ) -> None:
         """Validate workflow inputs."""
         if not description or not description.strip():
             raise MCPValidationError("Description cannot be empty", field="description")
         if not gen_model or not gen_model.strip():
-            raise MCPValidationError("Generation model cannot be empty", field="gen_model")
+            raise MCPValidationError(
+                "Generation model cannot be empty", field="gen_model"
+            )
         if not review_model or not review_model.strip():
-            raise MCPValidationError("Review model cannot be empty", field="review_model")
+            raise MCPValidationError(
+                "Review model cannot be empty", field="review_model"
+            )
 
-    async def _execute_workflow(self, description: str, gen_model: str, review_model: str) -> dict[str, Any]:
+    async def _execute_workflow(
+        self, description: str, gen_model: str, review_model: str
+    ) -> dict[str, Any]:
         """Execute the orchestration workflow."""
         try:
             agents = self._create_agents(gen_model, review_model)
@@ -77,7 +85,9 @@ class OrchestrationAdapter:
             "reviewer": CodeReviewerAgent(model_client=reviewer_adapter),
         }
 
-    def _create_request(self, description: str, gen_model: str, review_model: str) -> OrchestratorRequest:
+    def _create_request(
+        self, description: str, gen_model: str, review_model: str
+    ) -> OrchestratorRequest:
         """Create orchestrator request."""
         return OrchestratorRequest(
             task_description=description,

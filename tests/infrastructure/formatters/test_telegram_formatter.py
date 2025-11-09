@@ -5,7 +5,9 @@ import pytest
 
 def test_format_task_summary_basic() -> None:
     fmt = TelegramFormatter()
-    txt = fmt.format_task_summary(TaskSummary(total=5, completed=2, overdue=1, high_priority=1, timeframe="today"))
+    txt = fmt.format_task_summary(
+        TaskSummary(total=5, completed=2, overdue=1, high_priority=1, timeframe="today")
+    )
     assert "Summary (today)" in txt
     assert "Total: 5" in txt
     assert "Completed: 2" in txt
@@ -14,7 +16,9 @@ def test_format_task_summary_basic() -> None:
 
 def test_format_digest_top_items() -> None:
     fmt = TelegramFormatter()
-    digest = DigestMessage(items=[DigestItem(channel="news", summary="top", post_count=3)])
+    digest = DigestMessage(
+        items=[DigestItem(channel="news", summary="top", post_count=3)]
+    )
     txt = fmt.format_digest(digest)
     assert "📰 news: top" in txt
 

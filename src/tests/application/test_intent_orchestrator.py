@@ -2,7 +2,9 @@ import pytest
 
 
 class DummyLLM:
-    async def generate(self, prompt: str, temperature: float = 0.2, max_tokens: int = 256) -> str:  # noqa: D401
+    async def generate(
+        self, prompt: str, temperature: float = 0.2, max_tokens: int = 256
+    ) -> str:  # noqa: D401
         # Return a simple JSON for parsing
         return (
             '{"title":"Buy milk","description":"2L","deadline":null,'
@@ -24,7 +26,7 @@ async def test_parse_task_intent_basic():
 @pytest.mark.asyncio
 async def test_refine_with_answers_merges():
     from src.application.orchestration.intent_orchestrator import IntentOrchestrator
-    from src.domain.entities.intent import IntentParseResult, ClarificationQuestion
+    from src.domain.entities.intent import ClarificationQuestion, IntentParseResult
 
     orchestrator = IntentOrchestrator(llm=DummyLLM())
     base = IntentParseResult(
@@ -39,5 +41,3 @@ async def test_refine_with_answers_merges():
     refined = await orchestrator.refine_with_answers(base, ["2025-12-31T10:00:00"])
     assert refined.deadline == "2025-12-31T10:00:00"
     assert refined.needs_clarification is False
-
-

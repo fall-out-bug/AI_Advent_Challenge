@@ -90,7 +90,9 @@ class TestMultiPassReportPass4:
 
     def test_haiku_in_dict(self) -> None:
         """Test haiku included in to_dict()."""
-        haiku_text = "Code flows onward,\nIssues found, lessons learned—\nImprovement awaits."
+        haiku_text = (
+            "Code flows onward,\nIssues found, lessons learned—\nImprovement awaits."
+        )
         report = MultiPassReport(
             session_id="test-123",
             repo_name="test_repo",

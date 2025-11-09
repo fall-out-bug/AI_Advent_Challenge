@@ -83,9 +83,7 @@ class TaskHandler(Handler):
             logger.error(f"Task handling failed: {e}", exc_info=True)
             return "❌ Sorry, I couldn't process your task request. Please try again."
 
-    async def _process_intent(
-        self, context: DialogContext, intent_result: Any
-    ) -> str:
+    async def _process_intent(self, context: DialogContext, intent_result: Any) -> str:
         """Process parsed intent result.
 
         Args:
@@ -127,4 +125,3 @@ class TaskHandler(Handler):
         context.reset()
         task_id = result.get("id", "unknown")
         return f"✅ Task created successfully! (ID: {task_id})"
-

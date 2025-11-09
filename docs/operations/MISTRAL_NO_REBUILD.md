@@ -4,7 +4,7 @@ This guide switches the served Mistral model using environment variables and a c
 
 ## Prerequisites
 - Container exposes a local OpenAI-compatible API.
-- `MODEL_NAME` is read by the service (see `local_models/chat_api.py`).
+- `MODEL_NAME` is read by the service (see `archive/legacy/local_models/chat_api.py`).
 - Optional: `HF_TOKEN` configured for gated models.
 
 ## Steps

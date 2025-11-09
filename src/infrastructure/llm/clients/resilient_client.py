@@ -3,19 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 import time
-from typing import Any
 
 import httpx
 
-from src.infrastructure.clients.llm_client import (
-    FallbackLLMClient,
-    HTTPLLMClient,
-    get_llm_client,
-)
+from src.infrastructure.clients.llm_client import FallbackLLMClient, get_llm_client
 from src.infrastructure.logging import get_logger
-from .llm_client import LLMClient
 
 logger = get_logger("llm.resilient_client")
 
@@ -68,7 +61,11 @@ class ResilientLLMClient:
         timeout: float = 120.0,
     ) -> None:
         # Use longer timeout for summarization (120s default vs 30s for regular requests)
-        self._primary = get_llm_client(url, timeout=timeout) if url else get_llm_client(timeout=timeout)
+        self._primary = (
+            get_llm_client(url, timeout=timeout)
+            if url
+            else get_llm_client(timeout=timeout)
+        )
         self._fallback = FallbackLLMClient()
         self._use_fallback = isinstance(self._primary, FallbackLLMClient)
         self.max_retries = max_retries
@@ -160,7 +157,7 @@ class ResilientLLMClient:
                     if attempt < self.max_retries - 1:
                         # Use longer backoff for rate limits
                         delay = min(
-                            self.initial_backoff * (self.backoff_factor ** attempt) * 2,
+                            self.initial_backoff * (self.backoff_factor**attempt) * 2,
                             self.max_backoff,
                         )
                         await asyncio.sleep(delay)
@@ -214,9 +211,9 @@ class ResilientLLMClient:
         fallback_duration = time.time() - fallback_start
 
         if _llm_request_duration:
-            _llm_request_duration.labels(
-                client="fallback", status="success"
-            ).observe(fallback_duration)
+            _llm_request_duration.labels(client="fallback", status="success").observe(
+                fallback_duration
+            )
         if _llm_requests_total:
             _llm_requests_total.labels(client="fallback", status="success").inc()
 

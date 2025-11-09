@@ -1,4 +1,4 @@
-.PHONY: help install test lint format clean docker-build docker-up docker-down coverage integration e2e maintenance-cleanup maintenance-backup maintenance-export maintenance-validate day-07 day-08 day-11 day-11-up day-11-down day-11-build day-11-logs day-11-logs-bot day-11-logs-worker day-11-logs-mcp day-11-logs-mistral day-11-ps day-11-restart day-11-clean day-11-setup day-12 day-12-up day-12-down day-12-build day-12-logs day-12-logs-bot day-12-logs-worker day-12-logs-post-fetcher day-12-logs-mcp day-12-logs-mistral day-12-ps day-12-restart day-12-clean day-12-setup day-12-test day-12-metrics butler butler-up butler-down butler-build butler-logs butler-logs-bot butler-logs-worker butler-logs-mcp butler-logs-post-fetcher butler-logs-mistral butler-ps butler-restart butler-clean butler-setup butler-test butler-metrics mcp-discover mcp-demo test-mcp test-mcp-comprehensive mcp-chat mcp-chat-streaming mcp-server-start mcp-server-stop mcp-chat-docker mcp-demo-start mcp-demo-stop mcp-demo-logs demo-mcp-comprehensive
+.PHONY: help install test lint format clean docker-build docker-up docker-down coverage integration e2e maintenance-cleanup maintenance-backup maintenance-export maintenance-validate day-07 day-08 day-11 day-11-up day-11-down day-11-build day-11-logs day-11-logs-bot day-11-logs-worker day-11-logs-mcp day-11-ps day-11-restart day-11-clean day-11-setup day-12 day-12-up day-12-down day-12-build day-12-logs day-12-logs-bot day-12-logs-worker day-12-logs-post-fetcher day-12-logs-mcp day-12-ps day-12-restart day-12-clean day-12-setup day-12-test day-12-metrics butler butler-up butler-down butler-build butler-logs butler-logs-bot butler-logs-worker butler-logs-mcp butler-logs-post-fetcher butler-ps butler-restart butler-clean butler-setup butler-test butler-metrics mcp-discover mcp-demo test-mcp test-mcp-comprehensive mcp-chat mcp-chat-streaming mcp-server-start mcp-server-stop mcp-chat-docker mcp-demo-start mcp-demo-stop mcp-demo-logs demo-mcp-comprehensive
 
 help:
 	@echo "Available commands:"
@@ -38,7 +38,6 @@ help:
 	@echo "  make day-11-logs-bot   - View bot logs"
 	@echo "  make day-11-logs-worker - View worker logs"
 	@echo "  make day-11-logs-mcp   - View MCP server logs"
-	@echo "  make day-11-logs-mistral - View Mistral LLM logs"
 	@echo "  make day-11-ps         - Show service status"
 	@echo "  make day-11-restart    - Restart all services"
 	@echo "  make day-11-clean      - Remove all containers and volumes"
@@ -51,10 +50,9 @@ help:
 	@echo "  make butler-build      - Rebuild Butler Docker images"
 	@echo "  make butler-logs       - View logs from all services"
 	@echo "  make butler-logs-bot   - View bot logs"
-	@echo "  make butler-logs-worker - View summary worker logs"
+	@echo "  make butler-logs-worker - View unified task worker logs"
 	@echo "  make butler-logs-post-fetcher - View post fetcher worker logs"
 	@echo "  make butler-logs-mcp   - View MCP server logs"
-	@echo "  make butler-logs-mistral - View Mistral LLM logs"
 	@echo "  make butler-ps         - Show service status"
 	@echo "  make butler-restart    - Restart all services"
 	@echo "  make butler-clean      - Remove all containers and volumes"
@@ -118,8 +116,12 @@ coverage: test-coverage
 
 lint:
 	poetry run flake8 src
-	poetry run mypy src
+	poetry run mypy src --ignore-missing-imports
+	poetry run mypy packages/multipass-reviewer/multipass_reviewer --strict
 	poetry run bandit -r src
+
+dev:
+	docker compose -f docker-compose.dev.yml run --rm dev
 
 format:
 	poetry run black src tests
@@ -245,9 +247,6 @@ day-11-logs-worker:
 day-11-logs-mcp:
 	docker compose -f archive/docker-compose/docker-compose.day11.yml logs -f mcp-server
 
-day-11-logs-mistral:
-	docker compose -f archive/docker-compose/docker-compose.day11.yml logs -f mistral-chat
-
 day-11-ps:
 	docker compose -f archive/docker-compose/docker-compose.day11.yml ps
 
@@ -305,7 +304,6 @@ day-12-logs-bot: butler-logs-bot
 day-12-logs-worker: butler-logs-worker
 day-12-logs-post-fetcher: butler-logs-post-fetcher
 day-12-logs-mcp: butler-logs-mcp
-day-12-logs-mistral: butler-logs-mistral
 day-12-ps: butler-ps
 day-12-restart: butler-restart
 day-12-clean: butler-clean
@@ -320,16 +318,13 @@ butler-logs-bot:
 	docker-compose -f docker-compose.butler.yml logs -f butler-bot
 
 butler-logs-worker:
-	docker-compose -f docker-compose.butler.yml logs -f summary-worker
+	docker-compose -f docker-compose.butler.yml logs -f unified-task-worker
 
 butler-logs-post-fetcher:
 	docker-compose -f docker-compose.butler.yml logs -f post-fetcher-worker
 
 butler-logs-mcp:
 	docker-compose -f docker-compose.butler.yml logs -f mcp-server
-
-butler-logs-mistral:
-	docker-compose -f docker-compose.butler.yml logs -f mistral-chat
 
 butler-ps:
 	docker-compose -f docker-compose.butler.yml ps

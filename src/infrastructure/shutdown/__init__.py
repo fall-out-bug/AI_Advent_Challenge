@@ -1,2 +1,1 @@
 """Shutdown infrastructure."""
-

@@ -62,9 +62,9 @@ async def test_conversation_persistence(orchestrator):
     """Test conversation is persisted."""
     await orchestrator.initialize()
     conv_id = "test_persist"
-    
+
     await orchestrator.handle_message("first message", conv_id)
-    
+
     conversation = await orchestrator.conversation_repo.get_by_id(conv_id)
     assert conversation is not None
     assert len(conversation.messages) == 2  # user + assistant
@@ -75,11 +75,13 @@ async def test_conversation_history(orchestrator):
     """Test conversation history is maintained."""
     await orchestrator.initialize()
     conv_id = "test_history"
-    
+
     await orchestrator.handle_message("message 1", conv_id)
     await orchestrator.handle_message("message 2", conv_id)
-    
-    history = await orchestrator.conversation_repo.get_recent_messages(conv_id, limit=10)
+
+    history = await orchestrator.conversation_repo.get_recent_messages(
+        conv_id, limit=10
+    )
     assert len(history) >= 4  # 2 user + 2 assistant
 
 
@@ -93,17 +95,17 @@ async def test_clarification_needed():
             response='{"primary_goal": "unclear", "confidence": 0.4, "needs_clarification": true}'
         )
     )
-    
+
     repo = JsonConversationRepository(Path("data/test_clarify.json"))
     orch = MistralChatOrchestrator(
         unified_client=mock_client,
         conversation_repo=repo,
         confidence_threshold=0.7,
     )
-    
+
     await orch.initialize()
     response = await orch.handle_message("vague request", "test_clarify_conv")
-    
+
     assert response is not None
     assert isinstance(response, str)
 
@@ -118,16 +120,16 @@ async def test_intent_parsing():
             response='{"primary_goal": "build a calculator", "tools_needed": ["generate_code"], "confidence": 0.9}'
         )
     )
-    
+
     repo = JsonConversationRepository(Path("data/test_intent.json"))
     orch = MistralChatOrchestrator(
         unified_client=mock_client,
         conversation_repo=repo,
     )
-    
+
     await orch.initialize()
     intent = await orch._parse_intent("build a calculator", [])
-    
+
     assert intent.primary_goal == "build a calculator"
     assert "generate_code" in intent.tools_needed
     assert intent.confidence == 0.9

@@ -11,8 +11,8 @@ from typing import Dict
 from fastapi import APIRouter
 
 from src.infrastructure.config.settings import Settings
+from src.infrastructure.health.health_checker import HealthStatus
 from src.infrastructure.health.model_health import ModelHealthChecker
-from src.infrastructure.health.health_checker import HealthResult, HealthStatus
 from src.infrastructure.health.storage_health import StorageHealthChecker
 
 

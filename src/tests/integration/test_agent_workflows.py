@@ -5,9 +5,10 @@ Following TDD principles and the Zen of Python:
 - Readability counts
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime
+from unittest.mock import AsyncMock
+
+import pytest
 
 from src.application.orchestrators.multi_agent_orchestrator import (
     MultiAgentOrchestrator,
@@ -15,10 +16,8 @@ from src.application.orchestrators.multi_agent_orchestrator import (
 from src.domain.agents.code_generator import CodeGeneratorAgent
 from src.domain.agents.code_reviewer import CodeReviewerAgent
 from src.domain.messaging.message_schema import (
-    CodeGenerationRequest,
     CodeGenerationResponse,
     CodeQualityMetrics,
-    CodeReviewRequest,
     CodeReviewResponse,
     OrchestratorRequest,
     TaskMetadata,

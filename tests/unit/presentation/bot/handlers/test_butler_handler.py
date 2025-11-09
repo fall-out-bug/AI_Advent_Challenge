@@ -41,7 +41,7 @@ def mock_message():
 async def test_setup_butler_handler(mock_orchestrator):
     """Test setup_butler_handler creates router correctly."""
     router = setup_butler_handler(mock_orchestrator)
-    
+
     assert router is not None
     assert len(router.message.handlers) > 0
 
@@ -50,9 +50,9 @@ async def test_setup_butler_handler(mock_orchestrator):
 async def test_handle_any_message_success(mock_orchestrator, mock_message):
     """Test successful message handling."""
     setup_butler_handler(mock_orchestrator)
-    
+
     await handle_any_message(mock_message)
-    
+
     mock_orchestrator.handle_user_message.assert_called_once_with(
         user_id="456", message="Test message", session_id="telegram_456_123"
     )
@@ -63,13 +63,13 @@ async def test_handle_any_message_success(mock_orchestrator, mock_message):
 async def test_handle_any_message_no_text(mock_orchestrator):
     """Test handling message without text."""
     setup_butler_handler(mock_orchestrator)
-    
+
     message = MagicMock(spec=Message)
     message.text = None
     message.from_user = MagicMock()
-    
+
     await handle_any_message(message)
-    
+
     mock_orchestrator.handle_user_message.assert_not_called()
 
 
@@ -77,13 +77,13 @@ async def test_handle_any_message_no_text(mock_orchestrator):
 async def test_handle_any_message_no_user(mock_orchestrator):
     """Test handling message without user."""
     setup_butler_handler(mock_orchestrator)
-    
+
     message = MagicMock(spec=Message)
     message.text = "Test"
     message.from_user = None
-    
+
     await handle_any_message(message)
-    
+
     mock_orchestrator.handle_user_message.assert_not_called()
 
 
@@ -92,9 +92,9 @@ async def test_handle_any_message_orchestrator_error(mock_orchestrator, mock_mes
     """Test error handling when orchestrator fails."""
     setup_butler_handler(mock_orchestrator)
     mock_orchestrator.handle_user_message.side_effect = Exception("Test error")
-    
+
     await handle_any_message(mock_message)
-    
+
     # Error handler should be called
     assert mock_message.answer.call_count >= 1
 
@@ -104,9 +104,10 @@ async def test_handle_any_message_no_orchestrator(mock_message):
     """Test handling when orchestrator not initialized."""
     # Set orchestrator to None
     import src.presentation.bot.handlers.butler_handler as handler_module
+
     original = handler_module._orchestrator
     handler_module._orchestrator = None
-    
+
     try:
         await handle_any_message(mock_message)
         # Should call error handler
@@ -119,7 +120,7 @@ async def test_handle_any_message_no_orchestrator(mock_message):
 async def test_safe_answer_success(mock_message):
     """Test successful answer sending."""
     await _safe_answer(mock_message, "Test response")
-    
+
     mock_message.answer.assert_called_once_with("Test response", parse_mode="Markdown")
 
 
@@ -128,7 +129,7 @@ async def test_safe_answer_long_message(mock_message):
     """Test answering with long message (truncation)."""
     long_text = "x" * 5000
     await _safe_answer(mock_message, long_text)
-    
+
     call_args = mock_message.answer.call_args
     assert call_args is not None
     sent_text = call_args[0][0]
@@ -140,7 +141,7 @@ async def test_safe_answer_long_message(mock_message):
 async def test_safe_answer_send_error(mock_message):
     """Test error handling when sending fails."""
     mock_message.answer.side_effect = Exception("Send error")
-    
+
     # Should not raise exception
     await _safe_answer(mock_message, "Test")
 
@@ -149,8 +150,7 @@ async def test_safe_answer_send_error(mock_message):
 async def test_handle_error(mock_message):
     """Test error handler sends user-friendly message."""
     await _handle_error(mock_message, Exception("Test error"))
-    
+
     mock_message.answer.assert_called_once()
     call_args = mock_message.answer.call_args[0][0]
     assert "error" in call_args.lower() or "❌" in call_args
-

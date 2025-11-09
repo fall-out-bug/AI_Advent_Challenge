@@ -5,7 +5,6 @@ Following Python Zen: Explicit is better than implicit.
 """
 
 import logging
-from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
 import httpx
@@ -166,7 +165,9 @@ class HWCheckerClient:
             httpx.HTTPError: If HTTP request fails
         """
         if not any([job_id, archive_name, commit_hash]):
-            raise ValueError("At least one identifier (job_id, archive_name, commit_hash) must be provided")
+            raise ValueError(
+                "At least one identifier (job_id, archive_name, commit_hash) must be provided"
+            )
 
         payload: Dict[str, Any] = {}
         if job_id:
@@ -280,4 +281,3 @@ class HWCheckerClient:
         except httpx.RequestError as e:
             logger.error(f"Request error downloading archive: {e}")
             raise
-

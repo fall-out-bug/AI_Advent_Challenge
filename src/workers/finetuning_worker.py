@@ -3,10 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-import os
-from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from src.domain.value_objects.finetuning.finetuning_task import FineTuningTask
 from src.infrastructure.config.settings import get_settings
@@ -92,7 +89,9 @@ class FineTuningWorker:
             logger.info(f"Exported {len(dataset)} samples to {dataset_path}")
 
             # Create fine-tuning task
-            output_dir = Path(self.settings.finetuning_model_output_dir) / "summarization"
+            output_dir = (
+                Path(self.settings.finetuning_model_output_dir) / "summarization"
+            )
             output_dir.mkdir(parents=True, exist_ok=True)
 
             task = FineTuningTask(
