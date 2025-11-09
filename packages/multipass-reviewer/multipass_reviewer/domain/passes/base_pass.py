@@ -61,7 +61,7 @@ class BaseReviewPass:
         """Create pass result describing failure."""
         message = str(error)
         self._start_timer_if_needed()
-        metadata = {"status": "error", "error_message": message}
+        metadata: dict[str, object] = {"status": "error", "error_message": message}
         if self.review_logger:
             self.review_logger.log_review_pass(self.name, "error", metadata)
         duration = self._observe_runtime()
@@ -82,7 +82,7 @@ class BaseReviewPass:
         if self._timer_start is None:
             self._timer_start = time.perf_counter()
 
-    def _observe_runtime(self) -> None:
+    def _observe_runtime(self) -> float | None:
         """Record runtime metric and reset timer."""
         if self._timer_start is None:
             return None

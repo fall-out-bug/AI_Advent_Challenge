@@ -9,6 +9,12 @@ from unittest.mock import AsyncMock
 from src.domain.agents.handlers.reminders_handler import RemindersHandler
 from src.domain.agents.state_machine import DialogContext, DialogState
 
+pytestmark = pytest.mark.skip(
+    reason=(
+        "Reminder flows archived in Stage 02_01; handler slated for removal in EP04."
+    )
+)
+
 
 class MockToolClient:
     """Mock tool client."""

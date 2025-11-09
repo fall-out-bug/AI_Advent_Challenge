@@ -25,7 +25,9 @@ class TypeChecker(BaseChecker):
                 stripped = line.strip()
                 if not stripped.startswith("def "):
                     continue
-                params_section = stripped[stripped.find("(") + 1 : stripped.find(")")]
+                start = stripped.find("(") + 1
+                end = stripped.find(")")
+                params_section = stripped[start:end]
                 params = [p.strip() for p in params_section.split(",") if p.strip()]
                 missing_param_hints = [
                     p for p in params if (":" not in p and not p.startswith("*"))
@@ -38,7 +40,7 @@ class TypeChecker(BaseChecker):
                             "line": lineno,
                             "rule": "missing_type_hints",
                             "message": (
-                                "Function in " f"{path}:{lineno} lacks type hints"
+                                f"Function in {path}:{lineno} lacks type hints"
                             ),
                         }
                     )

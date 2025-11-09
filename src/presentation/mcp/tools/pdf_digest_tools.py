@@ -6,6 +6,7 @@ import base64
 import time
 from datetime import datetime
 from typing import Any, Dict, List
+import warnings
 
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.database.mongo import get_db
@@ -23,6 +24,18 @@ from src.infrastructure.repositories.post_repository import PostRepository
 from src.presentation.mcp.server import mcp
 
 logger = get_logger("pdf_digest_tools")
+
+PDF_TOOL_DEPRECATION_MESSAGE = (
+    "PDF digest MCP tools are deprecated and will be replaced by Stage 02_02 CLI "
+    "commands (e.g., digest:export). Enable MCP_INCLUDE_DEPRECATED_TOOLS to register "
+    "them temporarily."
+)
+
+
+def _warn_deprecated() -> None:
+    """Emit deprecation warning for PDF digest tools."""
+    warnings.warn(PDF_TOOL_DEPRECATION_MESSAGE, DeprecationWarning, stacklevel=2)
+    logger.warning(PDF_TOOL_DEPRECATION_MESSAGE)
 
 
 async def _db():
@@ -45,6 +58,7 @@ async def get_posts_from_db(user_id: int, hours: int = 24) -> Dict[str, Any]:
     Returns:
         Dict with keys: posts_by_channel, total_posts, channels_count
     """
+    _warn_deprecated()
     settings = get_settings()
     db = await _db()
     repository = PostRepository(db)
@@ -114,6 +128,7 @@ async def summarize_posts(
     Raises:
         None: Errors are logged and handled gracefully
     """
+    _warn_deprecated()
     settings = get_settings()
     max_posts = settings.pdf_max_posts_per_channel
 
@@ -224,6 +239,7 @@ async def format_digest_markdown(
 
     Returns dict with keys: markdown (str), sections_count (int).
     """
+    _warn_deprecated()
     try:
         markdown = _render_markdown_template(summaries, metadata)
         return {
@@ -282,6 +298,7 @@ async def combine_markdown_sections(
 
     Returns dict with keys: combined_markdown (str), total_chars (int).
     """
+    _warn_deprecated()
     template_str = _load_template(template)
     combined_sections = "\n\n".join(sections)
 
@@ -397,6 +414,7 @@ async def convert_markdown_to_pdf(
 
     Returns dict with keys: pdf_bytes (base64 str), file_size (int), pages (int).
     """
+    _warn_deprecated()
     start_time = time.time()
     try:
         css = _generate_css()

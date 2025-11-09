@@ -19,11 +19,23 @@ class ToolMetadata(BaseModel):
         name: Tool name
         description: Tool description
         input_schema: JSON schema for tool inputs
+        status: Lifecycle status (supported/transition/experimental/deprecated/archived)
+        note: Optional status note for prompts and UI
     """
 
     name: str = Field(..., description="Tool name")
     description: str = Field(..., description="Tool description")
     input_schema: Dict[str, Any] = Field(..., description="Input schema")
+    status: str = Field(
+        default="supported",
+        description=(
+            "Lifecycle status (supported, transition, experimental, deprecated, archived)"
+        ),
+    )
+    note: str | None = Field(
+        default=None,
+        description="Optional note describing status or migration guidance",
+    )
 
 
 class AgentRequest(BaseModel):

@@ -31,7 +31,9 @@ class MLOpsChecker(BaseChecker):
                     {
                         "file": path,
                         "rule": "missing_tracking_uri",
-                        "message": "MLflow usage detected without configuring tracking URI",
+                        "message": (
+                            "MLflow usage detected without configuring tracking URI"
+                        ),
                     }
                 )
 
@@ -40,7 +42,10 @@ class MLOpsChecker(BaseChecker):
                     {
                         "file": path,
                         "rule": "missing_model_registry",
-                        "message": "Model training code should register artifacts in a model registry",
+                        "message": (
+                            "Model training code should register artifacts "
+                            "in a model registry"
+                        ),
                     }
                 )
 
@@ -76,7 +81,10 @@ class DataPipelineChecker(BaseChecker):
                     {
                         "file": path,
                         "rule": "runtime_schema_evolution",
-                        "message": "mergeSchema usage may indicate runtime schema drift; prefer explicit schema management",
+                        "message": (
+                            "mergeSchema usage may indicate runtime schema drift; "
+                            "prefer explicit schema management"
+                        ),
                     }
                 )
 
@@ -89,7 +97,10 @@ class DataPipelineChecker(BaseChecker):
                     {
                         "file": path,
                         "rule": "no_data_quality_steps",
-                        "message": "Pipeline lacks explicit data quality steps (dropna/fillna/drop_duplicates)",
+                        "message": (
+                            "Pipeline lacks explicit data quality steps "
+                            "(dropna/fillna/drop_duplicates)"
+                        ),
                     }
                 )
 

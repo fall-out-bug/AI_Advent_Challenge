@@ -22,6 +22,10 @@ from src.infrastructure.monitoring.agent_metrics import (
     long_tasks_queue_size,
     long_tasks_total,
 )
+from src.infrastructure.monitoring.worker_metrics import (
+    record_worker_task,
+    set_worker_queue_depth,
+)
 from src.infrastructure.notifiers.telegram_notifier import TelegramNotifier
 from src.infrastructure.repositories.long_tasks_repository import LongTasksRepository
 from src.presentation.mcp.client import get_mcp_client
@@ -127,6 +131,7 @@ class SummaryWorker:
                 {"status": TaskStatus.QUEUED.value}
             )
             long_tasks_queue_size.set(queued_count)
+            set_worker_queue_depth("summarization", queued_count)
 
             # Pick next queued summarization task (filter by type)
             task = await long_tasks_repo.pick_next_queued(
@@ -155,7 +160,6 @@ class SummaryWorker:
 
             try:
                 result_text = await process_use_case.execute(task)
-                duration = time.time() - start_time
 
                 # Send result to user
                 if task.channel_username:
@@ -166,6 +170,9 @@ class SummaryWorker:
                     message = f"📋 Дайджест по всем каналам:\n\n{result_text}"
 
                 await notifier.send_message(task.chat_id, message)
+
+                duration = time.time() - start_time
+                record_worker_task("summarization", "success", duration)
                 logger.info(
                     f"Summarization task completed and sent: task_id={task.task_id}, "
                     f"user_id={task.user_id}, result_length={len(result_text)}, "
@@ -174,6 +181,7 @@ class SummaryWorker:
 
             except Exception as e:
                 duration = time.time() - start_time
+                record_worker_task("summarization", "error", duration)
                 error_msg = f"Ошибка при создании дайджеста: {str(e)[:200]}"
                 logger.error(
                     f"Summarization task failed: task_id={task.task_id}, error={error_msg}, "
@@ -212,7 +220,7 @@ class SummaryWorker:
             queued_count = await long_tasks_repo.get_queue_size(
                 task_type=TaskType.CODE_REVIEW
             )
-            # Note: We could add a separate metric for review tasks if needed
+            set_worker_queue_depth("code_review", queued_count)
 
             # Pick next queued review task (filter by type)
             task = await long_tasks_repo.pick_next_queued(
@@ -336,6 +344,7 @@ class SummaryWorker:
                 duration = time.time() - start_time
                 long_tasks_duration.observe(duration)
                 long_tasks_total.labels(status="succeeded").inc()
+                record_worker_task("code_review", "success", duration)
                 logger.info(
                     f"Review task completed: task_id={task.task_id}, "
                     f"session_id={session_id}, duration={duration:.2f}s"
@@ -344,6 +353,7 @@ class SummaryWorker:
                 duration = time.time() - start_time
                 long_tasks_duration.observe(duration)
                 long_tasks_total.labels(status="failed").inc()
+                record_worker_task("code_review", "error", duration)
                 logger.error(
                     f"Review task failed: task_id={task.task_id}, error={e}",
                     exc_info=True,

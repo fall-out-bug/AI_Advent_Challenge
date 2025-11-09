@@ -18,16 +18,23 @@ multipass-reviewer = { path = "packages/multipass-reviewer", develop = true }
 
 ### Option B. Poetry Git Dependency (remote consumption)
 
-If you publish the package to a Git repository (tagged `v0.2.0`):
+If you publish the package to a Git repository (tagged `v0.3.0`):
 
 ```toml
 [tool.poetry.dependencies]
-multipass-reviewer = { git = "https://example.com/multipass-reviewer.git", tag = "v0.2.0" }
+multipass-reviewer = { git = "https://example.com/multipass-reviewer.git", tag = "v0.3.0" }
 ```
 
 Then execute `poetry install`.
 
 The package requires Python 3.10+, `httpx 0.27`, and `prometheus-client 0.20`. Poetry will resolve these automatically when the dependency is declared.
+
+### Stage 01_03 Hardening Snapshot
+
+The `0.3.0` release (Stage 01_03) ships with:
+- Strict lint/type gates (flake8 + mypy) on reviewer-critical modules.
+- Expanded integration/unit coverage (≥94% package, ≥90% shared SDK).
+- Permanent modular reviewer activation (kill-switch removed).
 
 ## 2. Environment Variables
 
@@ -38,11 +45,10 @@ MONGODB_URL=mongodb://admin:<password>@shared-mongo:27017/butler?authSource=admi
 LLM_URL=http://llm-api:8000
 LLM_MODEL=qwen
 PROMETHEUS_URL=http://shared-prometheus:9090
-USE_MODULAR_REVIEWER=1
 ```
 
 - `LLM_MODEL` should be the alias (`qwen`, `mistral`, etc.). The reviewer normalises long model names, but aliases avoid validation errors.
-- `USE_MODULAR_REVIEWER` lets you switch the integration on/off without code changes (optional but recommended).
+- The modular reviewer is permanently enabled starting with version `0.3.0`; no runtime flag toggle is required.
 
 ## 3. Wiring the Service
 

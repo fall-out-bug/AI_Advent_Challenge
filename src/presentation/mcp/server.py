@@ -1,5 +1,6 @@
 """FastMCP server exposing AI Challenge capabilities."""
 
+import os
 from pathlib import Path
 from typing import Any, Dict
 
@@ -16,32 +17,73 @@ mcp = FastMCP(
 
 # Register tools AFTER mcp is created to avoid circular imports
 # Import modules so their @mcp.tool decorators execute and register tools
-def _register_all_tools():
+def _register_all_tools() -> None:
     """Register all tool modules by importing them."""
 
-    tool_modules = [
-        ("reminder_tools", "src.presentation.mcp.tools.reminder_tools"),
-        ("nlp_tools", "src.presentation.mcp.tools.nlp_tools"),
-        ("digest_tools", "src.presentation.mcp.tools.digest_tools"),
-        ("pdf_digest_tools", "src.presentation.mcp.tools.pdf_digest_tools"),
-        # Explicitly import channels module to ensure tools are registered
-        ("channels", "src.presentation.mcp.tools.channels"),
-        ("homework_review_tool", "src.presentation.mcp.tools.homework_review_tool"),
-    ]
-
     from src.infrastructure.logging import get_logger
+    from src.infrastructure.monitoring.mcp_metrics import set_registered_tools
+
+    include_deprecated = os.getenv(
+        "MCP_INCLUDE_DEPRECATED_TOOLS", "0"
+    ).lower() not in {"", "0", "false", "no"}
+
+    tool_modules = [
+        ("nlp_tools", "src.presentation.mcp.tools.nlp_tools", "supported", ""),
+        (
+            "digest_tools",
+            "src.presentation.mcp.tools.digest_tools",
+            "supported",
+            "",
+        ),
+        (
+            "channels",
+            "src.presentation.mcp.tools.channels",
+            "supported",
+            "Channel bulk management migrates to CLI backoffice in Stage 02_02.",
+        ),
+        (
+            "pdf_digest_tools",
+            "src.presentation.mcp.tools.pdf_digest_tools",
+            "deprecated",
+            "CLI `digest:export` replaces this tool during Stage 02_02.",
+        ),
+        (
+            "homework_review_tool",
+            "src.presentation.mcp.tools.homework_review_tool",
+            "deprecated",
+            "Modular reviewer replacement ships after EP01 refactor.",
+        ),
+    ]
 
     logger = get_logger(__name__)
 
-    for name, module_path in tool_modules:
+    for name, module_path, status, note in tool_modules:
+        if status == "deprecated" and not include_deprecated:
+            logger.info(
+                "Skipping deprecated MCP tool %s (enable MCP_INCLUDE_DEPRECATED_TOOLS "
+                "to register).",
+                name,
+            )
+            continue
+
         try:
             __import__(module_path)
-            logger.info(f"Registered tools from {name}")
-        except Exception as e:
+            if status == "deprecated":
+                logger.warning("Registered deprecated MCP tool %s: %s", name, note)
+            else:
+                logger.info("Registered tools from %s", name)
+            if note and status != "deprecated":
+                logger.debug(note)
+        except Exception as exc:
             logger.error(
-                f"Failed to import {name} from {module_path}: {e}", exc_info=True
+                "Failed to import %s from %s: %s", name, module_path, exc, exc_info=True
             )
 
+    try:
+        tools_registered = len(mcp._tool_manager._tools)
+    except AttributeError:
+        tools_registered = 0
+    set_registered_tools(tools_registered)
 
 # Register tools immediately when module loads
 _register_all_tools()

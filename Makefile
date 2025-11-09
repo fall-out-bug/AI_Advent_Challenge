@@ -120,6 +120,17 @@ lint:
 	poetry run mypy packages/multipass-reviewer/multipass_reviewer --strict
 	poetry run bandit -r src
 
+lint-allowlist:
+	poetry run flake8 --config packages/multipass-reviewer/.flake8 packages/multipass-reviewer/multipass_reviewer
+	poetry run flake8 --config shared/.flake8 shared/shared_package/agents shared/shared_package/clients
+	poetry run flake8 --max-line-length=120 src/application/services/modular_review_service.py src/application/use_cases/review_submission_use_case.py
+	poetry run mypy shared/shared_package/agents shared/shared_package/clients
+	poetry run mypy packages/multipass-reviewer/multipass_reviewer
+	poetry run mypy --ignore-missing-imports src/application/services/modular_review_service.py src/application/use_cases/review_submission_use_case.py
+
+lint-debt:
+	poetry run flake8 --count --exit-zero src tests shared packages
+
 dev:
 	docker compose -f docker-compose.dev.yml run --rm dev
 
@@ -402,8 +413,12 @@ unified-task-worker:
 	poetry run python -m src.workers
 
 review-test:
-	@echo "Running review system tests..."
-	poetry run pytest tests/unit/domain/test_review*.py tests/unit/domain/test_code_diff.py tests/unit/domain/test_submission_archive.py tests/unit/application/test_enqueue_review_task.py -v
+	@echo "Running review system smoke tests..."
+	poetry run pytest \
+		src/tests/application/services/test_modular_review_service.py \
+		src/tests/application/use_cases/test_review_submission_use_case.py \
+		src/tests/infrastructure/clients/test_llm_client.py \
+		-v
 
 review-e2e:
 	@echo "Running review E2E tests..."

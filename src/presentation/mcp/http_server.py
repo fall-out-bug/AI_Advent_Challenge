@@ -2,10 +2,12 @@
 import asyncio
 import os
 import sys
+from time import perf_counter
 from typing import Any, Dict, List
+from uuid import uuid4
 
 try:
-    from fastapi import FastAPI, HTTPException
+    from fastapi import FastAPI, HTTPException, Request
     from fastapi.responses import Response
     from pydantic import BaseModel
     from uvicorn import run
@@ -15,7 +17,13 @@ except ImportError:
     sys.stderr.write("Install with: pip install fastapi uvicorn\n")
     sys.exit(1)
 
-from src.infrastructure.logging import get_logger
+from src.domain.value_objects.audit_event import AuditEvent
+from src.infrastructure.logging import get_logger, with_request_id
+from src.infrastructure.logging.audit import log_audit_event
+from src.infrastructure.monitoring.mcp_metrics import (
+    record_mcp_request,
+    set_registered_tools,
+)
 from src.infrastructure.monitoring.prometheus_metrics import get_metrics_registry
 
 # Import MCP server
@@ -96,7 +104,9 @@ def _get_tools_list() -> List[Dict[str, Any]]:
                     f"Failed to serialize tool {tool_name}: {e}", exc_info=True
                 )
 
-        logger.info(f"Returning {len(tools)} tools")
+        tools_count = len(tools)
+        set_registered_tools(tools_count)
+        logger.info(f"Returning {tools_count} tools")
     except Exception as e:
         logger.error(f"Failed to get tools list: {e}", exc_info=True)
     return tools
@@ -137,37 +147,93 @@ async def list_tools():
 
 
 @app.post("/call")
-async def call_tool(request: ToolCallRequest):
+async def call_tool(tool_request: ToolCallRequest, http_request: Request):
     """Call an MCP tool."""
-    try:
-        logger.info(
-            f"Calling tool: {request.tool_name} with arguments: {str(request.arguments)[:200]}"
-        )
-        # Use the tool manager to call tools
-        result = await mcp._tool_manager.call_tool(request.tool_name, request.arguments)
-        logger.info(
-            f"Tool call completed: {request.tool_name} (result type: {type(result).__name__})"
-        )
+    tool_name = tool_request.tool_name
+    start_time = perf_counter()
+    status = "success"
+    request_id = http_request.headers.get("X-Request-ID") or uuid4().hex
+    actor = http_request.headers.get("X-Actor") or "mcp-http"
+    client_ip = http_request.client.host if http_request.client else "unknown"
 
-        # Log result structure for debugging
-        if isinstance(result, dict):
-            logger.info(f"Result keys: {list(result.keys())}")
-            if "digests" in result:
-                logger.info(f"Digests count: {len(result.get('digests', []))}")
-                if result.get("digests"):
-                    for i, d in enumerate(result["digests"]):
-                        logger.info(
-                            f"Digest {i}: channel={d.get('channel')}, posts={d.get('post_count')}, summary_len={len(d.get('summary', ''))}"
-                        )
-            if "message" in result:
-                logger.info(f"Result message: {result['message'][:100]}")
+    with with_request_id(request_id):
+        try:
+            logger.info(
+                f"Calling tool: {tool_name} with arguments: {str(tool_request.arguments)[:200]}"
+            )
+            result = await mcp._tool_manager.call_tool(tool_name, tool_request.arguments)
+            logger.info(
+                f"Tool call completed: {tool_name} (result type: {type(result).__name__})"
+            )
 
-        return {"result": result}
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Tool call failed: {request.tool_name} - {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+            # Log result structure for debugging
+            if isinstance(result, dict):
+                logger.info(f"Result keys: {list(result.keys())}")
+                if "digests" in result:
+                    logger.info(f"Digests count: {len(result.get('digests', []))}")
+                    if result.get("digests"):
+                        for i, d in enumerate(result["digests"]):
+                            logger.info(
+                                f"Digest {i}: channel={d.get('channel')}, posts={d.get('post_count')}, summary_len={len(d.get('summary', ''))}"
+                            )
+                if "message" in result:
+                    logger.info(f"Result message: {result['message'][:100]}")
+
+            duration = perf_counter() - start_time
+            record_mcp_request(tool_name, status, duration)
+            log_audit_event(
+                AuditEvent.create(
+                    actor=actor,
+                    action="mcp_tool_call",
+                    resource=tool_name,
+                    outcome="success",
+                    metadata={
+                        "duration_ms": round(duration * 1000, 2),
+                        "client_ip": client_ip,
+                        "arguments": list(tool_request.arguments.keys()),
+                    },
+                    trace_id=request_id,
+                )
+            )
+            return {"result": result}
+        except HTTPException as exc:
+            status = "error" if exc.status_code >= 400 else "success"
+            duration = perf_counter() - start_time
+            record_mcp_request(tool_name, status, duration)
+            log_audit_event(
+                AuditEvent.create(
+                    actor=actor,
+                    action="mcp_tool_call",
+                    resource=tool_name,
+                    outcome="error" if exc.status_code >= 400 else "success",
+                    metadata={
+                        "status_code": exc.status_code,
+                        "client_ip": client_ip,
+                    },
+                    trace_id=request_id,
+                )
+            )
+            raise
+        except Exception as e:
+            status = "error"
+            duration = perf_counter() - start_time
+            record_mcp_request(tool_name, status, duration)
+            logger.error(f"Tool call failed: {tool_name} - {str(e)}", exc_info=True)
+            log_audit_event(
+                AuditEvent.create(
+                    actor=actor,
+                    action="mcp_tool_call",
+                    resource=tool_name,
+                    outcome="error",
+                    metadata={
+                        "error": str(e)[:200],
+                        "duration_ms": round(duration * 1000, 2),
+                        "client_ip": client_ip,
+                    },
+                    trace_id=request_id,
+                )
+            )
+            raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/config")

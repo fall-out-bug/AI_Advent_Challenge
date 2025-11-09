@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any, Dict
+import warnings
 
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.database.mongo import get_db
@@ -14,6 +15,13 @@ from src.presentation.mcp.server import mcp
 from ._summary_helpers import _build_summary_query, _compute_task_stats
 
 logger = get_logger("mcp.reminder_tools")
+REMINDER_TOOLS_ARCHIVE_MESSAGE = (
+    "Reminder MCP tools are archived and scheduled for removal during EP04. Do not "
+    "use them in new integrations."
+)
+warnings.warn(REMINDER_TOOLS_ARCHIVE_MESSAGE, DeprecationWarning, stacklevel=2)
+logger.warning(REMINDER_TOOLS_ARCHIVE_MESSAGE)
+
 _settings = get_settings()
 
 

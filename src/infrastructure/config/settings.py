@@ -177,10 +177,6 @@ class Settings(BaseSettings):
         default=100, description="Max posts to summarize per channel"
     )
 
-    use_modular_reviewer: bool = Field(
-        default=True,
-        description="Use reusable multipass reviewer package instead of legacy implementation",
-    )
     # Parser/agent flags
     parser_strict_mode: bool = Field(
         default=False, description="If true, decision parser uses strict JSON-only mode"

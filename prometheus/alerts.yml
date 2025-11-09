@@ -2,156 +2,50 @@ groups:
   - name: worker_alerts
     interval: 30s
     rules:
-      # Post Fetcher Worker Alerts
-      - alert: PostFetcherWorkerDown
-        expr: post_fetcher_worker_running == 0
+      - alert: UnifiedWorkerDown
+        expr: up{job="unified-task-worker"} == 0
         for: 2m
         labels:
           severity: critical
-          service: post_fetcher_worker
+          service: unified-task-worker
         annotations:
-          summary: "Post fetcher worker is not running"
-          description: "Post fetcher worker has been down for more than 2 minutes. Posts are not being collected from Telegram channels."
+          summary: "Unified worker metrics endpoint is down"
+          description: "The unified task worker metrics endpoint has been unavailable for more than 2 minutes. Check container status and logs."
 
-      - alert: PostFetcherHighErrorRate
+      - alert: UnifiedWorkerHighErrorRate
         expr: |
-          rate(post_fetcher_errors_total[1h]) > 3
+          rate(unified_worker_tasks_total{status="error"}[5m])
+          /
+          clamp_min(rate(unified_worker_tasks_total[5m]), 1e-6) > 0.10
         for: 10m
         labels:
-          severity: critical
-          service: post_fetcher_worker
+          severity: warning
+          service: unified-task-worker
         annotations:
-          summary: "Post fetcher worker has high error rate"
-          description: "Post fetcher worker has failed more than 3 times in the last hour. Check logs for details."
+          summary: "Unified worker error rate exceeds 10%"
+          description: "More than 10% of unified worker tasks failed during the last 10 minutes. Inspect worker logs for failing task types."
 
-      - alert: PostFetcherNoRuns
+      - alert: UnifiedWorkerBacklog
         expr: |
-          time() - post_fetcher_last_run_timestamp_seconds > 7200
+          unified_worker_queue_depth{task_type="code_review"} > 50
         for: 15m
         labels:
           severity: warning
-          service: post_fetcher_worker
+          service: unified-task-worker
         annotations:
-          summary: "Post fetcher worker has not run in 2 hours"
-          description: "Post fetcher worker last run was more than 2 hours ago. Expected interval is 1 hour."
+          summary: "Unified worker queue backlog exceeds threshold"
+          description: "Code review queue depth has been above 50 tasks for 15 minutes. Scale workers or investigate upstream bottlenecks."
 
-      # PDF Generation Alerts
-      - alert: PDFGenerationHighErrorRate
+      - alert: UnifiedWorkerHighLatency
         expr: |
-          rate(pdf_generation_errors_total[5m]) / rate(pdf_generation_duration_seconds_count[5m]) > 0.10
-        for: 5m
-        labels:
-          severity: warning
-          service: pdf_generation
-        annotations:
-          summary: "PDF generation error rate exceeds 10%"
-          description: "PDF generation is failing more than 10% of the time in the last 5 minutes. Check logs for error details."
-
-      - alert: PDFGenerationHighLatency
-        expr: |
-          histogram_quantile(0.95, rate(pdf_generation_duration_seconds_bucket[5m])) > 30
-        for: 2m
-        labels:
-          severity: warning
-          service: pdf_generation
-        annotations:
-          summary: "PDF generation latency exceeds 30 seconds (P95)"
-          description: "95th percentile of PDF generation time exceeds 30 seconds. This may indicate performance issues."
-
-      # Bot Digest Handler Alerts
-      - alert: BotDigestHighErrorRate
-        expr: |
-          rate(bot_digest_errors_total[5m]) / rate(bot_digest_requests_total[5m]) > 0.10
-        for: 5m
-        labels:
-          severity: warning
-          service: bot_digest_handler
-        annotations:
-          summary: "Bot digest handler error rate exceeds 10%"
-          description: "Bot digest requests are failing more than 10% of the time in the last 5 minutes. Check logs for error details."
-
-      - alert: BotDigestLowCacheHitRate
-        expr: |
-          rate(bot_digest_cache_hits_total[1h]) / rate(bot_digest_requests_total[1h]) < 0.3
-        for: 30m
-        labels:
-          severity: info
-          service: bot_digest_handler
-        annotations:
-          summary: "Bot digest cache hit rate is low"
-          description: "Cache hit rate is below 30% in the last hour. Consider reviewing cache TTL settings."
-
-      # General System Alerts
-      - alert: PostFetcherSlowProcessing
-        expr: |
-          histogram_quantile(0.95, rate(post_fetcher_duration_seconds_bucket[5m])) > 120
+          histogram_quantile(0.95, rate(unified_worker_task_duration_seconds_bucket[5m])) > 300
         for: 10m
         labels:
           severity: warning
-          service: post_fetcher_worker
+          service: unified-task-worker
         annotations:
-          summary: "Post fetcher processing is slow"
-          description: "95th percentile of post fetcher processing time exceeds 2 minutes. This may indicate performance issues."
-
-  - name: ml_alerts
-    interval: 30s
-    rules:
-      # LLM Service Alerts
-      - alert: HighLLMLatency
-        expr: |
-          histogram_quantile(0.95, rate(llm_inference_latency_seconds_bucket[5m])) > 5
-        for: 5m
-        labels:
-          severity: warning
-          service: llm
-        annotations:
-          summary: "LLM inference latency exceeds 5 seconds (P95)"
-          description: "95th percentile of LLM inference latency exceeds 5 seconds for the last 5 minutes. Check model performance and infrastructure."
-
-      - alert: HighLLMErrorRate
-        expr: |
-          rate(llm_error_rate_total[2m]) > 0.10
-        for: 2m
-        labels:
-          severity: warning
-          service: llm
-        annotations:
-          summary: "LLM error rate exceeds 10%"
-          description: "LLM error rate exceeds 10% in the last 2 minutes. Check logs for error details and model availability."
-
-      - alert: LLMModelDown
-        expr: |
-          up{job="mistral-chat"} == 0
-        for: 2m
-        labels:
-          severity: critical
-          service: llm
-        annotations:
-          summary: "LLM model service is down"
-          description: "LLM model service has been unavailable for more than 2 minutes. Check service health and logs."
-
-      - alert: LLMModelDrift
-        expr: |
-          (histogram_quantile(0.95, rate(llm_inference_latency_seconds_bucket[1h])) - 
-           histogram_quantile(0.95, rate(llm_inference_latency_seconds_bucket[6h] offset 1h))) > 2
-        for: 10m
-        labels:
-          severity: critical
-          service: llm
-        annotations:
-          summary: "LLM model latency drift detected"
-          description: "LLM inference latency has increased significantly compared to baseline. Recommends retrain/investigation pipeline."
-
-      - alert: LLMHighTokenUsage
-        expr: |
-          rate(llm_token_generation_rate_total[5m]) > 10000
-        for: 5m
-        labels:
-          severity: warning
-          service: llm
-        annotations:
-          summary: "High LLM token generation rate"
-          description: "Token generation rate exceeds 10,000 tokens per minute. Monitor costs and rate limits."
+          summary: "Unified worker latency exceeds 5 minutes (P95)"
+          description: "95th percentile unified worker task duration is above 5 minutes for the last 10 minutes. Investigate slow tasks or external dependencies."
 
   - name: mcp_alerts
     interval: 30s
@@ -171,7 +65,9 @@ groups:
 
       - alert: MCPServerHighErrorRate
         expr: |
-          rate(mcp_errors_total[5m]) / rate(mcp_requests_total[5m]) > 0.10
+          rate(mcp_requests_total{status="error"}[5m])
+          /
+          clamp_min(rate(mcp_requests_total[5m]), 1e-6) > 0.10
         for: 5m
         labels:
           severity: warning

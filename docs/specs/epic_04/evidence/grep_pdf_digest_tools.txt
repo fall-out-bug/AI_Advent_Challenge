@@ -1,0 +1,77 @@
+AI_CONTEXT.md:333:- `src/presentation/mcp/tools/pdf_digest_tools.py`
+docs/architecture/mcp_agent_prompt_tuning_report.md:15:  - `src/presentation/mcp/server.py` регистрирует тулы (`digest_tools`, `pdf_digest_tools`, и др.)
+docs/specs/epic_00/stage_00_01.md:58:| PDF digest | `pdf_digest_tools.py` | PDF reports | Deprecate |
+docs/specs/epic_00/stage_00_01.md:115:| `pdf_digest_tools.py` | Deprecate | Functionality redundant; depends on heavy WeasyPrint stack. |
+docs/specs/epic_00/stage_00_01.md:318:- MCP suites (`src/tests/presentation/mcp/test_adapters.py`, `test_digest_tools.py`, `test_pdf_digest_tools.py`, `test_performance.py`) – blocked by Mongo auth, logging kwargs, heavyweight dependencies.
+docs/specs/epic_00/stage_00_01.md:319:- `src/tests/presentation/mcp/test_pdf_digest_tools.py` – needs Mongo auth and WeasyPrint stubs.
+docs/specs/epic_00/stage_00_02.md:121:| PDF digest tests | `tests/presentation/mcp/test_pdf_digest_tools.py` | Relies on WeasyPrint; mark xfail until CLI backoffice replaces functionality | Excluded (pending replacement) |
+scripts/day12_run.py:42:            "src/tests/presentation/mcp/test_pdf_digest_tools.py",
+scripts/day12_run.py:48:            "src/tests/presentation/mcp/test_pdf_digest_tools.py",
+src/presentation/mcp/server.py:47:            "pdf_digest_tools",
+src/presentation/mcp/server.py:48:            "src.presentation.mcp.tools.pdf_digest_tools",
+src/presentation/mcp/tools/pdf_digest_tools.py:26:logger = get_logger("pdf_digest_tools")
+src/tests/infrastructure/monitoring/test_prometheus_metrics.py:129:        from src.presentation.mcp.tools.pdf_digest_tools import convert_markdown_to_pdf
+src/tests/infrastructure/monitoring/test_prometheus_metrics.py:132:            "src.presentation.mcp.tools.pdf_digest_tools._convert_to_pdf"
+src/tests/infrastructure/monitoring/test_prometheus_metrics.py:137:                "src.presentation.mcp.tools.pdf_digest_tools.pdf_generation_duration_seconds"
+src/tests/infrastructure/monitoring/test_prometheus_metrics.py:140:                    "src.presentation.mcp.tools.pdf_digest_tools.pdf_file_size_bytes"
+src/tests/infrastructure/monitoring/test_prometheus_metrics.py:143:                        "src.presentation.mcp.tools.pdf_digest_tools.pdf_pages_total"
+src/tests/infrastructure/monitoring/test_prometheus_metrics.py:216:        from src.presentation.mcp.tools.pdf_digest_tools import convert_markdown_to_pdf
+src/tests/infrastructure/monitoring/test_prometheus_metrics.py:219:            "src.presentation.mcp.tools.pdf_digest_tools._convert_to_pdf"
+src/tests/infrastructure/monitoring/test_prometheus_metrics.py:224:                "src.presentation.mcp.tools.pdf_digest_tools.pdf_generation_errors_total"
+src/tests/presentation/mcp/test_pdf_digest_tools.py:55:    from src.presentation.mcp.tools.pdf_digest_tools import get_posts_from_db
+src/tests/presentation/mcp/test_pdf_digest_tools.py:100:    from src.presentation.mcp.tools.pdf_digest_tools import get_posts_from_db
+src/tests/presentation/mcp/test_pdf_digest_tools.py:125:    from src.presentation.mcp.tools.pdf_digest_tools import get_posts_from_db
+src/tests/presentation/mcp/test_pdf_digest_tools.py:143:    from src.presentation.mcp.tools.pdf_digest_tools import get_posts_from_db
+src/tests/presentation/mcp/test_pdf_digest_tools.py:174:    from src.presentation.mcp.tools.pdf_digest_tools import summarize_posts
+src/tests/presentation/mcp/test_pdf_digest_tools.py:205:    from src.presentation.mcp.tools.pdf_digest_tools import summarize_posts
+src/tests/presentation/mcp/test_pdf_digest_tools.py:229:    from src.presentation.mcp.tools.pdf_digest_tools import summarize_posts
+src/tests/presentation/mcp/test_pdf_digest_tools.py:245:    from src.presentation.mcp.tools.pdf_digest_tools import summarize_posts
+src/tests/presentation/mcp/test_pdf_digest_tools.py:257:        "src.presentation.mcp.tools.pdf_digest_tools.llm_summarize_posts"
+src/tests/presentation/mcp/test_pdf_digest_tools.py:271:    from src.presentation.mcp.tools.pdf_digest_tools import format_digest_markdown
+src/tests/presentation/mcp/test_pdf_digest_tools.py:306:    from src.presentation.mcp.tools.pdf_digest_tools import format_digest_markdown
+src/tests/presentation/mcp/test_pdf_digest_tools.py:326:    from src.presentation.mcp.tools.pdf_digest_tools import combine_markdown_sections
+src/tests/presentation/mcp/test_pdf_digest_tools.py:348:    from src.presentation.mcp.tools.pdf_digest_tools import combine_markdown_sections
+src/tests/presentation/mcp/test_pdf_digest_tools.py:362:    from src.presentation.mcp.tools.pdf_digest_tools import convert_markdown_to_pdf
+src/tests/presentation/mcp/test_pdf_digest_tools.py:381:    from src.presentation.mcp.tools.pdf_digest_tools import convert_markdown_to_pdf
+src/tests/presentation/mcp/test_pdf_digest_tools.py:398:    from src.presentation.mcp.tools.pdf_digest_tools import convert_markdown_to_pdf
+tasks/day_12/day_12-code-review.md:32:- **File**: `src/presentation/mcp/tools/pdf_digest_tools.py` (426 lines)
+tasks/day_12/day_12-code-review.md:45:**Found in `pdf_digest_tools.py`:**
+tasks/day_12/day_12-code-review.md:202:- Run: `pytest src/tests/presentation/mcp/test_pdf_digest_tools.py -v`
+tasks/day_12/day_12-code-review.md:279:2. `src/presentation/mcp/tools/pdf_digest_tools.py` → Extract PDF logic
+tasks/day_12/day_12-improvements.cursor.md:185:**File**: `tests/presentation/mcp/test_pdf_digest_tools.py` (new)
+tasks/day_12/day_12-improvements.cursor.md:194:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py` (new)
+tasks/day_12/day_12-improvements.cursor.md:222:**File**: `tests/presentation/mcp/test_pdf_digest_tools.py` (add tests)
+tasks/day_12/day_12-improvements.cursor.md:232:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py` (add implementation)
+tasks/day_12/day_12-improvements.cursor.md:254:**File**: `tests/presentation/mcp/test_pdf_digest_tools.py` (add tests)
+tasks/day_12/day_12-improvements.cursor.md:263:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py` (add implementation)
+tasks/day_12/day_12-improvements.cursor.md:291:**File**: `tests/presentation/mcp/test_pdf_digest_tools.py` (add tests)
+tasks/day_12/day_12-improvements.cursor.md:300:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py` (add implementation)
+tasks/day_12/day_12-improvements.cursor.md:319:**File**: `tests/presentation/mcp/test_pdf_digest_tools.py` (add tests)
+tasks/day_12/day_12-improvements.cursor.md:328:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py` (add implementation)
+tasks/day_12/day_12-improvements.cursor.md:359:**Change**: Add `pdf_digest_tools` to `tool_modules` list in `_register_all_tools()`.
+tasks/day_12/day_12-improvements.cursor.md:446:- `tests/presentation/mcp/test_pdf_digest_tools.py` (new)
+tasks/day_12/day_12-improvements.cursor.md:721:- [ ] Register pdf_digest_tools in MCP server
+tasks/day_12/day_12-phase-03-summary.md:15:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py`
+tasks/day_12/day_12-phase-03-summary.md:17:**Test Coverage** (`tests/presentation/mcp/test_pdf_digest_tools.py`):
+tasks/day_12/day_12-phase-03-summary.md:35:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py`
+tasks/day_12/day_12-phase-03-summary.md:56:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py`
+tasks/day_12/day_12-phase-03-summary.md:75:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py`
+tasks/day_12/day_12-phase-03-summary.md:94:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py`
+tasks/day_12/day_12-phase-03-summary.md:144:- Added `pdf_digest_tools` to `tool_modules` list in `_register_all_tools()`
+tasks/day_12/day_12-phase-03-summary.md:161:- `src/presentation/mcp/tools/pdf_digest_tools.py` (411 lines, 5 tools)
+tasks/day_12/day_12-phase-03-summary.md:162:- `src/tests/presentation/mcp/test_pdf_digest_tools.py` (394 lines, 13 tests)
+tasks/day_12/day_12-phase-03-summary.md:167:- `src/presentation/mcp/server.py` (registered pdf_digest_tools)
+tasks/day_12/day_12-phase-03-summary.md:299:from src.presentation.mcp.tools.pdf_digest_tools import (
+tasks/day_12/day_12-phase-05-summary.md:81:- `src/presentation/mcp/tools/pdf_digest_tools.py` (already uses settings correctly)
+tasks/day_12/day_12-phase-05-summary.md:144:2. **PDF Digest Tools** (`pdf_digest_tools.py`):
+tasks/day_12/day_12-phase-06-summary.md:17:- ✅ `src/tests/presentation/mcp/test_pdf_digest_tools.py` (13 tests from Phase 3)
+tasks/day_12/day_12-phase-06-summary.md:136:12. ✅ `test_mcp_pdf_digest_tools_backward_compatibility` - Backward compatibility
+tasks/day_12/day_12-phase-07-summary.md:18:- ✅ `src/presentation/mcp/tools/pdf_digest_tools.py` - All tools have Google-style docstrings
+tasks/day_12/day_12-phase-08-summary.md:57:- ✅ Metrics integrated into `pdf_digest_tools.py`
+tasks/day_12/day_12-phase-08-summary.md:160:- `src/presentation/mcp/tools/pdf_digest_tools.py` (added metrics integration)
+tasks/day_13/phase0/01_code_quality_report.md:17:   - `src/presentation/mcp/tools/pdf_digest_tools.py`: **406 lines** - Needs decomposition
+tasks/day_13/phase0/03_test_coverage_baseline.md:104:- ❌ `test_pdf_digest_tools.py`: 12 errors (event loop)
+tasks/day_13/phase0/03_test_coverage_baseline.md:278:| pdf_digest_tools.py | 406 | 40% | 80% | 40% |
+tasks/day_13/phase0/04_refactoring_priorities.md:82:### 3. 🟠 pdf_digest_tools.py (406 lines)
+tests/contract/test_mcp_tools_schema.py:215:def test_mcp_pdf_digest_tools_backward_compatibility() -> None:
+tests/integration/test_pdf_digest_flow.py:18:from src.presentation.mcp.tools.pdf_digest_tools import (

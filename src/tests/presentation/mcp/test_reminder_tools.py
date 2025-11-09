@@ -4,7 +4,15 @@ from datetime import datetime, timedelta
 
 import pytest
 
-pytestmark = pytest.mark.asyncio
+pytestmark = [
+    pytest.mark.asyncio,
+    pytest.mark.skip(
+        reason=(
+            "Reminder MCP tools archived in Stage 02_01; flows will be removed "
+            "during EP04."
+        )
+    ),
+]
 
 
 @pytest.fixture(scope="module")

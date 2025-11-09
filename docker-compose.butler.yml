@@ -241,9 +241,47 @@ services:
           memory: 128M
         reservations:
           memory: 64M
+
+  # =============================================
+  # Loki log aggregation backend
+  # =============================================
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: loki
+    command: -config.file=/etc/loki/local-config.yml
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yml:ro
+      - loki-data:/loki
+    ports:
+      - "3100:3100"
+    restart: unless-stopped
+    networks:
+      - butler-network
+
+  # =============================================
+  # Promtail log shipper
+  # =============================================
+  promtail:
+    image: grafana/promtail:2.9.4
+    container_name: promtail
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    depends_on:
+      - loki
+    networks:
+      - butler-network
+
 networks:
   butler-network:
     driver: bridge
   infra_app-network:
     external: true
     name: infra_infra_app-network
+
+volumes:
+  loki-data:
+    driver: local

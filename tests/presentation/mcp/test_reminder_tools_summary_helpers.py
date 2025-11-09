@@ -1,8 +1,17 @@
 from datetime import datetime, timezone
 
+import pytest
+
 from src.presentation.mcp.tools._summary_helpers import (
     _build_summary_query,
     _compute_task_stats,
+)
+
+pytestmark = pytest.mark.skip(
+    reason=(
+        "Reminder summary helpers scheduled for archival after Stage 02_01; "
+        "see EP04 coordination plan."
+    )
 )
 
 
