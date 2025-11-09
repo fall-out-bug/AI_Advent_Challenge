@@ -3,102 +3,115 @@
 Deterministic command-line interface that mirrors the Telegram digest/channel
 flows without intent recognition. Owner-only usage.
 
-## 1. Installation
+## 1. Launching the CLI
 
-CLI will live under `src/presentation/cli/backoffice/` (work in progress).
-For now the specification defines command surface for upcoming implementation.
+```bash
+poetry run python -m src.presentation.cli.backoffice.main <group> <command> [options]
+```
 
-## 2. Command Overview
+- Default output: human-readable table.
+- Add `--json` flag to receive machine-readable JSON.
+- All commands require `--user-id` (Telegram user identifier used in the system).
+
+## 2. Command Overview (Stage 02_02)
 
 | Command | Description | Status |
 |---------|-------------|--------|
-| `channels list` | Show active subscriptions | Planned |
-| `channels add` | Subscribe to a channel | Planned |
-| `channels remove` | Unsubscribe from channel | Planned |
-| `channels refresh` | Trigger immediate fetch | Planned |
-| `digest run` | Generate digest for channel | Planned |
-| `digest last` | Inspect last digest metadata | Planned |
+| `channels list` | Show active subscriptions for a user | Ready |
+| `channels add` | Subscribe user to a channel (validates via metadata) | Ready |
+| `channels remove` | Mark subscription inactive | Ready |
+| `digest run` | Generate digest for channel(s) | Ready |
+| `digest last` | Inspect last digest timestamp & metadata | Ready |
+| `channels refresh` | Trigger immediate post fetch | Backlog |
+| `digest export` | Export digest to file (Markdown/PDF) | Backlog |
 | `nlp test` | Run intent parsing sanity check | Optional |
-
-All commands accept `--output json` to emit machine-readable payloads.
-Default format is human-friendly table/markdown.
 
 ## 3. Channel Commands
 
 ### 3.1 `channels list`
 
-```
-butler-cli channels list [--limit N] [--include-tags] [--output json]
+```bash
+poetry run python -m src.presentation.cli.backoffice.main \
+    channels list --user-id 12345 [--limit 50] [--json]
 ```
 
-Response (table or JSON):
-
-| Channel | Title | Tags | Active | Since |
-|---------|-------|------|--------|-------|
+- Default: table with columns `id`, `channel`, `title`, `tags`, `active`, `subscribed_at`.
+- JSON mode returns list of channel objects.
+- `--limit` caps result count (default 100, max 500).
 
 ### 3.2 `channels add`
 
-```
-butler-cli channels add --username <name> [--tags t1,t2]
+```bash
+poetry run python -m src.presentation.cli.backoffice.main \
+    channels add --user-id 12345 --channel tech_news [--tag analytics] [--json]
 ```
 
-Return codes:
-
-- `0` subscription added
-- `1` validation error (channel not found, already subscribed)
+- Validates channel metadata (via Telegram API) before persisting.
+- Tags supplied via repeated `--tag` flags.
+- Exit codes: `0` success / already subscribed, `1` validation error.
 
 ### 3.3 `channels remove`
 
-```
-butler-cli channels remove (--channel-id <id> | --username <name>)
+```bash
+poetry run python -m src.presentation.cli.backoffice.main \
+    channels remove --user-id 12345 --channel-id 507f1f77bcf86cd799439011 [--json]
 ```
 
-Outputs status string (`removed`, `not_found`).
+- Marks subscription inactive. Output includes `status` and `channel_id`.
 
 ### 3.4 `channels refresh`
 
-```
-butler-cli channels refresh (--channel-id <id> | --username <name>) [--hours 24]
+> Planned for post-MVP. Command remains documented for backlog alignment.
+
+```bash
+poetry run python -m src.presentation.cli.backoffice.main \
+    channels refresh --user-id 12345 --channel-id 507f... [--hours 72]
 ```
 
-Schedules fetch job via MCP or worker queue; prints job identifier.
+- Will enqueue immediate fetch job; not yet implemented in Stage 02_02.
 
 ## 4. Digest Commands
 
 ### 4.1 `digest run`
 
-```
-butler-cli digest run --channel <name> [--hours 24] [--format markdown|json]
+```bash
+poetry run python -m src.presentation.cli.backoffice.main \
+    digest run --user-id 12345 [--channel tech_news] [--hours 24] \
+    [--format markdown|json] [--json]
 ```
 
-Returns digest summary (markdown by default).
-JSON format contains the same fields as `digest_generate`.
+- When `--channel` omitted, generates digests for all active subscriptions.
+- `--format markdown` returns plain summary text; `json` includes summary metadata.
+- JSON output wraps entries in a list with fields `channel`, `summary`, `post_count`, etc.
 
 ### 4.2 `digest last`
 
-```
-butler-cli digest last --channel <name>
+```bash
+poetry run python -m src.presentation.cli.backoffice.main \
+    digest last --user-id 12345 --channel tech_news [--json]
 ```
 
-Displays timestamp, post count, short summary.
+- Displays stored metadata (`last_digest` timestamp, tags, active flag).
+- Non-zero exit code when channel not found.
 
 ## 5. NLP Command (Optional)
 
 ```
-butler-cli nlp test --text "show digest for tech news"
+poetry run python -m src.presentation.cli.backoffice.main \
+    nlp test --user-id 12345 --text "show digest for tech news"
 ```
 
 Useful for validating slot-filling or regression tests.
 
 ## 6. Implementation Notes
 
-- CLI should reuse MCP tools (`API_MCP.md`) under the hood.
-- Logging should include `trace_id` or command UUID.
-- Authentication: owner-only; initial version relies on env vars / local config.
-- Future enhancements: batch imports (`csv`), tagging utilities, digest scheduling.
+- CLI currently reuses existing MCP tool implementations (Stage 02_01) for subscription lifecycle.
+- Prometheus metrics exported via `cli_command_total`, `cli_command_duration_seconds`,
+  and `cli_command_errors_total`.
+- Authentication: owner-only; environment variables / config drive DB & API credentials.
+- Future enhancements: batch imports (`csv`), tagging utilities, digest scheduling, PDF export.
 
 ## 7. Localization
 
-- Default CLI output Russian (`--lang en` optional).
-- Command help text must be available in EN/RU via `API_BOT_BACKOFFICE.ru.md`.
+- CLI output uses Russian defaults (summary text comes from summariser). Documentation mirrored in RU version (`docs/API_BOT_BACKOFFICE.ru.md`).
 

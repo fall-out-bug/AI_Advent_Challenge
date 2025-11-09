@@ -29,7 +29,6 @@ MAX_ITEMS_PER_PAGE = 10
 def build_main_menu() -> InlineKeyboardBuilder:
     """Build main menu inline keyboard."""
     builder = InlineKeyboardBuilder()
-    builder.button(text="📝 Tasks", callback_data="menu:tasks")
     builder.button(text="📰 Channels", callback_data="menu:channels")
     builder.button(text="📊 Summary", callback_data="menu:summary")
     builder.button(text="📮 Digest", callback_data="menu:digest")
@@ -45,6 +44,7 @@ def build_back_button() -> InlineKeyboardBuilder:
 
 
 router = Router()
+menu_router = router
 
 
 @router.message(Command("menu"))
@@ -59,16 +59,6 @@ async def callback_main_menu(callback: CallbackQuery) -> None:
     """Return to main menu."""
     keyboard = build_main_menu()
     await callback.message.edit_text("📋 Main Menu:", reply_markup=keyboard.as_markup())
-    await callback.answer()
-
-
-@router.callback_query(F.data == "menu:tasks")
-async def callback_tasks(callback: CallbackQuery) -> None:
-    """Navigate to tasks menu."""
-    from src.presentation.bot.handlers.tasks import build_tasks_menu
-
-    keyboard = build_tasks_menu()
-    await callback.message.edit_text("📝 Tasks:", reply_markup=keyboard.as_markup())
     await callback.answer()
 
 
@@ -184,28 +174,17 @@ async def _generate_pdf_digest(client, user_id: int, hours: int = 24) -> dict:
 
 @router.callback_query(F.data == "menu:summary")
 async def callback_summary(call: CallbackQuery) -> None:
-    """Show a task summary via MCP tools with basic error handling."""
+    """Show summary guidance aligned with digest-first scope."""
     await call.answer()
-    user_id = call.from_user.id if call.from_user else 0
-    try:
-        client = get_mcp_client()
-        # timeframe could be configurable; use 'today' default
-        result = await client.call_tool(
-            "get_summary", {"user_id": int(user_id), "timeframe": "today"}
-        )
-        stats = result.get("stats", {})
-        total = stats.get("total", 0)
-        completed = stats.get("completed", 0)
-        overdue = stats.get("overdue", 0)
-        high_priority = stats.get("high_priority", 0)
-        await call.message.answer(
-            f"📋 Summary (today)\n\nTotal: {total}\nCompleted: {completed}\nOverdue: {overdue}\nHigh priority: {high_priority}"
-        )
-    except Exception as e:
-        logger.error(
-            "Error fetching summary", user_id=user_id, error=str(e), exc_info=True
-        )
-        await call.message.answer("⚠️ Failed to fetch summary. Please try again later.")
+    keyboard = build_back_button()
+    await call.message.edit_text(
+        (
+            "📊 Summaries now rely on digest history.\n\n"
+            "• Use CLI `digest last` for detailed metadata.\n"
+            "• Request a fresh digest via the menu if needed."
+        ),
+        reply_markup=keyboard.as_markup(),
+    )
 
 
 @router.callback_query(F.data == "menu:digest")

@@ -7,9 +7,9 @@
 | EP01 | Stage 01_01 | Coverage & gap audit | Completed | Assistant & User | 2025-11-09 | – |
 | EP01 | Stage 01_02 | Remediation & CI hardening | Completed | Assistant & User | 2025-11-09 | – |
 | EP01 | Stage 01_03 | Documentation & release readiness | Completed | Assistant & User | 2025-11-09 | – |
-| EP02 | Stage 02_01 | MCP tool catalogue freeze | Planned | Tech Lead TBD | – | Requires EP01 interface confirmation |
-| EP02 | Stage 02_02 | CLI backoffice delivery | Planned | Tech Lead TBD | – | Depends on Stage 02_01 outputs |
-| EP02 | Stage 02_03 | Telegram & documentation alignment | Planned | Tech Lead TBD | – | Depends on Stage 02_02 readiness |
+| EP02 | Stage 02_01 | MCP tool catalogue freeze | Completed | Assistant & User | 2025-11-10 | – |
+| EP02 | Stage 02_02 | CLI backoffice delivery | Completed | Assistant & User | 2025-11-10 | – |
+| EP02 | Stage 02_03 | Telegram & documentation alignment | Completed | Assistant & User | 2025-11-11 | – |
 | EP03 | Stage 03_01 | Observability gap analysis | Planned | Tech Lead TBD | – | Coordination with EP01/EP02 needed |
 | EP03 | Stage 03_02 | Instrumentation rollout | Planned | Tech Lead TBD | – | Depends on Stage 03_01 backlog |
 | EP03 | Stage 03_03 | Runbooks & CI operations checks | Planned | Tech Lead TBD | – | Depends on Stage 03_02 instrumentation |

@@ -6,22 +6,12 @@ try:
 except Exception as exc:  # pragma: no cover
     pytest.skip("aiogram is required for FSM tests", allow_module_level=True)
 
-from src.presentation.bot.states import TaskCreation
+from types import ModuleType
+
+from src.presentation.bot import states as bot_states
 
 
-def test_task_creation_states_exist() -> None:
-    """Ensure TaskCreation FSM has required states with correct types."""
-    assert hasattr(TaskCreation, "waiting_for_task")
-    assert hasattr(TaskCreation, "waiting_for_clarification")
-
-    assert isinstance(TaskCreation.waiting_for_task, State)
-    assert isinstance(TaskCreation.waiting_for_clarification, State)
-
-
-def test_task_creation_state_names_are_readable() -> None:
-    """State names should be explicit and stable for persistence."""
-    assert TaskCreation.waiting_for_task.state == "TaskCreation:waiting_for_task"
-    assert (
-        TaskCreation.waiting_for_clarification.state
-        == "TaskCreation:waiting_for_clarification"
-    )
+def test_task_creation_states_removed() -> None:
+    """Task creation state machine must be removed in Stage 02_03 scope."""
+    assert isinstance(bot_states, ModuleType)
+    assert not hasattr(bot_states, "TaskCreation")

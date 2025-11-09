@@ -139,8 +139,9 @@ Telegram-поиск для уточнения данных.
 
 ## 8. Связанные документы
 
-- `docs/specs/epic_02/mcp_tool_matrix.md` — итоговая матрица инструментов.
-- `docs/specs/epic_02/mcp_migration_bulletin.md` — миграционный бюллетень.
-- `docs/API_MCP.md` — англоязычная версия.
+- `docs/specs/epic_02/mcp_tool_matrix.md` — итоговая матрица инструментов.  
+- `docs/specs/epic_02/mcp_migration_bulletin.md` — миграционный бюллетень.  
+- `docs/CHANGELOG_MCP.md` — публичный changelog обновлений MCP.  
+- `docs/API_MCP.md` — англоязычная версия.  
 - `docs/API_BOT_BACKOFFICE.ru.md` — справочник по CLI (Stage 02_02).
 

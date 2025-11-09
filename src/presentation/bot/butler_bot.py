@@ -15,7 +15,6 @@ from src.infrastructure.metrics import get_butler_metrics
 from src.infrastructure.shutdown.graceful_shutdown import GracefulShutdown
 from src.presentation.bot.handlers.butler_handler import setup_butler_handler
 from src.presentation.bot.handlers.menu import router as menu_router
-from src.presentation.bot.handlers.tasks import tasks_router
 from src.presentation.bot.metrics_server import MetricsServer
 from src.presentation.bot.middleware.state_middleware import StatePersistenceMiddleware
 
@@ -65,10 +64,9 @@ class ButlerBot:
         self.router.message(Command("menu"))(self.cmd_menu)
 
         # Include existing handler routers
-        from src.presentation.bot.handlers import channels, menu, tasks
+        from src.presentation.bot.handlers import channels, menu
 
         self.dp.include_router(menu.router)
-        self.dp.include_router(tasks.router)
         self.dp.include_router(channels.router)
 
         # Include butler handler for natural language processing
@@ -166,7 +164,6 @@ def create_dispatcher() -> Dispatcher:
     # Register outer middleware explicitly for aiogram v3 compatibility
     dp.update.outer_middleware.register(StatePersistenceMiddleware())
 
-    dp.include_router(tasks_router)
     dp.include_router(menu_router)
 
     return dp
