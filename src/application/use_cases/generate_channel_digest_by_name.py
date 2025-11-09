@@ -78,7 +78,9 @@ class GenerateChannelDigestByNameUseCase:
 
         # Get posts for channel from database (cached posts)
         since = datetime.now(timezone.utc) - timedelta(hours=hours)
-        posts_data = await post_repo.get_posts_by_channel(channel_username, since, user_id=user_id)
+        posts_data = await post_repo.get_posts_by_channel(
+            channel_username, since, user_id=user_id
+        )
 
         # Get channel title from database
         db = await get_db()
@@ -165,7 +167,7 @@ class GenerateChannelDigestByNameUseCase:
                 f"posts_count={len(post_contents)}, max_sentences={max_sentences}, "
                 f"language={language}, hours={hours}"
             )
-            
+
             # Log sample post data for debugging
             if post_contents:
                 sample_posts = post_contents[:3]
@@ -175,26 +177,28 @@ class GenerateChannelDigestByNameUseCase:
                     f"first_post_length={len(sample_posts[0].text) if sample_posts else 0}, "
                     f"first_post_preview={sample_posts[0].text[:200] if sample_posts else 'N/A'}"
                 )
-            
+
             summary_result = await summarizer.summarize_posts(
                 posts=post_contents,
                 max_sentences=max_sentences,
                 language=language,
                 context=context,
             )
-            
+
             logger.info(
                 f"Summary generated successfully: channel={channel_username}, "
                 f"method={summary_result.method}, sentences={summary_result.sentences_count}, "
                 f"summary_length={len(summary_result.text)}, "
                 f"confidence={summary_result.confidence}"
             )
-            
+
             # Trigger async evaluation (fire-and-forget)
             # Only evaluate if summary was successfully generated (not error)
-            if (self._settings.enable_quality_evaluation and 
-                summary_result.method != "error" and 
-                summary_result.confidence > 0):
+            if (
+                self._settings.enable_quality_evaluation
+                and summary_result.method != "error"
+                and summary_result.confidence > 0
+            ):
                 # Combine posts text for evaluation
                 combined_text = "\n\n".join(
                     post.text for post in post_contents if post.text
@@ -257,24 +261,22 @@ class GenerateChannelDigestByNameUseCase:
         context: SummarizationContext,
     ) -> None:
         """Evaluate summary quality asynchronously (background task).
-        
+
         Purpose:
             Fire-and-forget task that evaluates summary quality using LLM,
             stores results in MongoDB for fine-tuning dataset creation.
-            
+
         Args:
             original_text: Original combined text from posts.
             summary_result: Generated summary result.
             context: Summarization context.
         """
         try:
-            from src.infrastructure.di.factories import (
-                create_summarization_evaluator,
-            )
+            from src.infrastructure.database.mongo import get_db
+            from src.infrastructure.di.factories import create_summarization_evaluator
             from src.infrastructure.repositories.summarization_evaluation_repository import (
                 SummarizationEvaluationRepository,
             )
-            from src.infrastructure.database.mongo import get_db
 
             # Create evaluator
             evaluator = create_summarization_evaluator()
@@ -298,8 +300,5 @@ class GenerateChannelDigestByNameUseCase:
             )
         except Exception as e:
             # Don't fail main flow if evaluation fails
-            logger.error(
-                f"Error evaluating summary quality: {e}",
-                exc_info=True
-            )
+            logger.error(f"Error evaluating summary quality: {e}", exc_info=True)
             # Evaluation is non-critical, just log and continue

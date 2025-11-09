@@ -7,8 +7,7 @@ concise. This is distinct from MCP discovery used for execution.
 
 from __future__ import annotations
 
-from typing import List, Dict, Any
-
+from typing import Any, Dict, List
 
 TOOLS_SCHEMA: List[Dict[str, Any]] = [
     {
@@ -62,5 +61,3 @@ TOOLS_SCHEMA: List[Dict[str, Any]] = [
         },
     },
 ]
-
-

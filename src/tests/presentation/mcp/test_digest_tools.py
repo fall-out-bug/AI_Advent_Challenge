@@ -1,7 +1,8 @@
-import os
 import asyncio
+import os
+from datetime import datetime
+
 import pytest
-from datetime import datetime, timedelta
 
 
 @pytest.fixture(scope="module")
@@ -14,12 +15,14 @@ def event_loop():
 @pytest.fixture(autouse=True)
 def _set_test_db_env(monkeypatch):
     monkeypatch.setenv("DB_NAME", "butler_test")
-    monkeypatch.setenv("MONGODB_URL", os.getenv("MONGODB_URL", "mongodb://localhost:27017"))
+    monkeypatch.setenv(
+        "MONGODB_URL", os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+    )
 
 
 @pytest.fixture(autouse=True)
 async def _cleanup_db():
-    from src.infrastructure.database.mongo import get_db, close_client
+    from src.infrastructure.database.mongo import close_client, get_db
 
     db = await get_db()
     await db.channels.delete_many({})
@@ -43,7 +46,7 @@ async def test_add_and_list_channels():
 
 @pytest.mark.asyncio
 async def test_delete_channel():
-    from src.presentation.mcp.tools.digest_tools import add_channel, delete_channel, list_channels
+    from src.presentation.mcp.tools.digest_tools import add_channel, delete_channel
 
     add_res = await add_channel(user_id=2, channel_username="temp_channel")  # type: ignore[arg-type]
     channel_id = add_res.get("channel_id")
@@ -150,4 +153,3 @@ async def test_save_posts_to_db_error_handling():
     assert result["saved"] == 0
     assert result["skipped"] >= 0
     assert result["total"] == 1
-

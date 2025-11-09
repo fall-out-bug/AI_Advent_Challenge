@@ -1,6 +1,7 @@
 """Task domain models with validation (Pydantic)."""
 
 from typing import List, Optional
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -61,5 +62,3 @@ class TaskUpdate(BaseModel):
         if v not in allowed:
             raise ValueError(f"priority must be one of {allowed}")
         return v
-
-

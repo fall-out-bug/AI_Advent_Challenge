@@ -74,4 +74,3 @@ class GetReviewStatusUseCase:
                 }
 
         return result
-

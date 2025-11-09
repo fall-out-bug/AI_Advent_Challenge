@@ -9,5 +9,3 @@ async def test_parse_task_intent_tool_returns_dict():
     assert isinstance(res, dict)
     assert "title" in res
     assert "priority" in res
-
-

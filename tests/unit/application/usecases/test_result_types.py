@@ -15,9 +15,7 @@ class TestTaskCreationResult:
 
     def test_successful_creation(self):
         """Test successful task creation result."""
-        result = TaskCreationResult(
-            created=True, task_id="507f1f77bcf86cd799439011"
-        )
+        result = TaskCreationResult(created=True, task_id="507f1f77bcf86cd799439011")
         assert result.created is True
         assert result.task_id == "507f1f77bcf86cd799439011"
         assert result.clarification is None
@@ -35,9 +33,7 @@ class TestTaskCreationResult:
 
     def test_error_result(self):
         """Test error result."""
-        result = TaskCreationResult(
-            created=False, error="Failed to create task"
-        )
+        result = TaskCreationResult(created=False, error="Failed to create task")
         assert result.created is False
         assert result.error == "Failed to create task"
         assert result.task_id is None
@@ -49,9 +45,7 @@ class TestDigestResult:
 
     def test_successful_digest(self):
         """Test successful digest result."""
-        digests = [
-            {"channel": "python", "posts_count": 5, "summary": "Test summary"}
-        ]
+        digests = [{"channel": "python", "posts_count": 5, "summary": "Test summary"}]
         result = DigestResult(digests=digests)
         assert len(result.digests) == 1
         assert result.digests[0]["channel"] == "python"
@@ -92,4 +86,3 @@ class TestStatsResult:
         result = StatsResult(error="Failed to fetch stats")
         assert result.error == "Failed to fetch stats"
         assert result.stats == {}
-

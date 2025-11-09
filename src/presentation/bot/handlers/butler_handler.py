@@ -5,22 +5,21 @@ Following Python Zen: Simple is better than complex.
 """
 
 import base64
-import logging
 import re
 from typing import Optional
 
-from aiogram import Router, F
+from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import BufferedInputFile, Message
 
-from src.domain.agents.butler_orchestrator import ButlerOrchestrator
-from src.domain.agents.services.mode_classifier import DialogMode
 from src.application.use_cases.resolve_channel_name import ResolveChannelNameUseCase
 from src.application.use_cases.search_channel_for_subscription import (
     SearchChannelForSubscriptionUseCase,
 )
-from src.presentation.bot.states import ChannelSearchStates
+from src.domain.agents.butler_orchestrator import ButlerOrchestrator
+from src.domain.agents.services.mode_classifier import DialogMode
 from src.infrastructure.logging import get_logger
+from src.presentation.bot.states import ChannelSearchStates
 
 logger = get_logger("butler_handler")
 
@@ -108,7 +107,9 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                     "channel_input": unsubscribe_channel,
                 },
             )
-            await _handle_unsubscribe_request(message, int(user_id), unsubscribe_channel.strip())
+            await _handle_unsubscribe_request(
+                message, int(user_id), unsubscribe_channel.strip()
+            )
             return
 
         # Check for subscribe request
@@ -752,7 +753,7 @@ async def _handle_subscribe_request(
         f"Processing subscribe request: user_id={user_id}, "
         f"channel_input='{channel_input}' (len={len(channel_input)})"
     )
-    
+
     try:
         # First, try to resolve from subscriptions
         resolve_use_case = ResolveChannelNameUseCase(allow_telegram_search=False)
@@ -774,7 +775,11 @@ async def _handle_subscribe_request(
         # If found in subscriptions, subscribe directly
         # But only if we have high confidence (user is already subscribed)
         # Low confidence means it might be a false match - use search instead
-        if resolution.found and resolution.channel_username and resolution.confidence_score >= 0.7:
+        if (
+            resolution.found
+            and resolution.channel_username
+            and resolution.confidence_score >= 0.7
+        ):
             from src.presentation.mcp.tools.channels.channel_management import (
                 add_channel,
             )
@@ -828,13 +833,10 @@ async def _handle_subscribe_request(
                     f"resolved_username='{resolution.channel_username if resolution else 'N/A'}'"
                 )
                 error_msg = result.get(
-                    "message", 
-                    f"Не удалось подписаться на канал {resolution.channel_username if resolution and resolution.channel_username else channel_input}"
+                    "message",
+                    f"Не удалось подписаться на канал {resolution.channel_username if resolution and resolution.channel_username else channel_input}",
                 )
-                await message.answer(
-                    f"❌ {error_msg}\n\n"
-                    f"Статус: {status}"
-                )
+                await message.answer(f"❌ {error_msg}\n\n" f"Статус: {status}")
             return
 
         # Not found in subscriptions, search Telegram
@@ -858,9 +860,7 @@ async def _handle_subscribe_request(
         # Take top 3 candidates for cycling
         top_candidates = search_results[:3]
         if not top_candidates:
-            await message.answer(
-                f"❌ Канал '{channel_input}' не найден."
-            )
+            await message.answer(f"❌ Канал '{channel_input}' не найден.")
             return
 
         # Show first candidate for confirmation
@@ -907,7 +907,7 @@ async def _handle_subscribe_request(
                 }
                 for candidate in top_candidates
             ]
-            
+
             await state.set_data(
                 {
                     "candidates": candidates_data,

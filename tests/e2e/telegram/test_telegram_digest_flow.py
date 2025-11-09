@@ -23,7 +23,9 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from src.infrastructure.repositories.post_repository import PostRepository
-from src.presentation.mcp.tools.channels.channel_digest import get_channel_digest_by_name
+from src.presentation.mcp.tools.channels.channel_digest import (
+    get_channel_digest_by_name,
+)
 from src.presentation.mcp.tools.channels.posts_management import collect_posts
 
 # Import real_mongodb from e2e conftest
@@ -46,13 +48,15 @@ async def test_complete_digest_flow_e2e(real_mongodb):
 
     try:
         # Step 1: Subscribe to channel
-        await db.channels.insert_one({
-            "user_id": test_user_id,
-            "channel_username": test_channel,
-            "title": "Test Channel E2E",
-            "active": True,
-            "test_data": True,
-        })
+        await db.channels.insert_one(
+            {
+                "user_id": test_user_id,
+                "channel_username": test_channel,
+                "title": "Test Channel E2E",
+                "active": True,
+                "test_data": True,
+            }
+        )
 
         # Step 2: Collect posts (mock or real)
         # Note: In real E2E, this would call Telegram API
@@ -85,7 +89,13 @@ async def test_complete_digest_flow_e2e(real_mongodb):
         # Step 4: Verify response
         assert result is not None
         # Result can have different structures depending on whether posts were found
-        assert "channel" in result or "channel_username" in result or "summary" in result or "digest" in result or "message" in result
+        assert (
+            "channel" in result
+            or "channel_username" in result
+            or "summary" in result
+            or "digest" in result
+            or "message" in result
+        )
 
         # Verify posts were included (if any)
         if "post_count" in result:
@@ -93,12 +103,16 @@ async def test_complete_digest_flow_e2e(real_mongodb):
         elif "digests" in result:
             # Multiple channels format
             assert isinstance(result["digests"], list)
-        
+
         # If summary exists, verify it's not empty
         if "summary" in result:
-            summary_text = result["summary"].get("text", "") if isinstance(result["summary"], dict) else str(result["summary"])
+            summary_text = (
+                result["summary"].get("text", "")
+                if isinstance(result["summary"], dict)
+                else str(result["summary"])
+            )
             assert len(summary_text) > 0, "Summary should not be empty"
-        
+
         # If message exists (empty channel case), verify it's informative
         if "message" in result:
             assert len(result["message"]) > 0, "Message should not be empty"
@@ -125,35 +139,43 @@ async def test_digest_multiple_channels_e2e(real_mongodb):
     try:
         # Subscribe to multiple channels
         for channel in channels:
-            await db.channels.insert_one({
-                "user_id": test_user_id,
-                "channel_username": channel,
-                "title": f"Test Channel {channel}",
-                "active": True,
-                "test_data": True,
-            })
+            await db.channels.insert_one(
+                {
+                    "user_id": test_user_id,
+                    "channel_username": channel,
+                    "title": f"Test Channel {channel}",
+                    "active": True,
+                    "test_data": True,
+                }
+            )
 
             # Add posts to each channel
             post_repo = PostRepository(db)
             for i in range(3):
-                await post_repo.save_post({
-                    "user_id": test_user_id,
-                    "channel_username": channel,
-                    "message_id": f"msg_{channel}_{i}",
-                    "text": f"Post {i} in {channel}",
-                    "date": datetime.now(timezone.utc) - timedelta(hours=i),
-                    "test_data": True,
-                })
+                await post_repo.save_post(
+                    {
+                        "user_id": test_user_id,
+                        "channel_username": channel,
+                        "message_id": f"msg_{channel}_{i}",
+                        "text": f"Post {i} in {channel}",
+                        "date": datetime.now(timezone.utc) - timedelta(hours=i),
+                        "test_data": True,
+                    }
+                )
 
         # Request digest for all channels
-        from src.presentation.mcp.tools.channels.channel_digest import get_channel_digest
+        from src.presentation.mcp.tools.channels.channel_digest import (
+            get_channel_digest,
+        )
 
         result = await get_channel_digest(user_id=test_user_id, hours=24)
 
         # Verify result
         assert result is not None
         if "digests" in result:
-            assert len(result["digests"]) >= 1, "Should include digests for subscribed channels"
+            assert (
+                len(result["digests"]) >= 1
+            ), "Should include digests for subscribed channels"
 
     finally:
         # Cleanup
@@ -176,13 +198,15 @@ async def test_digest_with_real_collection_e2e(real_mongodb):
 
     try:
         # Subscribe to channel
-        await db.channels.insert_one({
-            "user_id": test_user_id,
-            "channel_username": test_channel,
-            "title": "Test Channel Collect",
-            "active": True,
-            "test_data": True,
-        })
+        await db.channels.insert_one(
+            {
+                "user_id": test_user_id,
+                "channel_username": test_channel,
+                "title": "Test Channel Collect",
+                "active": True,
+                "test_data": True,
+            }
+        )
 
         # Manually trigger post collection (if Telegram API available)
         # Note: This may fail if test channel doesn't exist or Telegram API is not configured

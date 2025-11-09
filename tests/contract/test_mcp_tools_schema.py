@@ -53,7 +53,10 @@ def test_mcp_get_summary_response_schema() -> None:
     }
     assert "tasks" in valid_response
     assert "stats" in valid_response
-    assert all(k in valid_response["stats"] for k in ["total", "completed", "overdue", "high_priority"])
+    assert all(
+        k in valid_response["stats"]
+        for k in ["total", "completed", "overdue", "high_priority"]
+    )
 
 
 def test_mcp_get_posts_from_db_request_schema() -> None:
@@ -119,9 +122,7 @@ def test_mcp_summarize_posts_response_schema() -> None:
 def test_mcp_format_digest_markdown_request_schema() -> None:
     """Validate format_digest_markdown tool expects summaries (list) and metadata (dict)."""
     valid_args = {
-        "summaries": [
-            {"summary": "Summary", "post_count": 5, "channel": "channel1"}
-        ],
+        "summaries": [{"summary": "Summary", "post_count": 5, "channel": "channel1"}],
         "metadata": {"generation_date": "2024-01-15T10:00:00", "user_id": 123},
     }
     assert isinstance(valid_args["summaries"], list)
@@ -216,17 +217,16 @@ def test_mcp_pdf_digest_tools_backward_compatibility() -> None:
     # Test that existing tools still work with old call patterns
     old_get_posts_args = {"user_id": 123}  # hours is optional
     assert isinstance(old_get_posts_args["user_id"], int)
-    
+
     old_summarize_args = {
         "posts": [],
         "channel_username": "test",
     }  # max_sentences is optional
     assert isinstance(old_summarize_args["posts"], list)
     assert isinstance(old_summarize_args["channel_username"], str)
-    
+
     old_combine_args = {"sections": []}  # template is optional
     assert isinstance(old_combine_args["sections"], list)
-    
+
     old_convert_args = {"markdown": "# Test"}  # style and metadata are optional
     assert isinstance(old_convert_args["markdown"], str)
-

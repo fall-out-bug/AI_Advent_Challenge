@@ -12,7 +12,6 @@ from pathlib import Path
 import pytest
 
 from scripts.maintenance.export_data import export_metrics, generate_summary
-from src.infrastructure.config.settings import Settings
 
 
 class TestExportDataScript:

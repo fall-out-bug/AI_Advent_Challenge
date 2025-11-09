@@ -7,6 +7,7 @@ import json
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from uuid import uuid4
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +23,10 @@ class ReviewLogger:
     Args:
         session_id: Session ID for this review
         enabled: Whether logging is enabled (default: True)
+        trace_id: Optional trace identifier for log correlation
 
     Example:
-        logger = ReviewLogger(session_id="abc-123")
+        logger = ReviewLogger(session_id="abc-123", trace_id="trace-xyz")
         logger.log_work_step("extract_archive", {"archive_path": "hw.zip"})
         logger.log_model_interaction(
             prompt="Review this code...",
@@ -37,26 +39,29 @@ class ReviewLogger:
         self,
         session_id: Optional[str] = None,
         enabled: bool = True,
+        trace_id: Optional[str] = None,
     ):
         """Initialize review logger.
 
         Args:
             session_id: Session ID for this review
             enabled: Whether logging is enabled
+            trace_id: Optional trace identifier for correlating events
         """
         self.session_id = session_id
         self.enabled = enabled
-        
+        self.trace_id = trace_id or uuid4().hex
+
         # Storage for logs
         self.work_log_json: List[Dict[str, Any]] = []
         self.review_log_json: List[Dict[str, Any]] = []
         self.model_responses: List[Dict[str, Any]] = []
         self.reasoning_log: List[Dict[str, Any]] = []
-        
+
         # Text logs for readability
         self.work_log_text: List[str] = []
         self.review_log_text: List[str] = []
-        
+
         self.logger = logging.getLogger(__name__)
 
     def log_work_step(
@@ -89,6 +94,7 @@ class ReviewLogger:
             "timestamp": datetime.utcnow().isoformat(),
             "event_type": "work_step",
             "session_id": self.session_id,
+            "trace_id": self.trace_id,
             "step": step,
             "status": status,
             "data": data or {},
@@ -98,8 +104,8 @@ class ReviewLogger:
 
         # Text format
         text_line = (
-            f"[{event['timestamp']}] WORK STEP: {step} "
-            f"(status: {status})"
+            f"[{event['timestamp']}] [trace_id={self.trace_id}] "
+            f"WORK STEP: {step} (status: {status})"
         )
         if data:
             text_line += f" | data: {json.dumps(data, default=str)}"
@@ -113,7 +119,10 @@ class ReviewLogger:
             "error": logging.ERROR,
         }.get(status, logging.INFO)
 
-        self.logger.log(log_level, f"[{step}] {json.dumps(data, default=str)}")
+        self.logger.log(
+            log_level,
+            f"[trace_id={self.trace_id}] [{step}] {json.dumps(data, default=str)}",
+        )
 
     def log_review_pass(
         self,
@@ -144,6 +153,7 @@ class ReviewLogger:
             "timestamp": datetime.utcnow().isoformat(),
             "event_type": "review_pass",
             "session_id": self.session_id,
+            "trace_id": self.trace_id,
             "pass_name": pass_name,
             "event": event,
             "data": data or {},
@@ -153,15 +163,16 @@ class ReviewLogger:
 
         # Text format
         text_line = (
-            f"[{log_entry['timestamp']}] REVIEW PASS: {pass_name} | "
-            f"Event: {event}"
+            f"[{log_entry['timestamp']}] [trace_id={self.trace_id}] "
+            f"REVIEW PASS: {pass_name} | Event: {event}"
         )
         if data:
             text_line += f" | data: {json.dumps(data, default=str)}"
         self.review_log_text.append(text_line)
 
         self.logger.info(
-            f"[{pass_name}] {event}: {json.dumps(data, default=str)}"
+            f"[trace_id={self.trace_id}] [{pass_name}] "
+            f"{event}: {json.dumps(data, default=str)}"
         )
 
     def log_model_interaction(
@@ -209,6 +220,7 @@ class ReviewLogger:
             "timestamp": datetime.utcnow().isoformat(),
             "event_type": "model_interaction",
             "session_id": self.session_id,
+            "trace_id": self.trace_id,
             "pass_name": pass_name,
             "model_name": model_name,
             "prompt": prompt,
@@ -224,11 +236,10 @@ class ReviewLogger:
 
         # Text format - truncated for readability
         prompt_preview = prompt[:200] + "..." if len(prompt) > 200 else prompt
-        response_preview = (
-            response[:200] + "..." if len(response) > 200 else response
-        )
+        response_preview = response[:200] + "..." if len(response) > 200 else response
         text_line = (
-            f"[{interaction['timestamp']}] MODEL INTERACTION ({pass_name}):\n"
+            f"[{interaction['timestamp']}] [trace_id={self.trace_id}] "
+            f"MODEL INTERACTION ({pass_name}):\n"
             f"  Model: {model_name} | Temp: {temperature} | "
             f"Max tokens: {max_tokens}\n"
             f"  Prompt: {prompt_preview}\n"
@@ -246,7 +257,7 @@ class ReviewLogger:
         self.review_log_text.append(text_line)
 
         self.logger.debug(
-            f"[{pass_name}] Model interaction: "
+            f"[trace_id={self.trace_id}] [{pass_name}] Model interaction: "
             f"{len(prompt)} chars prompt → {len(response)} chars response"
         )
 
@@ -281,6 +292,7 @@ class ReviewLogger:
             "timestamp": datetime.utcnow().isoformat(),
             "event_type": "reasoning",
             "session_id": self.session_id,
+            "trace_id": self.trace_id,
             "pass_name": pass_name,
             "reasoning": reasoning,
             "context": context,
@@ -290,14 +302,18 @@ class ReviewLogger:
 
         # Text format
         text_line = (
-            f"[{entry['timestamp']}] REASONING ({pass_name}):\n"
+            f"[{entry['timestamp']}] [trace_id={self.trace_id}] "
+            f"REASONING ({pass_name}):\n"
         )
         if context:
             text_line += f"  Context: {context}\n"
         text_line += f"  {reasoning}\n"
         self.review_log_text.append(text_line)
 
-        self.logger.debug(f"[{pass_name}] Reasoning: {reasoning[:100]}...")
+        self.logger.debug(
+            f"[trace_id={self.trace_id}] "
+            f"[{pass_name}] Reasoning: {reasoning[:100]}..."
+        )
 
     def get_work_log_json(self) -> List[Dict[str, Any]]:
         """Get work log as JSON list."""
@@ -331,6 +347,7 @@ class ReviewLogger:
         """
         return {
             "session_id": self.session_id,
+            "trace_id": self.trace_id,
             "work_log_json": self.get_work_log_json(),
             "work_log_text": self.get_work_log_text(),
             "review_log_json": self.get_review_log_json(),
@@ -338,4 +355,3 @@ class ReviewLogger:
             "model_responses": self.get_model_responses(),
             "reasoning_log": self.get_reasoning_log(),
         }
-

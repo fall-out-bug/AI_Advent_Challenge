@@ -21,6 +21,7 @@ class DummyMCP:
 @pytest.mark.asyncio
 async def test_bot_handles_nl_and_creates_task(monkeypatch):
     from aiogram.types import User
+
     from src.presentation.bot.butler_bot import ButlerBot
 
     bot = ButlerBot(token="TEST_TOKEN")
@@ -39,5 +40,3 @@ async def test_bot_handles_nl_and_creates_task(monkeypatch):
     msg = DummyMessage()
     await bot.handle_natural_language(msg)
     assert any("Task added" in s for s in msg.sent)
-
-

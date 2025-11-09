@@ -3,9 +3,9 @@
 Following TDD principles and the Zen of Python.
 """
 
-import pytest
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from src.domain.messaging.message_schema import (
     CodeGenerationRequest,

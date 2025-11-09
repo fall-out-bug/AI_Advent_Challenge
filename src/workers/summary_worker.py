@@ -10,20 +10,20 @@ from typing import Optional
 
 from aiogram import Bot
 
+from src.application.use_cases.process_long_summarization_task import (
+    ProcessLongSummarizationTaskUseCase,
+)
+from src.domain.value_objects.task_type import TaskType
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.database.mongo import get_db
 from src.infrastructure.logging import get_logger
 from src.infrastructure.monitoring.agent_metrics import (
-    long_tasks_total,
     long_tasks_duration,
     long_tasks_queue_size,
+    long_tasks_total,
 )
 from src.infrastructure.notifiers.telegram_notifier import TelegramNotifier
-from src.domain.value_objects.task_type import TaskType
 from src.infrastructure.repositories.long_tasks_repository import LongTasksRepository
-from src.application.use_cases.process_long_summarization_task import (
-    ProcessLongSummarizationTaskUseCase,
-)
 from src.presentation.mcp.client import get_mcp_client
 from src.presentation.mcp.http_client import MCPHTTPClient
 from src.workers.data_fetchers import get_digest_texts, get_summary_text
@@ -67,6 +67,7 @@ class SummaryWorker:
 
     def _setup_signal_handlers(self) -> None:
         """Register signal handlers for graceful shutdown."""
+
         def signal_handler(signum, frame):
             logger.info(f"Received shutdown signal: {signum}")
             self.stop()
@@ -121,16 +122,22 @@ class SummaryWorker:
 
             # Update queue size metric (count all queued tasks)
             from src.domain.value_objects.task_status import TaskStatus
-            queued_count = await db.long_tasks.count_documents({"status": TaskStatus.QUEUED.value})
+
+            queued_count = await db.long_tasks.count_documents(
+                {"status": TaskStatus.QUEUED.value}
+            )
             long_tasks_queue_size.set(queued_count)
 
             # Pick next queued summarization task (filter by type)
-            task = await long_tasks_repo.pick_next_queued(task_type=TaskType.SUMMARIZATION)
+            task = await long_tasks_repo.pick_next_queued(
+                task_type=TaskType.SUMMARIZATION
+            )
 
             if not task:
                 return  # No tasks to process
 
             import time
+
             start_time = time.time()
 
             logger.info(
@@ -152,7 +159,9 @@ class SummaryWorker:
 
                 # Send result to user
                 if task.channel_username:
-                    message = f"📋 Дайджест канала {task.channel_username}:\n\n{result_text}"
+                    message = (
+                        f"📋 Дайджест канала {task.channel_username}:\n\n{result_text}"
+                    )
                 else:
                     message = f"📋 Дайджест по всем каналам:\n\n{result_text}"
 
@@ -200,17 +209,21 @@ class SummaryWorker:
             long_tasks_repo = LongTasksRepository(db)
 
             # Update queue size metric for review tasks
-            from src.domain.value_objects.task_status import TaskStatus
-            queued_count = await long_tasks_repo.get_queue_size(task_type=TaskType.CODE_REVIEW)
+            queued_count = await long_tasks_repo.get_queue_size(
+                task_type=TaskType.CODE_REVIEW
+            )
             # Note: We could add a separate metric for review tasks if needed
 
             # Pick next queued review task (filter by type)
-            task = await long_tasks_repo.pick_next_queued(task_type=TaskType.CODE_REVIEW)
+            task = await long_tasks_repo.pick_next_queued(
+                task_type=TaskType.CODE_REVIEW
+            )
 
             if not task:
                 return  # No tasks to process
 
             import time
+
             start_time = time.time()
 
             logger.info(
@@ -222,18 +235,21 @@ class SummaryWorker:
 
             # Process review task
             # Import here to avoid circular dependencies
+            import sys
+            from pathlib import Path
+
             from src.application.use_cases.review_submission_use_case import (
                 ReviewSubmissionUseCase,
             )
-            from src.infrastructure.archive.archive_service import ZipArchiveService
             from src.domain.services.diff_analyzer import DiffAnalyzer
+            from src.infrastructure.archive.archive_service import ZipArchiveService
+            from src.infrastructure.clients.external_api_client import ExternalAPIClient
+            from src.infrastructure.clients.external_api_mock import (
+                ExternalAPIClientMock,
+            )
             from src.infrastructure.repositories.homework_review_repository import (
                 HomeworkReviewRepository,
             )
-            from src.infrastructure.clients.external_api_client import ExternalAPIClient
-            from src.infrastructure.clients.external_api_mock import ExternalAPIClientMock
-            import sys
-            from pathlib import Path
 
             # Add shared to path for UnifiedModelClient
             _root = Path(__file__).parent.parent.parent.parent
@@ -250,7 +266,9 @@ class SummaryWorker:
                     shared_package_path = _root / "shared" / "shared_package"
                     if shared_package_path.exists():
                         sys.path.insert(0, str(shared_package_path.parent))
-                        from shared_package.clients.unified_client import UnifiedModelClient
+                        from shared_package.clients.unified_client import (
+                            UnifiedModelClient,
+                        )
                     else:
                         raise RuntimeError("UnifiedModelClient not available")
 
@@ -264,12 +282,14 @@ class SummaryWorker:
             llm_url = self.settings.llm_url or os.getenv("LLM_URL")
             if not llm_url:
                 raise ValueError("LLM_URL must be configured for code review")
-            
+
             # Set LLM_URL in environment if not already set (UnifiedModelClient reads from env)
             if not os.getenv("LLM_URL"):
                 os.environ["LLM_URL"] = llm_url
 
-            unified_client = UnifiedModelClient(timeout=self.settings.review_llm_timeout)
+            unified_client = UnifiedModelClient(
+                timeout=self.settings.review_llm_timeout
+            )
 
             # Use real client if enabled, otherwise mock
             if self.settings.external_api_enabled and self.settings.external_api_url:
@@ -284,9 +304,9 @@ class SummaryWorker:
                 )
 
             # Initialize log analysis components
-            from src.infrastructure.logs.log_parser_impl import LogParserImpl
-            from src.infrastructure.logs.log_normalizer import LogNormalizer
             from src.infrastructure.logs.llm_log_analyzer import LLMLogAnalyzer
+            from src.infrastructure.logs.log_normalizer import LogNormalizer
+            from src.infrastructure.logs.log_parser_impl import LogParserImpl
 
             log_parser = LogParserImpl()
             log_normalizer = LogNormalizer()
@@ -343,10 +363,14 @@ class SummaryWorker:
             should_send = False
             if self._last_debug_send is None:
                 should_send = True
-                logger.info(f"Debug mode: first run, sending notifications immediately (interval={debug_interval} min)")
+                logger.info(
+                    f"Debug mode: first run, sending notifications immediately (interval={debug_interval} min)"
+                )
             elif (now - self._last_debug_send).total_seconds() >= (debug_interval * 60):
                 should_send = True
-                logger.info(f"Debug mode: sending notifications (interval={debug_interval} min)")
+                logger.info(
+                    f"Debug mode: sending notifications (interval={debug_interval} min)"
+                )
 
             if should_send:
                 await self._send_debug_notifications()
@@ -354,9 +378,9 @@ class SummaryWorker:
             return
 
         # Normal mode: respect quiet hours and scheduled times
-        if is_quiet_hours(now, 
-                         self.settings.quiet_hours_start, 
-                         self.settings.quiet_hours_end):
+        if is_quiet_hours(
+            now, self.settings.quiet_hours_start, self.settings.quiet_hours_end
+        ):
             return
 
         morning_time = self._parse_time(self.settings.morning_summary_time)
@@ -375,8 +399,11 @@ class SummaryWorker:
         logger.info(f"Sending morning summaries to {len(user_ids)} users")
 
         for user_id in user_ids:
+
             async def get_text(uid: int) -> Optional[str]:
-                return await get_summary_text(self.mcp, uid, timeframe="today", debug=False)
+                return await get_summary_text(
+                    self.mcp, uid, timeframe="today", debug=False
+                )
 
             await send_with_retry(self.bot, user_id, get_text, "morning summary")
 
@@ -400,7 +427,10 @@ class SummaryWorker:
                             # Small delay between messages to avoid rate limiting
                             await asyncio.sleep(0.5)
             except Exception as e:
-                logger.error(f"Error sending evening digests for user {user_id}: {e}", exc_info=True)
+                logger.error(
+                    f"Error sending evening digests for user {user_id}: {e}",
+                    exc_info=True,
+                )
 
     async def _send_debug_notifications(self) -> None:
         """Send debug notifications (summary + digest) to all users.
@@ -439,21 +469,26 @@ class SummaryWorker:
                         f"length={len(text) if text else 0}, has_text={text is not None}"
                     )
                     if text:
-                        await send_with_retry(
-                            self.bot, user_id, text, "debug summary"
-                        )
+                        await send_with_retry(self.bot, user_id, text, "debug summary")
                         summary_count += 1
                     else:
-                        logger.warning(f"No summary text to send for user {user_id}, skipping")
+                        logger.warning(
+                            f"No summary text to send for user {user_id}, skipping"
+                        )
                 except Exception as e:
-                    logger.error(f"Error getting summary text for user {user_id}: {e}", exc_info=True)
+                    logger.error(
+                        f"Error getting summary text for user {user_id}: {e}",
+                        exc_info=True,
+                    )
 
             # Send channel digests - one message per channel
             if user_id in channel_user_ids:
                 logger.info(f"Sending debug digests for user {user_id}")
                 try:
                     digest_texts = await get_digest_texts(self.mcp, user_id, debug=True)
-                    logger.info(f"Got {len(digest_texts)} digest texts for user {user_id}")
+                    logger.info(
+                        f"Got {len(digest_texts)} digest texts for user {user_id}"
+                    )
                     if digest_texts:
                         for digest_text in digest_texts:
                             if digest_text:
@@ -463,11 +498,18 @@ class SummaryWorker:
                                 digest_count += 1
                                 await asyncio.sleep(0.5)
                     else:
-                        logger.warning(f"No digest texts to send for user {user_id}, skipping")
+                        logger.warning(
+                            f"No digest texts to send for user {user_id}, skipping"
+                        )
                 except Exception as e:
-                    logger.error(f"Error getting digest texts for user {user_id}: {e}", exc_info=True)
+                    logger.error(
+                        f"Error getting digest texts for user {user_id}: {e}",
+                        exc_info=True,
+                    )
 
-        logger.info(f"Debug notifications sent: {summary_count} summaries, {digest_count} digests")
+        logger.info(
+            f"Debug notifications sent: {summary_count} summaries, {digest_count} digests"
+        )
 
     @staticmethod
     def _parse_time(time_str: str) -> Optional[time]:

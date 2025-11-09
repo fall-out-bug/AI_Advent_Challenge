@@ -5,9 +5,7 @@ from typing import Any, Optional
 class MCPBaseException(Exception):
     """Base exception for all MCP errors."""
 
-    def __init__(
-        self, message: str, context: Optional[dict[str, Any]] = None
-    ) -> None:
+    def __init__(self, message: str, context: Optional[dict[str, Any]] = None) -> None:
         """Initialize exception.
 
         Args:
@@ -20,8 +18,6 @@ class MCPBaseException(Exception):
 
 class MCPAdapterError(MCPBaseException):
     """Error in adapter operations."""
-
-    pass
 
 
 class MCPModelError(MCPBaseException):
@@ -115,16 +111,10 @@ class MCPValidationError(MCPBaseException):
 class MCPTimeoutError(MCPBaseException):
     """Error when MCP operation times out."""
 
-    pass
-
 
 class MCPConnectionError(MCPBaseException):
     """Error when MCP connection fails."""
 
-    pass
-
 
 class MCPClientError(MCPBaseException):
     """Generic MCP client error."""
-
-    pass

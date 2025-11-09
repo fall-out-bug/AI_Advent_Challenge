@@ -1,40 +1,42 @@
-"""Facade adapter to bridge MCP tools to application layer."""
-import sys
-from pathlib import Path
-from typing import Any, Dict
+"""Facade adapter that exposes MCP capabilities via specialised adapters."""
 
-_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(_root))
-sys.path.insert(0, str(_root / "shared"))
+from __future__ import annotations
 
-from src.presentation.mcp.adapters.model_adapter import ModelAdapter
-from src.presentation.mcp.adapters.generation_adapter import GenerationAdapter
-from src.presentation.mcp.adapters.review_adapter import ReviewAdapter
-from src.presentation.mcp.adapters.orchestration_adapter import OrchestrationAdapter
-from src.presentation.mcp.adapters.token_adapter import TokenAdapter
-from src.presentation.mcp.adapters.formalize_adapter import FormalizeAdapter
-from src.presentation.mcp.adapters.test_generation_adapter import TestGenerationAdapter
-from src.presentation.mcp.adapters.format_adapter import FormatAdapter
+from typing import Any, Mapping, Optional
+
+from shared.shared_package.clients.unified_client import UnifiedModelClient
+from src.domain.services.token_analyzer import TokenAnalyzer
 from src.presentation.mcp.adapters.complexity_adapter import ComplexityAdapter
+from src.presentation.mcp.adapters.formalize_adapter import FormalizeAdapter
+from src.presentation.mcp.adapters.format_adapter import FormatAdapter
+from src.presentation.mcp.adapters.generation_adapter import GenerationAdapter
+from src.presentation.mcp.adapters.model_adapter import ModelAdapter
+from src.presentation.mcp.adapters.orchestration_adapter import OrchestrationAdapter
+from src.presentation.mcp.adapters.review_adapter import ReviewAdapter
+from src.presentation.mcp.adapters.test_generation_adapter import TestGenerationAdapter
+from src.presentation.mcp.adapters.token_adapter import TokenAdapter
 
 
 class ModelClientAdapter:
-    """Adapter to make UnifiedModelClient compatible with BaseAgent interface."""
+    """Expose ``UnifiedModelClient`` via a minimal BaseAgent-like interface."""
 
-    def __init__(self, unified_client: Any, model_name: str = "starcoder"):
-        """Initialize adapter."""
-        self.unified_client = unified_client
-        self.model_name = model_name
+    def __init__(
+        self, unified_client: UnifiedModelClient, model_name: str = "starcoder"
+    ) -> None:
+        self._unified_client = unified_client
+        self._model_name = model_name
 
-    async def generate(self, prompt: str, max_tokens: int = 1500, temperature: float = 0.3) -> dict:
-        """Generate response compatible with BaseAgent interface."""
-        response = await self.unified_client.make_request(
-            model_name=self.model_name,
+    async def generate(
+        self, prompt: str, max_tokens: int = 1500, temperature: float = 0.3
+    ) -> dict[str, Any]:
+        """Return a response payload matching the legacy BaseAgent contract."""
+
+        response = await self._unified_client.make_request(
+            model_name=self._model_name,
             prompt=prompt,
             max_tokens=max_tokens,
             temperature=temperature,
         )
-
         return {
             "response": response.response,
             "total_tokens": response.total_tokens,
@@ -44,144 +46,196 @@ class ModelClientAdapter:
 
 
 class MCPApplicationAdapter:
-    """Facade that delegates to specialized adapters."""
+    """Facade orchestrating the individual MCP adapters used by the bot."""
 
-    def __init__(self):
-        """Initialize MCP application adapter."""
-        # Import lazily to avoid circular dependencies
-        from shared_package.clients.unified_client import UnifiedModelClient
-        from src.domain.services.token_analyzer import TokenAnalyzer
-        
-        self.unified_client = UnifiedModelClient()
-        self.token_analyzer = TokenAnalyzer()
-        
-        # Initialize specialized adapters
-        self.model_adapter = ModelAdapter(self.unified_client)
-        self.token_adapter = TokenAdapter(self.token_analyzer)
-        self.generation_adapter = GenerationAdapter(
-            self.unified_client, model_name="starcoder"
+    def __init__(
+        self,
+        unified_client: Optional[UnifiedModelClient] = None,
+        token_analyzer: Optional[TokenAnalyzer] = None,
+    ) -> None:
+        self._unified_client = unified_client or UnifiedModelClient()
+        self._token_analyzer = token_analyzer or TokenAnalyzer()
+
+        self._model_adapter = ModelAdapter(self._unified_client)
+        self._token_adapter = TokenAdapter(self._token_analyzer)
+        self._generation_adapter = GenerationAdapter(
+            self._unified_client, model_name="starcoder"
         )
-        self.review_adapter = ReviewAdapter(
-            self.unified_client, model_name="starcoder"
+        self._review_adapter = ReviewAdapter(
+            self._unified_client, model_name="starcoder"
         )
-        self.orchestration_adapter = OrchestrationAdapter(self.unified_client)
-        self.formalize_adapter = FormalizeAdapter(self.unified_client, model_name="starcoder")
-        self.test_generation_adapter = TestGenerationAdapter(self.unified_client, model_name="starcoder")
-        self.format_adapter = FormatAdapter()
-        self.complexity_adapter = ComplexityAdapter()
+        self._orchestration_adapter = OrchestrationAdapter(self._unified_client)
+        self._formalize_adapter = FormalizeAdapter(
+            self._unified_client, model_name="starcoder"
+        )
+        self._test_generation_adapter = TestGenerationAdapter(
+            self._unified_client, model_name="starcoder"
+        )
+        self._format_adapter = FormatAdapter()
+        self._complexity_adapter = ComplexityAdapter()
 
-    async def list_available_models(self) -> Dict[str, Any]:
-        """List all configured models."""
-        return self.model_adapter.list_available_models()
+    async def list_available_models(self) -> dict[str, Any]:
+        """Return all configured model descriptors."""
 
-    async def check_model_availability(self, model_name: str) -> Dict[str, bool]:
-        """Check if model is available."""
-        return await self.model_adapter.check_model_availability(model_name)
+        return self._model_adapter.list_available_models()
 
-    async def generate_code_via_agent(self, description: str, model: str) -> Dict[str, Any]:
-        """Generate code using CodeGeneratorAgent."""
+    async def check_model_availability(
+        self,
+        model_name: str,
+    ) -> dict[str, bool]:
+        """Return availability metadata for ``model_name``."""
+
+        return await self._model_adapter.check_model_availability(model_name)
+
+    async def generate_code_via_agent(
+        self, description: str, model: str
+    ) -> dict[str, Any]:
+        """Delegate to the code generation adapter with error wrapping."""
+
         try:
-            return await self.generation_adapter.generate_code(description, model)
-        except Exception as e:
+            return await self._generation_adapter.generate_code(description, model)
+        except Exception as error:  # noqa: BLE001
             return {
                 "success": False,
                 "code": "",
-                "error": str(e),
+                "error": str(error),
                 "metadata": {"model_used": model},
             }
 
-    async def review_code_via_agent(self, code: str, model: str) -> Dict[str, Any]:
-        """Review code using CodeReviewerAgent."""
+    async def review_code_via_agent(
+        self,
+        code: str,
+        model: str,
+    ) -> dict[str, Any]:
+        """Run the review adapter while preserving legacy response shape."""
+
         try:
-            return await self.review_adapter.review_code(code, model)
-        except Exception as e:
+            return await self._review_adapter.review_code(code, model)
+        except Exception as error:  # noqa: BLE001
             return {
                 "success": False,
                 "review": "",
                 "quality_score": 0,
-                "error": str(e),
+                "error": str(error),
                 "metadata": {"model_used": model},
             }
 
-    async def formalize_task(self, informal_request: str, context: str = "") -> Dict[str, Any]:
-        """Formalize an informal task description into a structured plan."""
+    async def formalize_task(
+        self, informal_request: str, context: str = ""
+    ) -> dict[str, Any]:
+        """Formalise free-form input through the planner adapter."""
+
         try:
-            return await self.formalize_adapter.formalize(informal_request, context)
-        except Exception as e:
+            return await self._formalize_adapter.formalize(
+                informal_request,
+                context,
+            )
+        except Exception as error:  # noqa: BLE001
             return {
                 "success": False,
-                "error": str(e),
+                "error": str(error),
                 "formalized_description": "",
                 "requirements": [],
                 "steps": [],
                 "estimated_complexity": "unknown",
             }
 
-    async def orchestrate_generation_and_review(self, description: str, gen_model: str, review_model: str) -> Dict[str, Any]:
-        """Full workflow via MultiAgentOrchestrator."""
+    async def orchestrate_generation_and_review(
+        self,
+        description: str,
+        gen_model: str,
+        review_model: str,
+    ) -> dict[str, Any]:
+        """Run the orchestrator and keep the legacy payload structure."""
+
         try:
-            return await self.orchestration_adapter.orchestrate_generation_and_review(
-                description, gen_model, review_model
+            orchestrate = self._orchestration_adapter.orchestrate_generation_and_review
+            return await orchestrate(
+                description,
+                gen_model,
+                review_model,
             )
-        except Exception as e:
+        except Exception as error:  # noqa: BLE001
             return {
                 "success": False,
                 "generation": {"code": "", "tests": ""},
                 "review": {"score": 0, "issues": [], "recommendations": []},
                 "workflow_time": 0.0,
-                "error": str(e),
+                "error": str(error),
             }
 
-    def count_text_tokens(self, text: str) -> Dict[str, int]:
-        """Count tokens using TokenAnalyzer."""
-        try:
-            return self.token_adapter.count_text_tokens(text)
-        except Exception as e:
-            return {"count": 0, "error": str(e)}
+    def count_text_tokens(self, text: str) -> Mapping[str, int | str]:
+        """Return token counts or a descriptive error payload."""
 
-    async def generate_tests(self, code: str, test_framework: str = "pytest", coverage_target: int = 80) -> Dict[str, Any]:
-        """Generate tests for code."""
         try:
-            return await self.test_generation_adapter.generate_tests(
+            return self._token_adapter.count_text_tokens(text)
+        except Exception as error:  # noqa: BLE001
+            return {"count": 0, "error": str(error)}
+
+    async def generate_tests(
+        self,
+        code: str,
+        test_framework: str = "pytest",
+        coverage_target: int = 80,
+    ) -> dict[str, Any]:
+        """Produce test cases for ``code`` with graceful degradation."""
+
+        try:
+            return await self._test_generation_adapter.generate_tests(
                 code, test_framework, coverage_target
             )
-        except Exception as e:
+        except Exception as error:  # noqa: BLE001
             return {
                 "success": False,
                 "test_code": "",
                 "test_count": 0,
                 "coverage_estimate": 0,
                 "test_cases": [],
-                "error": str(e),
+                "error": str(error),
             }
-    
-    def format_code(self, code: str, formatter: str = "black", line_length: int = 100) -> Dict[str, Any]:
-        """Format code."""
+
+    def format_code(
+        self,
+        code: str,
+        formatter: str = "black",
+        line_length: int = 100,
+    ) -> dict[str, Any]:
+        """Apply the configured formatter and guard against failures."""
+
         try:
-            return self.format_adapter.format_code(code, formatter, line_length)
-        except Exception as e:
+            return self._format_adapter.format_code(
+                code,
+                formatter,
+                line_length,
+            )
+        except Exception as error:  # noqa: BLE001
             return {
                 "formatted_code": code,
                 "changes_made": 0,
                 "formatter_used": formatter,
-                "error": str(e),
+                "error": str(error),
             }
-    
-    def analyze_complexity(self, code: str, detailed: bool = True) -> Dict[str, Any]:
-        """Analyze code complexity."""
+
+    def analyze_complexity(
+        self,
+        code: str,
+        detailed: bool = True,
+    ) -> dict[str, Any]:
+        """Delegate to the complexity adapter, mirroring the legacy payload."""
+
         try:
-            return self.complexity_adapter.analyze_complexity(code, detailed)
-        except Exception as e:
+            return self._complexity_adapter.analyze_complexity(code, detailed)
+        except Exception as error:  # noqa: BLE001
             return {
                 "cyclomatic_complexity": 0,
                 "cognitive_complexity": 0,
                 "lines_of_code": 0,
                 "maintainability_index": 0.0,
                 "recommendations": [],
-                "error": str(e),
+                "error": str(error),
             }
 
     async def close(self) -> None:
-        """Cleanup resources."""
-        await self.unified_client.close()
+        """Release resources owned by the unified client."""
 
+        await self._unified_client.close()

@@ -1,11 +1,6 @@
 """Adapter for model-related operations."""
-import sys
-from pathlib import Path
-from typing import Any
 
-_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(_root))
-sys.path.insert(0, str(_root / "shared"))
+from typing import Any
 
 from src.presentation.mcp.exceptions import MCPModelError
 
@@ -13,12 +8,14 @@ from src.presentation.mcp.exceptions import MCPModelError
 def _get_unified_client():
     """Import UnifiedModelClient at runtime."""
     from shared_package.clients.unified_client import UnifiedModelClient
+
     return UnifiedModelClient
 
 
 def _get_model_configs():
     """Import MODEL_CONFIGS at runtime."""
     from shared_package.config.models import MODEL_CONFIGS
+
     return MODEL_CONFIGS
 
 

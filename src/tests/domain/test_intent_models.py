@@ -39,5 +39,3 @@ def test_clarification_question_model():
 
     q = ClarificationQuestion(text="When is the deadline?", key="deadline")
     assert q.key == "deadline"
-
-

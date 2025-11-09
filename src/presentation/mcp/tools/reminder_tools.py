@@ -1,15 +1,16 @@
 """MCP tools for task reminders backed by MongoDB."""
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any, Dict
 
-from src.presentation.mcp.server import mcp
+from src.infrastructure.config.settings import get_settings
 from src.infrastructure.database.mongo import get_db
+from src.infrastructure.di.factories import create_task_summary_use_case
 from src.infrastructure.logging import get_logger
 from src.infrastructure.repositories.task_repository import TaskRepository
-from src.infrastructure.config.settings import get_settings
-from src.infrastructure.di.factories import create_task_summary_use_case
+from src.presentation.mcp.server import mcp
+
 from ._summary_helpers import _build_summary_query, _compute_task_stats
 
 logger = get_logger("mcp.reminder_tools")
@@ -19,8 +20,6 @@ _settings = get_settings()
 async def _repo() -> TaskRepository:
     db = await get_db()
     return TaskRepository(db)
-
-
 
 
 @mcp.tool()
@@ -50,29 +49,42 @@ async def add_task(
     """
     # Validation
     if not isinstance(user_id, int) or user_id <= 0:
-        logger.warning("Invalid user_id", user_id=user_id)
+        logger.warning("Invalid user_id", extra={"user_id": user_id})
         return {"status": "error", "error": "user_id must be a positive integer"}
 
     if not title or not isinstance(title, str):
-        logger.warning("Missing or invalid title", user_id=user_id)
+        logger.warning(
+            "Missing or invalid title", extra={"user_id": user_id}
+        )
         return {"status": "error", "error": "title is required and must be a string"}
 
     if len(title) > 256:
-        logger.warning("Title too long", user_id=user_id, length=len(title))
+        logger.warning(
+            "Title too long",
+            extra={"user_id": user_id, "length": len(title)},
+        )
         title = title[:256]
 
     if description and len(description) > 2048:
-        logger.warning("Description too long", user_id=user_id, length=len(description))
+        logger.warning(
+            "Description too long",
+            extra={"user_id": user_id, "length": len(description)},
+        )
         description = description[:2048]
 
     if priority not in ("high", "medium", "low"):
-        logger.warning("Invalid priority", user_id=user_id, priority=priority)
+        logger.warning(
+            "Invalid priority",
+            extra={"user_id": user_id, "priority": priority},
+        )
         priority = "medium"
 
     if tags:
         if len(tags) > 50:
             tags = tags[:50]
-            logger.warning("Too many tags, truncating", user_id=user_id)
+            logger.warning(
+                "Too many tags, truncating", extra={"user_id": user_id}
+            )
         tags = [str(tag)[:32] for tag in tags if tag]
 
     try:
@@ -88,10 +100,19 @@ async def add_task(
             tags=tags or [],
         )
         task_id = await repo.create_task(task_in)
-        logger.info("Task created", user_id=user_id, task_id=task_id)
-        return {"task_id": task_id, "created_at": datetime.utcnow().isoformat(), "status": "created"}
+        logger.info(
+            "Task created", extra={"user_id": user_id, "task_id": task_id}
+        )
+        return {
+            "task_id": task_id,
+            "created_at": datetime.utcnow().isoformat(),
+            "status": "created",
+        }
     except Exception as e:
-        logger.error("Failed to create task", user_id=user_id, error=str(e))
+        logger.error(
+            "Failed to create task",
+            extra={"user_id": user_id, "error": str(e)},
+        )
         return {"status": "error", "error": f"Failed to create task: {str(e)}"}
 
 
@@ -113,11 +134,20 @@ async def list_tasks(
     """
     # Validation
     if not isinstance(user_id, int) or user_id <= 0:
-        logger.warning("Invalid user_id", user_id=user_id)
-        return {"status": "error", "error": "user_id must be a positive integer", "tasks": [], "total": 0, "filtered": 0}
+        logger.warning("Invalid user_id", extra={"user_id": user_id})
+        return {
+            "status": "error",
+            "error": "user_id must be a positive integer",
+            "tasks": [],
+            "total": 0,
+            "filtered": 0,
+        }
 
     if status not in ("all", "active", "completed"):
-        logger.warning("Invalid status", user_id=user_id, status=status)
+        logger.warning(
+            "Invalid status",
+            extra={"user_id": user_id, "status": status},
+        )
         status = "active"
 
     if not isinstance(limit, int) or limit < 1:
@@ -128,11 +158,23 @@ async def list_tasks(
         repo = await _repo()
         tasks = await repo.list_tasks(user_id=user_id, status=status, limit=limit)
         total = len(await repo.list_tasks(user_id=user_id, status="all", limit=limit))
-        logger.info("Tasks listed", user_id=user_id, status=status, count=len(tasks))
+        logger.info(
+            "Tasks listed",
+            extra={"user_id": user_id, "status": status, "count": len(tasks)},
+        )
         return {"tasks": tasks, "total": total, "filtered": len(tasks)}
     except Exception as e:
-        logger.error("Failed to list tasks", user_id=user_id, error=str(e))
-        return {"status": "error", "error": f"Failed to list tasks: {str(e)}", "tasks": [], "total": 0, "filtered": 0}
+        logger.error(
+            "Failed to list tasks",
+            extra={"user_id": user_id, "error": str(e)},
+        )
+        return {
+            "status": "error",
+            "error": f"Failed to list tasks: {str(e)}",
+            "tasks": [],
+            "total": 0,
+            "filtered": 0,
+        }
 
 
 @mcp.tool()
@@ -148,30 +190,52 @@ async def update_task(task_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
     """
     # Validation
     if not task_id or not isinstance(task_id, str):
-        logger.warning("Invalid task_id", task_id=task_id)
+        logger.warning("Invalid task_id", extra={"task_id": task_id})
         return {"status": "error", "error": "task_id is required and must be a string"}
 
     if not updates or not isinstance(updates, dict):
-        logger.warning("Invalid updates", task_id=task_id)
+        logger.warning("Invalid updates", extra={"task_id": task_id})
         return {"status": "error", "error": "updates must be a non-empty dictionary"}
 
     # Validate update fields
-    allowed_fields = {"title", "description", "deadline", "priority", "completed", "tags"}
+    allowed_fields = {
+        "title",
+        "description",
+        "deadline",
+        "priority",
+        "completed",
+        "tags",
+    }
     invalid_fields = set(updates.keys()) - allowed_fields
     if invalid_fields:
-        logger.warning("Invalid update fields", task_id=task_id, fields=invalid_fields)
+        logger.warning(
+            "Invalid update fields",
+            extra={"task_id": task_id, "fields": invalid_fields},
+        )
         updates = {k: v for k, v in updates.items() if k in allowed_fields}
 
     try:
         repo = await _repo()
         ok = await repo.update_task(task_id, updates)
         if ok:
-            logger.info("Task updated", task_id=task_id, fields=list(updates.keys()))
+            logger.info(
+                "Task updated",
+                extra={"task_id": task_id, "fields": list(updates.keys())},
+            )
         else:
-            logger.warning("Task not found for update", task_id=task_id)
-        return {"task_id": task_id, "updated_fields": list(updates.keys()), "status": "updated" if ok else "not_found"}
+            logger.warning(
+                "Task not found for update", extra={"task_id": task_id}
+            )
+        return {
+            "task_id": task_id,
+            "updated_fields": list(updates.keys()),
+            "status": "updated" if ok else "not_found",
+        }
     except Exception as e:
-        logger.error("Failed to update task", task_id=task_id, error=str(e))
+        logger.error(
+            "Failed to update task",
+            extra={"task_id": task_id, "error": str(e)},
+        )
         return {"status": "error", "error": f"Failed to update task: {str(e)}"}
 
 
@@ -187,19 +251,24 @@ async def delete_task(task_id: str) -> Dict[str, str]:
     """
     # Validation
     if not task_id or not isinstance(task_id, str):
-        logger.warning("Invalid task_id", task_id=task_id)
+        logger.warning("Invalid task_id", extra={"task_id": task_id})
         return {"status": "error", "error": "task_id is required and must be a string"}
 
     try:
         repo = await _repo()
         ok = await repo.delete_task(task_id)
         if ok:
-            logger.info("Task deleted", task_id=task_id)
+            logger.info("Task deleted", extra={"task_id": task_id})
         else:
-            logger.warning("Task not found for deletion", task_id=task_id)
+            logger.warning(
+                "Task not found for deletion", extra={"task_id": task_id}
+            )
         return {"status": "deleted" if ok else "not_found", "task_id": task_id}
     except Exception as e:
-        logger.error("Failed to delete task", task_id=task_id, error=str(e))
+        logger.error(
+            "Failed to delete task",
+            extra={"task_id": task_id, "error": str(e)},
+        )
         return {"status": "error", "error": f"Failed to delete task: {str(e)}"}
 
 
@@ -223,12 +292,11 @@ async def get_summary(user_id: int, timeframe: str = "today") -> Dict[str, Any]:
         try:
             logger.info(
                 "Using new summarization system",
-                user_id=user_id,
-                timeframe=timeframe,
+                extra={"user_id": user_id, "timeframe": timeframe},
             )
             use_case = create_task_summary_use_case()
             result = await use_case.execute(user_id=user_id, timeframe=timeframe)
-            
+
             # Convert to expected format (backward compatibility)
             # Ensure tasks have 'id' field instead of '_id'
             tasks = []
@@ -237,7 +305,7 @@ async def get_summary(user_id: int, timeframe: str = "today") -> Dict[str, Any]:
                 if "_id" in task_dict:
                     task_dict["id"] = str(task_dict.pop("_id"))
                 tasks.append(task_dict)
-            
+
             return {
                 "tasks": tasks,
                 "stats": result.stats,
@@ -249,14 +317,16 @@ async def get_summary(user_id: int, timeframe: str = "today") -> Dict[str, Any]:
         except Exception as e:
             logger.error(
                 "Error in new summarization, falling back to old",
-                user_id=user_id,
-                error=str(e),
+                extra={"user_id": user_id, "error": str(e)},
                 exc_info=True,
             )
             # Fall through to old implementation
-    
+
     # Old implementation (fallback or feature flag disabled)
-    logger.debug("Using old summarization system", user_id=user_id, timeframe=timeframe)
+    logger.debug(
+        "Using old summarization system",
+        extra={"user_id": user_id, "timeframe": timeframe},
+    )
     db = await get_db()
     now = datetime.now(timezone.utc)
 
@@ -289,5 +359,3 @@ async def get_summary(user_id: int, timeframe: str = "today") -> Dict[str, Any]:
     stats = _compute_task_stats(tasks, now_iso=now.isoformat())
 
     return {"tasks": tasks, "stats": stats}
-
-

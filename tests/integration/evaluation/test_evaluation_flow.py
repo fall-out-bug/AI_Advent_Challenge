@@ -76,13 +76,9 @@ async def test_should_trigger_finetuning(real_mongodb):
         await repo.save_evaluation(evaluation)
 
     # Check trigger with min_samples=3 (should trigger)
-    should_trigger = await repo.should_trigger_finetuning(
-        min_score=0.7, min_samples=3
-    )
+    should_trigger = await repo.should_trigger_finetuning(min_score=0.7, min_samples=3)
     assert should_trigger is True
 
     # Check trigger with min_samples=10 (should not trigger)
-    should_trigger = await repo.should_trigger_finetuning(
-        min_score=0.7, min_samples=10
-    )
+    should_trigger = await repo.should_trigger_finetuning(min_score=0.7, min_samples=10)
     assert should_trigger is False

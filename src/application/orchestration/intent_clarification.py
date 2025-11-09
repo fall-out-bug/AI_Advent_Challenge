@@ -44,4 +44,3 @@ class IntentClarificationGenerator:
             raise ClarificationGenerationError(
                 f"Failed to generate clarification questions: {e}", original_error=e
             ) from e
-

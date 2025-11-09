@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class CodeReviewerAgent(BaseAgent):
     """Agent responsible for reviewing and analyzing Python code.
-    
+
     .. deprecated:: 1.0
         Use :class:`MultiPassReviewerAgent` instead for comprehensive multi-pass code review.
         This class is maintained for backward compatibility only.

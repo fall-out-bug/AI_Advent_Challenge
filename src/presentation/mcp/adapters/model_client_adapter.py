@@ -1,13 +1,6 @@
 """Model client adapter for agent compatibility."""
-import sys
-from pathlib import Path
-from typing import Any
 
-# Add shared to path for imports
-_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(_root))
-shared_path = _root / "shared"
-sys.path.insert(0, str(shared_path))
+from typing import Any
 
 from shared_package.clients.unified_client import UnifiedModelClient
 

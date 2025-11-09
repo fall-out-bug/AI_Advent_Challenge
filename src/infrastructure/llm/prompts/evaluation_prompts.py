@@ -74,7 +74,7 @@ def get_evaluation_prompt(
   "overall": 0.87,
   "explanation": "Краткое объяснение оценки"
 }}"""
-    
+
     # English version
     return f"""Evaluate the summary quality based on 5 criteria (score 0.0 to 1.0):
 

@@ -6,7 +6,6 @@ Following TDD approach:
 - Refactor for clarity (refactor)
 """
 
-import pytest
 
 from src.domain.services.riddle_evaluator import RiddleEvaluator
 

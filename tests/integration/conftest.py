@@ -49,19 +49,14 @@ async def integration_tool_client(mock_tool_client_protocol):
     """
     # Allow tool call responses to be configured per test
     mock_tool_client_protocol.call_tool = AsyncMock(
-        return_value={
-            "success": True,
-            "data": {"id": "test_123"}
-        }
+        return_value={"success": True, "data": {"id": "test_123"}}
     )
     return mock_tool_client_protocol
 
 
 @pytest.fixture
 async def integration_orchestrator(
-    butler_orchestrator,
-    integration_llm_client,
-    integration_tool_client
+    butler_orchestrator, integration_llm_client, integration_tool_client
 ):
     """ButlerOrchestrator configured for integration tests.
 
@@ -91,14 +86,14 @@ async def integration_mongodb(mock_mongodb):
     """
     # Track stored contexts
     stored_contexts: Dict[str, Any] = {}
-    
+
     async def find_one_mock(filter: Dict[str, Any]) -> Dict[str, Any] | None:
         """Find context by user_id and session_id."""
         user_id = filter.get("user_id")
         session_id = filter.get("session_id")
         key = f"{user_id}:{session_id}"
         return stored_contexts.get(key)
-    
+
     async def insert_one_mock(doc: Dict[str, Any]) -> MagicMock:
         """Insert new context."""
         user_id = doc.get("user_id")
@@ -108,8 +103,10 @@ async def integration_mongodb(mock_mongodb):
         result = MagicMock()
         result.inserted_id = f"context_{len(stored_contexts)}"
         return result
-    
-    async def update_one_mock(filter: Dict[str, Any], update: Dict[str, Any], **kwargs) -> MagicMock:
+
+    async def update_one_mock(
+        filter: Dict[str, Any], update: Dict[str, Any], **kwargs
+    ) -> MagicMock:
         """Update existing context."""
         user_id = filter.get("user_id")
         session_id = filter.get("session_id")
@@ -122,11 +119,11 @@ async def integration_mongodb(mock_mongodb):
         result = MagicMock()
         result.modified_count = 0
         return result
-    
+
     mock_mongodb.dialog_contexts.find_one = AsyncMock(side_effect=find_one_mock)
     mock_mongodb.dialog_contexts.insert_one = AsyncMock(side_effect=insert_one_mock)
     mock_mongodb.dialog_contexts.update_one = AsyncMock(side_effect=update_one_mock)
-    
+
     return mock_mongodb
 
 
@@ -147,14 +144,13 @@ async def real_mongodb():
     """
     settings = get_settings()
     mongodb_url = os.getenv("TEST_MONGODB_URL", settings.mongodb_url)
-    
+
     # Use test database
     client = AsyncIOMotorClient(mongodb_url)
     db = client.get_database("ai_challenge_integration_test")
-    
+
     yield db
-    
+
     # Cleanup: drop test database
     await client.drop_database("ai_challenge_integration_test")
     client.close()
-

@@ -85,6 +85,20 @@ curl http://localhost:8000/health
 curl http://localhost:8000/docs
 ```
 
+#### Dev container for local work
+
+Если хотите разработку внутри контейнера, уже подключённого к shared сетям и
+использующего общий кэш Poetry:
+
+```bash
+make dev
+```
+
+Сервис `dev` из `docker-compose.dev.yml` монтирует репозиторий в `/workspace`,
+подключает volume `poetry-cache` к `/root/.cache/pypoetry` и наследует все
+переменные `MONGODB_*` из `.env`, поэтому e2e тесты автоматически видят
+`shared-mongo`.
+
 ### Option 2: Non-Docker Deployment
 
 For local development without Docker.
@@ -195,6 +209,38 @@ poetry run pytest src/tests/integration
 # With coverage
 poetry run pytest --cov=src src/tests
 ```
+
+#### End-to-end pipeline
+
+E2E сценарии требуют доступа к shared MongoDB и LLM. Проще всего запускать их в
+контейнере, подключённом к нужным сетям:
+
+```bash
+docker run --rm \
+  --network infra_infra_db-network \
+  --network-alias runner \
+  --env-file .env \
+  -e TEST_MONGODB_DB=ai_challenge_test \
+  -e MONGODB_HOST=shared-mongo \
+  -e MONGODB_PORT=27017 \
+  -v $(pwd):/workspace -w /workspace \
+  python:3.10-slim bash -lc '
+    apt-get update >/dev/null && apt-get install -y build-essential git >/dev/null && \
+    pip install poetry >/dev/null && \
+    poetry config virtualenvs.create false && \
+    poetry install --with dev >/tmp/poetry.log && \
+    USE_MODULAR_REVIEWER=1 \
+    TEST_MONGODB_URL=$MONGODB_URL \
+    MONGODB_USERNAME=$MONGODB_USERNAME \
+    MONGODB_PASSWORD=$MONGODB_PASSWORD \
+    MONGODB_AUTH_SOURCE=${MONGODB_AUTH_SOURCE:-admin} \
+    LLM_URL=$MISTRAL_API_URL \
+    poetry run pytest tests/e2e/test_review_pipeline.py
+  '
+```
+
+Если `TEST_MONGODB_URL` не задан, фикстуры e2e автоматически соберут URL вида
+`mongodb://<username>:<password>@shared-mongo:27017/ai_challenge_test?authSource=admin`.
 
 ### Code Quality
 

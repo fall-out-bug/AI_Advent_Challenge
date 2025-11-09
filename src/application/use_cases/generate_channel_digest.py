@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any
 
 from src.application.dtos.digest_dtos import ChannelDigest
@@ -41,9 +40,7 @@ class GenerateChannelDigestUseCase:
         self._summarizer = summarizer
         self._settings = settings or get_settings()
 
-    async def execute(
-        self, user_id: int, hours: int = 24
-    ) -> list[ChannelDigest]:
+    async def execute(self, user_id: int, hours: int = 24) -> list[ChannelDigest]:
         """Execute channel digest generation.
 
         Purpose:
@@ -57,13 +54,15 @@ class GenerateChannelDigestUseCase:
         Returns:
             List of ChannelDigest objects, sorted by post count (descending).
         """
-        logger.info(f"Generating channel digests for user: user_id={user_id}, hours={hours}")
+        logger.info(
+            f"Generating channel digests for user: user_id={user_id}, hours={hours}"
+        )
 
         # Get active channels for user
         db = await get_db()
-        channels = await db.channels.find(
-            {"user_id": user_id, "active": True}
-        ).to_list(length=self._settings.digest_max_channels)
+        channels = await db.channels.find({"user_id": user_id, "active": True}).to_list(
+            length=self._settings.digest_max_channels
+        )
 
         if not channels:
             logger.info(f"No active channels found: user_id={user_id}")
@@ -71,7 +70,7 @@ class GenerateChannelDigestUseCase:
 
         # Generate digest for each channel
         digests = []
-        
+
         # Reuse single digest-by-name use case
         digest_by_name_use_case = GenerateChannelDigestByNameUseCase(
             post_repository=self._post_repository,
@@ -90,7 +89,7 @@ class GenerateChannelDigestUseCase:
                     channel_username=channel_username,
                     hours=hours,
                 )
-                
+
                 # Only include channels with posts
                 if digest.post_count > 0:
                     digests.append(digest)

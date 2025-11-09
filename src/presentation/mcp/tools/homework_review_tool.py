@@ -4,145 +4,61 @@ Following Clean Architecture principles and the Zen of Python.
 """
 
 import json
-import sys
-import zipfile
-import tempfile
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Mapping, Optional
 
-# Add root to path for imports
-_root = Path(__file__).parent.parent.parent.parent.parent
-sys.path.insert(0, str(_root))
-shared_path = _root / "shared"
-sys.path.insert(0, str(shared_path))
+from multipass_reviewer.application.config import ReviewConfig
 
-# Try to import UnifiedModelClient with fallbacks
-_UNIFIED_CLIENT_AVAILABLE = False
-try:
-    from shared_package.clients.unified_client import UnifiedModelClient
-    _UNIFIED_CLIENT_AVAILABLE = True
-except ImportError:
-    # Fallback: try shared.clients.unified_client
-    try:
-        from shared.clients.unified_client import UnifiedModelClient
-        _UNIFIED_CLIENT_AVAILABLE = True
-    except ImportError:
-        # Last resort: try to add shared_package to path
-        shared_package_path = _root / "shared" / "shared_package"
-        if shared_package_path.exists():
-            sys.path.insert(0, str(shared_package_path.parent))
-            try:
-                from shared_package.clients.unified_client import UnifiedModelClient
-                _UNIFIED_CLIENT_AVAILABLE = True
-            except ImportError:
-                pass
-
-# If UnifiedModelClient is not available, create a dummy class
-if not _UNIFIED_CLIENT_AVAILABLE:
-    # Create a dummy UnifiedModelClient to prevent NameError
-    class UnifiedModelClient:
-        def __init__(self, *args, **kwargs):
-            raise RuntimeError("UnifiedModelClient not available. Shared package not installed.")
-
-# Import other dependencies (these should be available)
-try:
-    from src.domain.agents.multi_pass_reviewer import MultiPassReviewerAgent
-except ImportError as e:
-    # If MultiPassReviewerAgent depends on UnifiedModelClient, we need to handle it
-    if not _UNIFIED_CLIENT_AVAILABLE:
-        # Create a dummy MultiPassReviewerAgent if UnifiedModelClient is not available
-        class MultiPassReviewerAgent:
-            def __init__(self, *args, **kwargs):
-                raise RuntimeError("MultiPassReviewerAgent not available. Shared package not installed.")
-    else:
-        raise
+from src.application.services.modular_review_service import ModularReviewService
+from src.domain.services.diff_analyzer import DiffAnalyzer
+from src.infrastructure.archive.archive_service import ZipArchiveService
+from src.infrastructure.config.settings import get_settings
 from src.infrastructure.database.mongo import get_db
 from src.infrastructure.logging.review_logger import ReviewLogger
-from src.infrastructure.repositories.homework_review_repository import (
-    HomeworkReviewRepository,
-)
 from src.infrastructure.reporting.homework_report_generator import (
     generate_detailed_markdown_report,
 )
+from src.infrastructure.repositories.homework_review_repository import (
+    HomeworkReviewRepository,
+)
+from src.infrastructure.utils.path_utils import ensure_shared_in_path
 from src.presentation.mcp.server import mcp
 
+ensure_shared_in_path()
 
-def load_all_files_as_string(directory: Path, extensions: Optional[list] = None) -> str:
-    """Load all files from directory as single string.
-
-    Args:
-        directory: Path to directory with files
-        extensions: List of file extensions to include (None = all)
-
-    Returns:
-        Concatenated file contents
-    """
-    if extensions is None:
-        extensions = [".py", ".yml", ".yaml", ".sh", ".txt", ".md", "Dockerfile"]
-
-    content_parts = []
-    for file_path in directory.rglob("*"):
-        if file_path.is_file():
-            if any(
-                file_path.suffix in ext or ext in str(file_path.name)
-                for ext in extensions
-            ):
-                try:
-                    rel_path = file_path.relative_to(directory)
-                    content_parts.append(f"\n# File: {rel_path}\n")
-                    content_parts.append(
-                        file_path.read_text(encoding="utf-8", errors="ignore")
-                    )
-                    content_parts.append("\n\n")
-                except Exception as e:
-                    content_parts.append(f"# Error reading {file_path}: {e}\n\n")
-
-    return "".join(content_parts)
+from shared_package.clients.unified_client import UnifiedModelClient
 
 
-def extract_archive(archive_path: str) -> Path:
-    """Extract ZIP archive to temporary directory.
+def detect_assignment_type(codebase: Mapping[str, str]) -> str:
+    """Auto-detect assignment type from codebase structure and contents.
 
     Args:
-        archive_path: Path to ZIP archive
+        codebase: Mapping of relative file paths to file contents.
 
     Returns:
-        Path to temporary directory with extracted files
+        Assignment type label: "HW1", "HW2", "HW3", or "auto".
     """
-    temp_dir = tempfile.mkdtemp(prefix="homework_review_")
+    if not codebase:
+        return "auto"
 
-    with zipfile.ZipFile(archive_path, "r") as zip_ref:
-        zip_ref.extractall(temp_dir)
+    lower_paths = [path.lower() for path in codebase.keys()]
+    lower_contents = [content.lower() for content in codebase.values()]
 
-    return Path(temp_dir)
-
-
-def detect_assignment_type(directory: Path) -> str:
-    """Auto-detect assignment type from directory structure.
-
-    Args:
-        directory: Path to extracted project directory
-
-    Returns:
-        Assignment type: "HW1", "HW2", "HW3", or "auto"
-    """
-    # Check for HW3: MLflow directory
-    if (directory / "mlflow").exists() or any(
-        "mlflow" in str(p) for p in directory.rglob("*")
+    if any("mlflow" in path for path in lower_paths) or any(
+        "mlflow" in content for content in lower_contents
     ):
         return "HW3"
 
-    # Check for HW2: Airflow DAGs
-    if (directory / "airflow").exists() or any(
-        "airflow" in str(p).lower() for p in directory.rglob("*")
+    if any("airflow" in path for path in lower_paths) or any(
+        "airflow" in content for content in lower_contents
     ):
         return "HW2"
 
-    # Check for HW1: Docker + Spark
-    dockerfile_exists = any(p.name == "Dockerfile" for p in directory.rglob("*"))
-    spark_exists = any(
-        "spark" in str(p).lower() or "SparkSession" in p.read_text(errors="ignore")
-        for p in directory.rglob("*.py")
+    dockerfile_exists = any(
+        Path(path).name.lower() == "dockerfile" for path in codebase
+    )
+    spark_exists = any("spark" in path for path in lower_paths) or any(
+        "sparksession" in content for content in lower_contents
     )
 
     if dockerfile_exists and spark_exists:
@@ -181,91 +97,96 @@ async def review_homework_archive(
     if not archive_path_obj.suffix == ".zip":
         raise ValueError(f"Expected .zip archive, got: {archive_path}")
 
-    # Extract archive
-    temp_dir = None
-    review_logger = None
-    client = None
+    review_logger: Optional[ReviewLogger] = None
+    client: Optional[UnifiedModelClient] = None
+    detected_assignment = assignment_type
+
     try:
-        # Create ReviewLogger for detailed logging
+        settings = get_settings()
+        archive_service = ZipArchiveService(settings)
+        diff_analyzer = DiffAnalyzer()
+
         review_logger = ReviewLogger(enabled=True)
         review_logger.log_work_step(
-            "extract_archive",
-            {"archive_path": archive_path},
+            "validate_archive",
+            {
+                "archive_path": archive_path,
+                "token_budget": token_budget,
+                "model_name": model_name,
+            },
             status="info",
         )
 
-        temp_dir = extract_archive(archive_path)
+        submission = archive_service.extract_submission(
+            archive_path=str(archive_path_obj),
+            submission_id=archive_path_obj.stem,
+        )
 
         review_logger.log_work_step(
             "extract_archive",
-            {"extracted_to": str(temp_dir)},
+            {
+                "files_count": submission.metadata.get("files_count", 0),
+                "total_size_bytes": submission.metadata.get("total_size_bytes", 0),
+            },
             status="success",
         )
 
-        # Find root project directory
-        root_dir = temp_dir
-        subdirs = [d for d in temp_dir.iterdir() if d.is_dir()]
-        if len(subdirs) == 1:
-            root_dir = subdirs[0]
-
-        review_logger.log_work_step(
-            "find_project_root",
-            {"root_dir": str(root_dir)},
-            status="success",
-        )
-
-        # Auto-detect assignment type if needed
-        if assignment_type == "auto":
-            assignment_type = detect_assignment_type(root_dir)
+        if not submission.code_files:
             review_logger.log_work_step(
-                "detect_assignment_type",
-                {"assignment_type": assignment_type},
-                status="success",
-            )
-        else:
-            review_logger.log_work_step(
-                "detect_assignment_type",
-                {"assignment_type": assignment_type, "mode": "manual"},
-                status="info",
-            )
-
-        # Load all files
-        review_logger.log_work_step("load_files", {}, status="info")
-        code = load_all_files_as_string(root_dir)
-
-        if not code.strip():
-            review_logger.log_work_step(
-                "load_files",
+                "validate_codebase",
                 {"error": "No code files found"},
                 status="error",
             )
             raise ValueError("No code files found in archive")
 
-        review_logger.log_work_step(
-            "load_files",
-            {"files_loaded": True, "code_length": len(code)},
-            status="success",
+        if assignment_type == "auto":
+            detected_assignment = detect_assignment_type(submission.code_files)
+            review_logger.log_work_step(
+                "detect_assignment_type",
+                {"assignment_type": detected_assignment},
+                status="success",
+            )
+        else:
+            detected_assignment = assignment_type
+            review_logger.log_work_step(
+                "detect_assignment_type",
+                {"assignment_type": detected_assignment, "mode": "manual"},
+                status="info",
+            )
+
+        review_config = ReviewConfig(token_budget=token_budget)
+        client = UnifiedModelClient(timeout=settings.review_llm_timeout)
+
+        review_service = ModularReviewService(
+            archive_service=archive_service,
+            diff_analyzer=diff_analyzer,
+            llm_client=client,
+            review_config=review_config,
+            review_logger=review_logger,
+            settings=settings,
         )
 
-        # Initialize client and agent with logger
-        if not _UNIFIED_CLIENT_AVAILABLE:
-            raise RuntimeError("UnifiedModelClient not available. Shared package not installed.")
-        client = UnifiedModelClient(timeout=300.0)
-        agent = MultiPassReviewerAgent(
-            client, token_budget=token_budget, review_logger=review_logger
-        )
-
-        # Determine repo name
         repo_name = archive_path_obj.stem
-        review_logger.session_id = None  # Will be set after process_multi_pass
+        student_id = f"mcp_tool::{repo_name}"
 
-        # Run multi-pass review
-        review_logger.log_work_step("start_review", {"repo_name": repo_name}, status="info")
-        report = await agent.process_multi_pass(code, repo_name=repo_name)
+        review_logger.log_work_step(
+            "start_review",
+            {
+                "repo_name": repo_name,
+                "student_id": student_id,
+                "assignment_type": detected_assignment,
+            },
+            status="info",
+        )
 
-        # Set session_id in logger for consistency
+        report = await review_service.review_submission(
+            new_archive_path=str(archive_path_obj),
+            previous_archive_path=None,
+            assignment_id=repo_name,
+            student_id=student_id,
+        )
+
         review_logger.session_id = report.session_id
-
         review_logger.log_work_step(
             "complete_review",
             {
@@ -276,30 +197,17 @@ async def review_homework_archive(
             status="success",
         )
 
-        # Generate detailed markdown report
         try:
             detailed_markdown = await generate_detailed_markdown_report(
-                report, review_logger=review_logger, client=client
+                report,
+                review_logger=review_logger,
+                client=client,
             )
-            # Log markdown report length for debugging
+        except Exception as error:
             import logging
+
             logger = logging.getLogger(__name__)
-            logger.info(
-                f"Generated markdown report: length={len(detailed_markdown) if detailed_markdown else 0}, "
-                f"total_findings={report.total_findings}, "
-                f"components={len(report.detected_components)}"
-            )
-            if not detailed_markdown or not detailed_markdown.strip():
-                logger.warning(
-                    f"Markdown report is empty! total_findings={report.total_findings}, "
-                    f"pass_1={report.pass_1 is not None}, pass_2={len(report.pass_2_results)}, "
-                    f"pass_3={report.pass_3 is not None}"
-                )
-        except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Error generating markdown report: {e}", exc_info=True)
-            # Fallback: generate minimal report
+            logger.error("Error generating markdown report: %s", error, exc_info=True)
             detailed_markdown = f"""# Code Review Report
 
 **Archive Name**: {report.repo_name}
@@ -308,7 +216,7 @@ async def review_homework_archive(
 
 ## Error
 
-An error occurred while generating the detailed report: {str(e)}
+An error occurred while generating the detailed report: {error}
 
 ## Basic Information
 
@@ -316,19 +224,18 @@ An error occurred while generating the detailed report: {str(e)}
 - **Detected Components**: {', '.join(report.detected_components) if report.detected_components else 'None'}
 """
 
-        # Initialize MongoDB repository and save
         db = await get_db()
         repository = HomeworkReviewRepository(db)
-
-        # Save all logs and reports to MongoDB
         await repository.save_review_session(
             session_id=report.session_id,
             repo_name=report.repo_name,
-            assignment_type=assignment_type,
+            assignment_type=detected_assignment,
             logs=review_logger.get_all_logs(),
             report={
                 "markdown": detailed_markdown,
-                "json": json.loads(report.to_json()) if hasattr(report, "to_json") else {},
+                "json": json.loads(report.to_json())
+                if hasattr(report, "to_json")
+                else {},
             },
             metadata={
                 "execution_time_seconds": report.execution_time_seconds,
@@ -340,33 +247,30 @@ An error occurred while generating the detailed report: {str(e)}
             },
         )
 
-        # Convert report to dict
         return {
             "success": True,
             "session_id": report.session_id,
             "repo_name": report.repo_name,
-            "assignment_type": assignment_type,
+            "assignment_type": detected_assignment,
             "detected_components": report.detected_components,
             "total_findings": report.total_findings,
             "execution_time_seconds": report.execution_time_seconds,
             "pass_1_completed": report.pass_1 is not None,
             "pass_2_components": list(report.pass_2_results.keys()),
             "pass_3_completed": report.pass_3 is not None,
-            "markdown_report": detailed_markdown,  # Use detailed report
+            "markdown_report": detailed_markdown,
             "json_report": report.to_json(),
             "logs_saved": True,
             "report_saved_to_mongodb": True,
         }
 
-    except Exception as e:
-        # Log error if logger is available
+    except Exception as error:
         if review_logger:
             review_logger.log_work_step(
                 "error",
-                {"error": str(e), "error_type": type(e).__name__},
+                {"error": str(error), "error_type": type(error).__name__},
                 status="error",
             )
-            # Try to save logs even on error
             try:
                 db = await get_db()
                 repository = HomeworkReviewRepository(db)
@@ -375,14 +279,9 @@ An error occurred while generating the detailed report: {str(e)}
                         review_logger.session_id, review_logger.get_all_logs()
                     )
             except Exception:
-                pass  # Ignore save errors during exception handling
+                pass
         raise
 
     finally:
-        # Cleanup
-        if temp_dir:
-            import shutil
-
-            shutil.rmtree(temp_dir, ignore_errors=True)
         if client:
             await client.close()

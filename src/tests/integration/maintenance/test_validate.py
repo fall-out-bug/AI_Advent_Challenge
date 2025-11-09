@@ -10,15 +10,12 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from yaml import safe_dump
 
 from scripts.maintenance.validate import (
     validate_config_files,
     validate_json_file,
-    validate_storage_files,
     validate_yaml_file,
 )
-from src.infrastructure.config.settings import Settings
 
 
 class TestValidateScript:

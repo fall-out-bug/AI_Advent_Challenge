@@ -3,9 +3,7 @@
 Following TDD principles and the Zen of Python.
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import patch
 
 from src.infrastructure.config.model_selector import ModelSelector
 

@@ -76,4 +76,3 @@ async def test_check_clarification_needed_low_confidence(orchestrator):
     )
     result = await orchestrator._check_clarification_needed(intent)
     assert result is True
-

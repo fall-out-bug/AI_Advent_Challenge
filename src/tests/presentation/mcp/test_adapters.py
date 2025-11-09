@@ -1,18 +1,14 @@
 """Unit tests for MCP adapters."""
-import pytest
-from unittest.mock import Mock, AsyncMock, MagicMock
-from typing import Any
+from unittest.mock import AsyncMock, Mock
 
-from src.presentation.mcp.adapters.model_adapter import ModelAdapter
+import pytest
+
 from src.presentation.mcp.adapters.generation_adapter import GenerationAdapter
-from src.presentation.mcp.adapters.review_adapter import ReviewAdapter
+from src.presentation.mcp.adapters.model_adapter import ModelAdapter
 from src.presentation.mcp.adapters.orchestration_adapter import OrchestrationAdapter
+from src.presentation.mcp.adapters.review_adapter import ReviewAdapter
 from src.presentation.mcp.adapters.token_adapter import TokenAdapter
-from src.presentation.mcp.exceptions import (
-    MCPAdapterError,
-    MCPModelError,
-    MCPValidationError,
-)
+from src.presentation.mcp.exceptions import MCPModelError, MCPValidationError
 
 
 @pytest.fixture
@@ -39,7 +35,7 @@ class TestModelAdapter:
         """Test successful model listing."""
         adapter = ModelAdapter(mock_unified_client())
         result = adapter.list_available_models()
-        
+
         assert "local_models" in result
         assert "api_models" in result
         assert isinstance(result["local_models"], list)
@@ -50,7 +46,7 @@ class TestModelAdapter:
         """Test successful model availability check."""
         adapter = ModelAdapter(mock_unified_client)
         result = await adapter.check_model_availability("mistral")
-        
+
         assert "available" in result
         assert result["available"] is True
 
@@ -58,10 +54,12 @@ class TestModelAdapter:
     async def test_check_model_availability_failure(self):
         """Test model availability check with error."""
         mock_client = Mock()
-        mock_client.check_availability = AsyncMock(side_effect=Exception("Connection failed"))
-        
+        mock_client.check_availability = AsyncMock(
+            side_effect=Exception("Connection failed")
+        )
+
         adapter = ModelAdapter(mock_client)
-        
+
         with pytest.raises(MCPModelError):
             await adapter.check_model_availability("nonexistent")
 
@@ -73,7 +71,7 @@ class TestTokenAdapter:
         """Test successful token counting."""
         adapter = TokenAdapter(mock_token_analyzer)
         result = adapter.count_text_tokens("Hello world")
-        
+
         assert "count" in result
         assert result["count"] == 42
 
@@ -81,11 +79,11 @@ class TestTokenAdapter:
         """Test token counting with error."""
         mock_analyzer = Mock()
         mock_analyzer.count_tokens = Mock(side_effect=Exception("Invalid text"))
-        
+
         adapter = TokenAdapter(mock_analyzer)
-        
+
         from src.presentation.mcp.exceptions import MCPAdapterError
-        
+
         with pytest.raises(MCPAdapterError):
             adapter.count_text_tokens("")
 
@@ -98,7 +96,7 @@ class TestGenerationAdapter:
         """Test generation with invalid input."""
         mock_client = Mock()
         adapter = GenerationAdapter(mock_client, model_name="mistral")
-        
+
         with pytest.raises(MCPValidationError):
             await adapter.generate_code("")
 
@@ -106,10 +104,10 @@ class TestGenerationAdapter:
         """Test validation with empty description."""
         mock_client = Mock()
         adapter = GenerationAdapter(mock_client, model_name="mistral")
-        
+
         with pytest.raises(MCPValidationError) as exc_info:
             adapter._validate_description("")
-        
+
         assert exc_info.value.context["field"] == "description"
 
 
@@ -121,7 +119,7 @@ class TestReviewAdapter:
         """Test review with invalid input."""
         mock_client = Mock()
         adapter = ReviewAdapter(mock_client, model_name="mistral")
-        
+
         with pytest.raises(MCPValidationError):
             await adapter.review_code("")
 
@@ -129,7 +127,7 @@ class TestReviewAdapter:
         """Test validation with empty code."""
         mock_client = Mock()
         adapter = ReviewAdapter(mock_client, model_name="mistral")
-        
+
         with pytest.raises(MCPValidationError):
             adapter._validate_code("")
 
@@ -142,7 +140,7 @@ class TestOrchestrationAdapter:
         """Test orchestration with empty description."""
         mock_client = Mock()
         adapter = OrchestrationAdapter(mock_client)
-        
+
         with pytest.raises(MCPValidationError):
             await adapter.orchestrate_generation_and_review("", "mistral", "mistral")
 
@@ -151,7 +149,7 @@ class TestOrchestrationAdapter:
         """Test orchestration with empty generation model."""
         mock_client = Mock()
         adapter = OrchestrationAdapter(mock_client)
-        
+
         with pytest.raises(MCPValidationError):
             await adapter.orchestrate_generation_and_review(
                 "Create a todo list", "", "mistral"
@@ -162,7 +160,7 @@ class TestOrchestrationAdapter:
         """Test orchestration with empty review model."""
         mock_client = Mock()
         adapter = OrchestrationAdapter(mock_client)
-        
+
         with pytest.raises(MCPValidationError):
             await adapter.orchestrate_generation_and_review(
                 "Create a todo list", "mistral", ""

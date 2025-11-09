@@ -5,7 +5,9 @@ from __future__ import annotations
 from typing import Literal
 
 
-def get_map_prompt(text: str, language: Literal["ru", "en"], max_sentences: int = 5) -> str:
+def get_map_prompt(
+    text: str, language: Literal["ru", "en"], max_sentences: int = 5
+) -> str:
     """Prompt for chunk-level summarization.
 
     Args:
@@ -31,7 +33,9 @@ def get_map_prompt(text: str, language: Literal["ru", "en"], max_sentences: int 
     )
 
 
-def get_reduce_prompt(summaries: str, language: Literal["ru", "en"], max_sentences: int = 8) -> str:
+def get_reduce_prompt(
+    summaries: str, language: Literal["ru", "en"], max_sentences: int = 8
+) -> str:
     """Prompt for reduce phase to combine chunk summaries.
 
     Args:
@@ -57,7 +61,9 @@ def get_reduce_prompt(summaries: str, language: Literal["ru", "en"], max_sentenc
     )
 
 
-def get_intent_parse_prompt(text: str, language: Literal["ru", "en"] = "en", context: dict | None = None) -> str:
+def get_intent_parse_prompt(
+    text: str, language: Literal["ru", "en"] = "en", context: dict | None = None
+) -> str:
     """Prompt for parsing natural language task intent.
 
     Args:
@@ -71,9 +77,17 @@ def get_intent_parse_prompt(text: str, language: Literal["ru", "en"] = "en", con
     context_str = ""
     if context:
         if "timezone" in context:
-            context_str += f"\nКонтекст: часовой пояс {context['timezone']}" if language == "ru" else f"\nContext: timezone {context['timezone']}"
+            context_str += (
+                f"\nКонтекст: часовой пояс {context['timezone']}"
+                if language == "ru"
+                else f"\nContext: timezone {context['timezone']}"
+            )
         if "prev_tasks" in context:
-            context_str += f"\nПредыдущие задачи: {len(context['prev_tasks'])}" if language == "ru" else f"\nPrevious tasks: {len(context['prev_tasks'])}"
+            context_str += (
+                f"\nПредыдущие задачи: {len(context['prev_tasks'])}"
+                if language == "ru"
+                else f"\nPrevious tasks: {len(context['prev_tasks'])}"
+            )
 
     if language == "ru":
         return (
@@ -93,7 +107,7 @@ def get_intent_parse_prompt(text: str, language: Literal["ru", "en"] = "en", con
             f"Вход: 'Напомни позвонить маме'\n"
             f"Выход: {{'title': 'Позвонить маме', 'deadline_iso': null, 'priority': 'medium', 'needs_clarification': true, 'questions': ['Когда нужно позвонить?']}}"
         )
-    
+
     return (
         f"Extract structured task information from user text.\n\n"
         f"TEXT: {text}{context_str}\n\n"
@@ -113,7 +127,9 @@ def get_intent_parse_prompt(text: str, language: Literal["ru", "en"] = "en", con
     )
 
 
-def get_clarification_prompt(missing_fields: list[str], language: Literal["ru", "en"] = "en") -> str:
+def get_clarification_prompt(
+    missing_fields: list[str], language: Literal["ru", "en"] = "en"
+) -> str:
     """Generate clarifying questions for missing task fields.
 
     Args:
@@ -143,7 +159,7 @@ def get_clarification_prompt(missing_fields: list[str], language: Literal["ru", 
             else:
                 questions.append(f"Уточните поле: {field}")
         return f"Сгенерируй уточняющие вопросы для полей: {', '.join(missing_fields)}.\n\nВопросы: {', '.join(questions)}"
-    
+
     field_names = {
         "deadline": "deadline",
         "priority": "priority",

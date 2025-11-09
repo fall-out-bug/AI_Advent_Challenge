@@ -1,5 +1,4 @@
-import pytest
-from datetime import time, datetime
+from datetime import datetime, time
 
 
 def test_is_quiet_hours_within_quiet_time():
@@ -32,4 +31,3 @@ def test_is_time_to_send_within_tolerance():
     # 9:01 should be within 1 minute tolerance of 9:00
     dt = datetime(2025, 1, 1, 9, 1)
     assert is_time_to_send(dt, target_time=time(9, 0), tolerance_minutes=1) is True
-

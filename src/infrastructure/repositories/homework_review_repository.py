@@ -106,7 +106,13 @@ class HomeworkReviewRepository:
         await self._ensure_indexes()
 
         # Validate required fields
-        if not session_id or not repo_name or not assignment_type or not logs or not report:
+        if (
+            not session_id
+            or not repo_name
+            or not assignment_type
+            or not logs
+            or not report
+        ):
             missing = []
             if not session_id:
                 missing.append("session_id")
@@ -139,9 +145,7 @@ class HomeworkReviewRepository:
 
         return str(result.upserted_id) if result.upserted_id else session_id
 
-    async def get_review_session(
-        self, session_id: str
-    ) -> Optional[Dict[str, Any]]:
+    async def get_review_session(self, session_id: str) -> Optional[Dict[str, Any]]:
         """Get review session by session_id.
 
         Purpose:
@@ -275,9 +279,7 @@ class HomeworkReviewRepository:
             query["assignment_type"] = assignment_type
 
         cursor = (
-            self._db.homework_reviews.find(query)
-            .sort("created_at", -1)
-            .limit(limit)
+            self._db.homework_reviews.find(query).sort("created_at", -1).limit(limit)
         )
         docs = await cursor.to_list(length=limit)
 
@@ -285,4 +287,3 @@ class HomeworkReviewRepository:
             doc["id"] = str(doc.pop("_id"))
 
         return docs
-

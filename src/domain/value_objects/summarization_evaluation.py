@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
 
@@ -77,7 +77,7 @@ class SummarizationEvaluation:
             raise ValueError("original_text cannot be empty")
         if not self.summary_text:
             raise ValueError("summary_text cannot be empty")
-        
+
         # Validate scores are in range [0.0, 1.0]
         for score_name, score_value in [
             ("coverage_score", self.coverage_score),
@@ -90,7 +90,7 @@ class SummarizationEvaluation:
                 raise ValueError(
                     f"{score_name} must be between 0.0 and 1.0, got {score_value}"
                 )
-        
+
         if not self.evaluation_method:
             raise ValueError("evaluation_method cannot be empty")
         if not self.evaluator_model:

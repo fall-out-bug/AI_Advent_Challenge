@@ -38,12 +38,14 @@ class PostRepository:
         """Create required indexes for efficient queries."""
         if self._indexes_created:
             return
-        
+
         collection = self._db.posts
         await collection.create_index([("channel_username", 1), ("message_id", 1)])
         await collection.create_index([("content_hash", 1), ("date", -1)])
         await collection.create_index([("user_id", 1), ("date", -1)])
-        await collection.create_index([("date", 1)], expireAfterSeconds=604800)  # 7 days TTL
+        await collection.create_index(
+            [("date", 1)], expireAfterSeconds=604800
+        )  # 7 days TTL
         self._indexes_created = True
 
     async def save_post(self, post: dict) -> str | None:
@@ -64,7 +66,7 @@ class PostRepository:
             ValueError: If required fields are missing
         """
         await self._ensure_indexes()
-        
+
         required_fields = ["channel_username", "message_id", "text", "user_id", "date"]
         missing_fields = [field for field in required_fields if field not in post]
         if missing_fields:
@@ -99,7 +101,9 @@ class PostRepository:
         result = await self._db.posts.insert_one(doc)
         return str(result.inserted_id)
 
-    async def get_posts_by_user_subscriptions(self, user_id: int, hours: int = 24) -> List[dict]:
+    async def get_posts_by_user_subscriptions(
+        self, user_id: int, hours: int = 24
+    ) -> List[dict]:
         """Get posts for user's subscribed channels.
 
         Args:
@@ -110,7 +114,7 @@ class PostRepository:
             List of post dictionaries
         """
         since = datetime.utcnow() - timedelta(hours=hours)
-        since_iso = since.isoformat()
+        since.isoformat()
 
         # Get user's subscribed channels
         channels_cursor = self._db.channels.find({"user_id": user_id, "active": True})
@@ -129,7 +133,7 @@ class PostRepository:
         }
         cursor = self._db.posts.find(query).sort("date", -1)
         all_posts = await cursor.to_list(length=1000)
-        
+
         # Filter by date in Python to handle both datetime and ISO string formats
         posts = []
         for post in all_posts:
@@ -138,10 +142,12 @@ class PostRepository:
                 # Convert ISO string to datetime if needed
                 if isinstance(post_date, str):
                     try:
-                        post_date = datetime.fromisoformat(post_date.replace("Z", "+00:00"))
+                        post_date = datetime.fromisoformat(
+                            post_date.replace("Z", "+00:00")
+                        )
                     except (ValueError, AttributeError):
                         continue
-                
+
                 # Compare datetime objects
                 if isinstance(post_date, datetime) and post_date >= since:
                     posts.append(post)
@@ -166,21 +172,25 @@ class PostRepository:
         Returns:
             List of post dictionaries
         """
-        query: Dict[str, Any] = {"channel_username": channel_username, "date": {"$gte": since}}
+        query: Dict[str, Any] = {
+            "channel_username": channel_username,
+            "date": {"$gte": since},
+        }
         if user_id is not None:
             query["user_id"] = user_id
-        
+
         # Log query for debugging
         from src.infrastructure.logging import get_logger
+
         logger = get_logger("post_repository")
         logger.debug(
             f"Querying posts from database: channel={channel_username}, "
             f"user_id={user_id}, since={since.isoformat()}"
         )
-        
+
         cursor = self._db.posts.find(query).sort("date", 1)  # Sort from old to new
         posts = await cursor.to_list(length=1000)
-        
+
         logger.info(
             f"Found {len(posts)} posts in database: channel={channel_username}, "
             f"user_id={user_id}, since={since.isoformat()}"
@@ -208,11 +218,17 @@ class PostRepository:
         """
         since = datetime.utcnow() - timedelta(hours=hours)
         existing = await self._db.posts.find_one(
-            {"channel_username": channel_username, "message_id": message_id, "date": {"$gte": since}}
+            {
+                "channel_username": channel_username,
+                "message_id": message_id,
+                "date": {"$gte": since},
+            }
         )
         return existing is not None
 
-    async def _check_duplicate_by_content_hash(self, content_hash: str, days: int = 7) -> bool:
+    async def _check_duplicate_by_content_hash(
+        self, content_hash: str, days: int = 7
+    ) -> bool:
         """Check if content_hash exists in last N days.
 
         Args:
@@ -254,4 +270,3 @@ class PostRepository:
         """
         content = f"{text}{channel_username}"
         return hashlib.sha256(content.encode()).hexdigest()
-

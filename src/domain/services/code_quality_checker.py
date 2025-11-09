@@ -2,10 +2,7 @@
 
 from typing import List
 
-from src.domain.value_objects.quality_metrics import (
-    Metrics,
-    QualityScore,
-)
+from src.domain.value_objects.quality_metrics import Metrics, QualityScore
 
 
 class CodeQualityChecker:

@@ -170,9 +170,7 @@ class MCPToolsRegistryV2:
             description=description,
         )
 
-    def _parse_parameters(
-        self, input_schema: Dict[str, Any]
-    ) -> List[ToolParameter]:
+    def _parse_parameters(self, input_schema: Dict[str, Any]) -> List[ToolParameter]:
         """Parse parameters from JSON schema.
 
         Args:
@@ -402,8 +400,5 @@ class MCPToolsRegistryV2:
         """
         await self._ensure_initialized()
         return [
-            schema
-            for schema in self._schemas.values()
-            if schema.category == category
+            schema for schema in self._schemas.values() if schema.category == category
         ]
-

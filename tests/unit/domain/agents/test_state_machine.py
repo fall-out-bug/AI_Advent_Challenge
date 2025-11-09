@@ -132,4 +132,3 @@ class TestDialogContext:
         context.update_data("title", "New title")
         assert context.data["title"] == "New title"
         assert len(context.data) == 1
-

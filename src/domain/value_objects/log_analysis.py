@@ -180,4 +180,3 @@ class LogAnalysisResult:
             md += f"{i}. {rec}\n"
         md += f"\n*Confidence: {self.confidence:.0%}*\n"
         return md
-

@@ -8,13 +8,9 @@ Supports two methods:
 from __future__ import annotations
 
 import os
-import sys
 import shutil
 from datetime import datetime
 from typing import List, Optional
-
-from aiogram import Bot
-from aiogram.exceptions import TelegramBadRequest, TelegramAPIError
 
 from src.infrastructure.logging import get_logger
 
@@ -340,7 +336,6 @@ async def _fetch_with_pyrogram(
                 f"FloodWait: need to wait {e.value} seconds: channel={channel_username}"
             )
             # Return what we have so far
-            pass
         except Exception as fetch_error:
             error_msg = str(fetch_error)
             logger.error(
@@ -360,7 +355,6 @@ async def _fetch_with_pyrogram(
                     f"has_session_string={bool(session_string)}"
                 )
             # Return empty list - don't raise, let caller handle it
-            pass
 
         # Convert messages to our format
         # Use actual_username for saving posts (important for database consistency)
@@ -491,7 +485,7 @@ async def search_channels_by_name(query: str, limit: int = 5) -> List[dict]:
 
     # Lazy import Pyrogram
     from pyrogram import Client
-    from pyrogram.errors import BadRequest, FloodWait
+    from pyrogram.errors import FloodWait
 
     # Normalize query: replace underscores with spaces, strip
     # This helps with queries like "крупнокалиберный_переполох" -> "крупнокалиберный переполох"
@@ -501,89 +495,122 @@ async def search_channels_by_name(query: str, limit: int = 5) -> List[dict]:
     dialog_count = 0  # Initialize counter for logging
     channels_processed = 0  # Initialize counter for channels processed
     matching_attempts = 0  # Initialize counter for matching attempts
-    
+
     # Try MongoDB cache first (fast path)
     try:
         from src.infrastructure.cache.dialogs_cache import PublicChannelsCache
+
         cache = PublicChannelsCache()
         cached_channels = await cache.get_cached()
-        
+
         if cached_channels:
-            logger.debug(f"Searching in cache: {len(cached_channels)} channels available")
+            logger.debug(
+                f"Searching in cache: {len(cached_channels)} channels available"
+            )
             cache_results = []
-            
+
             for channel in cached_channels:
                 title = channel.get("title", "") or ""
                 username = channel.get("username", "") or ""
-                
+
                 if not title or not username:
                     continue
-                
+
                 title_lower = title.lower()
                 username_lower = username.lower()
                 title_normalized = title_lower.replace("_", " ").replace("-", " ")
                 username_normalized = username_lower.replace("_", " ").replace("-", " ")
-                
+
                 # Calculate score using same logic as dialogs search
                 score = 0
-                
+
                 if query_lower == title_lower:
                     score = 100
                 elif query_lower == username_lower:
                     score = 90
                 elif query_lower:
                     query_tokens = set(query_lower.split())
-                    title_tokens = set(title_normalized.split()) if title_normalized else set()
-                    username_tokens = set(username_normalized.split()) if username_normalized else set()
-                    
+                    title_tokens = (
+                        set(title_normalized.split()) if title_normalized else set()
+                    )
+                    username_tokens = (
+                        set(username_normalized.split())
+                        if username_normalized
+                        else set()
+                    )
+
                     if query_tokens:
-                        title_match = query_tokens.issubset(title_tokens) if title_tokens else False
-                        username_match = query_tokens.issubset(username_tokens) if username_tokens else False
-                        
+                        title_match = (
+                            query_tokens.issubset(title_tokens)
+                            if title_tokens
+                            else False
+                        )
+                        username_match = (
+                            query_tokens.issubset(username_tokens)
+                            if username_tokens
+                            else False
+                        )
+
                         if title_match:
                             score = 80
                         elif username_match:
                             score = 70
                         else:
-                            title_ratio = len(query_tokens & title_tokens) / len(query_tokens) if query_tokens else 0
-                            username_ratio = len(query_tokens & username_tokens) / len(query_tokens) if query_tokens else 0
-                            
+                            title_ratio = (
+                                len(query_tokens & title_tokens) / len(query_tokens)
+                                if query_tokens
+                                else 0
+                            )
+                            username_ratio = (
+                                len(query_tokens & username_tokens) / len(query_tokens)
+                                if query_tokens
+                                else 0
+                            )
+
                             if title_ratio >= 0.5:
                                 score = 60
                             elif username_ratio >= 0.5:
                                 score = 50
                             else:
-                                if (query_lower in title_lower or query_lower in username_lower or
-                                    query_lower in title_normalized or query_lower in username_normalized):
+                                if (
+                                    query_lower in title_lower
+                                    or query_lower in username_lower
+                                    or query_lower in title_normalized
+                                    or query_lower in username_normalized
+                                ):
                                     score = 40
-                
+
                 if score > 0:
-                    cache_results.append({
-                        "username": username,
-                        "title": title,
-                        "description": channel.get("description", "") or "",
-                        "chat_id": channel.get("chat_id"),
-                        "score": score,
-                    })
-            
+                    cache_results.append(
+                        {
+                            "username": username,
+                            "title": title,
+                            "description": channel.get("description", "") or "",
+                            "chat_id": channel.get("chat_id"),
+                            "score": score,
+                        }
+                    )
+
             if cache_results:
                 # Sort by score and take top-N
                 cache_results.sort(key=lambda x: x.get("score", 0), reverse=True)
                 cache_results = cache_results[:limit]
-                
+
                 logger.info(
                     f"Found {len(cache_results)} results from cache for query='{query}'"
                 )
                 return cache_results
             else:
-                logger.debug(f"No matches found in cache for query='{query}', falling back to dialogs search")
+                logger.debug(
+                    f"No matches found in cache for query='{query}', falling back to dialogs search"
+                )
         else:
             logger.debug("Cache is empty, falling back to dialogs search")
     except Exception as cache_error:
         logger.warning(
             f"Error accessing cache, falling back to dialogs search: {cache_error}"
         )
-    
+
     # Fallback to direct dialogs search if cache is empty or failed
 
     # Use unique client name to avoid conflicts with concurrent requests
@@ -603,8 +630,11 @@ async def search_channels_by_name(query: str, limit: int = 5) -> List[dict]:
         await client.start()
 
         # Search through user's dialogs
-        logger.debug(f"Starting dialog search: query='{query}', normalized='{query_normalized}', query_lower='{query_lower}'")
+        logger.debug(
+            f"Starting dialog search: query='{query}', normalized='{query_normalized}', query_lower='{query_lower}'"
+        )
         from pyrogram.enums import ChatType
+
         dialog_count = 0
         channels_processed = 0
         matching_attempts = 0
@@ -619,15 +649,27 @@ async def search_channels_by_name(query: str, limit: int = 5) -> List[dict]:
             # Check if it's a channel or supergroup (use enum comparison for reliability)
             if chat_type not in (ChatType.CHANNEL, ChatType.SUPERGROUP):
                 continue
-            
+
             channels_processed += 1
 
             # Check if title or username matches query
             title = getattr(dialog.chat, "title", "") or ""
             username = getattr(dialog.chat, "username", "") or ""
-            
+
             # Debug logging for specific channels - use INFO level so it shows
-            if any(term in (title.lower() + " " + username.lower()) for term in ["крупнокалиберный", "переполох", "деградат", "нация", "лвд", "bolshiepushki", "degradat1", "thinkaboutism"]):
+            if any(
+                term in (title.lower() + " " + username.lower())
+                for term in [
+                    "крупнокалиберный",
+                    "переполох",
+                    "деградат",
+                    "нация",
+                    "лвд",
+                    "bolshiepushki",
+                    "degradat1",
+                    "thinkaboutism",
+                ]
+            ):
                 logger.info(
                     f"Processing potential match: type={chat_type.name}, title='{title}', username='{username}', "
                     f"query='{query}'"
@@ -641,23 +683,35 @@ async def search_channels_by_name(query: str, limit: int = 5) -> List[dict]:
             # This handles cases like "крупнокалиберный_переполох" matching "Крупнокалиберный Переполох"
             title_lower = title.lower() if title else ""
             username_lower = username.lower() if username else ""
-            
+
             # Normalize title and username for matching (replace underscores, hyphens with spaces)
             title_normalized = title_lower.replace("_", " ").replace("-", " ")
             username_normalized = username_lower.replace("_", " ").replace("-", " ")
-            
+
             # Track matching attempts for specific channels
-            is_target_channel = any(term in (title_lower + " " + username_lower) for term in ["крупнокалиберный", "переполох", "деградат", "нация", "лвд", "bolshiepushki", "degradat1", "thinkaboutism"])
+            is_target_channel = any(
+                term in (title_lower + " " + username_lower)
+                for term in [
+                    "крупнокалиберный",
+                    "переполох",
+                    "деградат",
+                    "нация",
+                    "лвд",
+                    "bolshiepushki",
+                    "degradat1",
+                    "thinkaboutism",
+                ]
+            )
             if is_target_channel:
                 matching_attempts += 1
                 logger.info(
                     f"Processing target channel: title='{title}', username='{username}', "
                     f"title_normalized='{title_normalized}', query_lower='{query_lower}'"
                 )
-            
+
             # Calculate weighted score for this channel
             score = 0
-            
+
             # Exact title match: 100
             if query_lower == title_lower:
                 score = 100
@@ -667,54 +721,93 @@ async def search_channels_by_name(query: str, limit: int = 5) -> List[dict]:
             # All tokens in title: 80
             elif query_lower:
                 query_tokens = set(query_lower.split())
-                title_tokens = set(title_normalized.split()) if title_normalized else set()
-                username_tokens = set(username_normalized.split()) if username_normalized else set()
-                
+                title_tokens = (
+                    set(title_normalized.split()) if title_normalized else set()
+                )
+                username_tokens = (
+                    set(username_normalized.split()) if username_normalized else set()
+                )
+
                 if query_tokens:
-                    title_match = query_tokens.issubset(title_tokens) if title_tokens else False
-                    username_match = query_tokens.issubset(username_tokens) if username_tokens else False
-                    
+                    title_match = (
+                        query_tokens.issubset(title_tokens) if title_tokens else False
+                    )
+                    username_match = (
+                        query_tokens.issubset(username_tokens)
+                        if username_tokens
+                        else False
+                    )
+
                     if title_match:
                         score = 80
                     elif username_match:
                         score = 70
                     else:
                         # 50%+ tokens in title: 60
-                        title_ratio = len(query_tokens & title_tokens) / len(query_tokens) if query_tokens else 0
-                        username_ratio = len(query_tokens & username_tokens) / len(query_tokens) if query_tokens else 0
-                        
+                        title_ratio = (
+                            len(query_tokens & title_tokens) / len(query_tokens)
+                            if query_tokens
+                            else 0
+                        )
+                        username_ratio = (
+                            len(query_tokens & username_tokens) / len(query_tokens)
+                            if query_tokens
+                            else 0
+                        )
+
                         if title_ratio >= 0.5:
                             score = 60
                         elif username_ratio >= 0.5:
                             score = 50
                         else:
                             # Substring match: 40
-                            if (query_lower in title_lower or query_lower in username_lower or
-                                query_lower in title_normalized or query_lower in username_normalized or
-                                title_normalized in query_lower or username_normalized in query_lower):
+                            if (
+                                query_lower in title_lower
+                                or query_lower in username_lower
+                                or query_lower in title_normalized
+                                or query_lower in username_normalized
+                                or title_normalized in query_lower
+                                or username_normalized in query_lower
+                            ):
                                 score = 40
                             else:
                                 # Check significant tokens (length >= 4)
-                                significant_query_tokens = {t for t in query_tokens if len(t) >= 4}
+                                significant_query_tokens = {
+                                    t for t in query_tokens if len(t) >= 4
+                                }
                                 if significant_query_tokens:
                                     title_sig_match = any(
-                                        any(st in tt for tt in title_tokens) or st in title_normalized
+                                        any(st in tt for tt in title_tokens)
+                                        or st in title_normalized
                                         for st in significant_query_tokens
                                     )
                                     username_sig_match = any(
-                                        any(st in ut for ut in username_tokens) or st in username_normalized
+                                        any(st in ut for ut in username_tokens)
+                                        or st in username_normalized
                                         for st in significant_query_tokens
                                     )
                                     if title_sig_match or username_sig_match:
                                         score = 30
-            
+
             # Simple match flag for backward compatibility
             simple_match = score >= 40
             token_match = score >= 30
-            
+
             if score > 0:
                 # Log match found for debugging
-                if any(term in (title.lower() + " " + username.lower()) for term in ["крупнокалиберный", "переполох", "деградат", "нация", "лвд", "bolshiepushki", "degradat1", "thinkaboutism"]):
+                if any(
+                    term in (title.lower() + " " + username.lower())
+                    for term in [
+                        "крупнокалиберный",
+                        "переполох",
+                        "деградат",
+                        "нация",
+                        "лвд",
+                        "bolshiepushki",
+                        "degradat1",
+                        "thinkaboutism",
+                    ]
+                ):
                     logger.info(
                         f"Match found: simple_match={simple_match}, token_match={token_match}, "
                         f"title='{title}', username='{username}', query='{query}'"
@@ -723,7 +816,10 @@ async def search_channels_by_name(query: str, limit: int = 5) -> List[dict]:
                 # For subscription search, we need both username and title
                 # Skip channels without title
                 if not title or not title.strip():
-                    if any(term in username.lower() for term in ["bolshiepushki", "degradat1", "thinkaboutism"]):
+                    if any(
+                        term in username.lower()
+                        for term in ["bolshiepushki", "degradat1", "thinkaboutism"]
+                    ):
                         logger.warning(
                             f"Skipping channel without title: username='{username}', "
                             f"query='{query}'"
@@ -732,7 +828,12 @@ async def search_channels_by_name(query: str, limit: int = 5) -> List[dict]:
 
                 # Skip channels without username (can't subscribe to private groups)
                 if not username or not username.strip():
-                    if "крупнокалиберный" in title.lower() or "переполох" in title.lower() or "деградат" in title.lower() or "лвд" in title.lower():
+                    if (
+                        "крупнокалиберный" in title.lower()
+                        or "переполох" in title.lower()
+                        or "деградат" in title.lower()
+                        or "лвд" in title.lower()
+                    ):
                         logger.warning(
                             f"Skipping channel without username: title='{title}', "
                             f"query='{query}'"
@@ -760,7 +861,7 @@ async def search_channels_by_name(query: str, limit: int = 5) -> List[dict]:
                     if r.get("username") == username:
                         existing_index = i
                         break
-                
+
                 if existing_index is not None:
                     existing_score = results[existing_index].get("score", 0)
                     if score > existing_score:
@@ -800,11 +901,11 @@ async def search_channels_by_name(query: str, limit: int = 5) -> List[dict]:
 
                 if len(results) >= limit * 2:  # Collect more for sorting, then trim
                     break
-        
+
         # Sort results by score (descending) and return top-N
         results.sort(key=lambda x: x.get("score", 0), reverse=True)
         results = results[:limit]
-        
+
         logger.debug(
             f"After sorting: top {len(results)} results with scores: "
             f"{[(r.get('username'), r.get('score')) for r in results[:5]]}"
@@ -815,11 +916,11 @@ async def search_channels_by_name(query: str, limit: int = 5) -> List[dict]:
             logger.debug(
                 f"No channels found in dialogs, trying fallback strategies: query='{query}', normalized='{query_normalized}'"
             )
-            
+
             # Strategy 1: Try direct resolve with normalized query (in case it's a username variant)
             try:
                 username_to_try = query_normalized.lstrip("@").strip()
-                
+
                 # Try direct get_chat (works for public channels by username)
                 try:
                     chat = await client.get_chat(username_to_try)
@@ -833,7 +934,8 @@ async def search_channels_by_name(query: str, limit: int = 5) -> List[dict]:
                                 {
                                     "username": chat_username,
                                     "title": chat_title,
-                                    "description": getattr(chat, "description", "") or "",
+                                    "description": getattr(chat, "description", "")
+                                    or "",
                                     "chat_id": chat.id,
                                     "score": 85,  # Direct resolve gets high score
                                 }
@@ -849,48 +951,57 @@ async def search_channels_by_name(query: str, limit: int = 5) -> List[dict]:
                     )
             except Exception as e:
                 logger.debug(f"Error during direct resolve: {e}")
-            
+
             # Strategy 2: Try searching in all known dialogs more thoroughly
             # Sometimes channels are in dialogs but matching failed due to normalization
             if not results:
-                logger.debug(f"Re-scanning dialogs with improved matching: query='{query_normalized}'")
+                logger.debug(
+                    f"Re-scanning dialogs with improved matching: query='{query_normalized}'"
+                )
                 # Re-scan with more relaxed matching - check each word individually
-                query_words = [w for w in query_normalized.lower().split() if len(w) >= 3]
-                
+                query_words = [
+                    w for w in query_normalized.lower().split() if len(w) >= 3
+                ]
+
                 async for dialog in client.get_dialogs(limit=1000):
                     if not dialog.chat:
                         continue
                     from pyrogram.enums import ChatType
+
                     chat_type = dialog.chat.type
                     if chat_type not in (ChatType.CHANNEL, ChatType.SUPERGROUP):
                         continue
-                    
+
                     title = getattr(dialog.chat, "title", "") or ""
                     username = getattr(dialog.chat, "username", "") or ""
-                    
+
                     if not title or not username:
                         continue
-                    
+
                     # Normalize title for matching
                     title_normalized = title.lower().replace("_", " ").replace("-", " ")
-                    
+
                     # More relaxed matching: check if any significant word matches
                     # For "крупнокалиберный_переполох" -> ["крупнокалиберный", "переполох"]
                     # Should match "Крупнокалиберный Переполох"
                     significant_match = False
-                    
+
                     if query_words:
                         # Check if any query word appears in title (even partial)
                         for query_word in query_words:
                             if query_word in title_normalized:
                                 significant_match = True
                                 break
-                        
+
                         # Also check if at least 50% of words match
                         if not significant_match and len(query_words) > 1:
-                            matching_words = sum(1 for word in query_words if word in title_normalized)
-                            significant_match = matching_words >= max(1, len(query_words) // 2)
-                    
+                            matching_words = sum(
+                                1 for word in query_words if word in title_normalized
+                            )
+                            significant_match = matching_words >= max(
+                                1, len(query_words) // 2
+                            )
+
                     if significant_match:
                         # Check if we already have this channel
                         if not any(r.get("username") == username for r in results):
@@ -898,7 +1009,10 @@ async def search_channels_by_name(query: str, limit: int = 5) -> List[dict]:
                                 {
                                     "username": username,
                                     "title": title,
-                                    "description": getattr(dialog.chat, "description", "") or "",
+                                    "description": getattr(
+                                        dialog.chat, "description", ""
+                                    )
+                                    or "",
                                     "chat_id": dialog.chat.id,
                                     "score": 35,  # Relaxed matching gets lower score
                                 }
@@ -910,34 +1024,43 @@ async def search_channels_by_name(query: str, limit: int = 5) -> List[dict]:
                             )
                             if len(results) >= limit:
                                 break
-            
+
             # Strategy 3: Try known username patterns (for common channels)
             # This is a last resort - try transliterated variants
-            if not results and any('\u0400' <= c <= '\u04ff' for c in query_normalized):
-                logger.debug(f"Query contains Cyrillic, trying transliteration variants")
+            if not results and any("\u0400" <= c <= "\u04ff" for c in query_normalized):
+                logger.debug(
+                    f"Query contains Cyrillic, trying transliteration variants"
+                )
                 # Could try transliteration here, but might be too complex
                 # For now, just log that we tried
-            
+
             # Sort fallback results by score
             if results:
                 results.sort(key=lambda x: x.get("score", 0), reverse=True)
                 results = results[:limit]
-        
+
         # Strategy 4: Bot API fallback (if enabled and no results)
         if not results:
             try:
                 from src.infrastructure.config.settings import get_settings
+
                 settings = get_settings()
-                
+
                 if settings.bot_api_fallback_enabled:
                     # Check if query looks like a username (latin, digits, underscore)
                     username_pattern = query_normalized.lstrip("@").strip()
-                    if username_pattern and all(c.isalnum() or c == "_" for c in username_pattern):
-                        from src.infrastructure.clients.bot_api_resolver import BotApiChannelResolver
-                        
+                    if username_pattern and all(
+                        c.isalnum() or c == "_" for c in username_pattern
+                    ):
+                        from src.infrastructure.clients.bot_api_resolver import (
+                            BotApiChannelResolver,
+                        )
+
                         resolver = BotApiChannelResolver()
                         try:
-                            bot_result = await resolver.resolve_username(username_pattern)
+                            bot_result = await resolver.resolve_username(
+                                username_pattern
+                            )
                             if bot_result:
                                 results.append(bot_result)
                                 logger.info(
@@ -948,34 +1071,47 @@ async def search_channels_by_name(query: str, limit: int = 5) -> List[dict]:
                             await resolver.close()
             except Exception as bot_api_error:
                 logger.debug(f"Bot API fallback error: {bot_api_error}")
-        
+
         # Strategy 5: LLM fallback (if enabled and no results or ambiguous)
-        if len(results) == 0 or (len(results) > 0 and all(r.get("score", 0) < 50 for r in results)):
+        if len(results) == 0 or (
+            len(results) > 0 and all(r.get("score", 0) < 50 for r in results)
+        ):
             try:
                 from src.infrastructure.config.settings import get_settings
+
                 settings = get_settings()
-                
+
                 if settings.llm_fallback_enabled:
                     # Get cached channels for LLM processing
                     try:
-                        from src.infrastructure.cache.dialogs_cache import PublicChannelsCache
+                        from src.infrastructure.cache.dialogs_cache import (
+                            PublicChannelsCache,
+                        )
+
                         cache = PublicChannelsCache()
                         cached_channels = await cache.get_cached()
-                        
+
                         if cached_channels:
-                            from src.infrastructure.llm.channel_matcher import LlmChannelMatcher
-                            
+                            from src.infrastructure.llm.channel_matcher import (
+                                LlmChannelMatcher,
+                            )
+
                             matcher = LlmChannelMatcher()
                             llm_results = await matcher.match_channels(
                                 query, cached_channels, limit=limit
                             )
-                            
+
                             if llm_results:
                                 # Merge LLM results with existing results (deduplicate by username)
-                                existing_usernames = {r.get("username") for r in results}
-                                
+                                existing_usernames = {
+                                    r.get("username") for r in results
+                                }
+
                                 for llm_result in llm_results:
-                                    if llm_result.get("username") not in existing_usernames:
+                                    if (
+                                        llm_result.get("username")
+                                        not in existing_usernames
+                                    ):
                                         results.append(llm_result)
                                         logger.info(
                                             f"Found channel via LLM fallback: "
@@ -983,10 +1119,12 @@ async def search_channels_by_name(query: str, limit: int = 5) -> List[dict]:
                                             f"confidence={llm_result.get('llm_confidence', 0):.2f}, "
                                             f"query='{query}'"
                                         )
-                                
+
                                 # Re-sort by score
                                 if results:
-                                    results.sort(key=lambda x: x.get("score", 0), reverse=True)
+                                    results.sort(
+                                        key=lambda x: x.get("score", 0), reverse=True
+                                    )
                                     results = results[:limit]
                     except Exception as llm_error:
                         logger.debug(f"LLM fallback error: {llm_error}")
@@ -1000,7 +1138,7 @@ async def search_channels_by_name(query: str, limit: int = 5) -> List[dict]:
     finally:
         if client.is_connected:
             await client.stop()
-        
+
             logger.info(
                 f"Channel search completed: query={query}, normalized={query_normalized}, "
                 f"dialogs_scanned={dialog_count}, channels_processed={channels_processed}, "
@@ -1093,17 +1231,17 @@ async def _update_channel_username_in_db(
     user_id: int, old_username: str, new_username: str
 ) -> None:
     """Update channel username in database without touching title.
-    
+
     Purpose:
         Helper function to update channel_username when actual username
         differs from stored value. Does NOT update title to preserve
         existing metadata.
-    
+
     Args:
         user_id: Telegram user ID
         old_username: Current username in database (may be incorrect)
         new_username: Correct username from Telegram
-    
+
     Raises:
         None: Errors are logged and handled gracefully
     """
@@ -1176,7 +1314,9 @@ async def _save_posts_to_db(
                     )
 
         # Import here to avoid circular dependencies
-        from src.presentation.mcp.tools.digest_tools import save_posts_to_db as mcp_save_posts
+        from src.presentation.mcp.tools.digest_tools import (
+            save_posts_to_db as mcp_save_posts,
+        )
 
         result = await mcp_save_posts(posts, actual_username, user_id)
         logger.debug(

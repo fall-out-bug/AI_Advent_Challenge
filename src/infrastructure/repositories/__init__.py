@@ -5,4 +5,3 @@ from src.infrastructure.repositories.homework_review_repository import (
 )
 
 __all__ = ["HomeworkReviewRepository"]
-

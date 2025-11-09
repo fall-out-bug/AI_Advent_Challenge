@@ -6,10 +6,10 @@ Following TDD principles and the Zen of Python:
 - Clear assertions
 """
 
-import pytest
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock
 from typing import Any, Dict
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from src.domain.agents.base_agent import BaseAgent, TaskMetadata
 
@@ -74,7 +74,7 @@ async def test_base_agent_stats_tracking():
     agent = ConcreteTestAgent(model_client=mock_client)
 
     # Make a call
-    response = await agent.process("test prompt")
+    await agent.process("test prompt")
 
     # Check stats
     assert agent.stats["total_requests"] == 1
@@ -284,7 +284,6 @@ def test_abstract_method():
     """Test that abstract method is enforced."""
     # Abstract base class should enforce abstract methods
     # Python's ABC will prevent instantiation of IncompleteAgent
-    from abc import ABC
 
     class IncompleteAgent(BaseAgent):
         """Agent without process implementation."""

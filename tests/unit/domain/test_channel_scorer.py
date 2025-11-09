@@ -169,4 +169,3 @@ class TestChannelScorer:
         score = scorer.score(query, channel)
         assert isinstance(score, float)
         assert 0.0 <= score <= 1.0
-

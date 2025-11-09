@@ -123,10 +123,12 @@ class TestRuleBasedClassifier:
     def test_latency_performance(self, classifier):
         """Test that rule-based classification is fast."""
         import time
+
         start = time.time()
         for _ in range(100):
             classifier.classify("Дай мои подписки")
         elapsed = time.time() - start
         avg_latency_ms = (elapsed / 100) * 1000
-        assert avg_latency_ms < 100, f"Average latency {avg_latency_ms}ms exceeds 100ms threshold"
-
+        assert (
+            avg_latency_ms < 100
+        ), f"Average latency {avg_latency_ms}ms exceeds 100ms threshold"

@@ -1,15 +1,17 @@
 """Tests for PDF digest MCP tools (TDD - Red Phase)."""
 
 import os
-import pytest
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
+
+import pytest
 
 
 @pytest.fixture(scope="module")
 def event_loop():
     """Create event loop for async tests."""
     import asyncio
+
     loop = asyncio.new_event_loop()
     yield loop
     loop.close()
@@ -19,13 +21,15 @@ def event_loop():
 def _set_test_db_env(monkeypatch):
     """Set test database environment."""
     monkeypatch.setenv("DB_NAME", "butler_test")
-    monkeypatch.setenv("MONGODB_URL", os.getenv("MONGODB_URL", "mongodb://localhost:27017"))
+    monkeypatch.setenv(
+        "MONGODB_URL", os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+    )
 
 
 @pytest.fixture(autouse=True)
 async def _cleanup_db():
     """Cleanup database before and after tests."""
-    from src.infrastructure.database.mongo import get_db, close_client
+    from src.infrastructure.database.mongo import close_client, get_db
 
     db = await get_db()
     await db.channels.delete_many({})
@@ -39,8 +43,8 @@ async def _cleanup_db():
 @pytest.mark.asyncio
 async def test_get_posts_from_db_groups_by_channel():
     """Test that get_posts_from_db groups posts by channel."""
-    from src.presentation.mcp.tools.pdf_digest_tools import get_posts_from_db
     from src.presentation.mcp.tools.digest_tools import save_posts_to_db
+    from src.presentation.mcp.tools.pdf_digest_tools import get_posts_from_db
 
     # Setup: save posts for different channels
     posts_channel1 = [
@@ -84,8 +88,8 @@ async def test_get_posts_from_db_groups_by_channel():
 @pytest.mark.asyncio
 async def test_get_posts_from_db_enforces_limits():
     """Test that get_posts_from_db enforces max posts per channel and max channels limits."""
-    from src.presentation.mcp.tools.pdf_digest_tools import get_posts_from_db
     from src.presentation.mcp.tools.digest_tools import save_posts_to_db
+    from src.presentation.mcp.tools.pdf_digest_tools import get_posts_from_db
 
     # Setup: create more than 100 posts for one channel
     many_posts = [
@@ -127,8 +131,8 @@ async def test_get_posts_from_db_empty_results():
 @pytest.mark.asyncio
 async def test_get_posts_from_db_date_filtering():
     """Test that get_posts_from_db filters posts by date correctly."""
-    from src.presentation.mcp.tools.pdf_digest_tools import get_posts_from_db
     from src.presentation.mcp.tools.digest_tools import save_posts_to_db
+    from src.presentation.mcp.tools.pdf_digest_tools import get_posts_from_db
 
     # Setup: create old and new posts
     old_post = {
@@ -241,7 +245,9 @@ async def test_summarize_posts_handles_llm_errors():
     ]
 
     # Mock LLM summarizer to raise error
-    with patch("src.presentation.mcp.tools.pdf_digest_tools.llm_summarize_posts") as mock_summarize:
+    with patch(
+        "src.presentation.mcp.tools.pdf_digest_tools.llm_summarize_posts"
+    ) as mock_summarize:
         mock_summarize.side_effect = Exception("LLM error")
 
         # Should still return result (handled gracefully)

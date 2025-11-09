@@ -5,13 +5,8 @@ Following Clean Architecture: Application layer orchestrates domain services.
 
 from __future__ import annotations
 
-from typing import List
-
 from src.domain.services.channel_resolver import ChannelResolver
-from src.domain.value_objects.channel_resolution import (
-    ChannelResolutionResult,
-    ChannelSearchResult,
-)
+from src.domain.value_objects.channel_resolution import ChannelResolutionResult
 from src.infrastructure.clients.telegram_utils import search_channels_by_name
 from src.infrastructure.database.mongo import get_db
 from src.infrastructure.logging import get_logger
@@ -231,9 +226,6 @@ class ResolveChannelNameUseCase:
             # This works if we can guess the username from the input
             logger.debug(
                 f"No channels found in dialogs search, trying direct resolve: input={input_name}"
-            )
-            from src.presentation.mcp.tools.channels.channel_metadata import (
-                get_channel_metadata,
             )
 
             # Try to resolve directly (only if input looks like a username)

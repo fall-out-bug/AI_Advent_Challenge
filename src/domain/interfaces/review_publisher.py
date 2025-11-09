@@ -13,9 +13,7 @@ class ReviewPublisher(Protocol):
         systems. Allows mock and real implementations.
     """
 
-    async def publish_review(
-        self, payload: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def publish_review(self, payload: dict[str, Any]) -> dict[str, Any]:
         """Publish review result to external system.
 
         Args:
@@ -28,4 +26,3 @@ class ReviewPublisher(Protocol):
             Exception: On publish failure
         """
         ...
-

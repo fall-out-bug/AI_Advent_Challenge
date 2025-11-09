@@ -6,8 +6,8 @@ Following the Zen of Python:
 - Explicit is better than implicit
 """
 
-from src.domain.services.token_analyzer import TokenAnalyzer
 from src.domain.services.riddle_evaluator import RiddleEvaluator
+from src.domain.services.token_analyzer import TokenAnalyzer
 
 __all__ = [
     "TokenAnalyzer",

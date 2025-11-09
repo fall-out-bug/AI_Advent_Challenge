@@ -6,9 +6,8 @@ Following the Zen of Python:
 - Explicit is better than implicit
 """
 
-import sys
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict
 
 import httpx
 import yaml
@@ -108,10 +107,12 @@ def _check_storage() -> Dict:
         if storage_path.exists():
             try:
                 # Read existing data to verify read access
-                existing_data = storage_path.read_text()
-                
+                storage_path.read_text()
+
                 # Test write access using a temporary file in the same directory
-                temp_file = storage_path.parent / f".health_check_{storage_path.name}.tmp"
+                temp_file = (
+                    storage_path.parent / f".health_check_{storage_path.name}.tmp"
+                )
                 temp_file.write_text("{}")
                 temp_file.unlink()  # Clean up immediately
             except Exception as e:

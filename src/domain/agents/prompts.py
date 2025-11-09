@@ -98,5 +98,3 @@ SUMMARIZE_SYSTEM_PROMPT = (
 [Полный текст]
 """
 ).strip()
-
-

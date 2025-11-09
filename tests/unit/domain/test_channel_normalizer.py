@@ -105,4 +105,3 @@ class TestChannelNormalizer:
         normalizer = ChannelNormalizer()
         result = normalizer.normalize("")
         assert result == ""
-

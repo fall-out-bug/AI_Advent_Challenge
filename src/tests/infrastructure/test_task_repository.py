@@ -1,8 +1,8 @@
-import os
 import asyncio
+import os
 from datetime import datetime, timedelta
-import pytest
 
+import pytest
 
 pytestmark = pytest.mark.asyncio
 
@@ -17,13 +17,15 @@ def event_loop():
 @pytest.fixture(autouse=True)
 def _set_test_db_env(monkeypatch):
     monkeypatch.setenv("DB_NAME", "butler_test")
-    monkeypatch.setenv("MONGODB_URL", os.getenv("MONGODB_URL", "mongodb://localhost:27017"))
+    monkeypatch.setenv(
+        "MONGODB_URL", os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+    )
 
 
 @pytest.fixture
 async def repo():
     # Lazy import after env setup
-    from src.infrastructure.database.mongo import get_db, close_client
+    from src.infrastructure.database.mongo import close_client, get_db
     from src.infrastructure.repositories.task_repository import TaskRepository
 
     db = await get_db()
@@ -75,5 +77,3 @@ async def test_update_and_delete_task(repo):
 
     tasks_after = await repo.list_tasks(user_id=999, status="all", limit=10)
     assert all(t["id"] != task_id for t in tasks_after)
-
-

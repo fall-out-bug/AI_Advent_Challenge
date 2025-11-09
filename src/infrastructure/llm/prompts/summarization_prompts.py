@@ -5,7 +5,9 @@ from __future__ import annotations
 from typing import Literal
 
 
-def get_map_prompt(text: str, language: Literal["ru", "en"], max_sentences: int = 5) -> str:
+def get_map_prompt(
+    text: str, language: Literal["ru", "en"], max_sentences: int = 5
+) -> str:
     """Prompt for chunk-level summarization (Map phase).
 
     Purpose:
@@ -64,7 +66,9 @@ def get_map_prompt(text: str, language: Literal["ru", "en"], max_sentences: int 
     )
 
 
-def get_reduce_prompt(summaries: str, language: Literal["ru", "en"], max_sentences: int = 8) -> str:
+def get_reduce_prompt(
+    summaries: str, language: Literal["ru", "en"], max_sentences: int = 8
+) -> str:
     """Prompt for reduce phase to combine chunk summaries.
 
     Purpose:
@@ -164,13 +168,25 @@ def get_direct_summarization_prompt(
     if time_period_hours:
         days = time_period_hours / 24
         if days < 1:
-            time_context = f" (за последние {time_period_hours} часов)" if language == "ru" else f" (last {time_period_hours} hours)"
+            time_context = (
+                f" (за последние {time_period_hours} часов)"
+                if language == "ru"
+                else f" (last {time_period_hours} hours)"
+            )
         elif days == 1:
-            time_context = " (за последние 24 часа)" if language == "ru" else " (last 24 hours)"
+            time_context = (
+                " (за последние 24 часа)" if language == "ru" else " (last 24 hours)"
+            )
         elif days < 7:
-            time_context = f" (за последние {int(days)} дня)" if language == "ru" else f" (last {int(days)} days)"
+            time_context = (
+                f" (за последние {int(days)} дня)"
+                if language == "ru"
+                else f" (last {int(days)} days)"
+            )
         else:
-            time_context = " (за последнюю неделю)" if language == "ru" else " (last week)"
+            time_context = (
+                " (за последнюю неделю)" if language == "ru" else " (last week)"
+            )
 
     # Build channel context for better isolation
     channel_context = ""
@@ -178,7 +194,7 @@ def get_direct_summarization_prompt(
         channel_context = f" канала '{channel_title}'"
     elif channel_username:
         channel_context = f" канала @{channel_username}"
-    
+
     if language == "ru":
         return (
             f"Суммаризируй эти посты из Telegram-канала{channel_context}{time_context}.\n\n"
@@ -199,8 +215,12 @@ def get_direct_summarization_prompt(
             f"- Раскрой каждую тему подробно и интересно, не ограничивайся общими фразами\n"
             f"- Используй разнообразные формулировки, сделай текст живым и увлекательным\n"
             f"- Учитывай временной период: это посты{time_context}, сфокусируйся на актуальном контенте за этот период\n"
-            + (f"- Целевой размер примерно {max_chars} символов - используй это пространство для подробного и интересного описания\n" if max_chars else "") +
-            "\n"
+            + (
+                f"- Целевой размер примерно {max_chars} символов - используй это пространство для подробного и интересного описания\n"
+                if max_chars
+                else ""
+            )
+            + "\n"
             f"Пример правильного ответа:\n"
             f"Разработчики представили новую версию iOS с улучшенной производительностью на 30%. "
             f"Добавлены новые функции для работы с жестами и улучшена безопасность. "
@@ -209,7 +229,9 @@ def get_direct_summarization_prompt(
             f"Суммари (только этот канал):"
         )
     else:
-        channel_context_en = f" from channel @{channel_username}" if channel_username else ""
+        channel_context_en = (
+            f" from channel @{channel_username}" if channel_username else ""
+        )
         return (
             f"Summarize these Telegram channel posts{channel_context_en}{time_context}.\n\n"
             f"CRITICAL:\n"
@@ -228,8 +250,12 @@ def get_direct_summarization_prompt(
             f"- Elaborate on each topic in detail and engagingly, don't use generic phrases\n"
             f"- Use varied phrasing, make the text lively and captivating\n"
             f"- Focus on recent content{time_context}\n"
-            + (f"- Target size approximately {max_chars} characters - use this space for detailed and interesting description\n" if max_chars else "") +
-            "\n"
+            + (
+                f"- Target size approximately {max_chars} characters - use this space for detailed and interesting description\n"
+                if max_chars
+                else ""
+            )
+            + "\n"
             f"Example correct output:\n"
             f"Developers released new iOS version with 30% performance improvement. "
             f"New gesture features added and security enhanced. "

@@ -6,10 +6,10 @@ Following TDD principles:
 - Clear test scenarios
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.infrastructure.health.health_checker import HealthStatus
+import pytest
+
 from src.infrastructure.health.model_health import ModelHealthChecker
 
 

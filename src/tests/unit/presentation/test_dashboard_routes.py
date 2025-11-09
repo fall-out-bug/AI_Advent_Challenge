@@ -3,8 +3,8 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from src.infrastructure.monitoring.metrics import get_metrics
 from src.presentation.api.dashboard_routes import create_dashboard_router
-from src.infrastructure.monitoring.metrics import MetricsCollector, get_metrics
 
 
 @pytest.fixture

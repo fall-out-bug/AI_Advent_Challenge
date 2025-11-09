@@ -14,7 +14,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
 from typing import Optional
 
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from src.infrastructure.logging import get_logger
 from src.infrastructure.metrics import get_butler_metrics
@@ -55,7 +55,6 @@ class MetricsHandler(BaseHTTPRequestHandler):
 
     def log_message(self, format: str, *args: object) -> None:
         """Suppress default logging (we use our own logger)."""
-        pass
 
 
 class MetricsServer:
@@ -119,7 +118,9 @@ class MetricsServer:
         if not self._running:
             raise RuntimeError("Failed to start metrics server")
 
-        logger.info(f"Metrics server listening on http://{self.host}:{self.port}/metrics")
+        logger.info(
+            f"Metrics server listening on http://{self.host}:{self.port}/metrics"
+        )
 
     async def stop(self) -> None:
         """Stop metrics server gracefully."""
@@ -143,4 +144,3 @@ class MetricsServer:
             True if server is running, False otherwise
         """
         return self._running
-

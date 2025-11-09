@@ -7,8 +7,8 @@ Following the Zen of Python:
 """
 
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
 from rich.text import Text
 
 from src.infrastructure.config.settings import Settings
@@ -124,7 +124,7 @@ def _display_agent_status(console: Console) -> None:
         console: Rich console instance
     """
     settings = Settings.from_env()
-    repo = JsonAgentRepository(settings.get_agent_storage_path())
+    JsonAgentRepository(settings.get_agent_storage_path())
 
     # Check if storage exists and has data
     storage_path = settings.get_agent_storage_path()

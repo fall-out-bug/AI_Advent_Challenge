@@ -29,7 +29,9 @@ class ContextManager:
         self.summary_threshold = summary_threshold
         self.recent_messages_to_preserve = recent_messages_to_preserve
 
-    def should_summarize(self, messages: List[Dict[str, Any]], estimated_tokens: int) -> bool:
+    def should_summarize(
+        self, messages: List[Dict[str, Any]], estimated_tokens: int
+    ) -> bool:
         """Check if summarization is needed.
 
         Args:
@@ -79,13 +81,13 @@ class ContextManager:
             Prioritized message list
         """
         # Always preserve recent messages
-        recent = messages[-self.recent_messages_to_preserve:]
-        
+        recent = messages[-self.recent_messages_to_preserve :]
+
         # For remaining budget, include tool results
         remaining_budget = budget - self._estimate_tokens(recent)
         prioritized = recent.copy()
 
-        for msg in reversed(messages[:-self.recent_messages_to_preserve]):
+        for msg in reversed(messages[: -self.recent_messages_to_preserve]):
             msg_tokens = self._estimate_tokens([msg])
             if remaining_budget >= msg_tokens:
                 prioritized.insert(0, msg)
@@ -108,15 +110,17 @@ class ContextManager:
 
         if self.should_summarize(messages, estimated_tokens):
             # Summarize old messages, preserve recent
-            old_messages = messages[:-self.recent_messages_to_preserve]
-            recent_messages = messages[-self.recent_messages_to_preserve:]
-            
+            old_messages = messages[: -self.recent_messages_to_preserve]
+            recent_messages = messages[-self.recent_messages_to_preserve :]
+
             summary = self.create_summary(old_messages)
             context_parts = [summary] if summary else []
-            
+
             for msg in recent_messages:
-                context_parts.append(f"{msg.get('role', 'unknown')}: {msg.get('content', '')}")
-            
+                context_parts.append(
+                    f"{msg.get('role', 'unknown')}: {msg.get('content', '')}"
+                )
+
             return "\n".join(context_parts)
         else:
             # Use all messages
@@ -137,4 +141,3 @@ class ContextManager:
         # Rough estimation: 1 token ≈ 4 characters
         total_chars = sum(len(str(msg.get("content", ""))) for msg in messages)
         return int(total_chars / 4)
-

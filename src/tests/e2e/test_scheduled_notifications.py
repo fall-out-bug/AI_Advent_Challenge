@@ -3,8 +3,9 @@
 Uses freezegun to mock time for deterministic testing.
 """
 
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from freezegun import freeze_time
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.e2e, pytest.mark.slow]
@@ -25,9 +26,10 @@ async def test_morning_summary_sent_at_scheduled_time(unique_user_id, _cleanup_d
     Assert:
         - Summary would be sent (verify via mocks)
     """
-    from src.presentation.mcp.tools.reminder_tools import add_task, get_summary
+    from datetime import datetime, time
+
+    from src.presentation.mcp.tools.reminder_tools import add_task
     from src.workers.schedulers import is_time_to_send
-    from datetime import time, datetime
 
     # Arrange: Create task for user
     await add_task(user_id=unique_user_id, title="Morning task", priority="high")
@@ -60,9 +62,10 @@ async def test_evening_digest_sent_at_scheduled_time(unique_user_id, _cleanup_db
     Assert:
         - Digest would be sent (verify via mocks)
     """
+    from datetime import datetime, time
+
     from src.presentation.mcp.tools.digest_tools import add_channel
     from src.workers.schedulers import is_time_to_send
-    from datetime import time, datetime
 
     # Arrange: Subscribe to channel
     await add_channel(user_id=unique_user_id, channel_username="test_channel")
@@ -94,8 +97,9 @@ async def test_quiet_hours_blocks_notifications():
     Assert:
         - Quiet hours active
     """
-    from src.workers.schedulers import is_quiet_hours
     from datetime import datetime
+
+    from src.workers.schedulers import is_quiet_hours
 
     # Arrange: Current time in quiet hours (22:00-08:00)
     now = datetime.utcnow()
@@ -121,8 +125,9 @@ async def test_not_quiet_hours_allows_notifications():
     Assert:
         - Quiet hours not active
     """
-    from src.workers.schedulers import is_quiet_hours
     from datetime import datetime
+
+    from src.workers.schedulers import is_quiet_hours
 
     # Arrange: Current time outside quiet hours
     now = datetime.utcnow()
@@ -147,12 +152,15 @@ async def test_worker_handles_telegram_api_failure():
     Assert:
         - Error caught and logged, worker continues
     """
-    from aiogram.exceptions import TelegramBadRequest
     from unittest.mock import AsyncMock
+
+    from aiogram.exceptions import TelegramBadRequest
 
     # Arrange: Mock bot that fails
     mock_bot = AsyncMock()
-    mock_bot.send_message = AsyncMock(side_effect=TelegramBadRequest(message="User not found", method="send_message"))
+    mock_bot.send_message = AsyncMock(
+        side_effect=TelegramBadRequest(message="User not found", method="send_message")
+    )
 
     # Act & Assert: Should not raise, but handle gracefully
     try:
@@ -162,4 +170,3 @@ async def test_worker_handles_telegram_api_failure():
 
     # Verify it was called
     assert mock_bot.send_message.called
-

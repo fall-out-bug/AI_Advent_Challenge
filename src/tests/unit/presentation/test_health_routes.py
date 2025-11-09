@@ -10,7 +10,6 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.infrastructure.config.settings import Settings
-from src.infrastructure.health.health_checker import HealthStatus
 from src.presentation.api.health_routes import create_health_router
 
 

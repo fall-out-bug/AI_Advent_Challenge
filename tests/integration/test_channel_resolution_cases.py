@@ -29,7 +29,7 @@ class TestChannelResolutionCases:
         """Test Case 1: onaboka / 'Набока' → should match onaboka."""
         # User query
         query = "Набока"
-        
+
         # Channel from subscriptions
         channel = {
             "username": "onaboka",
@@ -42,7 +42,7 @@ class TestChannelResolutionCases:
                 "🖊 Связь @ask_naboka_bot"
             ),
         }
-        
+
         score = scorer.score(query, channel)
         assert score >= 0.6, f"Score {score} should be >= 0.6 for onaboka match"
 
@@ -50,7 +50,7 @@ class TestChannelResolutionCases:
         """Test Case 2: xor_journal / 'XOR' → should match xor_journal."""
         # User query
         query = "XOR"
-        
+
         # Channel from subscriptions
         channel = {
             "username": "xor_journal",
@@ -63,17 +63,15 @@ class TestChannelResolutionCases:
                 "РКН: https://clck.ru/3FjUWa"
             ),
         }
-        
+
         score = scorer.score(query, channel)
         assert score >= 0.8, f"Score {score} should be >= 0.8 for XOR match"
 
-    def test_case_3_bolshiepushki_discovery(
-        self, scorer: ChannelScorer
-    ) -> None:
+    def test_case_3_bolshiepushki_discovery(self, scorer: ChannelScorer) -> None:
         """Test Case 3: 'крупнокалиберный' → should match bolshiepushki."""
         # User query for subscription
         query = "крупнокалиберный"
-        
+
         # Channel found via Telegram search
         channel = {
             "username": "bolshiepushki",
@@ -86,7 +84,7 @@ class TestChannelResolutionCases:
                 "Бот для связи @bolshiepushki_helpme_bot"
             ),
         }
-        
+
         score = scorer.score(query, channel)
         assert score >= 0.6, f"Score {score} should be >= 0.6 for bolshiepushki match"
 
@@ -95,7 +93,7 @@ class TestChannelResolutionCases:
         query = "Набока"
         normalized = normalizer.normalize(query)
         assert "набока" in normalized.lower()
-        
+
         # Should transliterate to Latin
         transliterated = normalizer.transliterate_ru_to_lat("Набока")
         assert "naboka" in transliterated.lower()
@@ -114,14 +112,14 @@ class TestChannelResolutionCases:
             "title": "Completely Different Title",
             "description": "Some unrelated description",
         }
-        
+
         score = scorer.score(query, unrelated_channel)
         assert score < 0.4, f"Score {score} should be < 0.4 for unrelated channel"
 
     def test_multiple_candidates_ranking(self, scorer: ChannelScorer) -> None:
         """Test that correct channel ranks highest among multiple candidates."""
         query = "Набока"
-        
+
         candidates = [
             {
                 "username": "onaboka",
@@ -139,13 +137,12 @@ class TestChannelResolutionCases:
                 "description": "Секретный канал...",
             },
         ]
-        
+
         scores = [scorer.score(query, ch) for ch in candidates]
-        
+
         # onaboka should have the highest score
         onaboka_score = scores[0]
-        assert onaboka_score == max(scores), (
-            f"onaboka should have highest score, got {scores}"
-        )
+        assert onaboka_score == max(
+            scores
+        ), f"onaboka should have highest score, got {scores}"
         assert onaboka_score >= 0.6, f"onaboka score {onaboka_score} should be >= 0.6"
-

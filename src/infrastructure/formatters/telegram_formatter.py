@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List
 
-from src.domain.value_objects.task_summary import TaskSummary, DigestMessage
+from src.domain.value_objects.task_summary import DigestMessage, TaskSummary
 
 
 class TelegramFormatter:

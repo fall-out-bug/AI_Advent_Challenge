@@ -19,12 +19,17 @@ async def test_create_butler_orchestrator_success(mock_mongodb):
     Args:
         mock_mongodb: Mock MongoDB database.
     """
-    with patch("src.presentation.bot.factory.get_db", new_callable=AsyncMock) as mock_get_db, \
-         patch("src.presentation.bot.factory.MistralClient") as mock_mistral, \
-         patch("src.presentation.bot.factory.get_mcp_client") as mock_get_mcp, \
-         patch("src.presentation.bot.factory.RobustMCPClient") as mock_robust_mcp, \
-         patch("src.presentation.bot.factory.MCPToolClientAdapter") as mock_adapter:
-        
+    with patch(
+        "src.presentation.bot.factory.get_db", new_callable=AsyncMock
+    ) as mock_get_db, patch(
+        "src.presentation.bot.factory.MistralClient"
+    ) as mock_mistral, patch(
+        "src.presentation.bot.factory.get_mcp_client"
+    ) as mock_get_mcp, patch(
+        "src.presentation.bot.factory.RobustMCPClient"
+    ) as mock_robust_mcp, patch(
+        "src.presentation.bot.factory.MCPToolClientAdapter"
+    ) as mock_adapter:
         # Setup mocks
         mock_get_db.return_value = mock_mongodb
         mock_mistral_instance = MagicMock()
@@ -35,10 +40,10 @@ async def test_create_butler_orchestrator_success(mock_mongodb):
         mock_robust_mcp.return_value = mock_robust_mcp_instance
         mock_adapter_instance = MagicMock()
         mock_adapter.return_value = mock_adapter_instance
-        
+
         # Execute
         orchestrator = await create_butler_orchestrator(mongodb=mock_mongodb)
-        
+
         # Verify
         assert isinstance(orchestrator, ButlerOrchestrator)
         assert orchestrator.mongodb == mock_mongodb
@@ -52,13 +57,16 @@ async def test_create_butler_orchestrator_with_custom_mongodb():
     """
     custom_mongodb = MagicMock(spec=AsyncIOMotorDatabase)
     custom_mongodb.dialog_contexts = MagicMock()
-    
-    with patch("src.presentation.bot.factory.get_db", new_callable=AsyncMock), \
-         patch("src.presentation.bot.factory.MistralClient") as mock_mistral, \
-         patch("src.presentation.bot.factory.get_mcp_client") as mock_get_mcp, \
-         patch("src.presentation.bot.factory.RobustMCPClient") as mock_robust_mcp, \
-         patch("src.presentation.bot.factory.MCPToolClientAdapter") as mock_adapter:
-        
+
+    with patch("src.presentation.bot.factory.get_db", new_callable=AsyncMock), patch(
+        "src.presentation.bot.factory.MistralClient"
+    ) as mock_mistral, patch(
+        "src.presentation.bot.factory.get_mcp_client"
+    ) as mock_get_mcp, patch(
+        "src.presentation.bot.factory.RobustMCPClient"
+    ) as mock_robust_mcp, patch(
+        "src.presentation.bot.factory.MCPToolClientAdapter"
+    ) as mock_adapter:
         # Setup mocks
         mock_mistral_instance = MagicMock()
         mock_mistral.return_value = mock_mistral_instance
@@ -68,10 +76,10 @@ async def test_create_butler_orchestrator_with_custom_mongodb():
         mock_robust_mcp.return_value = mock_robust_mcp_instance
         mock_adapter_instance = MagicMock()
         mock_adapter.return_value = mock_adapter_instance
-        
+
         # Execute
         orchestrator = await create_butler_orchestrator(mongodb=custom_mongodb)
-        
+
         # Verify
         assert orchestrator.mongodb == custom_mongodb
 
@@ -82,16 +90,23 @@ async def test_create_butler_orchestrator_uses_env_variables():
 
     Verifies MISTRAL_API_URL and MCP_SERVER_URL are read from env.
     """
-    with patch.dict(os.environ, {
-        "MISTRAL_API_URL": "http://test:8001",
-        "MCP_SERVER_URL": "http://test-mcp:8000"
-    }), \
-         patch("src.presentation.bot.factory.get_db", new_callable=AsyncMock) as mock_get_db, \
-         patch("src.presentation.bot.factory.MistralClient") as mock_mistral, \
-         patch("src.presentation.bot.factory.get_mcp_client") as mock_get_mcp, \
-         patch("src.presentation.bot.factory.RobustMCPClient") as mock_robust_mcp, \
-         patch("src.presentation.bot.factory.MCPToolClientAdapter") as mock_adapter:
-        
+    with patch.dict(
+        os.environ,
+        {
+            "MISTRAL_API_URL": "http://test:8001",
+            "MCP_SERVER_URL": "http://test-mcp:8000",
+        },
+    ), patch(
+        "src.presentation.bot.factory.get_db", new_callable=AsyncMock
+    ) as mock_get_db, patch(
+        "src.presentation.bot.factory.MistralClient"
+    ) as mock_mistral, patch(
+        "src.presentation.bot.factory.get_mcp_client"
+    ) as mock_get_mcp, patch(
+        "src.presentation.bot.factory.RobustMCPClient"
+    ) as mock_robust_mcp, patch(
+        "src.presentation.bot.factory.MCPToolClientAdapter"
+    ) as mock_adapter:
         # Setup
         mock_get_db.return_value = MagicMock()
         mock_mistral_instance = MagicMock()
@@ -102,10 +117,10 @@ async def test_create_butler_orchestrator_uses_env_variables():
         mock_robust_mcp.return_value = mock_robust_mcp_instance
         mock_adapter_instance = MagicMock()
         mock_adapter.return_value = mock_adapter_instance
-        
+
         # Execute
         await create_butler_orchestrator()
-        
+
         # Verify
         mock_mistral.assert_called_once_with(base_url="http://test:8001")
         mock_get_mcp.assert_called_once_with(server_url="http://test-mcp:8000")
@@ -117,13 +132,17 @@ async def test_create_butler_orchestrator_defaults_mistral_url():
 
     Verifies default fallback to http://localhost:8001.
     """
-    with patch.dict(os.environ, {}, clear=True), \
-         patch("src.presentation.bot.factory.get_db", new_callable=AsyncMock) as mock_get_db, \
-         patch("src.presentation.bot.factory.MistralClient") as mock_mistral, \
-         patch("src.presentation.bot.factory.get_mcp_client") as mock_get_mcp, \
-         patch("src.presentation.bot.factory.RobustMCPClient") as mock_robust_mcp, \
-         patch("src.presentation.bot.factory.MCPToolClientAdapter") as mock_adapter:
-        
+    with patch.dict(os.environ, {}, clear=True), patch(
+        "src.presentation.bot.factory.get_db", new_callable=AsyncMock
+    ) as mock_get_db, patch(
+        "src.presentation.bot.factory.MistralClient"
+    ) as mock_mistral, patch(
+        "src.presentation.bot.factory.get_mcp_client"
+    ) as mock_get_mcp, patch(
+        "src.presentation.bot.factory.RobustMCPClient"
+    ) as mock_robust_mcp, patch(
+        "src.presentation.bot.factory.MCPToolClientAdapter"
+    ) as mock_adapter:
         # Setup
         mock_get_db.return_value = MagicMock()
         mock_mistral_instance = MagicMock()
@@ -134,10 +153,10 @@ async def test_create_butler_orchestrator_defaults_mistral_url():
         mock_robust_mcp.return_value = mock_robust_mcp_instance
         mock_adapter_instance = MagicMock()
         mock_adapter.return_value = mock_adapter_instance
-        
+
         # Execute
         await create_butler_orchestrator()
-        
+
         # Verify
         mock_mistral.assert_called_once_with(base_url="http://localhost:8001")
 
@@ -148,12 +167,16 @@ async def test_create_butler_orchestrator_mongodb_error():
 
     Verifies RuntimeError is raised when MongoDB initialization fails.
     """
-    with patch("src.presentation.bot.factory.get_db", new_callable=AsyncMock) as mock_get_db:
+    with patch(
+        "src.presentation.bot.factory.get_db", new_callable=AsyncMock
+    ) as mock_get_db:
         # Setup: MongoDB connection fails
         mock_get_db.side_effect = Exception("Connection failed")
-        
+
         # Execute & Verify
-        with pytest.raises(RuntimeError, match="Failed to initialize ButlerOrchestrator"):
+        with pytest.raises(
+            RuntimeError, match="Failed to initialize ButlerOrchestrator"
+        ):
             await create_butler_orchestrator()
 
 
@@ -166,15 +189,19 @@ async def test_create_butler_orchestrator_mistral_error(mock_mongodb):
 
     Verifies RuntimeError is raised when MistralClient fails.
     """
-    with patch("src.presentation.bot.factory.get_db", new_callable=AsyncMock) as mock_get_db, \
-         patch("src.presentation.bot.factory.MistralClient") as mock_mistral:
-        
+    with patch(
+        "src.presentation.bot.factory.get_db", new_callable=AsyncMock
+    ) as mock_get_db, patch(
+        "src.presentation.bot.factory.MistralClient"
+    ) as mock_mistral:
         # Setup
         mock_get_db.return_value = mock_mongodb
         mock_mistral.side_effect = Exception("Mistral initialization failed")
-        
+
         # Execute & Verify
-        with pytest.raises(RuntimeError, match="Failed to initialize ButlerOrchestrator"):
+        with pytest.raises(
+            RuntimeError, match="Failed to initialize ButlerOrchestrator"
+        ):
             await create_butler_orchestrator(mongodb=mock_mongodb)
 
 
@@ -187,17 +214,22 @@ async def test_create_butler_orchestrator_mcp_error(mock_mongodb):
 
     Verifies RuntimeError is raised when MCP client fails.
     """
-    with patch("src.presentation.bot.factory.get_db", new_callable=AsyncMock) as mock_get_db, \
-         patch("src.presentation.bot.factory.MistralClient") as mock_mistral, \
-         patch("src.presentation.bot.factory.get_mcp_client") as mock_get_mcp:
-        
+    with patch(
+        "src.presentation.bot.factory.get_db", new_callable=AsyncMock
+    ) as mock_get_db, patch(
+        "src.presentation.bot.factory.MistralClient"
+    ) as mock_mistral, patch(
+        "src.presentation.bot.factory.get_mcp_client"
+    ) as mock_get_mcp:
         # Setup
         mock_get_db.return_value = mock_mongodb
         mock_mistral.return_value = MagicMock()
         mock_get_mcp.side_effect = Exception("MCP connection failed")
-        
+
         # Execute & Verify
-        with pytest.raises(RuntimeError, match="Failed to initialize ButlerOrchestrator"):
+        with pytest.raises(
+            RuntimeError, match="Failed to initialize ButlerOrchestrator"
+        ):
             await create_butler_orchestrator(mongodb=mock_mongodb)
 
 
@@ -210,21 +242,35 @@ async def test_create_butler_orchestrator_initializes_all_components(mock_mongod
 
     Verifies all components are created with correct dependencies.
     """
-    with patch("src.presentation.bot.factory.get_db", new_callable=AsyncMock) as mock_get_db, \
-         patch("src.presentation.bot.factory.MistralClient") as mock_mistral, \
-         patch("src.presentation.bot.factory.get_mcp_client") as mock_get_mcp, \
-         patch("src.presentation.bot.factory.RobustMCPClient") as mock_robust_mcp, \
-         patch("src.presentation.bot.factory.MCPToolClientAdapter") as mock_adapter, \
-         patch("src.presentation.bot.factory.ModeClassifier") as mock_mode_classifier, \
-         patch("src.presentation.bot.factory.IntentOrchestrator") as mock_intent_orch, \
-         patch("src.presentation.bot.factory.CreateTaskUseCase") as mock_create_uc, \
-         patch("src.presentation.bot.factory.CollectDataUseCase") as mock_collect_uc, \
-         patch("src.presentation.bot.factory.TaskHandler") as mock_task_handler, \
-         patch("src.presentation.bot.factory.DataHandler") as mock_data_handler, \
-         patch("src.presentation.bot.factory.RemindersHandler") as mock_reminders_handler, \
-         patch("src.presentation.bot.factory.ChatHandler") as mock_chat_handler, \
-         patch("src.presentation.bot.factory.ButlerOrchestrator") as mock_butler:
-        
+    with patch(
+        "src.presentation.bot.factory.get_db", new_callable=AsyncMock
+    ) as mock_get_db, patch(
+        "src.presentation.bot.factory.MistralClient"
+    ) as mock_mistral, patch(
+        "src.presentation.bot.factory.get_mcp_client"
+    ) as mock_get_mcp, patch(
+        "src.presentation.bot.factory.RobustMCPClient"
+    ) as mock_robust_mcp, patch(
+        "src.presentation.bot.factory.MCPToolClientAdapter"
+    ) as mock_adapter, patch(
+        "src.presentation.bot.factory.ModeClassifier"
+    ) as mock_mode_classifier, patch(
+        "src.presentation.bot.factory.IntentOrchestrator"
+    ) as mock_intent_orch, patch(
+        "src.presentation.bot.factory.CreateTaskUseCase"
+    ) as mock_create_uc, patch(
+        "src.presentation.bot.factory.CollectDataUseCase"
+    ) as mock_collect_uc, patch(
+        "src.presentation.bot.factory.TaskHandler"
+    ) as mock_task_handler, patch(
+        "src.presentation.bot.factory.DataHandler"
+    ) as mock_data_handler, patch(
+        "src.presentation.bot.factory.RemindersHandler"
+    ) as mock_reminders_handler, patch(
+        "src.presentation.bot.factory.ChatHandler"
+    ) as mock_chat_handler, patch(
+        "src.presentation.bot.factory.ButlerOrchestrator"
+    ) as mock_butler:
         # Setup
         mock_get_db.return_value = mock_mongodb
         mock_mistral_instance = MagicMock()
@@ -235,10 +281,10 @@ async def test_create_butler_orchestrator_initializes_all_components(mock_mongod
         mock_robust_mcp.return_value = mock_robust_mcp_instance
         mock_adapter_instance = MagicMock()
         mock_adapter.return_value = mock_adapter_instance
-        
+
         # Execute
         await create_butler_orchestrator(mongodb=mock_mongodb)
-        
+
         # Verify: All components should be initialized
         assert mock_mistral.called
         assert mock_get_mcp.called
@@ -253,4 +299,3 @@ async def test_create_butler_orchestrator_initializes_all_components(mock_mongod
         assert mock_reminders_handler.called
         assert mock_chat_handler.called
         assert mock_butler.called
-

@@ -1,11 +1,12 @@
 """Unit tests for application use cases."""
 
+from unittest.mock import AsyncMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock
 
 from src.application.use_cases.generate_code import GenerateCodeUseCase
 from src.application.use_cases.review_code import ReviewCodeUseCase
-from src.domain.entities.agent_task import AgentTask, TaskStatus, TaskType
+from src.domain.entities.agent_task import TaskType
 
 
 @pytest.fixture
@@ -79,7 +80,6 @@ async def test_review_code_use_case(
 def test_generate_code_id_generation() -> None:
     """Test unique ID generation."""
     from src.application.use_cases.generate_code import GenerateCodeUseCase
-    import uuid
 
     use_case = GenerateCodeUseCase(
         agent_repository=AsyncMock(),

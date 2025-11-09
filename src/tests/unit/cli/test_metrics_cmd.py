@@ -6,15 +6,11 @@ Following the Zen of Python:
 """
 
 import json
-import pytest
-from pathlib import Path
-from unittest.mock import patch, MagicMock
-import tempfile
 
 from src.presentation.cli.commands.metrics_cmd import (
     display_metrics_summary,
-    export_metrics_json,
     export_metrics_csv,
+    export_metrics_json,
     reset_metrics,
 )
 

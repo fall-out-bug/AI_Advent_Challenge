@@ -3,17 +3,15 @@
 Following Python Zen: "Simple is better than complex."
 """
 
-from typing import Any
-
 
 def code_review_prompt(code: str, language: str = "python", style: str = "pep8") -> str:
     """Generate dynamic code review prompt.
-    
+
     Args:
         code: Code to review
         language: Programming language
         style: Style guide to check against
-        
+
     Returns:
         Formatted prompt for code review
     """
@@ -52,10 +50,10 @@ Respond in JSON format:
 
 def code_review_prompt_simple(code: str) -> str:
     """Generate simple code review prompt.
-    
+
     Args:
         code: Code to review
-        
+
     Returns:
         Simple review prompt
     """
@@ -70,4 +68,3 @@ Code:
 ```
 
 Be concise and actionable."""
-

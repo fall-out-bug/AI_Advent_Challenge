@@ -6,7 +6,8 @@ echo ""
 
 # Check Mistral
 echo "Mistral (Port 8001):"
-if docker ps --filter "name=mistral" --format "{{.Status}}" | grep -q "Up"; then
+if docker ps --filter "name=local_models-mistral-chat" \
+    --format "{{.Status}}" | grep -q "Up"; then
     echo "  ✅ Container is running"
     
     # Check health endpoint
@@ -29,10 +30,11 @@ if docker ps --filter "name=mistral" --format "{{.Status}}" | grep -q "Up"; then
     fi
 else
     echo "  ❌ Container is not running"
-    echo "     Start with: cd local_models && docker-compose up -d mistral-chat"
+    echo "     Start with: cd archive/legacy/local_models && docker-compose up -d mistral-chat"
 fi
 
 echo ""
 echo "📊 Container Details:"
-docker ps --filter "name=mistral" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+docker ps --filter "name=local_models-mistral-chat" \
+    --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 

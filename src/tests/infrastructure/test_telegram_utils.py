@@ -1,5 +1,6 @@
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
 
 
 @pytest.mark.asyncio
@@ -18,4 +19,3 @@ async def test_fetch_channel_posts_handles_empty_channel():
     since = datetime.utcnow() - timedelta(hours=24)
     posts = await fetch_channel_posts("nonexistent_channel", since=since)
     assert posts == []
-

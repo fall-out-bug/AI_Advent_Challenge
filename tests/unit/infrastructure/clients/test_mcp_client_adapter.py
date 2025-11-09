@@ -157,4 +157,3 @@ class TestMCPToolClientAdapter:
         mock_robust_client.call_tool.assert_called_once_with(
             tool_name="test_tool", arguments={"arg": "value"}
         )
-

@@ -46,6 +46,8 @@ class PassFindings:
     """Container for findings from a single pass."""
 
     pass_name: str
+    status: str = "completed"
+    error: Optional[str] = None
     timestamp: datetime = field(default_factory=datetime.now)
     findings: List[Finding] = field(default_factory=list)
     recommendations: List[str] = field(default_factory=list)
@@ -56,6 +58,8 @@ class PassFindings:
         """Convert to dictionary for JSON serialization."""
         return {
             "pass_name": self.pass_name,
+            "status": self.status,
+            "error": self.error,
             "timestamp": self.timestamp.isoformat(),
             "findings": [self._finding_to_dict(f) for f in self.findings],
             "recommendations": self.recommendations,
@@ -76,7 +80,6 @@ class PassFindings:
         }
 
 
-
 @dataclass
 class MultiPassReport:
     """Final report combining findings from all passes."""
@@ -93,6 +96,8 @@ class MultiPassReport:
     static_analysis_results: Optional[Dict[str, Any]] = None
     pass_4_logs: Optional[Dict[str, Any]] = None
     haiku: Optional[str] = None
+    assignment_id: Optional[str] = None
+    errors: List[Dict[str, Any]] = field(default_factory=list)
 
     @property
     def critical_count(self) -> int:
@@ -100,7 +105,9 @@ class MultiPassReport:
         count = 0
         for pass_findings in self._all_findings():
             count += sum(
-                1 for f in pass_findings.findings if f.severity == SeverityLevel.CRITICAL
+                1
+                for f in pass_findings.findings
+                if f.severity == SeverityLevel.CRITICAL
             )
         return count
 
@@ -126,7 +133,9 @@ class MultiPassReport:
 
     def to_markdown(self) -> str:
         """Export report as Markdown."""
-        detected_comp = ', '.join(self.detected_components) if self.detected_components else 'None'
+        detected_comp = (
+            ", ".join(self.detected_components) if self.detected_components else "None"
+        )
         md = f"""# Code Review Report: {self.repo_name}
 
 **Session ID**: {self.session_id}
@@ -138,6 +147,9 @@ class MultiPassReport:
 - Critical Issues: {self.critical_count}
 - Major Issues: {self.major_count}
 - Total Execution Time: {self.execution_time_seconds:.1f} seconds
+
+## Errors
+{self._errors_to_markdown()}
 
 ## Pass 1: Architecture Overview
 
@@ -160,16 +172,29 @@ class MultiPassReport:
 """
         return md
 
+    def _errors_to_markdown(self) -> str:
+        if not self.errors:
+            return "*(No errors recorded)*"
+        lines: list[str] = []
+        for entry in self.errors:
+            label = entry.get("pass") or entry.get("stage") or "unknown"
+            error = entry.get("error") or entry.get("message") or "unspecified error"
+            lines.append(f"- **{label}**: {error}")
+        return "\n".join(lines)
+
     def _static_analysis_to_markdown(self) -> str:
         """Format static analysis results as markdown.
-        
+
         Returns:
             Markdown string with static analysis results
         """
         if not self.static_analysis_results:
             return "*(Static analysis not performed)*"
-        
-        from src.infrastructure.reporting.static_analysis_formatter import format_static_analysis_markdown
+
+        from src.infrastructure.reporting.static_analysis_formatter import (
+            format_static_analysis_markdown,
+        )
+
         return format_static_analysis_markdown(self.static_analysis_results)
 
     def _pass_to_markdown(self, pass_findings: Optional[PassFindings]) -> str:
@@ -178,6 +203,11 @@ class MultiPassReport:
             return "*(No findings)*"
 
         md = f"\n### {pass_findings.pass_name}\n\n"
+        md += f"**Status**: {pass_findings.status.title()}\n\n"
+        if pass_findings.status != "completed":
+            if pass_findings.error:
+                md += f"**Error**: {pass_findings.error}\n\n"
+            return md
         if pass_findings.summary:
             md += f"**Summary**: {pass_findings.summary}\n\n"
 
@@ -214,17 +244,19 @@ class MultiPassReport:
 
     def _format_pass_4_logs(self) -> str:
         """Format Pass 4 log analysis results as markdown.
-        
+
         Returns:
             Markdown string with Pass 4 section or empty string
         """
         if not self.pass_4_logs or self.pass_4_logs.get("status") != "completed":
             return ""
-        
+
         md = "\n## Pass 4: Runtime Analysis (Logs)\n\n"
-        md += f"**Total Log Entries**: {self.pass_4_logs.get('total_log_entries', 0):,}\n"
+        md += (
+            f"**Total Log Entries**: {self.pass_4_logs.get('total_log_entries', 0):,}\n"
+        )
         md += f"**Issue Groups Found**: {self.pass_4_logs.get('log_groups_analyzed', 0)}\n\n"
-        
+
         results = self.pass_4_logs.get("results", [])
         if results:
             md += "### Detailed Findings\n\n"
@@ -234,7 +266,7 @@ class MultiPassReport:
                 if comp not in by_component:
                     by_component[comp] = []
                 by_component[comp].append(result)
-            
+
             for component in sorted(by_component.keys()):
                 md += f"#### {component.upper()}\n\n"
                 for result in by_component[component]:
@@ -243,21 +275,21 @@ class MultiPassReport:
                     md += f"**Description:**\n{result.get('description', 'N/A')}\n\n"
                     md += f"**Root Cause:**\n{result.get('root_cause', 'N/A')}\n\n"
                     md += "**Recommendations:**\n"
-                    for i, rec in enumerate(result.get('recommendations', []), 1):
+                    for i, rec in enumerate(result.get("recommendations", []), 1):
                         md += f"{i}. {rec}\n"
                     md += f"\n*Confidence: {result.get('confidence', 0.0):.0%}*\n\n"
-        
+
         return md
 
     def _format_haiku(self) -> str:
         """Format haiku section.
-        
+
         Returns:
             Markdown string with haiku or empty string
         """
         if not self.haiku:
             return ""
-        
+
         md = "---\n\n"
         md += "*A code review haiku:*\n\n"
         haiku_lines = [line.strip() for line in self.haiku.split("\n") if line.strip()]
@@ -270,7 +302,7 @@ class MultiPassReport:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary.
-        
+
         Returns:
             Dictionary representation of report
         """
@@ -295,13 +327,7 @@ class MultiPassReport:
             "pass_4_logs": self.pass_4_logs,
             "haiku": self.haiku,
         }
-    
+
     def to_json(self) -> str:
         """Export as JSON string."""
         return json.dumps(self.to_dict(), indent=2, default=str)
-
-
-
-
-
-

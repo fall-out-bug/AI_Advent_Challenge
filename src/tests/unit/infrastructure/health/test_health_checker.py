@@ -6,7 +6,6 @@ Following TDD principles:
 - Clear assertions
 """
 
-import pytest
 
 from src.infrastructure.health.health_checker import (
     HealthChecker,

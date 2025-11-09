@@ -59,7 +59,6 @@ class HealthChecker(ABC):
         Returns:
             Health check result
         """
-        pass
 
     def get_name(self) -> str:
         """Get checker name.

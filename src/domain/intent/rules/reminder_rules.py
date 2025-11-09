@@ -65,10 +65,11 @@ REMINDER_RULES: list[Tuple[re.Pattern, IntentType, float, Dict[str, Callable]]] 
     ),
     # Reminder deletion patterns
     (
-        re.compile(r"(удали|delete|remove|убери)\s+(напоминани|reminder)", re.IGNORECASE),
+        re.compile(
+            r"(удали|delete|remove|убери)\s+(напоминани|reminder)", re.IGNORECASE
+        ),
         IntentType.REMINDER_DELETE,
         0.95,
         {},
     ),
 ]
-

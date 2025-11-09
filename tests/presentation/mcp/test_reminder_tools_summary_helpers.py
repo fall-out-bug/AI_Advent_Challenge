@@ -1,6 +1,9 @@
 from datetime import datetime, timezone
 
-from src.presentation.mcp.tools._summary_helpers import _build_summary_query, _compute_task_stats
+from src.presentation.mcp.tools._summary_helpers import (
+    _build_summary_query,
+    _compute_task_stats,
+)
 
 
 def test_build_summary_query_today_and_tomorrow() -> None:
@@ -21,9 +24,21 @@ def test_compute_task_stats_counts_completed_overdue_and_priority() -> None:
     now_iso = datetime(2025, 1, 2, 12, 0, 0, tzinfo=timezone.utc).isoformat()
 
     tasks = [
-        {"completed": True, "deadline": "2025-01-02T10:00:00+00:00", "priority": "high"},
-        {"completed": False, "deadline": "2025-01-03T10:00:00+00:00", "priority": "medium"},
-        {"completed": False, "deadline": "2025-01-01T10:00:00+00:00", "priority": "high"},
+        {
+            "completed": True,
+            "deadline": "2025-01-02T10:00:00+00:00",
+            "priority": "high",
+        },
+        {
+            "completed": False,
+            "deadline": "2025-01-03T10:00:00+00:00",
+            "priority": "medium",
+        },
+        {
+            "completed": False,
+            "deadline": "2025-01-01T10:00:00+00:00",
+            "priority": "high",
+        },
     ]
 
     stats = _compute_task_stats(tasks, now_iso)

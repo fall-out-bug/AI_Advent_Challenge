@@ -25,7 +25,7 @@ async def get_summary_text(
     mcp_client: MCPClientProtocol,
     user_id: int,
     timeframe: str = "today",
-    debug: bool = False
+    debug: bool = False,
 ) -> Optional[str]:
     """Get summary text for user.
 
@@ -43,43 +43,39 @@ async def get_summary_text(
         Formatted summary text or None on error
     """
     try:
-        logger.info("get_summary_text called", 
-                   user_id=user_id, 
-                   timeframe=timeframe, 
-                   debug=debug)
+        logger.info(
+            "get_summary_text called", user_id=user_id, timeframe=timeframe, debug=debug
+        )
 
         # In debug mode, ALWAYS query DB directly, skip MCP completely
         if debug:
             return await _get_summary_from_db(user_id)
 
         # Normal mode: use MCP
-        logger.info("Calling get_summary tool", 
-                   user_id=user_id, 
-                   timeframe=timeframe)
+        logger.info("Calling get_summary tool", user_id=user_id, timeframe=timeframe)
         summary = await mcp_client.call_tool(
-            "get_summary", 
-            {"user_id": user_id, "timeframe": timeframe}
+            "get_summary", {"user_id": user_id, "timeframe": timeframe}
         )
         tasks = summary.get("tasks", [])
         stats = summary.get("stats", {})
 
-        logger.info("Got summary from MCP", 
-                   user_id=user_id, 
-                   task_count=len(tasks), 
-                   stats=stats)
+        logger.info(
+            "Got summary from MCP", user_id=user_id, task_count=len(tasks), stats=stats
+        )
 
         result = format_summary(tasks, stats, debug=debug)
-        logger.info("Formatted summary", 
-                   user_id=user_id, 
-                   result_length=len(result) if result else 0, 
-                   has_result=result is not None)
+        logger.info(
+            "Formatted summary",
+            user_id=user_id,
+            result_length=len(result) if result else 0,
+            has_result=result is not None,
+        )
         return result
 
     except Exception as e:
-        logger.error("Error getting summary text", 
-                    user_id=user_id, 
-                    error=str(e), 
-                    exc_info=True)
+        logger.error(
+            "Error getting summary text", user_id=user_id, error=str(e), exc_info=True
+        )
         if debug:
             return f"🔍 *Debug Summary Error*\n\nError retrieving summary: {str(e)}"
         return None
@@ -94,8 +90,7 @@ async def _get_summary_from_db(user_id: int) -> str:
     Returns:
         Formatted summary text or error message
     """
-    logger.info("🔧 DEBUG MODE: Querying DB directly, skipping MCP", 
-               user_id=user_id)
+    logger.info("🔧 DEBUG MODE: Querying DB directly, skipping MCP", user_id=user_id)
     try:
         db = await get_db()
         user_id_int = int(user_id)
@@ -103,15 +98,15 @@ async def _get_summary_from_db(user_id: int) -> str:
         logger.info("🔧 Executing DB query", user_id=user_id_int)
         raw = await db.tasks.find({"user_id": user_id_int}).to_list(length=200)
 
-        logger.info("🔧 DB returned raw tasks", 
-                   user_id=user_id, 
-                   raw_count=len(raw))
+        logger.info("🔧 DB returned raw tasks", user_id=user_id, raw_count=len(raw))
 
         tasks_filtered = [t for t in raw if not t.get("completed", False)]
 
-        logger.info("🔧 After filter (completed=False)", 
-                   user_id=user_id, 
-                   filtered_count=len(tasks_filtered))
+        logger.info(
+            "🔧 After filter (completed=False)",
+            user_id=user_id,
+            filtered_count=len(tasks_filtered),
+        )
 
         # Normalize for formatter (id field)
         normalized = []
@@ -120,9 +115,11 @@ async def _get_summary_from_db(user_id: int) -> str:
             if "_id" in td:
                 td["id"] = str(td.pop("_id"))
             normalized.append(td)
-            logger.info("🔧 Normalized task", 
-                       user_id=user_id, 
-                       task_title=td.get("title", "No title")[:50])
+            logger.info(
+                "🔧 Normalized task",
+                user_id=user_id,
+                task_title=td.get("title", "No title")[:50],
+            )
 
         tasks = normalized
         stats = {
@@ -132,34 +129,36 @@ async def _get_summary_from_db(user_id: int) -> str:
             "high_priority": sum(1 for t in tasks if t.get("priority") == "high"),
         }
 
-        logger.info("🔧 Final tasks and stats", 
-                   user_id=user_id, 
-                   task_count=len(tasks), 
-                   stats=stats)
+        logger.info(
+            "🔧 Final tasks and stats",
+            user_id=user_id,
+            task_count=len(tasks),
+            stats=stats,
+        )
 
         result = format_summary(tasks, stats, debug=True)
 
-        logger.info("🔧 Formatted summary result", 
-                   user_id=user_id, 
-                   result_length=len(result) if result else 0)
+        logger.info(
+            "🔧 Formatted summary result",
+            user_id=user_id,
+            result_length=len(result) if result else 0,
+        )
         return result
 
     except Exception as db_err:
-        logger.error("🔧 Debug DB query failed", 
-                    user_id=user_id, 
-                    error=str(db_err), 
-                    exc_info=True)
+        logger.error(
+            "🔧 Debug DB query failed", user_id=user_id, error=str(db_err), exc_info=True
+        )
         import traceback
-        logger.error("🔧 Debug DB traceback", 
-                    user_id=user_id, 
-                    traceback=traceback.format_exc())
+
+        logger.error(
+            "🔧 Debug DB traceback", user_id=user_id, traceback=traceback.format_exc()
+        )
         return f"🔍 *Debug Summary Error*\n\nDB query failed: {str(db_err)}"
 
 
 async def get_digest_texts(
-    mcp_client: MCPClientProtocol,
-    user_id: int,
-    debug: bool = False
+    mcp_client: MCPClientProtocol, user_id: int, debug: bool = False
 ) -> list[str]:
     """Get digest texts for user - one per channel.
 
@@ -179,21 +178,17 @@ async def get_digest_texts(
         # Always use 24 hours for consistency (both debug and normal mode)
         hours = 24
 
-        logger.info("Calling get_channel_digest tool", 
-                   user_id=user_id, 
-                   hours=hours,
-                   debug=debug)
+        logger.info(
+            "Calling get_channel_digest tool", user_id=user_id, hours=hours, debug=debug
+        )
 
         digest_data = await mcp_client.call_tool(
-            "get_channel_digest", 
-            {"user_id": user_id, "hours": hours}
+            "get_channel_digest", {"user_id": user_id, "hours": hours}
         )
 
         digests = digest_data.get("digests", [])
 
-        logger.info("Got digest from MCP", 
-                   user_id=user_id, 
-                   digest_count=len(digests))
+        logger.info("Got digest from MCP", user_id=user_id, digest_count=len(digests))
 
         if not digests:
             if debug:
@@ -210,25 +205,22 @@ async def get_digest_texts(
             if formatted:
                 results.append(formatted)
 
-        logger.info("Formatted digest texts", 
-                   user_id=user_id, 
-                   message_count=len(results))
+        logger.info(
+            "Formatted digest texts", user_id=user_id, message_count=len(results)
+        )
         return results
 
     except Exception as e:
-        logger.error("Error getting digest texts", 
-                    user_id=user_id, 
-                    error=str(e), 
-                    exc_info=True)
+        logger.error(
+            "Error getting digest texts", user_id=user_id, error=str(e), exc_info=True
+        )
         if debug:
             return [f"📰 Debug Digest Error\n\nError retrieving digest: {str(e)}"]
         return []
 
 
 async def get_digest_text(
-    mcp_client: MCPClientProtocol,
-    user_id: int,
-    debug: bool = False
+    mcp_client: MCPClientProtocol, user_id: int, debug: bool = False
 ) -> Optional[str]:
     """Get single combined digest text for user (legacy method).
 
@@ -249,4 +241,3 @@ async def get_digest_text(
         return None
     # Combine all texts with separator
     return "\n\n---\n\n".join(texts)
-

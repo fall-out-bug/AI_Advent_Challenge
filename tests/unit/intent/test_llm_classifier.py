@@ -34,14 +34,14 @@ class TestLLMClassifier:
     async def test_classify_successful(self, classifier, mock_llm_client):
         """Test successful LLM classification."""
         # Mock LLM response
-        mock_llm_client.make_request.return_value = '''{
+        mock_llm_client.make_request.return_value = """{
             "intent": "TASK_CREATE",
             "confidence": 0.9,
             "entities": {"title": "buy milk"}
-        }'''
-        
+        }"""
+
         result = await classifier.classify("Create a task to buy milk")
-        
+
         assert result.intent == IntentType.TASK_CREATE
         assert result.confidence == 0.9
         assert result.source == "llm"
@@ -51,16 +51,16 @@ class TestLLMClassifier:
     @pytest.mark.asyncio
     async def test_classify_with_json_in_text(self, classifier, mock_llm_client):
         """Test parsing JSON from text response."""
-        mock_llm_client.make_request.return_value = '''Here is the classification:
+        mock_llm_client.make_request.return_value = """Here is the classification:
         {
             "intent": "DATA_DIGEST",
             "confidence": 0.85,
             "entities": {"channel_name": "xor"}
         }
-        That's the result.'''
-        
+        That's the result."""
+
         result = await classifier.classify("digest of xor")
-        
+
         assert result.intent == IntentType.DATA_DIGEST
         assert result.confidence == 0.85
         assert result.entities.get("channel_name") == "xor"
@@ -69,10 +69,11 @@ class TestLLMClassifier:
     async def test_classify_timeout(self, classifier, mock_llm_client):
         """Test timeout handling."""
         import asyncio
+
         mock_llm_client.make_request.side_effect = asyncio.TimeoutError()
-        
+
         result = await classifier.classify("Create task")
-        
+
         # Should fallback to IDLE on timeout
         assert result.intent == IntentType.IDLE
         assert result.confidence == 0.3
@@ -82,9 +83,9 @@ class TestLLMClassifier:
     async def test_classify_parse_error(self, classifier, mock_llm_client):
         """Test JSON parsing error handling."""
         mock_llm_client.make_request.return_value = "Not valid JSON response"
-        
+
         result = await classifier.classify("Create task")
-        
+
         # Should fallback to IDLE on parse error
         assert result.intent == IntentType.IDLE
         assert result.confidence == 0.3
@@ -93,23 +94,23 @@ class TestLLMClassifier:
     async def test_classify_empty_response(self, classifier, mock_llm_client):
         """Test empty response handling."""
         mock_llm_client.make_request.return_value = ""
-        
+
         result = await classifier.classify("Create task")
-        
+
         assert result.intent == IntentType.IDLE
         assert result.confidence == 0.3
 
     @pytest.mark.asyncio
     async def test_classify_unknown_intent_type(self, classifier, mock_llm_client):
         """Test unknown intent type handling."""
-        mock_llm_client.make_request.return_value = '''{
+        mock_llm_client.make_request.return_value = """{
             "intent": "UNKNOWN_INTENT",
             "confidence": 0.8,
             "entities": {}
-        }'''
-        
+        }"""
+
         result = await classifier.classify("random message")
-        
+
         # Should default to IDLE for unknown intent
         assert result.intent == IntentType.IDLE
 
@@ -119,4 +120,3 @@ class TestLLMClassifier:
         result = await classifier.classify("")
         assert result.intent == IntentType.IDLE
         assert result.confidence == 0.5
-

@@ -30,10 +30,17 @@ class ModelResponse:
 
 class BaseModelClient(ABC):
     """Abstract base class for model clients."""
-    
-    def __init__(self, timeout: float = 120.0):
+
+    def __init__(
+        self,
+        timeout: float = 120.0,
+        max_retries: int = 3,
+        retry_base_delay: float = 0.5,
+    ):
         """Initialize base model client."""
         self.timeout = timeout
+        self.max_retries = max_retries
+        self.retry_base_delay = retry_base_delay
     
     @abstractmethod
     async def make_request(self, model_name: str, prompt: str, max_tokens: Optional[int] = None, temperature: Optional[float] = None) -> ModelResponse:

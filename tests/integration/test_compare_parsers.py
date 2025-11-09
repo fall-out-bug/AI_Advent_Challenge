@@ -13,9 +13,9 @@ from src.application.orchestration.intent_orchestrator import IntentOrchestrator
 
 async def compare_parsers():
     """Compare LLM and fallback parser results."""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("LLM vs Fallback Parser Comparison")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
     llm_orchestrator = IntentOrchestrator(use_llm=True, model_name="mistral")
     fallback_orchestrator = IntentOrchestrator(use_llm=False)
@@ -29,7 +29,7 @@ async def compare_parsers():
     for text in test_cases:
         print(f"\nInput: '{text}'")
         print("-" * 80)
-        
+
         # LLM parsing
         print("\n🤖 LLM Parser:")
         try:
@@ -42,25 +42,26 @@ async def compare_parsers():
                 print(f"   Description: {llm_result.description}")
         except Exception as e:
             print(f"   ❌ Error: {e}")
-        
+
         # Fallback parsing
         print("\n📝 Fallback Parser:")
         try:
-            fallback_result = await fallback_orchestrator.parse_task_intent(text=text, context={})
+            fallback_result = await fallback_orchestrator.parse_task_intent(
+                text=text, context={}
+            )
             print(f"   Title: {fallback_result.title}")
             print(f"   Deadline: {fallback_result.deadline_iso}")
             print(f"   Priority: {fallback_result.priority}")
             print(f"   Needs clarification: {fallback_result.needs_clarification}")
         except Exception as e:
             print(f"   ❌ Error: {e}")
-        
+
         print()
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("Comparison completed!")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
 
 if __name__ == "__main__":
     asyncio.run(compare_parsers())
-

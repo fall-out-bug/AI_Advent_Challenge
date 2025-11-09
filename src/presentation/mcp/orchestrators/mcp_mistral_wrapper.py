@@ -4,14 +4,13 @@ Following separation of concerns: MCP-specific logic stays in presentation layer
 """
 
 import asyncio
-import json
 import logging
 import os
 from typing import Any, Dict, List, Optional
 
 from src.application.orchestrators.mistral_orchestrator import MistralChatOrchestrator
 from src.application.services.result_cache import ResultCache
-from src.domain.entities.conversation import ExecutionPlan, ExecutionStep
+from src.domain.entities.conversation import ExecutionPlan
 
 logger = logging.getLogger(__name__)
 
@@ -44,30 +43,38 @@ class MCPMistralWrapper:
             use_docker: Use Docker MCP server via HTTP
             docker_url: URL of Docker MCP server
         """
-        self.use_docker = use_docker or os.getenv("MCP_USE_DOCKER", "false").lower() == "true"
-        self.docker_url = docker_url or os.getenv("MCP_DOCKER_URL", "http://localhost:8004")
-        
+        self.use_docker = (
+            use_docker or os.getenv("MCP_USE_DOCKER", "false").lower() == "true"
+        )
+        self.docker_url = docker_url or os.getenv(
+            "MCP_DOCKER_URL", "http://localhost:8004"
+        )
+
         # Lazy import to avoid circular dependencies
         if self.use_docker:
             from src.presentation.mcp.http_client import MCPHTTPClient
+
             self.mcp_client = MCPHTTPClient(base_url=self.docker_url)
             logger.info(f"Using Docker MCP server at {self.docker_url}")
         else:
             from src.presentation.mcp.client import MCPClient
-            self.mcp_client = MCPClient(server_script=server_script or "src/presentation/mcp/server.py")
+
+            self.mcp_client = MCPClient(
+                server_script=server_script or "src/presentation/mcp/server.py"
+            )
             logger.info(f"Using stdio MCP server with script: {server_script}")
-            
+
         self.orchestrator = orchestrator
         self.available_tools: Dict[str, Any] = {}
         self.enable_cache = enable_cache
         self.cache: Optional[ResultCache] = None
-        
+
         if enable_cache:
             self.cache = ResultCache(ttl_seconds=cache_ttl)
-        
+
         # Tools that should not be cached
         self.no_cache_tools = {"formalize_task"}
-        
+
         # Retry configuration
         self.max_retries = max_retries
         self.retry_initial_delay = retry_initial_delay
@@ -103,7 +110,9 @@ class MCPMistralWrapper:
             logger.info(f"Tool {step.tool} completed")
         return results
 
-    async def _call_mcp_tool(self, tool_name: str, args: Dict[str, Any]) -> Dict[str, Any]:
+    async def _call_mcp_tool(
+        self, tool_name: str, args: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Call MCP tool with caching.
 
         Args:
@@ -122,11 +131,15 @@ class MCPMistralWrapper:
 
         try:
             result = await self._execute_tool_with_retry(tool_name, args)
-            
+
             # Store in cache if enabled
-            if self.enable_cache and self.cache and tool_name not in self.no_cache_tools:
+            if (
+                self.enable_cache
+                and self.cache
+                and tool_name not in self.no_cache_tools
+            ):
                 self.cache.set(tool_name, args, result)
-            
+
             return result
         except Exception as e:
             logger.error(f"Tool {tool_name} failed: {e}")
@@ -165,11 +178,15 @@ class MCPMistralWrapper:
                     await asyncio.sleep(delay)
                     delay *= self.retry_backoff
                 else:
-                    logger.error(f"Tool {tool_name} failed after {attempt + 1} attempts")
+                    logger.error(
+                        f"Tool {tool_name} failed after {attempt + 1} attempts"
+                    )
 
         raise last_error or Exception(f"Tool {tool_name} execution failed")
 
-    async def _execute_tool(self, tool_name: str, args: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_tool(
+        self, tool_name: str, args: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Execute MCP tool (internal method).
 
         Args:
@@ -196,4 +213,3 @@ class MCPMistralWrapper:
             List of tool names
         """
         return list(self.available_tools.keys())
-

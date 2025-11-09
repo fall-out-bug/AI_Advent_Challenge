@@ -1,2 +1,1 @@
 """Shared fixtures for testing."""
-

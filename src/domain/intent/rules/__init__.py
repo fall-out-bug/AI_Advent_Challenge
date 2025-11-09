@@ -20,4 +20,3 @@ __all__ = [
 # Combine all rules: specific rules first (higher priority), then general mode rules
 # This ensures sub-intents (TASK_CREATE) are matched before general intents (TASK)
 ALL_RULES = TASK_RULES + DATA_RULES + REMINDER_RULES + MODE_RULES + GENERAL_RULES
-

@@ -41,8 +41,8 @@ python examples/basic_usage.py
 ### Running Workflow Examples
 
 ```bash
-# Ensure local_models docker-compose is running
-cd local_models && docker-compose up -d
+# Ensure legacy local_models docker-compose is running (optional)
+cd archive/legacy/local_models && docker-compose up -d mistral-chat
 
 # Run full workflow examples
 python examples/full_workflow.py

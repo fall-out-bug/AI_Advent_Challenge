@@ -6,7 +6,6 @@ Following TDD approach:
 - Refactor for clarity (refactor)
 """
 
-import pytest
 
 from src.domain.services.token_analyzer import TokenAnalyzer
 

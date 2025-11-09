@@ -6,7 +6,7 @@ Purpose:
     2. Test archive extraction
     3. Test diff analysis
     4. Test use cases
-    5. Test full pipeline with MultiPassReviewerAgent
+    5. Test full pipeline with ModularReviewService-backed reviewer
 """
 
 import asyncio
@@ -48,6 +48,9 @@ from src.infrastructure.clients.external_api_client import ExternalAPIClient
 from src.infrastructure.clients.external_api_mock import (
     ExternalAPIClientMock,
 )
+from src.infrastructure.logs.log_normalizer import LogNormalizer
+from src.infrastructure.logs.log_parser_impl import LogParserImpl
+from src.infrastructure.logs.llm_log_analyzer import LLMLogAnalyzer
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.database.mongo import get_db
 from src.infrastructure.repositories.homework_review_repository import (
@@ -181,7 +184,7 @@ async def test_use_cases() -> bool:
 
 
 async def test_full_pipeline() -> bool:
-    """Test full review pipeline with MultiPassReviewerAgent.
+    """Test full review pipeline with modular multipass reviewer.
 
     Purpose:
         Tests complete review pipeline with real UnifiedModelClient.
@@ -222,12 +225,18 @@ async def test_full_pipeline() -> bool:
             # Setup
             archive_service = ZipArchiveService(settings)
             diff_analyzer = DiffAnalyzer()
+            log_parser = LogParserImpl()
+            log_normalizer = LogNormalizer()
 
             # Set LLM_URL in environment for UnifiedModelClient
             if not os.getenv("LLM_URL"):
                 os.environ["LLM_URL"] = llm_url
 
             unified_client = UnifiedModelClient(timeout=settings.review_llm_timeout)
+            log_analyzer = LLMLogAnalyzer(
+                unified_client=unified_client,
+                timeout=settings.review_llm_timeout,
+            )
 
             # Use real external API client if configured, otherwise mock
             if settings.external_api_enabled and settings.external_api_url:
@@ -248,6 +257,10 @@ async def test_full_pipeline() -> bool:
                 review_repository=review_repo,
                 tasks_repository=tasks_repo,
                 publisher=publisher,
+                log_parser=log_parser,
+                log_normalizer=log_normalizer,
+                log_analyzer=log_analyzer,
+                settings=settings,
             )
 
             # Enqueue task

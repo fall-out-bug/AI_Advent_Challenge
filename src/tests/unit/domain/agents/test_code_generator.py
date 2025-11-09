@@ -6,9 +6,10 @@ Following TDD principles and the Zen of Python:
 - Clear assertions
 """
 
-import pytest
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from src.domain.agents.base_agent import BaseAgent
 from src.domain.agents.code_generator import CodeGeneratorAgent, GeneratorPrompts
@@ -76,7 +77,7 @@ class MockCodeGenerator(BaseAgent):
         )
 
         # Validate code
-        validation_issues = await self.validate_generated_code(code)
+        await self.validate_generated_code(code)
 
         # Create response
         return CodeGenerationResponse(

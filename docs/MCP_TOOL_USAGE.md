@@ -123,11 +123,14 @@ tool_modules = [
 - UnifiedModelClient configured for local models
 - Multi-pass review system initialized
 
+> ⚠️ Legacy local containers have moved to `archive/legacy/local_models/`.
+> Shared infrastructure is recommended for active development.
+
 ## Setup
 
 1. Start Mistral container:
    ```bash
-   cd local_models
+   cd archive/legacy/local_models
    docker-compose up -d mistral-chat
    ```
 

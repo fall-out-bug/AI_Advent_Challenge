@@ -54,4 +54,3 @@ class SubmissionArchive:
             Number of code files
         """
         return len(self.code_files)
-

@@ -7,7 +7,7 @@ Following Python Zen:
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, Optional, Protocol
+from typing import Dict, Protocol
 
 
 class IntentType(Enum):
@@ -67,7 +67,9 @@ class IntentResult:
             ValueError: If confidence is out of bounds
         """
         if not 0.0 <= self.confidence <= 1.0:
-            raise ValueError(f"Confidence must be between 0.0 and 1.0, got {self.confidence}")
+            raise ValueError(
+                f"Confidence must be between 0.0 and 1.0, got {self.confidence}"
+            )
 
 
 class IntentClassifierProtocol(Protocol):
@@ -86,4 +88,3 @@ class IntentClassifierProtocol(Protocol):
             IntentResult with classified intent, confidence, and entities
         """
         ...
-

@@ -1,7 +1,7 @@
 """Tests for MCP server tools."""
 import pytest
-import asyncio
-from src.presentation.mcp.server import add, multiply, count_tokens, list_models
+
+from src.presentation.mcp.server import add, count_tokens, list_models, multiply
 
 
 def test_add_tool():
@@ -41,4 +41,3 @@ async def test_check_model_tool():
     result = await check_model("qwen")
     assert "available" in result
     assert isinstance(result["available"], bool)
-

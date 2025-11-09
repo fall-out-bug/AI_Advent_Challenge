@@ -31,7 +31,9 @@ def hw_checker_client(mock_httpx_client):
     Returns:
         HWCheckerClient instance
     """
-    with patch("src.infrastructure.hw_checker.client.httpx.AsyncClient") as mock_client_class:
+    with patch(
+        "src.infrastructure.hw_checker.client.httpx.AsyncClient"
+    ) as mock_client_class:
         mock_client_class.return_value = mock_httpx_client
         client = HWCheckerClient(base_url="http://test-server:8005", timeout=30.0)
         client.client = mock_httpx_client
@@ -42,7 +44,9 @@ def hw_checker_client(mock_httpx_client):
 class TestHWCheckerClientGetRecentCommits:
     """Test suite for get_recent_commits method."""
 
-    async def test_get_recent_commits_success(self, hw_checker_client, mock_httpx_client):
+    async def test_get_recent_commits_success(
+        self, hw_checker_client, mock_httpx_client
+    ):
         """Test successful get_recent_commits call.
 
         Args:
@@ -250,4 +254,3 @@ class TestHWCheckerClientClose:
 
         # Assert
         mock_httpx_client.aclose.assert_called_once()
-

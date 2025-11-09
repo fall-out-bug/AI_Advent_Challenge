@@ -43,13 +43,11 @@ async def handle_generate(prompt: str, agent_name: Optional[str] = None) -> None
         agent_name: Optional agent name
     """
     from src.application.use_cases.generate_code import GenerateCodeUseCase
+    from src.infrastructure.clients.simple_model_client import SimpleModelClient
     from src.infrastructure.repositories.json_agent_repository import (
         JsonAgentRepository,
     )
-    from src.infrastructure.repositories.model_repository import (
-        InMemoryModelRepository,
-    )
-    from src.infrastructure.clients.simple_model_client import SimpleModelClient
+    from src.infrastructure.repositories.model_repository import InMemoryModelRepository
 
     settings = Settings.from_env()
     agent_repo = JsonAgentRepository(settings.get_agent_storage_path())
@@ -83,13 +81,11 @@ async def handle_review(code: str) -> None:
         code: Code to review
     """
     from src.application.use_cases.review_code import ReviewCodeUseCase
+    from src.infrastructure.clients.simple_model_client import SimpleModelClient
     from src.infrastructure.repositories.json_agent_repository import (
         JsonAgentRepository,
     )
-    from src.infrastructure.repositories.model_repository import (
-        InMemoryModelRepository,
-    )
-    from src.infrastructure.clients.simple_model_client import SimpleModelClient
+    from src.infrastructure.repositories.model_repository import InMemoryModelRepository
 
     settings = Settings.from_env()
     agent_repo = JsonAgentRepository(settings.get_agent_storage_path())
@@ -195,8 +191,8 @@ async def main() -> None:
     elif command == "config":
         from src.presentation.cli.commands.config_cmd import (
             display_configuration,
-            validate_configuration,
             list_experiments,
+            validate_configuration,
         )
 
         if len(sys.argv) >= 3:

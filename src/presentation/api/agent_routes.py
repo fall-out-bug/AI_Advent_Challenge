@@ -1,12 +1,12 @@
 """Agent API routes."""
 
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional
 
 from src.application.use_cases.generate_code import GenerateCodeUseCase
 from src.application.use_cases.review_code import ReviewCodeUseCase
-from src.domain.repositories.agent_repository import AgentRepository
 
 
 class GenerateCodeRequest(BaseModel):

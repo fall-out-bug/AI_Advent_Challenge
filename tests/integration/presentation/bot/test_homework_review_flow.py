@@ -60,25 +60,25 @@ def orchestrator(mode_classifier, homework_handler):
     from src.domain.agents.handlers.reminders_handler import RemindersHandler
     from src.domain.agents.handlers.task_handler import TaskHandler
     from motor.motor_asyncio import AsyncIOMotorDatabase
-    
+
     # Create minimal mocks for other handlers
     mock_chat = MagicMock(spec=ChatHandler)
     mock_chat.handle = AsyncMock(return_value="Chat response")
-    
+
     mock_data = MagicMock(spec=DataHandler)
     mock_data.handle = AsyncMock(return_value="Data response")
-    
+
     mock_reminders = MagicMock(spec=RemindersHandler)
     mock_reminders.handle = AsyncMock(return_value="Reminders response")
-    
+
     mock_task = MagicMock(spec=TaskHandler)
     mock_task.handle = AsyncMock(return_value="Task response")
-    
+
     mock_db = MagicMock(spec=AsyncIOMotorDatabase)
     mock_db.dialog_contexts = MagicMock()
     mock_db.dialog_contexts.find_one = AsyncMock(return_value=None)
     mock_db.dialog_contexts.update_one = AsyncMock()
-    
+
     return ButlerOrchestrator(
         mode_classifier=mode_classifier,
         task_handler=mock_task,
@@ -111,7 +111,9 @@ class TestHomeworkReviewFlow:
             ],
             "total": 1,
         }
-        mock_hw_checker_client.get_recent_commits = AsyncMock(return_value=mock_response)
+        mock_hw_checker_client.get_recent_commits = AsyncMock(
+            return_value=mock_response
+        )
         mode_classifier.classify = AsyncMock(return_value=DialogMode.HOMEWORK_REVIEW)
 
         # Act
@@ -132,8 +134,10 @@ class TestHomeworkReviewFlow:
         commit_hash = "abc123def456"
         archive_content = b"PK\x03\x04fake zip content"
         markdown_report = "# Code Review Report\n\n## Summary\n\nTest review content."
-        
-        mock_hw_checker_client.download_archive = AsyncMock(return_value=archive_content)
+
+        mock_hw_checker_client.download_archive = AsyncMock(
+            return_value=archive_content
+        )
         mock_tool_client.call_tool = AsyncMock(
             return_value={
                 "markdown_report": markdown_report,
@@ -154,7 +158,7 @@ class TestHomeworkReviewFlow:
         assert response.startswith("FILE:")
         assert "review_" in response
         assert commit_hash[:12] in response
-        
+
         # Verify file content
         parts = response[5:].split(":", 1)
         assert len(parts) == 2
@@ -163,7 +167,7 @@ class TestHomeworkReviewFlow:
         decoded_content = base64.b64decode(content_b64).decode("utf-8")
         assert decoded_content == markdown_report
         assert filename.endswith(".md")
-        
+
         mock_hw_checker_client.download_archive.assert_called_once_with(
             commit_hash, assignment=None
         )
@@ -180,7 +184,7 @@ class TestHomeworkReviewFlow:
             "ревью def456",
             "Покажи домашк",
         ]
-        
+
         # Act & Assert
         for message in test_messages:
             mode = await mode_classifier.classify(message)
@@ -193,7 +197,7 @@ class TestHomeworkReviewFlow:
         # Arrange
         commit_hash = "abc123"
         from httpx import HTTPStatusError, Response
-        
+
         mock_response = MagicMock(spec=Response)
         error = HTTPStatusError("404", request=MagicMock(), response=mock_response)
         mock_hw_checker_client.download_archive = AsyncMock(side_effect=error)
@@ -227,7 +231,9 @@ class TestHomeworkReviewFlow:
             ],
             "total": 1,
         }
-        mock_hw_checker_client.get_recent_commits = AsyncMock(return_value=mock_response)
+        mock_hw_checker_client.get_recent_commits = AsyncMock(
+            return_value=mock_response
+        )
         mode_classifier.classify = AsyncMock(return_value=DialogMode.HOMEWORK_REVIEW)
 
         # Act
@@ -251,8 +257,10 @@ class TestHomeworkReviewFlow:
         commit_hash = "abc123"
         archive_content = b"PK\x03\x04fake zip"
         markdown_report = "# Review Report\n\nTest"
-        
-        mock_hw_checker_client.download_archive = AsyncMock(return_value=archive_content)
+
+        mock_hw_checker_client.download_archive = AsyncMock(
+            return_value=archive_content
+        )
         mock_tool_client.call_tool = AsyncMock(
             return_value={"markdown_report": markdown_report}
         )
@@ -265,7 +273,7 @@ class TestHomeworkReviewFlow:
             mock_file.__enter__ = MagicMock(return_value=mock_file)
             mock_file.__exit__ = MagicMock(return_value=None)
             mock_temp.return_value = mock_file
-            
+
             response = await orchestrator.handle_user_message(
                 user_id="123",
                 message=f"Сделай ревью {commit_hash}",
@@ -277,4 +285,3 @@ class TestHomeworkReviewFlow:
         # Verify file was written and closed
         mock_file.write.assert_called_once()
         mock_file.__exit__.assert_called_once()
-

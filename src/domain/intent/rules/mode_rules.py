@@ -14,7 +14,10 @@ from src.domain.intent.intent_classifier import IntentType
 MODE_RULES: list[Tuple[re.Pattern, IntentType, float, Dict[str, Callable]]] = [
     # TASK mode patterns
     (
-        re.compile(r"(создай|добавь|напоминаю|create|add)\s+(задач|task|дело|todo)", re.IGNORECASE),
+        re.compile(
+            r"(создай|добавь|напоминаю|create|add)\s+(задач|task|дело|todo)",
+            re.IGNORECASE,
+        ),
         IntentType.TASK,
         0.95,
         {},
@@ -32,7 +35,9 @@ MODE_RULES: list[Tuple[re.Pattern, IntentType, float, Dict[str, Callable]]] = [
         {},
     ),
     (
-        re.compile(r"(какие|мои|show|list|покажи)\s+(задач|task|дел|todos)", re.IGNORECASE),
+        re.compile(
+            r"(какие|мои|show|list|покажи)\s+(задач|task|дел|todos)", re.IGNORECASE
+        ),
         IntentType.TASK,
         0.95,
         {},
@@ -49,14 +54,17 @@ MODE_RULES: list[Tuple[re.Pattern, IntentType, float, Dict[str, Callable]]] = [
     ),
     (
         re.compile(
-            r"(дайджест|digest|summary|последнее|latest)\s+(канал|channel|по|of|for)", re.IGNORECASE
+            r"(дайджест|digest|summary|последнее|latest)\s+(канал|channel|по|of|for)",
+            re.IGNORECASE,
         ),
         IntentType.DATA,
         0.95,
         {},
     ),
     (
-        re.compile(r"(статистика|stats|statistics)\s+(студент|student|ученик)", re.IGNORECASE),
+        re.compile(
+            r"(статистика|stats|statistics)\s+(студент|student|ученик)", re.IGNORECASE
+        ),
         IntentType.DATA,
         0.90,
         {},
@@ -68,7 +76,10 @@ MODE_RULES: list[Tuple[re.Pattern, IntentType, float, Dict[str, Callable]]] = [
         {},
     ),
     (
-        re.compile(r"(отпис|unsubscribe|удал|remove|убери)\s+(канал|channel|от|from)", re.IGNORECASE),
+        re.compile(
+            r"(отпис|unsubscribe|удал|remove|убери)\s+(канал|channel|от|from)",
+            re.IGNORECASE,
+        ),
         IntentType.DATA,
         0.95,
         {},
@@ -100,4 +111,3 @@ MODE_RULES: list[Tuple[re.Pattern, IntentType, float, Dict[str, Callable]]] = [
         {},
     ),
 ]
-

@@ -1,10 +1,4 @@
 """Adapter for token analysis operations."""
-import sys
-from pathlib import Path
-from typing import Any
-
-_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(_root))
 
 from src.domain.services.token_analyzer import TokenAnalyzer
 from src.presentation.mcp.exceptions import MCPAdapterError

@@ -1,6 +1,3 @@
-import pytest
-
-
 def test_parse_datetime_iso_returns_iso():
     from src.application.services.date_parser import DateParser
 
@@ -24,4 +21,3 @@ def test_parse_datetime_invalid_returns_none():
     parser = DateParser(tz="UTC", locale="en")
     result = parser.parse_datetime("not a date", tz="UTC")
     assert result is None
-

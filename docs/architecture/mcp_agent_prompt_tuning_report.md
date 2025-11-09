@@ -18,7 +18,7 @@
   - `shared/shared_package/clients/unified_client.py` решает через конфиг: OpenAI-совместимый `/v1/chat/completions` или локальный `/chat`
   - Ретрай, таймауты, метрики
 - Локальная модель
-  - `local_models/chat_api.py` (FastAPI)
+  - `archive/legacy/local_models/chat_api.py` (FastAPI)
   - Эндпоинты: `/v1/chat/completions` (OpenAI), `/v1/models`, `/chat` (legacy), `/metrics`
 
 ## 2) Ключевые точки настройки модели

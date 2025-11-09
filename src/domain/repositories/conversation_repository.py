@@ -75,7 +75,11 @@ class ConversationRepository(ABC):
 
     @abstractmethod
     async def add_message(
-        self, conversation_id: str, role: str, content: str, metadata: Optional[dict] = None
+        self,
+        conversation_id: str,
+        role: str,
+        content: str,
+        metadata: Optional[dict] = None,
     ) -> None:
         """
         Add message to conversation.
@@ -103,4 +107,3 @@ class ConversationRepository(ABC):
             List of message dictionaries
         """
         raise NotImplementedError
-

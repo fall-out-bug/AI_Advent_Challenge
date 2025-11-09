@@ -6,13 +6,11 @@ Following the Zen of Python:
 - Readability counts
 """
 
-import yaml
 from pathlib import Path
-from typing import Dict
 
+import yaml
 from rich.console import Console
 from rich.panel import Panel
-from rich.syntax import Syntax
 from rich.table import Table
 
 from src.infrastructure.config.settings import Settings
@@ -30,9 +28,9 @@ def display_configuration() -> None:
     config_table.add_column("Value", style="green")
 
     config_table.add_row("Storage Path", str(settings.storage_path))
-    config_table.add_row("Default Model", settings.model_default_name)
-    config_table.add_row("Default Max Tokens", str(settings.model_default_max_tokens))
-    config_table.add_row("Default Temperature", str(settings.model_default_temperature))
+    config_table.add_row("Default Model", settings.llm_model)
+    config_table.add_row("Default Max Tokens", str(settings.llm_max_tokens))
+    config_table.add_row("Default Temperature", str(settings.llm_temperature))
 
     console.print(Panel(config_table, title="Settings", border_style="cyan"))
 

@@ -6,7 +6,7 @@ Following Python Zen: "Simple is better than complex."
 
 def get_project_structure_template() -> str:
     """Return standard Python project structure template.
-    
+
     Returns:
         Project structure template
     """
@@ -36,7 +36,7 @@ def get_project_structure_template() -> str:
 
 def get_pytest_template() -> str:
     """Return pytest test file template.
-    
+
     Returns:
         Pytest test template
     """
@@ -66,7 +66,7 @@ class Test{class_or_function_name}:
 
 def get_class_template() -> str:
     """Return Python class template.
-    
+
     Returns:
         Python class template
     """
@@ -102,4 +102,3 @@ class {class_name}:
             raise ValueError("arg cannot be empty")
         
         return {{"result": "success"}}"""
-

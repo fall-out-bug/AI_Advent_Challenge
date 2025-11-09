@@ -4,17 +4,11 @@ Following Python Zen: "Beautiful is better than ugly"
 """
 
 import asyncio
-import sys
 from pathlib import Path
 from typing import Optional
 
-# Add project root to path
-_root = Path(__file__).parent.parent.parent.parent.parent
-sys.path.insert(0, str(_root))
-shared_path = _root / "shared"
-sys.path.insert(0, str(shared_path))
-
 from shared_package.clients.unified_client import UnifiedModelClient
+
 from src.application.orchestrators.mistral_orchestrator import MistralChatOrchestrator
 from src.infrastructure.repositories.json_conversation_repository import (
     JsonConversationRepository,
@@ -34,8 +28,6 @@ class InteractiveMistralChat:
 
     async def initialize(self) -> None:
         """Initialize orchestrator and MCP wrapper."""
-        from pathlib import Path
-
         conversations_path = Path("data/conversations/conversations.json")
         conversation_repo = JsonConversationRepository(conversations_path)
 
@@ -151,7 +143,11 @@ class InteractiveMistralChat:
         print("\nConversation history:")
         for msg in history:
             role = msg["role"].capitalize()
-            content = msg["content"][:100] + "..." if len(msg["content"]) > 100 else msg["content"]
+            content = (
+                msg["content"][:100] + "..."
+                if len(msg["content"]) > 100
+                else msg["content"]
+            )
             print(f"{role}: {content}")
 
 
@@ -163,4 +159,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

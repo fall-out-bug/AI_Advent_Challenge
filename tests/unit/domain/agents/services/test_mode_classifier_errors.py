@@ -25,12 +25,12 @@ async def test_classify_handles_llm_exception(mock_llm_client):
     """
     # Setup: LLM client raises exception
     mock_llm_client.make_request = AsyncMock(side_effect=Exception("LLM error"))
-    
+
     classifier = ModeClassifier(llm_client=mock_llm_client, default_model="mistral")
-    
+
     # Execute
     result = await classifier.classify("Test message")
-    
+
     # Verify: Falls back to IDLE
     assert result == DialogMode.IDLE
 
@@ -43,13 +43,15 @@ async def test_classify_handles_connection_error(mock_llm_client):
         mock_llm_client: Mock LLM client.
     """
     # Setup: Connection error
-    mock_llm_client.make_request = AsyncMock(side_effect=ConnectionError("Connection failed"))
-    
+    mock_llm_client.make_request = AsyncMock(
+        side_effect=ConnectionError("Connection failed")
+    )
+
     classifier = ModeClassifier(llm_client=mock_llm_client, default_model="mistral")
-    
+
     # Execute
     result = await classifier.classify("Test message")
-    
+
     # Verify: Falls back to IDLE
     assert result == DialogMode.IDLE
 
@@ -62,15 +64,17 @@ async def test_classify_handles_timeout(mock_llm_client):
         mock_llm_client: Mock LLM client.
     """
     import asyncio
-    
+
     # Setup: Timeout error
-    mock_llm_client.make_request = AsyncMock(side_effect=asyncio.TimeoutError("Timeout"))
-    
+    mock_llm_client.make_request = AsyncMock(
+        side_effect=asyncio.TimeoutError("Timeout")
+    )
+
     classifier = ModeClassifier(llm_client=mock_llm_client, default_model="mistral")
-    
+
     # Execute
     result = await classifier.classify("Test message")
-    
+
     # Verify: Falls back to IDLE
     assert result == DialogMode.IDLE
 
@@ -84,12 +88,12 @@ async def test_parse_response_handles_unparseable_response(mock_llm_client):
     """
     # Setup: LLM returns garbage
     mock_llm_client.make_request = AsyncMock(return_value="Garbage response 12345")
-    
+
     classifier = ModeClassifier(llm_client=mock_llm_client, default_model="mistral")
-    
+
     # Execute
     result = await classifier.classify("Test message")
-    
+
     # Verify: Falls back to IDLE
     assert result == DialogMode.IDLE
 
@@ -103,12 +107,12 @@ async def test_parse_response_handles_empty_response(mock_llm_client):
     """
     # Setup: LLM returns empty string
     mock_llm_client.make_request = AsyncMock(return_value="")
-    
+
     classifier = ModeClassifier(llm_client=mock_llm_client, default_model="mistral")
-    
+
     # Execute
     result = await classifier.classify("Test message")
-    
+
     # Verify: Falls back to IDLE
     assert result == DialogMode.IDLE
 
@@ -122,12 +126,12 @@ async def test_parse_response_handles_whitespace_only(mock_llm_client):
     """
     # Setup: LLM returns only whitespace
     mock_llm_client.make_request = AsyncMock(return_value="   \n\t  ")
-    
+
     classifier = ModeClassifier(llm_client=mock_llm_client, default_model="mistral")
-    
+
     # Execute
     result = await classifier.classify("Test message")
-    
+
     # Verify: Falls back to IDLE
     assert result == DialogMode.IDLE
 
@@ -141,12 +145,12 @@ async def test_parse_response_case_insensitive(mock_llm_client):
     """
     # Setup: LLM returns lowercase
     mock_llm_client.make_request = AsyncMock(return_value="task")
-    
+
     classifier = ModeClassifier(llm_client=mock_llm_client, default_model="mistral")
-    
+
     # Execute
     result = await classifier.classify("Test message")
-    
+
     # Verify: Parses correctly
     assert result == DialogMode.TASK
 
@@ -159,13 +163,15 @@ async def test_parse_response_with_mode_in_text(mock_llm_client):
         mock_llm_client: Mock LLM client.
     """
     # Setup: LLM returns mode embedded in text
-    mock_llm_client.make_request = AsyncMock(return_value="The mode is DATA for this request")
-    
+    mock_llm_client.make_request = AsyncMock(
+        return_value="The mode is DATA for this request"
+    )
+
     classifier = ModeClassifier(llm_client=mock_llm_client, default_model="mistral")
-    
+
     # Execute
     result = await classifier.classify("Test message")
-    
+
     # Verify: Parses correctly
     assert result == DialogMode.DATA
 
@@ -179,12 +185,14 @@ async def test_classify_passes_correct_parameters(mock_llm_client):
     """
     # Setup
     mock_llm_client.make_request = AsyncMock(return_value="TASK")
-    
-    classifier = ModeClassifier(llm_client=mock_llm_client, default_model="custom_model")
-    
+
+    classifier = ModeClassifier(
+        llm_client=mock_llm_client, default_model="custom_model"
+    )
+
     # Execute
     await classifier.classify("Create a task")
-    
+
     # Verify: Correct parameters passed
     mock_llm_client.make_request.assert_called_once()
     call_kwargs = mock_llm_client.make_request.call_args[1]
@@ -192,4 +200,3 @@ async def test_classify_passes_correct_parameters(mock_llm_client):
     assert call_kwargs["max_tokens"] == 10
     assert call_kwargs["temperature"] == 0.1
     assert "Create a task" in mock_llm_client.make_request.call_args[1]["prompt"]
-

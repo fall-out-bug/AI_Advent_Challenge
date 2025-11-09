@@ -5,9 +5,8 @@ Following SOLID: Dependency Inversion Principle via factory pattern.
 """
 
 import json
-import logging
 import os
-from typing import Optional, List, Tuple
+from typing import List, Optional, Tuple
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
@@ -90,11 +89,11 @@ async def create_butler_orchestrator(
 
         # 4. Initialize Intent Classification System (Hybrid: Rules + LLM + Cache)
         settings = get_settings()
-        
+
         # Create rule-based classifier
         rule_classifier = RuleBasedClassifier()
         logger.info("RuleBasedClassifier initialized")
-        
+
         # Create LLM classifier
         llm_classifier = LLMClassifier(
             llm_client=llm_client,
@@ -103,11 +102,13 @@ async def create_butler_orchestrator(
             temperature=0.2,
         )
         logger.info("LLMClassifier initialized")
-        
+
         # Create intent cache
-        intent_cache = IntentCache(default_ttl_seconds=settings.intent_cache_ttl_seconds)
+        intent_cache = IntentCache(
+            default_ttl_seconds=settings.intent_cache_ttl_seconds
+        )
         logger.info("IntentCache initialized")
-        
+
         # Create hybrid intent classifier
         hybrid_intent_classifier = HybridIntentClassifier(
             rule_classifier=rule_classifier,
@@ -116,10 +117,10 @@ async def create_butler_orchestrator(
             confidence_threshold=settings.intent_confidence_threshold,
         )
         logger.info("HybridIntentClassifier initialized")
-        
+
         # 5. Initialize Mode Classifier (uses hybrid system)
         mode_classifier = ModeClassifier(
-            llm_client=llm_client, 
+            llm_client=llm_client,
             default_model="mistral",
             hybrid_classifier=hybrid_intent_classifier,
         )
@@ -190,12 +191,12 @@ async def create_butler_orchestrator(
 
 def _parse_mcp_server_urls() -> List[str]:
     """Parse MCP server URLs from environment variables.
-    
+
     Supports:
     - MCP_SERVER_URLS (comma-separated or JSON array): Multiple servers
     - MCP_SERVER_URL (single): Backward compatibility
     - Default: http://mcp-server:8004 (local server)
-    
+
     Returns:
         List of MCP server URLs
     """
@@ -210,17 +211,17 @@ def _parse_mcp_server_urls() -> List[str]:
                     return [str(url) for url in urls if url]
             except json.JSONDecodeError:
                 pass
-        
+
         # Fallback to comma-separated
         urls = [url.strip() for url in urls_str.split(",") if url.strip()]
         if urls:
             return urls
-    
+
     # Fallback to single MCP_SERVER_URL (backward compatibility)
     single_url = os.getenv("MCP_SERVER_URL")
     if single_url:
         return [single_url]
-    
+
     # Default: local HTTP server (for development)
     # In production, MCP_SERVER_URL should be set via environment variable
     return ["http://localhost:8004"]
@@ -228,14 +229,14 @@ def _parse_mcp_server_urls() -> List[str]:
 
 def _create_mcp_clients() -> List[Tuple[MCPClientProtocol, str]]:
     """Create MCP clients for all configured servers.
-    
+
     Returns:
         List of (client, server_name) tuples.
         Server names are derived from URLs for logging.
     """
     urls = _parse_mcp_server_urls()
     clients: List[Tuple[MCPClientProtocol, str]] = []
-    
+
     for url in urls:
         try:
             # Extract server name from URL
@@ -248,7 +249,7 @@ def _create_mcp_clients() -> List[Tuple[MCPClientProtocol, str]]:
                 # Use stdio for None or non-HTTP URLs
                 server_name = "stdio_server"
                 server_url = None
-            
+
             client = get_mcp_client(server_url=server_url)
             clients.append((client, server_name))
             logger.debug(f"Created MCP client for {server_name} ({url or 'stdio'})")
@@ -256,11 +257,8 @@ def _create_mcp_clients() -> List[Tuple[MCPClientProtocol, str]]:
             logger.warning(f"Failed to create MCP client for {url or 'stdio'}: {e}")
             # Continue with other servers
             continue
-    
-    if not clients:
-        raise RuntimeError(
-            f"No MCP clients could be created from URLs: {urls}"
-        )
-    
-    return clients
 
+    if not clients:
+        raise RuntimeError(f"No MCP clients could be created from URLs: {urls}")
+
+    return clients
