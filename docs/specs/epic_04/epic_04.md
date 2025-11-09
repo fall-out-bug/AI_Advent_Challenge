@@ -12,6 +12,9 @@ structures.
   development.
 - Refresh repository hygiene (README, indices, manifests) to reflect the new
   canonical structure.
+- Execute EP03 observability follow-ups (Grafana dashboard IaC, Loki alert
+  extensions, disaster-recovery drill scheduling) so operations artefacts stay in
+  sync with the archived codebase.
 
 ## Dependencies
 - EP02 completion for MCP/bot replacements.
@@ -46,4 +49,6 @@ structures.
 - `docs/specs/epic_00/stage_00_01.md` inventory notes.
 - `docs/specs/progress.md` for epic tracking.
 - `docs/specs/operations.md` for infra-related script considerations.
+- `docs/specs/epic_03/epic_03_completion.md` for observability backlog items
+  folded into this epic.
 
