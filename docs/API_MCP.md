@@ -148,6 +148,7 @@ Common errors:
 
 - `docs/specs/epic_02/mcp_tool_matrix.md` — definitive catalogue.  
 - `docs/specs/epic_02/mcp_migration_bulletin.md` — migration guidance & CLI mapping.  
+- `docs/CHANGELOG_MCP.md` — public changelog of MCP tooling updates.  
 - `docs/API_MCP.ru.md` — Russian localisation of this document.  
 - `docs/API_BOT_BACKOFFICE.md` — CLI command reference (Stage 02_02).  
 

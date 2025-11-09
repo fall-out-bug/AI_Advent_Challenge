@@ -8,6 +8,16 @@ except Exception:
     pytest.skip("aiogram is required for menu tests", allow_module_level=True)
 
 import src.presentation.bot.handlers.menu as menu_mod
+from src.infrastructure.cache.pdf_cache import get_pdf_cache
+
+
+@pytest.fixture(autouse=True)
+def reset_pdf_cache() -> None:
+    """Ensure each test starts with a clean PDF cache."""
+    cache = get_pdf_cache()
+    cache.clear()
+    yield
+    cache.clear()
 
 
 class FakeMessage:
@@ -26,8 +36,14 @@ class FakeMessage:
     async def answer(self, text: str) -> None:
         self.sent.append(text)
 
-    async def answer_document(self, document: bytes, filename: str) -> None:
-        self.documents.append({"document": document, "filename": filename})
+    async def edit_text(self, text: str, reply_markup=None) -> None:  # noqa: D401
+        self.sent.append(text)
+
+    async def answer_document(self, document, filename: str | None = None) -> None:
+        resolved_filename = filename
+        if resolved_filename is None:
+            resolved_filename = getattr(document, "filename", "document.pdf")
+        self.documents.append({"document": document, "filename": resolved_filename})
 
 
 class FakeCall:
@@ -40,22 +56,10 @@ class FakeCall:
 
 
 @pytest.mark.asyncio
-async def test_callback_summary_calls_mcp_and_replies(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    class FakeClient:
-        async def call_tool(self, tool_name: str, arguments: dict) -> dict:
-            assert tool_name == "get_summary"
-            assert isinstance(arguments.get("user_id"), int)
-            return {
-                "stats": {"total": 3, "completed": 1, "overdue": 1, "high_priority": 1}
-            }
-
-    monkeypatch.setattr(menu_mod, "MCPClient", lambda: FakeClient())
-
+async def test_callback_summary_shows_guidance() -> None:
     call = FakeCall(user_id=123)
     await menu_mod.callback_summary(call)
-    assert any("Summary" in s for s in call.message.sent)
+    assert any("digest" in s.lower() for s in call.message.sent)
 
 
 @pytest.mark.asyncio
@@ -70,7 +74,7 @@ async def test_callback_digest_calls_mcp_and_replies(
                 return {"digests": [{"channel": "news", "summary": "top story"}]}
             return {}
 
-    monkeypatch.setattr(menu_mod, "MCPClient", lambda: FakeClient())
+    monkeypatch.setattr(menu_mod, "get_mcp_client", lambda: FakeClient())
 
     call = FakeCall(user_id=123)
     await menu_mod.callback_digest(call)
@@ -122,7 +126,7 @@ async def test_callback_digest_generates_pdf(monkeypatch: pytest.MonkeyPatch) ->
                 }
             return {}
 
-    monkeypatch.setattr(menu_mod, "MCPClient", lambda: FakeClient())
+    monkeypatch.setattr(menu_mod, "get_mcp_client", lambda: FakeClient())
 
     call = FakeCall(user_id=123)
     await menu_mod.callback_digest(call)
@@ -148,7 +152,7 @@ async def test_callback_digest_handles_no_posts(
                 return {"posts_by_channel": {}, "total_posts": 0, "channels_count": 0}
             return {}
 
-    monkeypatch.setattr(menu_mod, "MCPClient", lambda: FakeClient())
+    monkeypatch.setattr(menu_mod, "get_mcp_client", lambda: FakeClient())
 
     call = FakeCall(user_id=123)
     await menu_mod.callback_digest(call)
@@ -168,7 +172,7 @@ async def test_callback_digest_cache_hit(monkeypatch: pytest.MonkeyPatch) -> Non
             tool_calls.append(tool_name)
             return {}
 
-    monkeypatch.setattr(menu_mod, "MCPClient", lambda: FakeClient())
+    monkeypatch.setattr(menu_mod, "get_mcp_client", lambda: FakeClient())
     # Mock cache to return cached PDF
     from src.infrastructure.cache.pdf_cache import get_pdf_cache
 
@@ -214,7 +218,7 @@ async def test_callback_digest_fallback_to_text_on_error(
                 }
             return {}
 
-    monkeypatch.setattr(menu_mod, "MCPClient", lambda: FakeClient())
+    monkeypatch.setattr(menu_mod, "get_mcp_client", lambda: FakeClient())
 
     call = FakeCall(user_id=123)
     await menu_mod.callback_digest(call)

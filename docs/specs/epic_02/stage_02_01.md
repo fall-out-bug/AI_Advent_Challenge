@@ -1,16 +1,20 @@
 # Stage 02_01 · MCP Tool Catalogue Freeze
 
+**Status:** Completed — deliverables approved 2025-11-09 (see worklog for details).
+
 ## Goal
 Establish the definitive MCP toolset by confirming keep/rework/archive decisions,
 documenting replacements, and updating registry metadata.
 
 ## Checklist
-- [ ] Validate Stage 00 tool inventory against current repository state.
-- [ ] Produce final tool matrix (status, owner, replacement notes, dependencies).
-- [ ] Update `tools_registry` wiring to remove or flag deprecated tools.
-- [ ] Draft migration notes for consumers of archived tools (homework review,
+- [x] Validate Stage 00 tool inventory against current repository state.
+- [x] Produce final tool matrix (status, owner, replacement notes, dependencies).
+- [x] Update `tools_registry` wiring to remove or flag deprecated tools.
+- [x] Draft migration notes for consumers of archived tools (homework review,
   PDF digest, reminders).
-- [ ] Communicate freeze outcome to EP04 for archival scheduling.
+- [x] Communicate freeze outcome to EP04 for archival scheduling.
+- [x] Capture kickoff sync notes (team roster, timelines, outstanding questions)
+  and file them under `docs/specs/epic_02/stage_02_01_worklog.md`.
 
 ## Deliverables
 - Published tool matrix (embedded in Stage doc and linked from epic summary).
@@ -36,6 +40,6 @@ documenting replacements, and updating registry metadata.
 - CLI design (Stage 02_02) receives stable tool contract references.
 
 ## Open Questions
-- Do we preserve any archived tools behind feature flags for fallback?
-- Should we publish a public CHANGELOG entry for third-party consumers?
+- **Preserve archived tools behind feature flag?** ✅ Да — `MCP_INCLUDE_DEPRECATED_TOOLS` включает deprecated/archived инструменты до завершения CLI миграции.
+- **Публиковать ли публичный CHANGELOG?** ✅ Да — см. `docs/CHANGELOG_MCP.md` (добавлен в рамках closing steps).
 

@@ -4,101 +4,116 @@
 бота (подписки/дайджесты) без распознавания интентов. Предназначен только для
 владельца.
 
-## 1. Установка
+## 1. Запуск CLI
 
-CLI будет располагаться в `src/presentation/cli/backoffice/` (в разработке).
-Документ фиксирует требуемый набор команд для реализации.
+```bash
+poetry run python -m src.presentation.cli.backoffice.main <группа> <команда> [опции]
+```
 
-## 2. Обзор команд
+- Стандартный вывод — табличный.
+- Флаг `--json` включает машинно-читаемый JSON.
+- Все команды требуют `--user-id` (идентификатор пользователя в системе).
+
+## 2. Обзор команд (Stage 02_02)
 
 | Команда | Назначение | Статус |
 |---------|------------|--------|
-| `channels list` | Список подписок | Планируется |
-| `channels add` | Подписка на канал | Планируется |
-| `channels remove` | Отписка от канала | Планируется |
-| `channels refresh` | Принудительный сбор постов | Планируется |
-| `digest run` | Генерация дайджеста | Планируется |
-| `digest last` | Просмотр последнего дайджеста | Планируется |
+| `channels list` | Показать активные подписки пользователя | Готово |
+| `channels add` | Подписать пользователя на канал (с валидацией) | Готово |
+| `channels remove` | Деактивировать подписку | Готово |
+| `digest run` | Сформировать дайджест по каналу/каналам | Готово |
+| `digest last` | Показать время последнего дайджеста и метаданные | Готово |
+| `channels refresh` | Принудительный сбор постов | Бэклог |
+| `digest export` | Экспорт дайджеста (Markdown/PDF) | Бэклог |
 | `nlp test` | Проверка NLP-классификатора | Опционально |
-
-Флаг `--output json` выводит результат в JSON; по умолчанию табличный/markdown
-формат.
 
 ## 3. Команды для каналов
 
 ### 3.1 `channels list`
 
-```
-butler-cli channels list [--limit N] [--include-tags] [--output json]
+```bash
+poetry run python -m src.presentation.cli.backoffice.main \
+    channels list --user-id 12345 [--limit 100] [--json]
 ```
 
-Вывод (таблица или JSON):
-
-| Канал | Заголовок | Теги | Активен | С |
+- Таблица содержит `id`, `channel`, `title`, `tags`, `active`, `subscribed_at`.
+- В JSON режиме возвращается список объектов.
+- `--limit` ограничивает количество записей (по умолчанию 100, максимум 500).
 
 ### 3.2 `channels add`
 
-```
-butler-cli channels add --username <имя> [--tags тег1,тег2]
+```bash
+poetry run python -m src.presentation.cli.backoffice.main \
+    channels add --user-id 12345 --channel tech_news [--tag аналитика] [--json]
 ```
 
-Коды возврата:
-
-- `0` — подписка создана
-- `1` — ошибка (канал не найден, уже подписан)
+- Выполняется проверка канала через Telegram metadata API.
+- Теги передаются повторяющимися флагами `--tag`.
+- Коды возврата: `0` — успех/уже подписан, `1` — ошибка валидации.
 
 ### 3.3 `channels remove`
 
-```
-butler-cli channels remove (--channel-id <id> | --username <имя>)
+```bash
+poetry run python -m src.presentation.cli.backoffice.main \
+    channels remove --user-id 12345 --channel-id 507f1f77bcf86cd799439011 [--json]
 ```
 
-Вывод: `removed` или `not_found`.
+- Возвращает статус `deleted` / `not_found`.
 
 ### 3.4 `channels refresh`
 
-```
-butler-cli channels refresh (--channel-id <id> | --username <имя>) [--hours 24]
+> Функциональность запланирована после MVP.
+
+```bash
+poetry run python -m src.presentation.cli.backoffice.main \
+    channels refresh --user-id 12345 --channel-id 507f... [--hours 72]
 ```
 
-Планирует задачу на сбор постов; выводит идентификатор/статус.
+Запускает сбор постов (worker/MCP) и выводит идентификатор задания.
 
 ## 4. Команды дайджестов
 
 ### 4.1 `digest run`
 
-```
-butler-cli digest run --channel <имя> [--hours 24] [--format markdown|json]
+```bash
+poetry run python -m src.presentation.cli.backoffice.main \
+    digest run --user-id 12345 [--channel tech_news] [--hours 24] \
+    [--format markdown|json] [--json]
 ```
 
-Возвращает дайджест (markdown по умолчанию). JSON соответствует ответу
-`digest_generate`.
+- Без `--channel` генерирует дайджесты по всем активным подпискам.
+- `--format markdown` — выводит текст дайджеста, `json` — структуру с метаданными.
+- JSON режим возвращает список объектов с полями `channel`, `summary`, `post_count` и т.д.
 
 ### 4.2 `digest last`
 
-```
-butler-cli digest last --channel <имя>
+```bash
+poetry run python -m src.presentation.cli.backoffice.main \
+    digest last --user-id 12345 --channel tech_news [--json]
 ```
 
-Показывает время генерации, количество постов, краткое содержание.
+- Показывает `last_digest`, `title`, `tags`, признак `active`.
+- Если канал не найден — код возврата `1` и сообщение об ошибке.
 
 ## 5. NLP-команда (опционально)
 
 ```
-butler-cli nlp test --text "покажи дайджест tech news"
+poetry run python -m src.presentation.cli.backoffice.main \
+    nlp test --user-id 12345 --text "покажи дайджест tech news"
 ```
 
 Используется для проверки классификатора и регрессионных тестов.
 
 ## 6. Примечания к реализации
 
-- CLI должен переиспользовать MCP-инструменты (`API_MCP.md` / `.ru.md`).
-- Логирование — с `trace_id` или уникальным идентификатором команды.
-- Аутентификация: только владелец (через env или локальный профиль).
-- Потенциальные улучшения: массовые операции, импорт/экспорт CSV, планировщик.
+- Команды переиспользуют текущие MCP-инструменты (Stage 02_01) для подписок.
+- Экспортируются метрики Prometheus: `cli_command_total`, `cli_command_duration_seconds`,
+  `cli_command_errors_total`.
+- Аутентификация: режим владельца, параметры подключения — через переменные окружения.
+- Бэклог: массовые операции, CSV импорт/экспорт, расписания дайджестов, PDF экспорт.
 
 ## 7. Локализация
 
-- По умолчанию вывод на русском (`--lang en` для английского).
-- Сообщения помощи и ошибки должны быть доступны на двух языках (см. EN версию).
+- Маркдаун-версия команд доступна в EN/ RU (`docs/API_BOT_BACKOFFICE.md` / `.ru.md`).
+- Результаты дайджестов выводятся на русском (в зависимости от настроек summarizer).
 

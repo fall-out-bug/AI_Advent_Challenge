@@ -1,5 +1,10 @@
 # Epic 02 · MCP & Bot Consolidation
 
+## Status
+- **State:** Completed (2025-11-09)
+- **Summary:** MCP catalogue frozen, CLI backoffice shipped, Telegram bot/doc set aligned with new scope.
+- **Owners:** Tech lead – Assistant (user oversight); Implementation – GPT-5 Codex agents.
+
 ## Purpose
 Streamline the MCP toolset and Telegram bot flows by retiring legacy paths,
 introducing deterministic CLI backoffice tooling, and aligning all interfaces
@@ -26,6 +31,21 @@ with the modular reviewer era.
 | Stage 02_02 | CLI backoffice delivery | CLI command set implemented with tests and docs | CLI commands pass tests, operator guide approved |
 | Stage 02_03 | Telegram & docs alignment | Bot flows trimmed, localisation updated, docs synced | Telegram app reflects new scope, docs merged, stakeholders sign off |
 
+## Deliverables
+- `docs/specs/epic_02/mcp_tool_matrix.md` – finalised tool catalogue with lifecycle notes.
+- CLI backoffice (`src/presentation/cli/backoffice/…`) with tests/documentation.
+- Telegram bot scope reduction (channels/digest only) and updated manuals.
+- Public changelog entries (`docs/CHANGELOG_MCP.md`) capturing freeze and CLI rollout.
+- Stage worklogs (`stage_02_01_worklog.md`, `stage_02_02_worklog.md`, `stage_02_03_worklog.md`) and manual checklist.
+
+## Metrics & Evidence
+| Area | Evidence |
+|------|----------|
+| MCP | `tools_registry` filters deprecated/archived by default; Prometheus metric tracks registered tools. |
+| CLI | `poetry run pytest src/tests/presentation/cli/backoffice -q` – 16 passed; Prometheus counters for command usage. |
+| Bot | `poetry run pytest tests/presentation/bot -q` – 11 passed after scope reduction. |
+| Docs | EN/RU guides refreshed (MCP API, CLI backoffice, README, Telegram setup/cache). |
+
 ## Success Criteria
 - MCP `tools_registry` exposes only supported tools with accurate metadata.
 - CLI backoffice covers agreed commands and integrates with application services
@@ -47,8 +67,14 @@ with the modular reviewer era.
   **Mitigation:** Institute localisation review checklist in Stage 02_03 and run
   RU copy tests.
 
+## Follow-ups
+- EP03 backlog: extend CLI with `channels refresh`, `digest export`, NLP QA.
+- EP04: execute archival plan for deleted reminder/task assets.
+- Schedule RU localisation sign-off using `stage_02_03_manual_checklist.md`.
+
 ## References
 - `docs/specs/epic_00/stage_00_01.md` MCP tool inventory.
 - `docs/API_MCP.md`, `docs/API_BOT_BACKOFFICE.md` – existing drafts to refresh.
 - `docs/specs/operations.md` – shared infra commands required by CLI.
+
 

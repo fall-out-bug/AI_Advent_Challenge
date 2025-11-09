@@ -8,6 +8,8 @@
 
 This repository contains daily challenges building AI-powered systems with language models. Each day introduces new concepts and builds upon previous challenges.
 
+**Updates:** Project news and daily recaps are published in the Telegram channel [Высоконагруженный кабанчик](https://t.me/data_intensive_boar).
+
 **Current Status:** ✅ Day 17 Complete – Multi-Pass Code Review with MCP Publishing & Log Analysis
 
 **Project Status:**
@@ -25,7 +27,7 @@ This repository contains daily challenges building AI-powered systems with langu
 - ✅ Multi-model support (StarCoder, Mistral, Qwen, TinyLlama)
 - ✅ MCP (Model Context Protocol) integration with HTTP server
 - ✅ MCP-aware agent with automatic tool discovery and execution
-- ✅ FSM-based Telegram bot with natural language task creation
+- ✅ FSM-based Telegram bot for channel management and digest delivery
 - ✅ **Hybrid Intent Recognition** (Rule-based + LLM with caching)
 - ✅ **HW Checker integration** (all_checks_status, queue_status, retry_check)
 - ✅ **Homework Review via Telegram** (list homeworks, review by commit hash)
@@ -72,7 +74,7 @@ AI_Challenge/
 │   ├── application/ # Use cases and orchestrators
 │   ├── infrastructure/ # External integrations
 │   └── presentation/   # API and CLI
-├── tasks/           # Daily Challenges (day_01 - day_12)
+├── tasks/           # Daily Challenges (historical archive)
 ├── archive/legacy/local_models/    # Archived local model infrastructure (deprecated)
 ├── shared/          # Unified SDK for model interaction
 ├── scripts/         # Utility scripts

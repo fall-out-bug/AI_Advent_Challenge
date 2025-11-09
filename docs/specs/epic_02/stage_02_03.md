@@ -5,14 +5,14 @@ Align Telegram bot behaviour, localisation, and documentation with the
 consolidated MCP and CLI scope.
 
 ## Checklist
-- [ ] Remove or archive reminder/task flows from bot handlers, state machine, and
+- [x] Remove or archive reminder/task flows from bot handlers, state machine, and
   menus.
-- [ ] Ensure digest/channel flows reference the hardened modular reviewer APIs
+- [x] Ensure digest/channel flows reference the hardened modular reviewer APIs
   and CLI equivalents.
-- [ ] Review and update localisation files/content for Russian copy; align tests
+- [x] Review and update localisation files/content for Russian copy; align tests
   with new strings.
-- [ ] Refresh bot-related documentation and FAQs to match new scope.
-- [ ] Coordinate acceptance testing with operations or representative users.
+- [x] Refresh bot-related documentation and FAQs to match new scope.
+- [x] Coordinate acceptance testing with operations or representative users.
 
 ## Deliverables
 - Updated bot source code reflecting reduced scope.
@@ -38,6 +38,8 @@ consolidated MCP and CLI scope.
 
 ## Open Questions
 - Do we maintain a feature flag to temporarily re-enable any archived flows?
+  - Decision: No feature flag; removed flows stay archived (Stage 02_03).
 - Are additional support materials (videos, quick guides) required for end
   users?
+  - Decision: No new assets for this stage; README updates suffice.
 
