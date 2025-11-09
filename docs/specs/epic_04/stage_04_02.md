@@ -10,16 +10,22 @@ assets while preserving repository stability.
 - [ ] Provide stubs or redirect notes where external references exist.
 - [ ] Run full CI/test suite to confirm migrations did not introduce regressions.
 - [ ] Record audit trail noting file moves/deletions for future reference.
+- [ ] Implement observability follow-ups: commit Grafana dashboard IaC
+  provisioning and extend Loki alert rules per Stage 03_03 backlog.
 
 ## Deliverables
 - Pull requests or change sets executing the migrations.
 - Updated documentation indicating new locations or removal notices.
 - Migration log appended to stage summary.
+- IaC assets for Grafana dashboards and updated Alertmanager/Loki rules merged
+  with validation evidence.
 
 ## Metrics & Evidence
 - CI run showing green status post-migration.
 - Repository diff verifying only planned assets affected.
 - Search report confirming legacy references resolved.
+- Executed `observability-checks` workflow (or equivalent) validating new Grafana
+  provisioning and Loki alerts.
 
 ## Dependencies
 - Stage 04_01 approval and communication plan.

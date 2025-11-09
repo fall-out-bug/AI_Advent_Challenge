@@ -10,9 +10,9 @@
 | EP02 | Stage 02_01 | MCP tool catalogue freeze | Completed | Assistant & User | 2025-11-10 | – |
 | EP02 | Stage 02_02 | CLI backoffice delivery | Completed | Assistant & User | 2025-11-10 | – |
 | EP02 | Stage 02_03 | Telegram & documentation alignment | Completed | Assistant & User | 2025-11-11 | – |
-| EP03 | Stage 03_01 | Observability gap analysis | Planned | Tech Lead TBD | – | Coordination with EP01/EP02 needed |
-| EP03 | Stage 03_02 | Instrumentation rollout | Planned | Tech Lead TBD | – | Depends on Stage 03_01 backlog |
-| EP03 | Stage 03_03 | Runbooks & CI operations checks | Planned | Tech Lead TBD | – | Depends on Stage 03_02 instrumentation |
+| EP03 | Stage 03_01 | Observability gap analysis | Completed | Assistant & User | 2025-11-10 | – |
+| EP03 | Stage 03_02 | Instrumentation rollout | Completed | Assistant & User | 2025-11-10 | – |
+| EP03 | Stage 03_03 | Runbooks & CI operations checks | Completed | Assistant & User | 2025-11-11 | – |
 | EP04 | Stage 04_01 | Archive scope confirmation | Planned | Tech Lead TBD | – | Awaiting EP02 replacements |
 | EP04 | Stage 04_02 | Migration execution | Planned | Tech Lead TBD | – | Depends on Stage 04_01 approvals |
 | EP04 | Stage 04_03 | Repository hygiene & sign-off | Planned | Tech Lead TBD | – | Depends on Stage 04_02 migrations |

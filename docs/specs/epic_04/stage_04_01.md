@@ -10,6 +10,8 @@ with dependency analysis and communication plans.
 - [ ] Map dependencies (code references, docs links, automation scripts).
 - [ ] Draft communication plan for stakeholders (what moves, when, impact).
 - [ ] Validate archive folder structure and naming conventions.
+- [ ] Incorporate EP03 observability follow-ups (Grafana IaC, Loki alerts, DR
+  drills) into the scope document with owners and success criteria.
 
 ## Deliverables
 - Archive scope document (tables per asset type) with status and successor
@@ -21,6 +23,8 @@ with dependency analysis and communication plans.
 - Search results confirming absence of critical dependencies on assets marked
   for removal.
 - Signoffs from relevant epic leads (EP01–EP03) confirming readiness.
+- Observability backlog table capturing implementation owners for Grafana IaC,
+  Loki alert extensions, and disaster recovery drills.
 
 ## Dependencies
 - Latest outputs from EP01–EP03.

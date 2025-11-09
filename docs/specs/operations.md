@@ -82,3 +82,30 @@ export USE_MODULAR_REVIEWER=1
 ## 5. Known Issues
 - Several legacy tests expect unauthenticated Mongo; they require fixture
   updates to use `
+
+## 5. Maintenance Windows & Procedures
+
+### 5.1 Schedule
+- **Primary window**: Saturday 02:00–06:00 UTC (low traffic, coordinated with support)
+- **Emergency maintenance**: coordinate via ops chat (`#ops-shared`) and log incident ID in runbook
+- **Freeze periods**: none currently defined; announce exceptions in program stand-up
+
+### 5.2 Roles & Responsibilities
+| Role | Owner | Backup | Responsibilities |
+|------|-------|--------|------------------|
+| EP03 Tech Lead | to be assigned | delegated engineer | Approve maintenance scope, final escalation |
+| On-call Engineer | operations rotation | - | Execute checklist, own communications |
+| Ops Duty Officer | shared infra team | - | Manage shared services, approve infra changes |
+
+### 5.3 Maintenance Checklist Template
+```
+- [ ] Pre-maintenance: announce window, snapshot configs, verify rollback plan
+- [ ] During: execute runbook steps, log deviations, monitor dashboards
+- [ ] Post-maintenance: run health checks (Prometheus targets, Grafana SLOs, Loki logs)
+- [ ] Communication: post summary, document lessons learned, update incident tracker
+```
+
+### 5.4 Escalation Flow
+- Follow escalation matrix in `docs/specs/epic_03/alerting_runbook.md`
+- Communication channels: `#ops-shared`, on-call phone bridge, program coordination thread
+- Rollback authority: EP03 tech lead or delegated on-call engineer
