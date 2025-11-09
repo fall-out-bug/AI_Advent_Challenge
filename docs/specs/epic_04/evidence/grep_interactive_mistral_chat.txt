@@ -1,0 +1,4 @@
+Makefile:176:	poetry run python src/presentation/mcp/cli/interactive_mistral_chat.py
+docs/specs/epic_00/stage_00_01.md:161:| `cli/interactive_mistral_chat.py` | Archive | Superseded by modular reviewer + CLI plan; keep snippets for reference only. |
+tasks/day_10/day_10-phase-03.plan.cursor.md:89:**File**: `src/presentation/mcp/cli/interactive_mistral_chat.py`
+tasks/day_10/day_10-phase-03.plan.cursor.md:202:            └── interactive_mistral_chat.py          # NEW

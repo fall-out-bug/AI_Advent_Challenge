@@ -92,6 +92,33 @@ Prometheus scrapes metrics from:
 
 **Access**: Grafana → Dashboards → Post Fetcher & PDF Metrics
 
+### Dashboard 4: Review Pipeline SLOs
+
+**Location**: `grafana/dashboards/slo-review-pipeline.json`
+
+**Panels**:
+- Pipeline latency vs. 5 minute SLO target
+- Unified worker success rate stat panel
+- Code review backlog depth gauge
+
+### Dashboard 5: MCP Server SLOs
+
+**Location**: `grafana/dashboards/slo-mcp-server.json`
+
+**Panels**:
+- MCP request error rate vs. threshold
+- Request P95 latency with SLO target overlay
+- Overall request throughput
+
+### Dashboard 6: Butler Bot SLOs
+
+**Location**: `grafana/dashboards/slo-butler-bot.json`
+
+**Panels**:
+- Butler bot error rate vs. 10% threshold
+- Message processing P95 latency vs. 5 second target
+- Messages per minute indicator
+
 ## Adding Custom Panels
 
 1. Open Grafana UI: http://localhost:3000
@@ -124,6 +151,28 @@ Alerts are defined in `prometheus/alerts.yml`. To add new alerts:
 1. Edit `prometheus/alerts.yml`
 2. Add alert rule to appropriate group
 3. Restart Prometheus: `docker-compose restart prometheus`
+
+## Log Aggregation (Loki + Promtail)
+
+- **Loki**: collects application logs exposed by Docker containers (port 3100)
+- **Promtail**: ships container logs to Loki; configured via
+  `promtail/promtail-config.yml`
+- **Grafana integration**: Loki datasource provisioned automatically
+  (`grafana/provisioning/datasources/prometheus.yml`)
+
+### Common LogQL Queries
+
+```logql
+{stream="audit"} | json | line_format "{.action} {.resource} {.outcome}"
+
+{service="unified-task-worker"} | json | level!="INFO"
+
+count_over_time({service="mcp-server"} |= "ERROR" [5m])
+```
+
+### Retention
+- Loki filesystem storage retains logs for 30 days (`loki/loki-config.yml`).
+- Audit events are tagged with `stream="audit"` for longer retention policies.
 
 ## Metrics Exposed
 

@@ -339,18 +339,18 @@ async def test_digest_button_click_multiple_channels_processed(monkeypatch: pyte
             tool_calls.append(tool_name)
             
             if tool_name == "get_posts_from_db":
+                posts = {
+                    f"channel{i}": [
+                        {
+                            "text": f"Post from channel{i}",
+                            "date": datetime.utcnow().isoformat(),
+                            "message_id": str(i),
+                        },
+                    ]
+                    for i in range(5)
+                }
                 return {
-                    "posts_by_channel": {
-                        f"channel{i}": [
-                            {
-                                "text": f"Post from channel{i}",
-                                "date": datetime.utcnow().isoformat(),
-                                "message_id": str(i),
-                            },
-                        ],
-                    }
-                    for i in range(5)  # 5 channels
-                },
+                    "posts_by_channel": posts,
                     "total_posts": 5,
                     "channels_count": 5,
                 }

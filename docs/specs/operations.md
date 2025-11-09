@@ -7,6 +7,7 @@
 | Prometheus | `http://127.0.0.1:9090` | `shared-prometheus:9090` | Readiness at `/-/ready`, metrics at `/metrics`. |
 | LLM API (Qwen) | `http://127.0.0.1:8000` | `llm-api:8000` | OpenAI-compatible `/v1/chat/completions`. |
 | Grafana | `http://127.0.0.1:3000` | `grafana:3000` | Login `admin`, password from `.env.infra`. |
+| Loki (Logs) | `http://127.0.0.1:3100` | `loki:3100` | Backed by Promtail docker log shippers; retention 30 days. |
 
 ## 2. Environment Bootstrap
 ```bash
@@ -71,18 +72,13 @@ export USE_MODULAR_REVIEWER=1
   client unavailable.
 - Plan to register custom jobs in `prometheus/prometheus.yml` once modules are
   consolidated (tracked in EP03).
+- SLO dashboards provisioned in Grafana (`grafana/dashboards/slo-*.json`) cover
+  review pipeline, MCP server, and Butler bot components.
+- Alertmanager is enabled with webhook routing via `prometheus/alertmanager.yml`
+  and the runbook lives in `docs/specs/epic_03/alerting_runbook.md`.
+- Loki + Promtail provide centralised log aggregation; use the Grafana Loki
+  datasource for troubleshooting (`stream="audit"` for privileged operations).
 
 ## 5. Known Issues
 - Several legacy tests expect unauthenticated Mongo; they require fixture
-  updates to use `TEST_MONGODB_URL` (Stage 00_01 deliverable).
-- Lint target `make lint` currently fails due to pre-existing long lines and
-  unused variables; remediation tracked for future epic.
-- PDF generation tests rely on `weasyprint`; ensure dependency versions match
-  `pyproject`. Failures should be mocked or executed in environment with
-  required native libs.
-
-## 6. Runbooks (To Be Expanded)
-- Start shared infra (`./scripts/start-infra.sh` in infra repo).
-- Restart LLM API container (`docker compose -f llm/docker-compose.yml up -d`).
-- Rotate credentials (update `.env.infra`, restart consumers, commit masked
-  changes in ops docs).
+  updates to use `

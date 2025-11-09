@@ -4,46 +4,18 @@ from __future__ import annotations
 
 import json
 import logging
-import sys
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, cast, Callable
 
-# Add shared to path for imports
-_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(_root))
-shared_path = _root / "shared"
-sys.path.insert(0, str(shared_path))
-
-# Try to import UnifiedModelClient with fallbacks
-_UNIFIED_CLIENT_AVAILABLE = False
 try:
-    from shared_package.clients.unified_client import UnifiedModelClient
-
-    _UNIFIED_CLIENT_AVAILABLE = True
+    from shared_package.clients.unified_client import UnifiedModelClient  # type: ignore[import-not-found]
 except ImportError:
     try:
-        from shared.clients.unified_client import UnifiedModelClient
-
-        _UNIFIED_CLIENT_AVAILABLE = True
-    except ImportError:
-        shared_package_path = _root / "shared" / "shared_package"
-        if shared_package_path.exists():
-            sys.path.insert(0, str(shared_package_path.parent))
-            try:
-                from shared_package.clients.unified_client import UnifiedModelClient
-
-                _UNIFIED_CLIENT_AVAILABLE = True
-            except ImportError:
-                pass
-
-if not _UNIFIED_CLIENT_AVAILABLE:
-
-    class UnifiedModelClient:
-        def __init__(self, *args, **kwargs):
-            raise RuntimeError(
-                "UnifiedModelClient not available. Shared package not installed."
-            )
+        from shared.clients.unified_client import UnifiedModelClient  # type: ignore[import-not-found]
+    except ImportError as exc:  # pragma: no cover - defensive guard
+        raise RuntimeError(
+            "UnifiedModelClient not available. Shared SDK is not installed."
+        ) from exc
 
 
 from multipass_reviewer.application.config import ReviewConfig
@@ -61,6 +33,7 @@ from src.domain.interfaces.review_publisher import ReviewPublisher
 from src.domain.interfaces.tool_client import ToolClientProtocol
 from src.domain.services.diff_analyzer import DiffAnalyzer
 from src.domain.value_objects.long_summarization_task import LongTask
+from src.domain.models.code_review_models import MultiPassReport
 from src.infrastructure.archive.archive_service import ZipArchiveService
 from src.infrastructure.config.settings import Settings, get_settings
 from src.infrastructure.logging.review_logger import ReviewLogger
@@ -204,8 +177,8 @@ class ReviewSubmissionUseCase:
             await self._attach_haiku(report)
             report_markdown = await self._persist_report(report, context)
             await self._publish_review_report(report, context, report_markdown)
-            await self._mark_task_complete(context.task, report.session_id)
-            return report.session_id
+            await self._mark_task_complete(context.task, cast(str, report.session_id))
+            return cast(str, report.session_id)
         except Exception as exc:
             await self._mark_task_failed(context.task, exc)
             raise
@@ -247,14 +220,15 @@ class ReviewSubmissionUseCase:
             )
             raise
 
-    async def _run_review(self, context: _ReviewTaskContext):
+    async def _run_review(self, context: _ReviewTaskContext) -> MultiPassReport:
         """Run modular review service and return generated report."""
-        return await self.modular_service.review_submission(
+        report = await self.modular_service.review_submission(
             new_archive_path=context.new_submission_path,
             previous_archive_path=context.previous_submission_path,
             assignment_id=context.assignment_id,
             student_id=context.student_id,
         )
+        return cast(MultiPassReport, report)
 
     async def _append_log_analysis(
         self, report: Any, context: _ReviewTaskContext
@@ -346,7 +320,7 @@ class ReviewSubmissionUseCase:
             metadata=metadata,
         )
         logger.info("Saved review session: session_id=%s", session_id)
-        return report_markdown
+        return cast(str, report_markdown)
 
     async def _publish_review_report(
         self,
@@ -386,7 +360,7 @@ class ReviewSubmissionUseCase:
             return []
         return [finding.title[:40] for finding in report.pass_1.findings[:3]]
 
-    def _extract_overall_score(self, report) -> int:
+    def _extract_overall_score(self, report: MultiPassReport) -> int:
         """Extract overall score from MultiPassReport.
 
         Purpose:
@@ -440,7 +414,11 @@ class ReviewSubmissionUseCase:
         from src.domain.value_objects.log_analysis import LogEntry
 
         # 1. Extract logs from archive
-        logs_dict = self.archive_reader.extract_logs(logs_zip_path)
+        extractor = cast(
+            Callable[[str], dict[str, str]],
+            getattr(self.archive_reader, "extract_logs"),
+        )
+        logs_dict = extractor(logs_zip_path)
         if not logs_dict:
             return {
                 "status": "skipped",

@@ -20,7 +20,7 @@ import os
 load_dotenv()
 
 from src.infrastructure.database.mongo import get_db, close_client
-from src.infrastructure.monitoring.logger import get_logger
+from src.infrastructure.logging import get_logger
 
 logger = get_logger(name="clear_db")
 

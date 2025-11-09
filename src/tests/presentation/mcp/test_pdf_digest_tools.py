@@ -6,6 +6,14 @@ from unittest.mock import patch
 
 import pytest
 
+pytestmark = pytest.mark.xfail(
+    reason=(
+        "PDF digest MCP tools are deprecated in Stage 02_01; use CLI digest:export"
+        " from Stage 02_02."
+    ),
+    strict=False,
+)
+
 
 @pytest.fixture(scope="module")
 def event_loop():

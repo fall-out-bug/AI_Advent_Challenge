@@ -11,14 +11,36 @@ DEFAULT_TEMPERATURE = 0.7
 TEST_MAX_TOKENS = 1
 
 # Analysis configuration
-DIFFICULTY_LEVELS = {
-    "MIN": 1,
-    "MAX": 5
-}
+DIFFICULTY_LEVELS = {"MIN": 1, "MAX": 5}
 
 # Logical keywords for analysis
-LOGICAL_KEYWORDS = ["если", "значит", "поэтому", "следовательно", "отсюда", "из этого", "получается", "вывод", "рассуждение", "логика", "шаг", "этап", "сначала", "затем", "далее", "в итоге"]
-STEP_PATTERNS = [r'\d+[\.\)]\s', r'шаг\s*\d+', r'этап\s*\d+', r'сначала', r'затем', r'далее', r'в итоге']
+LOGICAL_KEYWORDS = [
+    "если",
+    "значит",
+    "поэтому",
+    "следовательно",
+    "отсюда",
+    "из этого",
+    "получается",
+    "вывод",
+    "рассуждение",
+    "логика",
+    "шаг",
+    "этап",
+    "сначала",
+    "затем",
+    "далее",
+    "в итоге",
+]
+STEP_PATTERNS = [
+    r"\d+[\.\)]\s",
+    r"шаг\s*\d+",
+    r"этап\s*\d+",
+    r"сначала",
+    r"затем",
+    r"далее",
+    r"в итоге",
+]
 
 # Report configuration
 REPORT_FILENAME_PREFIX = "model_test_report_"
@@ -40,7 +62,15 @@ MAX_TOKENS_LIMIT = 100000
 
 # Advice mode configuration
 MAX_ADVICE_QUESTIONS = 5
-ADVICE_TRIGGER_PHRASES = ["дай совет", "дай мне совет", "нужен совет", "посоветуй", "что посоветуешь", "как быть", "что делать"]
+ADVICE_TRIGGER_PHRASES = [
+    "дай совет",
+    "дай мне совет",
+    "нужен совет",
+    "посоветуй",
+    "что посоветуешь",
+    "как быть",
+    "что делать",
+]
 
 # UI configuration
 TERMINAL_WIDTH = 60

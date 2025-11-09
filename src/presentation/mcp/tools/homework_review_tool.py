@@ -4,6 +4,8 @@ Following Clean Architecture principles and the Zen of Python.
 """
 
 import json
+import logging
+import warnings
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional
 
@@ -27,6 +29,14 @@ from src.presentation.mcp.server import mcp
 ensure_shared_in_path()
 
 from shared_package.clients.unified_client import UnifiedModelClient
+
+logger = logging.getLogger(__name__)
+
+HOMEWORK_TOOL_DEPRECATION_MESSAGE = (
+    "MCP homework review tool is deprecated and will be replaced by the modular "
+    "reviewer implementation after EP01. Enable MCP_INCLUDE_DEPRECATED_TOOLS to "
+    "register it temporarily."
+)
 
 
 def detect_assignment_type(codebase: Mapping[str, str]) -> str:
@@ -89,6 +99,13 @@ async def review_homework_archive(
         FileNotFoundError: If archive_path doesn't exist
         ValueError: If archive is invalid or assignment type is unknown
     """
+    warnings.warn(
+        HOMEWORK_TOOL_DEPRECATION_MESSAGE,
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    logger.warning(HOMEWORK_TOOL_DEPRECATION_MESSAGE)
+
     archive_path_obj = Path(archive_path)
 
     if not archive_path_obj.exists():
@@ -204,9 +221,6 @@ async def review_homework_archive(
                 client=client,
             )
         except Exception as error:
-            import logging
-
-            logger = logging.getLogger(__name__)
             logger.error("Error generating markdown report: %s", error, exc_info=True)
             detailed_markdown = f"""# Code Review Report
 

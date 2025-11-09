@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import logging
 import re
+import time
 from pathlib import Path
-from typing import Any, Dict, Mapping, Optional
+from typing import Any, Dict, Mapping, Optional, cast
 
 from multipass_reviewer.application.config import ReviewConfig
 from multipass_reviewer.application.orchestrator import (
@@ -13,7 +14,9 @@ from multipass_reviewer.application.orchestrator import (
 )
 from multipass_reviewer.domain.interfaces.archive_reader import ArchiveReader
 from multipass_reviewer.domain.interfaces.llm_client import LLMClientProtocol
-from multipass_reviewer.domain.interfaces.review_logger import ReviewLoggerProtocol
+from multipass_reviewer.domain.interfaces.review_logger import (
+    ReviewLoggerProtocol,
+)
 from multipass_reviewer.domain.models.review_models import (
     MultiPassReport as PackageReview,
 )
@@ -32,6 +35,9 @@ from src.infrastructure.archive.archive_service import ZipArchiveService
 from src.infrastructure.config.settings import Settings, get_settings
 from src.infrastructure.logging.review_logger import ReviewLogger
 from src.infrastructure.monitoring.checker_metrics import observe_pass
+from src.infrastructure.monitoring.review_metrics import (
+    review_pipeline_duration,
+)
 
 
 class _ZipArchiveReaderAdapter(ArchiveReader):
@@ -44,27 +50,53 @@ class _ZipArchiveReaderAdapter(ArchiveReader):
         self, archive_path: str, *_args: object, **_kwargs: object
     ) -> Mapping[str, str]:
         submission_id = Path(archive_path).stem
-        archive = self._archive_service.extract_submission(archive_path, submission_id)
+        archive = self._archive_service.extract_submission(
+            archive_path,
+            submission_id,
+        )
         return archive.code_files
 
 
 class _LLMClientAliasAdapter(LLMClientProtocol):
     """Rewrite package-specific model aliases to real model names."""
 
-    def __init__(self, delegate: LLMClientProtocol, default_model: str) -> None:
+    def __init__(
+        self,
+        delegate: LLMClientProtocol,
+        default_model: str,
+    ) -> None:
         self._delegate = delegate
         self._default_model = self._normalize(default_model)
 
-    async def make_request(self, model_name: str, prompt: str, **kwargs: Any) -> str:
-        actual_model = self._default_model if model_name == "summary" else model_name
-        return await self._delegate.make_request(actual_model, prompt, **kwargs)
+    async def make_request(
+        self,
+        model_name: str,
+        prompt: str,
+        **kwargs: Any,
+    ) -> str:
+        actual_model = (
+            self._default_model if model_name == "summary" else model_name
+        )
+        response = await self._delegate.make_request(
+            actual_model,
+            prompt,
+            **kwargs,
+        )
+        return cast(str, response)
 
     @staticmethod
     def _normalize(model_name: str) -> str:
         candidate = model_name.lower()
         slug = re.sub(r"[^a-z0-9]+", " ", candidate)
         tokens = slug.split()
-        aliases = ("mistral", "qwen", "tinyllama", "starcoder", "perplexity", "chadgpt")
+        aliases = (
+            "mistral",
+            "qwen",
+            "tinyllama",
+            "starcoder",
+            "perplexity",
+            "chadgpt",
+        )
         for alias in aliases:
             if alias in tokens or alias in candidate:
                 return alias
@@ -72,7 +104,7 @@ class _LLMClientAliasAdapter(LLMClientProtocol):
 
 
 class ModularReviewService:
-    """Bridge between AI_Challenge infrastructure and the reusable reviewer package."""
+    """Bridge infrastructure services with the reusable reviewer package."""
 
     logger = logging.getLogger(__name__)
 
@@ -89,7 +121,8 @@ class ModularReviewService:
         self._diff_analyzer = diff_analyzer
         self._settings = settings or get_settings()
         self._llm_client = _LLMClientAliasAdapter(
-            llm_client, default_model=self._settings.llm_model
+            llm_client,
+            default_model=self._settings.llm_model,
         )
         self._review_logger = review_logger or ReviewLogger()
         self._config = review_config or ReviewConfig()
@@ -111,12 +144,16 @@ class ModularReviewService:
     ) -> MultiPassReport:
         """Run modular multipass review for archives stored on disk."""
 
-        package_report = await self._reviewer.review_from_archives(
-            new_archive_path=new_archive_path,
-            previous_archive_path=previous_archive_path,
-            assignment_id=assignment_id,
-            student_id=student_id,
-        )
+        start_time = time.perf_counter()
+        try:
+            package_report = await self._reviewer.review_from_archives(
+                new_archive_path=new_archive_path,
+                previous_archive_path=previous_archive_path,
+                assignment_id=assignment_id,
+                student_id=student_id,
+            )
+        finally:
+            review_pipeline_duration.observe(time.perf_counter() - start_time)
         return self._convert_report(package_report)
 
     @staticmethod
@@ -136,7 +173,11 @@ class ModularReviewService:
                 findings.append(
                     LegacyFinding(
                         severity=_parse_severity(entry.get("severity")),
-                        title=entry.get("title") or entry.get("message") or name,
+                        title=(
+                            entry.get("title")
+                            or entry.get("message")
+                            or name
+                        ),
                         description=entry.get("description")
                         or entry.get("message")
                         or "",
@@ -162,7 +203,8 @@ class ModularReviewService:
                 return SeverityLevel[value.upper()]
             except KeyError:
                 try:
-                    return SeverityLevel(value.lower())  # type: ignore[arg-type]
+                    normalized = value.lower()
+                    return SeverityLevel(normalized)  # type: ignore[arg-type]
                 except Exception:
                     return SeverityLevel.MAJOR
 

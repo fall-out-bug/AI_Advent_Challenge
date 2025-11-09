@@ -1,162 +1,133 @@
 # MCP Tool API (EN)
 
-The Butler MCP server exposes a curated set of tools for digest and channel
-operations, plus NLP intent helpers. Reminder/task tools and PDF digest have
-been deprecated (see Stage 00_02 decisions).
+The Butler MCP server now exposes only supported digest, channel, and NLP tools
+by default. Deprecated and archived tools remain discoverable only when the
+`MCP_INCLUDE_DEPRECATED_TOOLS=1` flag is enabled on both the server and the
+client. Each discovery response now includes tool `status` metadata that callers
+must respect.
 
-## 1. Available Tools
+> **Stage 01_03 (0.3.0):** Modular reviewer tools are always enabled; removal of the `use_modular_reviewer` flag means MCP deployments should assume the reviewer pipeline is active when CI is green.
 
-| Tool Name | Purpose | Status |
-|-----------|---------|--------|
-| `channels_list` | List subscribed channels | Active |
-| `channels_add` | Subscribe to a new channel | Active |
-| `channels_remove` | Remove an existing subscription | Active |
-| `channels_refresh` | Trigger content refresh | Active |
-| `digest_generate` | Generate digest for channel(s) | Active |
-| `digest_get_last` | Inspect latest digest metadata | Active |
-| `nlp_parse_intent` | Parse intent classification sample | Active |
+## 1. Discovery Overview
 
-Deprecated tools (reminders, homework review, PDF digest) are hidden from
-discovery and slated for archival.
+- Use `MCPToolsRegistry.discover_tools()` to obtain the filtered catalogue.  
+- Tool metadata contains `status` (`supported`, `transition`, `deprecated`,
+  `archived`) and an optional migration note.  
+- Deprecated/archived tools are hidden unless the opt-in flag is set.
 
-## 2. Channel Tools
+```python
+from src.presentation.mcp.client import MCPClient
+from src.presentation.mcp.tools_registry import MCPToolsRegistry
 
-### 2.1 `channels_list`
+client = MCPClient()
+registry = MCPToolsRegistry(client)
+tools = await registry.discover_tools()
 
-- **Args**: `{ "user_id": int, "limit": int | null, "include_tags": bool | null }`
-- **Returns**:
-
-```json
-{
-  "status": "success",
-  "channels": [
-    {
-      "channel_id": "507f1f77bcf86cd799439011",
-      "username": "tech_news",
-      "title": "Tech News",
-      "tags": ["analytics"],
-      "active": true,
-      "subscribed_at": "2025-11-09T10:00:00Z"
-    }
-  ],
-  "count": 1
-}
+for tool in tools:
+    print(tool.name, tool.status, tool.note)
 ```
 
-### 2.2 `channels_add`
+## 2. Supported Tools
 
-- **Args**: `{ "user_id": int, "channel_username": str, "tags": list[str] | null }`
-- **Returns**:
+| Tool Name | Module | Purpose | Notes |
+|-----------|--------|---------|-------|
+| `parse_digest_intent` | `nlp_tools.py` | Parse natural language digest requests | Keeps CLI/bot in sync with RU localisation. |
+| `get_channel_digest_by_name` | `channels/channel_digest.py` | Generate digest for a specific channel | Uses modular summarisation pipeline. |
+| `get_channel_digest` | `channels/channel_digest.py` | Generate digest for all active subscriptions | Supports new summarisation use case. |
+| `request_channel_digest_async` | `channels/channel_digest.py` | Enqueue long-running digest job | Worker integration preserved. |
+| `get_channel_metadata` | `channels/channel_metadata.py` | Resolve channel metadata from Mongo/Telegram | Provides data to CLI and bot flows. |
+| `resolve_channel_name` | `channels/channel_resolution.py` | Fuzzy channel lookup for user input | Falls back to Telegram search when allowed. |
 
-```json
-{
-  "status": "subscribed",
-  "channel_id": "507f1f77bcf86cd799439011"
-}
-```
+### 2.1 `get_channel_digest`
 
-Errors include `"already_subscribed"` or `"channel_not_found"`.
-
-### 2.3 `channels_remove`
-
-- **Args**: `{ "user_id": int, "channel_id": str | null, "channel_username": str | null }`
-- **Returns**:
-
-```json
-{
-  "status": "removed",
-  "channel_id": "507f1f77bcf86cd799439011"
-}
-```
-
-### 2.4 `channels_refresh`
-
-- **Args**: `{ "channel_id": str | null, "channel_username": str | null, "hours": int | null }`
-- **Effect**: Schedules immediate fetch job; returns `{"status": "scheduled"}`.
-
-## 3. Digest Tools
-
-### 3.1 `digest_generate`
-
-- **Args**:
+**Args**
 
 ```json
 {
   "user_id": 12345,
-  "channel": "tech_news",
-  "hours": 24,
-  "format": "markdown"
+  "hours": 24
 }
 ```
 
-- **Returns**:
+**Response**
 
 ```json
 {
-  "status": "success",
-  "generated_at": "2025-11-09T11:00:00Z",
-  "digest": {
-    "channel": "tech_news",
-    "summary": "Summary text…",
-    "post_count": 5,
-    "items": [
-      {"title": "...", "url": "...", "summary": "..."}
-    ]
-  }
-}
-```
-
-Supports `format` = `"markdown"` | `"json"` (default markdown).
-
-### 3.2 `digest_get_last`
-
-- **Args**: `{ "channel": str }`
-- **Returns**:
-
-```json
-{
-  "status": "success",
-  "last_digest": {
-    "generated_at": "2025-11-08T09:30:00Z",
-    "post_count": 3,
-    "summary": "…"
-  }
-}
-```
-
-## 4. NLP Tool
-
-### `nlp_parse_intent`
-
-- **Args**: `{ "text": str, "context": dict | null }`
-- **Returns**:
-
-```json
-{
-  "status": "success",
-  "intent": {
-    "mode": "digest",
-    "confidence": 0.92,
-    "slots": {
+  "digests": [
+    {
       "channel": "tech_news",
-      "hours": 24
-    },
-    "needs_clarification": false
-  }
+      "summary": "Summary text…",
+      "post_count": 5,
+      "tags": ["analytics"]
+    }
+  ],
+  "generated_at": "2025-11-09T11:00:00Z"
 }
 ```
 
-Useful for CLI backoffice validation and automated testing.
+### 2.2 `get_channel_metadata`
 
-## 5. Error Model
+**Args**: `{ "channel_username": "tech_news", "user_id": 12345 }`  
+**Response**: Metadata dictionary with `title`, `description`, `success` flag, and
+lookup notes. Falls back to Telegram search when Mongo data is stale.
 
-All tools return a consistent envelope:
+### 2.3 `parse_digest_intent`
+
+**Args**: `{ "text": "нужен дайджест за последние 24 часа", "user_context": {} }`  
+**Response**: Intent payload containing `intent_type`, `confidence`, inferred
+`hours`, optional `questions`, and recommended tool sequence.
+
+## 3. Transition Tools (Moving to CLI Backoffice)
+
+These tools remain callable for backward compatibility but will be replaced by
+Stage 02_02 CLI commands. Consumers should migrate to the CLI equivalents listed
+in the migration bulletin.
+
+| Tool Name | Purpose | Planned Replacement |
+|-----------|---------|----------------------|
+| `add_channel` | Subscribe user to a channel | `cli channels add` |
+| `list_channels` | List active subscriptions | `cli channels list` |
+| `delete_channel` | Remove subscription | `cli channels remove` |
+| `get_posts` | Read recent posts from Mongo | `cli channels refresh --dry-run` |
+| `collect_posts` | Harvest posts via Telegram | `cli channels refresh` |
+| `save_posts_to_db` | Persist harvested posts | CLI ingestion pipeline |
+
+> **Note:** Transition tools continue to require Mongo and Telegram credentials.
+> Their responses remain unchanged until Stage 02_02 completes.
+
+## 4. Deprecated Tools (Opt-In Only)
+
+Deprecated tools register only when `MCP_INCLUDE_DEPRECATED_TOOLS=1`. Each call
+emits a structured deprecation warning.
+
+| Tool Name | Status Note |
+|-----------|-------------|
+| `review_homework_archive` | Replaced by modular reviewer tool after EP01. |
+| `get_posts_from_db` | PDF digest flows superseded by CLI export. |
+| `summarize_posts` | CLI summariser handles channel summaries. |
+| `format_digest_markdown` | Markdown formatting moves to CLI renderer. |
+| `combine_markdown_sections` | CLI template combines sections. |
+| `convert_markdown_to_pdf` | PDF export handled outside MCP. |
+
+## 5. Archived Tools (Retiring)
+
+These tools are no longer exposed by default and will be removed during the EP04
+archival sweep. Avoid all new dependencies.
+
+| Tool Name | Rationale |
+|-----------|-----------|
+| `add_task`, `list_tasks`, `update_task`, `delete_task`, `get_summary` | Reminder/task flows discontinued. |
+| `parse_task_intent` | Reminder intent detection path removed. |
+
+## 6. Error Model
+
+All tools return structured results. Errors follow the envelope:
 
 ```json
 {
   "status": "error",
   "error": "human-readable message",
-  "details": {...}  // optional
+  "details": { "context": "optional diagnostic payload" }
 }
 ```
 
@@ -167,21 +138,16 @@ Common errors:
 - `digest_unavailable`
 - `nlp_timeout`
 
-## 6. Discovery & Health
+## 7. Health & Monitoring
 
-```python
-from src.presentation.mcp.client import MCPClient
+- MCP HTTP endpoint: `GET /health` → `{"status": "ok"}`  
+- Prometheus metrics exposed when shared infra is configured.  
+- Deprecated tool usage is logged with `WARNING` level and tool name.
 
-client = MCPClient()
-tools = await client.discover_tools()
-print([tool["name"] for tool in tools])  # Active tool list
-```
+## 8. Related Documents
 
-Health endpoint: `GET /health` (returns `{"status": "ok"}`).
-
-## 7. Cross-References
-
-- CLI backoffice (Stage 00_02) will reuse these tools internally.
-- Telegram bot digest/channel flows map one-to-one onto this API.
-- Russian localisation: `docs/API_MCP.ru.md`.
+- `docs/specs/epic_02/mcp_tool_matrix.md` — definitive catalogue.  
+- `docs/specs/epic_02/mcp_migration_bulletin.md` — migration guidance & CLI mapping.  
+- `docs/API_MCP.ru.md` — Russian localisation of this document.  
+- `docs/API_BOT_BACKOFFICE.md` — CLI command reference (Stage 02_02).  
 

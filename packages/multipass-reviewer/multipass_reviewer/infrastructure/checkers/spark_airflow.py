@@ -72,7 +72,10 @@ class AirflowChecker(BaseChecker):
                     {
                         "file": path,
                         "rule": "missing_default_args",
-                        "message": "Airflow DAG should define default_args for retries/owner",
+                        "message": (
+                            "Airflow DAG should define default_args "
+                            "for retries/owner"
+                        ),
                     }
                 )
 
@@ -81,7 +84,9 @@ class AirflowChecker(BaseChecker):
                     {
                         "file": path,
                         "rule": "missing_schedule_interval",
-                        "message": "Airflow DAG missing schedule_interval declaration",
+                        "message": (
+                            "Airflow DAG missing schedule_interval declaration"
+                        ),
                     }
                 )
 

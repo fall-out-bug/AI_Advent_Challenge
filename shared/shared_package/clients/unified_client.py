@@ -6,35 +6,30 @@ and "Explicit is better than implicit".
 """
 
 import asyncio
-from typing import Dict, List, Optional
-import httpx
 import logging
+from typing import Any, Dict, List, Optional
 
+import httpx
 from tenacity import (
     AsyncRetrying,
+    before_sleep_log,
     retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    before_sleep_log,
 )
 
-from .base_client import BaseModelClient, ModelResponse
-from ..config.models import MODEL_CONFIGS, ModelType, get_model_config, is_local_model
-from ..config.constants import (
-    DEFAULT_TIMEOUT,
-    DEFAULT_MAX_TOKENS,
-    DEFAULT_TEMPERATURE,
-    TEST_MAX_TOKENS,
-)
 from ..config.api_keys import get_api_key, is_api_key_configured
-from ..validation.models import ModelRequest, ValidationError, sanitize_input
+from ..config.constants import DEFAULT_MAX_TOKENS, DEFAULT_TEMPERATURE, DEFAULT_TIMEOUT
+from ..config.models import MODEL_CONFIGS, get_model_config, is_local_model
 from ..exceptions.model_errors import (
+    ModelConfigurationError,
     ModelConnectionError,
+    ModelNotAvailableError,
     ModelRequestError,
     ModelTimeoutError,
-    ModelConfigurationError,
-    ModelNotAvailableError,
 )
+from ..validation.models import ModelRequest, ValidationError, sanitize_input
+from .base_client import BaseModelClient, ModelResponse
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +65,7 @@ class UnifiedModelClient(BaseModelClient):
         )
         self.client = httpx.AsyncClient(timeout=timeout)
 
-    async def close(self):
+    async def close(self) -> None:
         """Close HTTP client."""
         await self.client.aclose()
 
@@ -90,21 +85,25 @@ class UnifiedModelClient(BaseModelClient):
         async for attempt in self._retrying():
             with attempt:
                 return await self._execute_request(validated_request)
+        raise ModelRequestError("Failed to execute model request")
 
     async def _execute_request(self, request: ModelRequest) -> ModelResponse:
         """Execute request against either local or external model."""
+        normalized_max_tokens = request.max_tokens or DEFAULT_MAX_TOKENS
+        normalized_temperature = request.temperature or DEFAULT_TEMPERATURE
+
         if is_local_model(request.model_name):
             return await self._make_local_request(
                 request.model_name,
                 request.prompt,
-                request.max_tokens,
-                request.temperature,
+                normalized_max_tokens,
+                normalized_temperature,
             )
         return await self._make_external_request(
             request.model_name,
             request.prompt,
-            request.max_tokens,
-            request.temperature,
+            normalized_max_tokens,
+            normalized_temperature,
         )
 
     def _retrying(self) -> AsyncRetrying:
@@ -201,7 +200,7 @@ class UnifiedModelClient(BaseModelClient):
 
     def _create_local_payload(
         self, prompt: str, max_tokens: int, temperature: float
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """Create payload for local model request."""
         return {
             "messages": [{"role": "user", "content": prompt}],
@@ -230,7 +229,7 @@ class UnifiedModelClient(BaseModelClient):
 
     def _create_openai_payload(
         self, model_name: str, prompt: str, max_tokens: int, temperature: float
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """Create OpenAI-compatible payload."""
         return {
             "model": model_name,
@@ -294,6 +293,8 @@ class UnifiedModelClient(BaseModelClient):
         """Make request to external API."""
         self._check_api_key_configured(model_name)
         api_key = get_api_key(model_name)
+        if api_key is None:
+            raise ModelConfigurationError(f"API key not configured for {model_name}")
         start_time = asyncio.get_event_loop().time()
 
         try:
@@ -361,7 +362,7 @@ class UnifiedModelClient(BaseModelClient):
 
     def _create_perplexity_payload(
         self, prompt: str, max_tokens: int, temperature: float
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """Create payload for Perplexity API request."""
         return {
             "model": "sonar-pro",
@@ -425,7 +426,7 @@ class UnifiedModelClient(BaseModelClient):
 
     def _create_chadgpt_payload(
         self, prompt: str, max_tokens: int, temperature: float, api_key: str
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """Create payload for ChadGPT API request."""
         return {
             "message": prompt,

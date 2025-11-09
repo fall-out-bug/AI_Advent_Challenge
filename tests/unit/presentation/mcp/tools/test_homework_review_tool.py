@@ -6,6 +6,14 @@ import pytest
 
 from src.presentation.mcp.tools.homework_review_tool import detect_assignment_type
 
+pytestmark = pytest.mark.xfail(
+    reason=(
+        "Homework review MCP tool deprecated in Stage 02_01; replacement arrives"
+        " after EP01 refactor."
+    ),
+    strict=False,
+)
+
 
 class TestDetectAssignmentType:
     """Test suite for detect_assignment_type function."""

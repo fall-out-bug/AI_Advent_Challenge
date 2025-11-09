@@ -17,30 +17,30 @@ Core Components:
 Usage Example:
     from shared_package.agents import CodeGeneratorAgent, AgentRequest
     from shared_package.orchestration.adapters import DirectAdapter
-    
+
     async with UnifiedModelClient() as client:
         agent = CodeGeneratorAgent(client, adapter=DirectAdapter())
-        
+
         request = AgentRequest(
             task_id="gen_001",
             task_type="code_generation",
             task="Create a Python function to calculate fibonacci",
             context={"language": "python", "style": "recursive"}
         )
-        
+
         response = await agent.process(request)
         print(f"Generated: {response.result}")
 """
 
+from typing import TYPE_CHECKING, Any, Type, cast
+
 from .base_agent import BaseAgent
 from .code_generator import CodeGeneratorAgent
 from .code_reviewer import CodeReviewerAgent
-from .schemas import (
-    AgentRequest,
-    AgentResponse,
-    TaskMetadata,
-    QualityMetrics
-)
+from .schemas import AgentRequest, AgentResponse, QualityMetrics, TaskMetadata
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ..clients.unified_client import UnifiedModelClient
 
 # Version information
 __version__ = "0.2.0"
@@ -50,39 +50,38 @@ __author__ = "AI Challenge Team"
 __all__ = [
     # Core agent classes
     "BaseAgent",
-    "CodeGeneratorAgent", 
+    "CodeGeneratorAgent",
     "CodeReviewerAgent",
-    
     # Schema models
     "AgentRequest",
     "AgentResponse",
     "TaskMetadata",
     "QualityMetrics",
-    
     # Version info
     "__version__",
     "__author__",
 ]
 
 # Agent registry for dynamic discovery
-AGENT_REGISTRY = {
+AGENT_REGISTRY: dict[str, Type[BaseAgent]] = {
     "code_generator": CodeGeneratorAgent,
     "code_reviewer": CodeReviewerAgent,
 }
 
+
 def get_agent_class(agent_name: str) -> type:
     """
     Get agent class by name.
-    
+
     Args:
         agent_name: Name of the agent (e.g., "code_generator")
-        
+
     Returns:
         Agent class
-        
+
     Raises:
         ValueError: If agent name is not found
-        
+
     Example:
         >>> agent_class = get_agent_class("code_generator")
         >>> agent = agent_class(client)
@@ -90,49 +89,58 @@ def get_agent_class(agent_name: str) -> type:
     if agent_name not in AGENT_REGISTRY:
         available = ", ".join(AGENT_REGISTRY.keys())
         raise ValueError(f"Unknown agent '{agent_name}'. Available: {available}")
-    
+
     return AGENT_REGISTRY[agent_name]
+
 
 def list_available_agents() -> list[str]:
     """
     List all available agent names.
-    
+
     Returns:
         List of agent names
-        
+
     Example:
         >>> agents = list_available_agents()
         >>> print(agents)  # ['code_generator', 'code_reviewer']
     """
     return list(AGENT_REGISTRY.keys())
 
+
 # Convenience functions for common operations
-def create_agent(agent_name: str, client, **kwargs):
+def create_agent(
+    agent_name: str,
+    client: "UnifiedModelClient",
+    **kwargs: Any,
+) -> BaseAgent:
     """
     Create an agent instance by name.
-    
+
     Args:
         agent_name: Name of the agent to create
         client: UnifiedModelClient instance
         **kwargs: Additional arguments for agent constructor
-        
+
     Returns:
         Agent instance
-        
+
     Raises:
         ValueError: If agent name is not found
-        
+
     Example:
         >>> agent = create_agent("code_generator", client)
         >>> response = await agent.process(request)
     """
     agent_class = get_agent_class(agent_name)
-    return agent_class(client, **kwargs)
+    return cast(BaseAgent, agent_class(client, **kwargs))
+
 
 # Add convenience functions to __all__
-__all__.extend([
-    "get_agent_class",
-    "list_available_agents", 
-    "create_agent",
-    "AGENT_REGISTRY",
-])
+__all__.extend(
+    [
+        "get_agent_class",
+        "list_available_agents",
+        "create_agent",
+        "AGENT_REGISTRY",
+    ]
+)

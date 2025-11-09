@@ -30,4 +30,4 @@ poetry run mypy multipass_reviewer --strict
 
 ## Status
 
-Initial scaffolding; implementation to follow via TDD per project plan.
+Production-ready for Stage 01_03 integration: strict lint/type gates enforced, CI green, and coverage ≥94% across reviewer modules.

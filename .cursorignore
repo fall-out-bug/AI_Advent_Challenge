@@ -30,6 +30,7 @@ docs/archive/
 
 # Archived scripts and demos
 archive/demos/
+!archive/ep04_2025-11/**
 
 # .cursor directory (rules excluded from specific ignore)
 # Note: .cursor/rules/ contains active rules, no exclusion needed

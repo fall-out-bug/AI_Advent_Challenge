@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Optional, Tuple
+from typing import Mapping, Optional, Tuple
 
 from multipass_reviewer.application.config import ReviewConfig
 from multipass_reviewer.domain.interfaces.archive_reader import ArchiveReader
@@ -125,7 +125,7 @@ class MultiPassReviewerAgent:
     async def _run_pass_with_recovery(
         self,
         review_pass: BaseReviewPass,
-        archive: dict[str, str],
+        archive: Mapping[str, str],
         errors: list[dict[str, str]],
     ) -> PassFindings:
         """Execute pass and capture exceptions as partial results."""

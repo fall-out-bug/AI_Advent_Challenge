@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0 - 2025-11-09
+- Stage 01_02 remediation: CI unblocked, test collection fixed, coverage raised to 94%+ for package & 90%+ for shared SDK.
+- Staged lint allowlist enforced (flake8/mypy strict) on reviewer-critical modules.
+- Removed `use_modular_reviewer` flag; modular reviewer now always active (Stage 01_03).
+- Type safety hardening: strict mypy across orchestrator, passes, and SDK clients.
+- Integration test suite expanded for modular review service and submission use case.
+
 ## 0.1.0 - 2025-11-07
 - Initial package scaffolding (Clean Architecture layout, tooling config).
 
