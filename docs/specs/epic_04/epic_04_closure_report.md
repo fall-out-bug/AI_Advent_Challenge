@@ -65,7 +65,7 @@ Refer to `docs/specs/epic_04/known_issues.md` for detailed tracking. Highlights:
 ## 5. Lessons Learned
 
 1. **Waves reduced blast radius:** Sequencing archival work prevented cross-cutting regressions.
-2. **Explicit infra hand-off:** Documenting shared infra (`scripts/start_shared_infra.sh`, `shared_infra_cutover.md`) removed ambiguity around external dependencies.
+2. **Explicit infra hand-off:** Documenting shared infra (`scripts/infra/start_shared_infra.sh`, `shared_infra_cutover.md`) removed ambiguity around external dependencies.
 3. **Test baselines as artefacts:** Capturing pytest output in evidence facilitated revert/rollback confidence and stakeholder review.
 4. **Presentation-layer migration:** Moving orchestrator/handlers clarified Clean Architecture boundaries and simplified dependency injection.
 

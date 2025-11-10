@@ -88,6 +88,6 @@ make test
 
 ## Additional Resources
 
-- [Development Guide](../docs/DEVELOPMENT.md) - Complete setup and deployment guide
-- [User Guide](../docs/USER_GUIDE.md) - User documentation
-- [MCP Guide](../docs/MCP_GUIDE.md) - MCP integration guide
+- [Development Guide](../docs/guides/en/DEVELOPMENT.md) - Complete setup and deployment guide
+- [User Guide](../docs/guides/en/USER_GUIDE.md) - User documentation
+- [MCP Guide](../docs/guides/en/MCP_GUIDE.md) - MCP integration guide

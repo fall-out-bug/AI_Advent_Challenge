@@ -8,7 +8,7 @@
 
 ```bash
 # Рекомендуемый способ (обёртка внутри AI Challenge)
-./scripts/start_shared_infra.sh
+./scripts/infra/start_shared_infra.sh
 
 # Альтернатива (из репозитория infra)
 cd ~/work/infra
@@ -24,22 +24,22 @@ make day-12-up
 ```bash
 # Примеры быстрых проверок после запуска
 curl "${PROMETHEUS_URL:-http://127.0.0.1:9090}/-/ready"
-poetry run python scripts/test_review_system.py | tail -n 20
+poetry run python scripts/quality/test_review_system.py | tail -n 20
 ```
 
 Если тестовый скрипт завершается с сообщением `✅ All tests passed!`, инфраструктура
-готова к работе. При ошибках проверьте, что `scripts/start_shared_infra.sh` отработал без
+готова к работе. При ошибках проверьте, что `scripts/infra/start_shared_infra.sh` отработал без
 ошибок и что Docker-контейнеры `infra_*` запущены.
 
 ### 3. Протестировать ревью на реальном архиве
 
 ```bash
-poetry run python scripts/test_review_system.py
+poetry run python scripts/quality/test_review_system.py
 ```
 
 Скрипт прогонит несколько проверок (MongoDB, анализ архива, полный пайплайн) с использованием
 модульного reviewer сервиса. Для запуска собственного архива используйте MCP инструмент
-`review_homework_archive` или новый CLI backoffice сценарий (см. `docs/API_MCP.md`).
+`review_homework_archive` или новый CLI backoffice сценарий (см. `docs/reference/en/API_MCP.md`).
 
 ### 4. Использовать через MCP
 
@@ -74,14 +74,14 @@ print(result["markdown_report"])
 
 - Docker и Docker Compose (используются стэком `~/work/infra`)
 - Python 3.10 + Poetry (для запуска скриптов и CLI)
-- Доступ к общему `.env.infra` (см. `scripts/start_shared_infra.sh`)
+- Доступ к общему `.env.infra` (см. `scripts/infra/start_shared_infra.sh`)
 
 ## 📚 Документация
 
-- `docs/MCP_TOOL_USAGE.md` - Использование через MCP
-- `docs/MODEL_SETUP.md` - Настройка моделей
-- `docs/PHASE_1_IMPLEMENTATION.md` - Архитектура системы
-- `docs/TESTING_FIXTURES_GUIDE.md` - Тестовые фикстуры
+- `docs/guides/en/MCP_TOOL_USAGE.md` - Использование через MCP
+- `docs/reference/en/MODEL_SETUP.md` - Настройка моделей
+- `docs/archive/2024-phase-01/PHASE_1_IMPLEMENTATION.md` - Архитектура системы (архив)
+- `docs/reference/en/TESTING_FIXTURES_GUIDE.md` - Тестовые фикстуры
 
 ## 🐛 Troubleshooting
 

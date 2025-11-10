@@ -1,7 +1,7 @@
 # Phase 4: Presentation Layer (Telegram) - Implementation Summary
 
-**Date:** 2025-01-27  
-**Status:** ✅ Complete  
+**Date:** 2025-01-27
+**Status:** ✅ Complete
 **Duration:** Implementation phase
 
 ## Overview
@@ -409,11 +409,10 @@ Phase 4 presentation layer is complete. Next phase should focus on:
 - [Phase 2 Summary](../phase2/README.md)
 - [Phase 3 Summary](../phase3/README.md)
 - [Refactoring Plan](../day_13-refactoring.md)
-- [Architecture Documentation](../../../docs/ARCHITECTURE.md)
+- [Architecture Documentation](../../../docs/reference/en/ARCHITECTURE.md)
 
 ---
 
 **Phase 4 Status: ✅ COMPLETE**
 
 Ready for Phase 5: Testing & Quality improvements.
-

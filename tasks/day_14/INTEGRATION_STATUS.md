@@ -1,6 +1,6 @@
 # Day 14 Integration Status
 
-**Date:** 2025-01-03  
+**Date:** 2025-01-03
 **Status:** ✅ MCP Tool Completed, Butler Integration Deferred
 
 ## Summary
@@ -190,7 +190,7 @@ MCP server configuration in `docker-compose.day12.yml`:
 
 ## Documentation
 
-- ✅ [MCP Homework Review Guide](../docs/MCP_HOMEWORK_REVIEW.md)
+- ✅ [MCP Homework Review Guide](../docs/guides/en/MCP_HOMEWORK_REVIEW.md)
 - ✅ [Architecture Decisions](ARCHITECTURE_DECISIONS.md)
 - ✅ [Implementation Review](IMPLEMENTATION_REVIEW.md)
 
@@ -223,4 +223,3 @@ If Butler Agent integration is needed:
 - [Day 14 Plan](PHASE_1_TZ_MULTIPASS.md)
 - [Day 13 Butler Agent](../day_13/day_13-refactoring.md)
 - [MCP API Documentation](../day_13/MCP_API_DOCUMENTATION.md)
-

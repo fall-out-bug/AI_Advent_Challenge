@@ -5,7 +5,7 @@
 - Epic 03 status: COMPLETE
 
 ## Deliverables Shipped
-- ✅ Operations documentation updates (`docs/specs/operations.md`, `docs/MONITORING.md`) with maintenance windows, escalation flow, Loki usage
+- ✅ Operations documentation updates (`docs/specs/operations.md`, `docs/reference/en/MONITORING.md`) with maintenance windows, escalation flow, Loki usage
 - ✅ Observability operations walkthrough (`docs/observability_operations_guide.md`) with TL;DR and workflow sections
 - ✅ Alerting runbook refreshed (`docs/specs/epic_03/alerting_runbook.md`) with unified worker/MCP coverage
 - ✅ CI observability-checks workflow (`.github/workflows/observability-checks.yml`) validating Prometheus, Alertmanager, dashboards, integration tests

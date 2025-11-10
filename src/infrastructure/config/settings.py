@@ -85,6 +85,18 @@ class Settings(BaseSettings):
     evaluation_min_score_for_dataset: float = Field(
         default=0.7, description="Minimum score to include in fine-tuning dataset"
     )
+    benchmark_dataset_dir: Path = Field(
+        default=Path("data/benchmarks"),
+        description="Base directory containing benchmark datasets",
+    )
+    benchmark_max_concurrency: int = Field(
+        default=4,
+        description="Maximum concurrent LLM judge requests during benchmark runs",
+    )
+    benchmark_judge_timeout_seconds: float = Field(
+        default=180.0,
+        description="Timeout applied to LLM judge calls within benchmark runs",
+    )
 
     # Fine-tuning settings
     enable_auto_finetuning: bool = Field(
@@ -392,6 +404,14 @@ class Settings(BaseSettings):
         if v <= 0:
             raise ValueError("pdf_max_posts_per_channel must be positive")
         return v
+
+    @field_validator("benchmark_max_concurrency")
+    @classmethod
+    def validate_benchmark_concurrency(cls, value: int) -> int:
+        """Validate benchmark concurrency is positive."""
+        if value <= 0:
+            raise ValueError("benchmark_max_concurrency must be positive")
+        return value
 
     @field_validator("intent_confidence_threshold")
     @classmethod

@@ -54,7 +54,7 @@ dependencies, and required follow-up work for later stages.
 - Shared infrastructure (Mongo, Prometheus, LLM API) must remain available to keep
   supported tools functional.
 - Feature flags controlling deprecated tool exposure must be documented in
-  `docs/API_MCP.md` and `docs/operations/`.
+  `docs/reference/en/API_MCP.md` and `docs/operations/`.
 - EP02 and EP04 coordination is required to avoid dangling references when
   archival work begins.
 
@@ -65,5 +65,3 @@ dependencies, and required follow-up work for later stages.
 - [ ] API documentation reflects status and timelines in both EN/RU variants.
 - [ ] Migration bulletin published and linked from epic summary.
 - [ ] Tests cover retained tools (digest, channels, NLP) and skip archived ones.
-
-

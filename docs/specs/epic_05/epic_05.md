@@ -40,15 +40,14 @@ should start once reviewer hardening (EP01) and observability improvements
 - Operations/Compliance: review governance and monitoring plans.
 
 ## Risk & Mitigation Snapshot
-- **Risk:** Evaluation metrics drift without oversight.  
+- **Risk:** Evaluation metrics drift without oversight.
   **Mitigation:** Schedule periodic benchmark reviews and calibrate scoring
   prompts.
-- **Risk:** Fine-tuning introduces regressions.  
+- **Risk:** Fine-tuning introduces regressions.
   **Mitigation:** Enforce approval workflow with rollback plan and guardrail
   tests before promotion.
 
 ## References
 - `docs/specs/specs.md` – summarisation & fine-tuning requirements.
 - `packages/multipass-reviewer` – source of review artefacts.
-- `docs/PERFORMANCE_BENCHMARKS.md` – target location for benchmark outputs.
-
+- `docs/reference/en/PERFORMANCE_BENCHMARKS.md` – target location for benchmark outputs.

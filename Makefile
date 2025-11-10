@@ -376,6 +376,15 @@ docs-check:
 	@echo "Checking markdown links..."
 	@command -v markdown-link-check >/dev/null && find . -name "*.md" -not -path "./.venv/*" -not -path "./node_modules/*" -exec markdown-link-check {} \; || echo "markdown-link-check not installed, skipping"
 
+repo-cleanup-dry-run:
+	poetry run python -m tools.repo_cleanup --config docs/specs/epic_06/repo_cleanup_plan.json --base-dir $(PWD)
+
+repo-cleanup-apply:
+	poetry run python -m tools.repo_cleanup --config docs/specs/epic_06/repo_cleanup_plan.json --base-dir $(PWD) --execute
+
+repo-cleanup-apply-git:
+	poetry run python -m tools.repo_cleanup --config docs/specs/epic_06/repo_cleanup_plan.json --base-dir $(PWD) --execute --use-git
+
 # Pre-commit hooks
 hook:
 	@echo "Installing pre-commit hooks..."
@@ -401,9 +410,9 @@ unified-task-worker:
 review-test:
 	@echo "Running review system smoke tests..."
 	poetry run pytest \
-		src/tests/application/services/test_modular_review_service.py \
-		src/tests/application/use_cases/test_review_submission_use_case.py \
-		src/tests/infrastructure/clients/test_llm_client.py \
+		tests/legacy/src/application/services/test_modular_review_service.py \
+		tests/legacy/src/application/use_cases/test_review_submission_use_case.py \
+		tests/legacy/src/infrastructure/clients/test_llm_client.py \
 		-v
 
 review-e2e:
@@ -417,4 +426,4 @@ review-health-check:
 	@echo "Running review system health check..."
 	@echo "This will test all components: MongoDB, archives, diff, use cases, pipeline"
 	@echo "Note: Full pipeline test requires LLM_URL environment variable"
-	poetry run python scripts/test_review_system.py
+	poetry run python scripts/quality/test_review_system.py

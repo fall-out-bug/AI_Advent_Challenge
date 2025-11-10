@@ -28,7 +28,7 @@ Stage 04_01 complete — approvals captured and blockers documented. Proceed wit
 
 - Wave 0 completed (docs + scripts archived); user approval recorded 2025-11-09.
 - CLI digest export (`digest:export`) available; PDF MCP tool scheduled for archival in Wave 1.
-- Shared infra connectivity tests now require running services with credentials (`./scripts/start_shared_infra.sh` + `MONGODB_URL`).
+- Shared infra connectivity tests now require running services with credentials (`./scripts/infra/start_shared_infra.sh` + `MONGODB_URL`).
 - Latency benchmarks remain xfail pending recalibration (tracked in Stage 04_03 known issues).
 
 ---

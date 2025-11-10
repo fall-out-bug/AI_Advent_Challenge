@@ -30,6 +30,18 @@ export PROMETHEUS_URL=http://127.0.0.1:9090
 export USE_MODULAR_REVIEWER=1
 ```
 
+### 2.1 CI / Automation Bootstrap
+- GitHub Actions jobs invoke `python scripts/ci/bootstrap_shared_infra.py --mongo-port 37017 --mock-port 19080`.
+- The script starts a disposable MongoDB container plus a lightweight mock service that exposes `/health` and `/metrics` endpoints, then writes connection strings into `$GITHUB_ENV`.
+- Cleanup runs via `python scripts/ci/cleanup_shared_infra.py` with `if: always()` guards.
+- Local parity:
+  ```bash
+  poetry run python scripts/ci/bootstrap_shared_infra.py --mongo-port 37017 --mock-port 19080
+  # ... run focussed tests ...
+  poetry run python scripts/ci/cleanup_shared_infra.py
+  ```
+- Mock service implementation is in `scripts/ci/mock_shared_services.py`; extend it if new probes are required.
+
 ## 3. Day 12 Deployment Quick Start
 
 1. **Bring up shared stack**
@@ -51,7 +63,7 @@ export USE_MODULAR_REVIEWER=1
 
 3. **Run smoke checks**
    ```bash
-   poetry run python scripts/test_review_system.py --metrics
+   poetry run python scripts/quality/test_review_system.py --metrics
    poetry run pytest tests/integration/shared_infra/test_shared_infra_connectivity.py -q
    ```
 
@@ -60,9 +72,11 @@ export USE_MODULAR_REVIEWER=1
    - Prometheus: `http://127.0.0.1:9090`
 
 ## 3. Validation Commands
-- Health check: `poetry run python scripts/test_review_system.py --metrics --report json`
+- Health check: `poetry run python scripts/quality/test_review_system.py --metrics --report json`
 - Unit tests: `poetry run pytest src/tests/unit -q`
 - Integration (shared infra): `poetry run pytest tests/integration/shared_infra/test_shared_infra_connectivity.py -q`
+- Backoffice CLI flows: `poetry run pytest tests/integration/presentation/cli/test_backoffice_cli.py -q`
+- MCP performance guardrails: `poetry run pytest tests/legacy/src/presentation/mcp/test_performance.py -q`
 - Full suite (expected failures documented in specs): `poetry run pytest -q`
 
 ## 4. Observability
@@ -78,6 +92,14 @@ export USE_MODULAR_REVIEWER=1
   and the runbook lives in `docs/specs/epic_03/alerting_runbook.md`.
 - Loki + Promtail provide centralised log aggregation; use the Grafana Loki
   datasource for troubleshooting (`stream="audit"` for privileged operations).
+- CI emits Prometheus-compatible health snapshots through the mock service; check GitHub Actions logs for `Bootstrap shared infrastructure`/`Cleanup shared infrastructure` steps.
+- MCP latency thresholds enforced in CI (override via environment variables):
+  | Metric | Threshold (s) | Environment variable |
+  |--------|---------------|----------------------|
+  | Tool discovery | 1.50 | `MCP_DISCOVERY_LATENCY_SEC` |
+  | Calculator tool | 1.20 | `MCP_CALCULATOR_LATENCY_P95_SEC` |
+  | Token counter (small / medium / large) | 1.10 / 1.30 / 1.60 | `MCP_TOKEN_LATENCY_SMALL_SEC`, `MCP_TOKEN_LATENCY_MEDIUM_SEC`, `MCP_TOKEN_LATENCY_LARGE_SEC` |
+  | Model listing | 1.20 | `MCP_MODEL_LISTING_LATENCY_SEC` |
 
 ## 5. Known Issues
 - Several legacy tests expect unauthenticated Mongo; they require fixture

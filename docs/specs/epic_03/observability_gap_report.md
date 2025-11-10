@@ -17,7 +17,7 @@
 - **Logging**: `src/infrastructure/logging/get_logger` wraps stdlib logging; Butler bot augments logs with contextual `extra`. A parallel `StructuredLogger` exists in `src/infrastructure/monitoring/logger.py` and is used by ad-hoc scripts only.
 - **Alerting**: `prometheus/alerts.yml` contains 24 rules grouped by component, yet Alertmanager integration is commented out and most expressions reference missing metrics.
 - **Operational Automation**: Make targets (`make test`, `make day-12-metrics`, QA smoke scripts) run manually; no CI workflows enforce them.
-- **Documentation**: `docs/MONITORING.md` and `docs/specs/operations.md` describe stack bootstrap. Runbooks, SLOs, and compliance/audit requirements are absent.
+- **Documentation**: `docs/reference/en/MONITORING.md` and `docs/specs/operations.md` describe stack bootstrap. Runbooks, SLOs, and compliance/audit requirements are absent.
 
 ## Gap Analysis
 
@@ -84,5 +84,4 @@
 - Prometheus and alerts configuration: `prometheus/prometheus.yml`, `prometheus/alerts.yml`
 - Logging implementations: `src/infrastructure/logging/__init__.py`, `src/infrastructure/monitoring/logger.py`, `src/presentation/mcp/http_server.py`
 - Dashboard expectations: `grafana/dashboards/app-health.json`, `grafana/dashboards/ml-service-metrics.json`, `grafana/dashboards/post-pdf-metrics.json`
-- Operational docs: `docs/MONITORING.md`, `docs/specs/operations.md`, `docs/TROUBLESHOOTING.md`
-
+- Operational docs: `docs/reference/en/MONITORING.md`, `docs/specs/operations.md`, `docs/guides/en/TROUBLESHOOTING.md`

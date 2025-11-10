@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class PromptLoader:
-    """Load prompts embedded in the `prompts.v1` package.
+    """Load prompts embedded in the `prompts.reviewer` package.
 
     Purpose:
         Provides centralized prompt loading from versioned files packaged as
@@ -29,7 +29,7 @@ class PromptLoader:
         )
     """
 
-    PROMPTS_PACKAGE = "prompts.v1"
+    PROMPTS_PACKAGE = "prompts.reviewer"
     REGISTRY_FILENAME = "prompt_registry.yaml"
 
     @classmethod

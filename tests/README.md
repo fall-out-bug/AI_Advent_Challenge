@@ -348,4 +348,4 @@ pytest tests/ --cov=src --cov-report=term-missing
 - [pytest Documentation](https://docs.pytest.org/)
 - [pytest-asyncio](https://pytest-asyncio.readthedocs.io/)
 - [Python Testing Best Practices](https://docs.python-guide.org/writing/tests/)
-- [Main Testing Documentation](../docs/TESTING.md)
+- [Main Testing Documentation](../docs/reference/en/TESTING.md)

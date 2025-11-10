@@ -78,7 +78,7 @@ assets while preserving repository stability.
 - Stage 04_01 sign-off requests sent 2025-11-09 (see `signoff_log.md`)
 - Remediation waves defined in `remediation_plan.md`
 - Archive structure and evidence bundle prepared for migrations
-- Shared infra dependency documented (`docs/specs/operations.md`) with helper script `scripts/start_shared_infra.sh`
+- Shared infra dependency documented (`docs/specs/operations.md`) with helper script `scripts/infra/start_shared_infra.sh`
 - CLI `digest:export` command implemented to replace PDF MCP tooling (`src/presentation/cli/backoffice/commands/digest.py`)
 
 ## Migration Log
@@ -86,7 +86,7 @@ assets while preserving repository stability.
 - Archived legacy scripts (`start_models.sh`, `wait_for_model.sh`, `check_model_status.sh`, `ci/test_day10.sh`, `day12_run.py`, `mcp_comprehensive_demo.py`, `healthcheck_mcp.py`) and removed `telegram_channel_reader.session`
 - Added stubs pointing to shared infra workflows and updated archive manifest/readmes
 - Re-ran `poetry run pytest packages/multipass-reviewer -q`; evidence stored under `docs/specs/epic_04/evidence/test_baseline_packages_multipass_reviewer_2025-11-09T112856Z.txt`
-- Updated shared infra connectivity tests to fail fast with actionable guidance when services are down; captured command `scripts/start_shared_infra.sh`
+- Updated shared infra connectivity tests to fail fast with actionable guidance when services are down; captured command `scripts/infra/start_shared_infra.sh`
 - Added CLI digest export path (`digest:export`) and backing service module (`digest_exporter`); PDF generation now handled outside MCP
 - Archived PDF digest MCP module and associated tests; CLI export is canonical
 - Refactored homework review MCP tool to modular reviewer workflow; removed deprecation flag
@@ -96,7 +96,7 @@ assets while preserving repository stability.
 - Migrated Butler legacy usecases to `src/application/use_cases/`; archived `src/application/usecases/`
 - Introduced presentation-layer Butler orchestrator and handlers; domain agents now eligible for archival
 - Removed `tests/integration/test_mcp_comprehensive_demo.py`; added backoffice CLI help coverage under `tests/integration/presentation/cli/test_backoffice_cli.py`
-- Documented shared infra bootstrap in README; replaced local model scripts with `scripts/start_shared_infra.sh`
+- Documented shared infra bootstrap in README; replaced local model scripts with `scripts/infra/start_shared_infra.sh`
 
 ## Validation Summary
 
