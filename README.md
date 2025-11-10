@@ -10,7 +10,7 @@ This repository contains daily challenges building AI-powered systems with langu
 
 **Updates:** Project news and daily recaps are published in the Telegram channel [Высоконагруженный кабанчик](https://t.me/data_intensive_boar).
 
-**Current Status:** 🚧 Stage 04_03 (Repository Hygiene & Sign-Off) — polishing docs, sign-offs, and final CI baseline after the Epic 04 archive.
+**Current Status:** ✅ Stage 06_04 (Final Verification & Hand-off) — shared infra automation live in CI, maintainer playbook published, sign-off in progress.
 
 **Project Status:**
 - ✅ 17 daily challenges completed
@@ -39,6 +39,7 @@ This repository contains daily challenges building AI-powered systems with langu
 - ✅ **Multi-Pass Code Review** (3-pass architecture for homework analysis)
 - ✅ **LLM-as-Judge Quality Assessment** (automatic evaluation of summaries)
 - ✅ **Self-Improving System** (automatic fine-tuning on high-quality data)
+- ✅ **Stage 05 RU Benchmarks** (release-cadence quality scoreboard for channel digests & reviewer summaries)
 - ✅ **Async Long Summarization** (queue-based processing with 600s timeout)
 - ✅ **Code Review Queue System** (Day 17 - async review pipeline with diff analysis)
 - ✅ **Pass 4 Log Analysis** (LLM-powered grouping, classification, and RCA for runtime logs)
@@ -54,7 +55,7 @@ This repository contains daily challenges building AI-powered systems with langu
 make install
 
 # Start shared infrastructure (MongoDB, Prometheus, reviewer API)
-./scripts/start_shared_infra.sh
+./scripts/infra/start_shared_infra.sh
 
 # Load shared infra credentials for Mongo/Prometheus
 set -a
@@ -72,7 +73,7 @@ make run-api
 poetry run python -m src.presentation.cli.backoffice.main --help
 ```
 
-For detailed setup instructions, see [DEVELOPMENT.md](docs/DEVELOPMENT.md).
+For detailed setup instructions, see [DEVELOPMENT.md](docs/guides/en/DEVELOPMENT.md) and the [Maintainer Playbook](docs/MAINTAINERS_GUIDE.md).
 
 ## Project Structure
 
@@ -86,9 +87,9 @@ AI_Challenge/
 ├── tasks/           # Daily Challenges (historical archive)
 ├── archive/legacy/local_models/    # Archived local model infrastructure (deprecated)
 ├── shared/          # Unified SDK for model interaction
-├── scripts/         # Utility scripts
+├── scripts/         # Utility scripts (infra, maintenance, quality)
 ├── config/          # Configuration files
-└── docs/            # Complete documentation
+└── docs/            # Specifications, guides, references, archives
 ```
 
 ## Daily Challenges
@@ -127,6 +128,19 @@ client = ModelClient(provider="perplexity")
 response = await client.chat("Hello, world!")
 ```
 
+### Stage 05 Benchmark Smoke (Dry Run)
+
+```bash
+poetry run python scripts/quality/benchmark/run_benchmark.py \
+  --scenario channel_digest_ru \
+  --dataset data/benchmarks/benchmark_digest_ru_v1/2025-11-09_samples.jsonl \
+  --dry-run --fail-on-warn
+```
+
+The `--dry-run` flag reuses stored judge scores, enabling CI smoke checks without
+incurring LLM costs. Omit it to execute live evaluations (requires shared infra
+credentials).
+
 ## Code Review System
 
 - **Five-pass insight pipeline**: Architecture overview → Component deep dives → Synthesis → Static analysis (Flake8, Pylint, MyPy, Black, isort) → Pass 4 log analysis with LLM-generated classification, root-cause, and remediation tips.
@@ -134,7 +148,7 @@ response = await client.chat("Hello, world!")
 - **Runtime diagnostics**: `LogParserImpl` + `LogNormalizer` feed curated groups into `LLMLogAnalyzer` with severity thresholds and configurable timeouts.
 - **Creative postscript**: Automatic haiku summarises review tone and highlights key risks.
 - **Publishing workflow**: LLM invokes the external HW Checker MCP tool (`submit_review_result`) through `MCPHTTPClient`; resilient fallback reuses `ExternalAPIClient` when needed.
-- **Integration assets**: Contracts live in `contracts/` (OpenAPI spec, JSON schema, examples) with deep-dive docs under `docs/day17/` and `docs/review_system_architecture.md`.
+- **Integration assets**: Contracts live in `contracts/` (OpenAPI spec, JSON schema, examples) with deep-dive docs under `docs/day17/` and `docs/reference/en/review_system_architecture.md`.
 - **Observability-first**: Structured review logs, Prometheus metrics, and MongoDB audit trail for every session.
 
 ## Docker Compose Files
@@ -244,13 +258,13 @@ These files help AI coding assistants understand the project structure, patterns
 ## Documentation
 
 Main documentation:
-- [DEVELOPMENT.md](docs/DEVELOPMENT.md) - Setup, deployment, and operations
-- [ARCHITECTURE.md](docs/ARCHITECTURE.md) - System architecture
-- [USER_GUIDE.md](docs/USER_GUIDE.md) - User guide
-- [API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md) - Complete API reference
-- [AGENT_INTEGRATION.md](docs/AGENT_INTEGRATION.md) - MCP-aware agent integration guide
-- [MONITORING.md](docs/MONITORING.md) - Monitoring setup and Grafana dashboards
-- [SECURITY.md](docs/SECURITY.md) - Security policies and practices
+- [DEVELOPMENT.md](docs/guides/en/DEVELOPMENT.md) - Setup, deployment, and operations
+- [ARCHITECTURE.md](docs/reference/en/ARCHITECTURE.md) - System architecture
+- [USER_GUIDE.md](docs/guides/en/USER_GUIDE.md) - User guide
+- [API_DOCUMENTATION.md](docs/reference/en/API_DOCUMENTATION.md) - Complete API reference
+- [AGENT_INTEGRATION.md](docs/guides/en/AGENT_INTEGRATION.md) - MCP-aware agent integration guide
+- [MONITORING.md](docs/reference/en/MONITORING.md) - Monitoring setup and Grafana dashboards
+- [SECURITY.md](docs/reference/en/SECURITY.md) - Security policies and practices
 
 Day 15 documentation (current):
 - [Quality Assessment & Fine-tuning Guide](docs/day15/README.md)
@@ -280,7 +294,7 @@ Available dashboards:
 3. **Post Fetcher & PDF Metrics** - Post collection and PDF generation metrics
 4. **Quality Assessment Metrics** - Evaluation scores, fine-tuning runs, dataset growth
 
-See [MONITORING.md](docs/MONITORING.md) for detailed setup.
+See [MONITORING.md](docs/reference/en/MONITORING.md) for detailed setup.
 
 ## Contributing
 

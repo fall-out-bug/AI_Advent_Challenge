@@ -206,7 +206,7 @@ expected behaviour.
 #### `scripts/` Breakdown
 | Script/Folder | Status | Notes |
 |---------------|--------|-------|
-| `test_review_system.py`, `check_model_status.sh`, `start_models.sh`, `wait_for_model.sh` | Completed 2025-11-09 | Shared infra wrapper (`scripts/start_shared_infra.sh`) replaces local scripts; review system script documented in README. |
+| `test_review_system.py`, `check_model_status.sh`, `start_models.sh`, `wait_for_model.sh` | Completed 2025-11-09 | Shared infra wrapper (`scripts/infra/start_shared_infra.sh`) replaces local scripts; review system script documented in README. |
 | `quality/` suite (`check_coverage.py`, `run_all_checks.sh`, etc.) | Keep/Rework | Keep automation; ensure targets match new lint/test baseline. |
 | `qa/` smoke scripts | Keep/Rework | Align with current infra endpoints and feature flags. |
 | `maintenance/` (backup/cleanup/export) | Keep | Useful for ops; document prerequisites. |

@@ -144,5 +144,4 @@ response = await agent.process("Generate digest for @technews")
 
 - [MCP Tools API](../../../../../docs/day12/api.md)
 - [PDF Digest User Guide](../../../../../docs/day12/USER_GUIDE.md)
-- [Channel Resolution Strategy](../../../../../docs/CHANNEL_RESOLUTION.md)
-
+- [Channel Resolution Strategy](../../../../../docs/reference/en/CHANNEL_RESOLUTION.md)

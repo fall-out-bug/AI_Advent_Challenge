@@ -5,16 +5,33 @@ Define governance for fine-tuning cycles, execute a pilot run, and document
 operational procedures for safe iteration.
 
 ## Checklist
-- [ ] Draft governance policy covering approval workflow, safety checks,
+- [x] Draft governance policy covering approval workflow, safety checks,
   rollback criteria, and monitoring requirements.
 - [ ] Conduct pilot fine-tuning run using curated dataset; capture config,
   results, and evaluation metrics.
 - [ ] Establish monitoring and alerting for fine-tuned models (performance,
   drift, errors).
-- [ ] Document runbooks for initiating, validating, and rolling back fine-tuning
+- [x] Document runbooks for initiating, validating, and rolling back fine-tuning
   jobs.
 - [ ] Summarise lessons learned and recommend next steps (e.g., automation,
   scaling).
+
+## Progress (2025-11-12)
+- Governance policy drafted (`stage_05_03_governance.md`) detailing approvals,
+  safety checks, and rollback expectations.
+- Pilot plan prepared (`stage_05_03_pilot.md`) with baseline metrics and target
+  configuration.
+- Runbook created for fine-tune execution and release alignment
+  (`stage_05_03_runbook.md`).
+- Sign-off log scaffolded (`stage_05_03_signoff.md`).
+- Live pilot blocked: shared Mongo still lacks benchmark datasets; fine-tuning
+  execution deferred to Epic 23 backlog.
+
+## Summary
+- Administrative artefacts (policy, pilot plan, runbook) are ready, but pilot
+  execution and monitoring rollout remain pending until datasets are seeded.
+- Next steps: populate digests/review reports (Epic 23), run pilot, extend
+  monitoring, and document lessons learned.
 
 ## Deliverables
 - Governance policy document with stakeholder approvals.
@@ -42,4 +59,3 @@ operational procedures for safe iteration.
 - Do we require external review (e.g., compliance/legal) before production
   fine-tuning?
 - How do we coordinate fine-tuning releases with existing deployment cadence?
-

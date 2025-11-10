@@ -46,4 +46,4 @@ Stage 03_02.
 1. Provision Loki and Promtail services in `docker-compose.butler.yml` (tracked
    in TODO `todo-1762671602154-tx4i6gd7p`).
 2. Update Grafana provisioning to add Loki datasource.
-3. Document common LogQL queries in `docs/MONITORING.md`.
+3. Document common LogQL queries in `docs/reference/en/MONITORING.md`.

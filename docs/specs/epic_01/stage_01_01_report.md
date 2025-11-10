@@ -110,7 +110,7 @@ See `docs/specs/epic_01/stage_01_01_backlog.md` for the full table (10 items). H
 1. **Triage P0 backlog tickets immediately** (Stage 01_02 kickoff). Without fixing test collection issues we cannot measure improvements or enforce coverage.
 2. **Assign owners for shared SDK remediation**; split mypy/flake8 cleanup into manageable PRs aligned with backlog IDs.
 3. **Introduce reviewer-focused smoke tests** covering `modular_review_service`, channel digest flows, and flag toggles; gate `use_modular_reviewer` toggling with automated checks.
-4. **Document and validate feature flags**: update relevant docs (`docs/API_REVIEWER.md`, architecture notes) and add unit tests ensuring toggles flip behaviour.
+4. **Document and validate feature flags**: update relevant docs (`docs/reference/en/API_REVIEWER.md`, architecture notes) and add unit tests ensuring toggles flip behaviour.
 5. **Plan lint enforcement**: adopt allowlist strategy so reviewer-critical modules (`packages/multipass-reviewer`, `shared_package`, reviewer-related `src` paths) can be held to strict lint/mypy without waiting for full repo cleanup.
 
 ## 8. Supporting Artifacts
@@ -126,6 +126,5 @@ See `docs/specs/epic_01/stage_01_01_backlog.md` for the full table (10 items). H
 
 ---
 
-Prepared by: Stage 01_01 Tech Lead (Assistant)  
+Prepared by: Stage 01_01 Tech Lead (Assistant)
 Date: 2025-11-09
-

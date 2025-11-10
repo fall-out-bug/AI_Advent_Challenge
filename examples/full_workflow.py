@@ -65,7 +65,7 @@ async def demo_mcp_workflow():
 async def main():
     """Run all workflow demos."""
     print("Full Workflow Demonstrations")
-    print("Assumes local MCP stack is running (see docs/MCP_GUIDE.md)")
+    print("Assumes local MCP stack is running (see docs/guides/en/MCP_GUIDE.md)")
 
     await demo_mcp_workflow()
 

@@ -28,8 +28,8 @@
   - Интеграционные тесты с использованием тестовых Mongo/LLM фикстур (auth-ready).
   - Smoke тесты (manual) для typical workflows.
 - **Docs**
-  - Обновлять `docs/API_BOT_BACKOFFICE.md` (+ RU версия) с примерами команд и флагов.
-  - Ссылаться на `docs/CHANGELOG_MCP.md` для коммуникации изменений.
+  - Обновлять `docs/reference/en/API_BOT_BACKOFFICE.md` (+ RU версия) с примерами команд и флагов.
+  - Ссылаться на `docs/archive/release_notes/CHANGELOG_MCP.md` для коммуникации изменений.
 
 ## Risks & Mitigations
 
@@ -50,6 +50,5 @@
 - `docs/specs/epic_02/mcp_tool_matrix.md`
 - `docs/specs/epic_02/mcp_migration_bulletin.md`
 - `docs/specs/epic_04/coordination_stage_02_01.md`
-- `docs/CHANGELOG_MCP.md`
-- `docs/API_MCP.md`, `docs/API_BOT_BACKOFFICE.md`
-
+- `docs/archive/release_notes/CHANGELOG_MCP.md`
+- `docs/reference/en/API_MCP.md`, `docs/reference/en/API_BOT_BACKOFFICE.md`

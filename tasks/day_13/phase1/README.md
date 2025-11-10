@@ -1,7 +1,7 @@
 # Phase 1: Domain Layer Implementation - Summary
 
-**Date:** 2025-01-27  
-**Status:** ✅ Complete  
+**Date:** 2025-01-27
+**Status:** ✅ Complete
 **Duration:** Implementation phase
 
 ## Overview
@@ -354,11 +354,10 @@ Phase 1 domain layer is complete. Next phase should:
 
 - [Phase 0 Analysis](../phase0/README.md)
 - [Refactoring Plan](../day_13-refactoring.md)
-- [Architecture Documentation](../../../docs/ARCHITECTURE.md)
+- [Architecture Documentation](../../../docs/reference/en/ARCHITECTURE.md)
 
 ---
 
 **Phase 1 Status: ✅ COMPLETE**
 
 Ready for Phase 2: Infrastructure Layer implementation.
-

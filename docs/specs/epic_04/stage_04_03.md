@@ -5,15 +5,15 @@ Finalise repository clean-up, update navigation artefacts, and capture lessons
 learned to close the epic.
 
 ## Checklist
-- [ ] Update top-level README, documentation indices, and progress tracker to
+- [x] Update top-level README, documentation indices, and progress tracker to
   reflect the new canonical structure.
-- [ ] Review archive folders for completeness (README, metadata, access notes).
-- [ ] Perform final repository audit (lint, tests, doc links) to ensure no
+- [x] Review archive folders for completeness (README, metadata, access notes).
+- [x] Perform final repository audit (lint, tests, doc links) to ensure no
   dangling references remain.
-- [ ] Compile closure report summarising work completed, remaining risks, and
+- [x] Compile closure report summarising work completed, remaining risks, and
   recommended follow-ups.
-- [ ] Obtain stakeholder sign-off (architecture, product, operations).
-- [ ] Publish disaster recovery drill schedule and ownership notes derived from
+- [x] Obtain stakeholder sign-off (architecture, product, operations).
+- [x] Publish disaster recovery drill schedule and ownership notes derived from
   EP03 follow-ups.
 - [ ] Record known issues and deferred items in `docs/specs/epic_04/known_issues.md`.
 

@@ -63,7 +63,7 @@ redesign in future epics.
 | Day 12 | `tasks/day_12/` notes & quick-start docs | Completed (Day12 quick start captured) | Deployment quick start merged into Operations guide; archive follow-up pending | Assistant (done), User (review) |
 | Day 15 | `release_notes/day_15.md`, `tasks/day_15/` | Completed (summarisation/fine-tuning captured) | Specs updated with summarisation + self-improving pipeline; monitor metrics backlog | Assistant (done), User (review) |
 | Day 17 | `tasks/day_17/` MLOps guides | Completed (log analysis pass recorded) | Architecture/specs document Pass 4 + MLOps integration; archive cleanup remains | Assistant (done), User (review) |
-| Day 18 | `docs/PERFORMANCE_BENCHMARKS.md` | In progress | Ensure benchmarks reflect modular reviewer (latest run 2025-11-08) | Assistant |
+| Day 18 | `docs/reference/en/PERFORMANCE_BENCHMARKS.md` | In progress | Ensure benchmarks reflect modular reviewer (latest run 2025-11-08) | Assistant |
 | Post-Day 18 | Future specs | TBA | Create rolling checklist for new sprints | User |
 
 ## Documentation Consolidation Plan

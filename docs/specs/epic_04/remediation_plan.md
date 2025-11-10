@@ -17,7 +17,7 @@ Owner: Assistant (Tech Lead)
 
 ### Wave 0
 - Publish deprecation warnings in `src/presentation/mcp/server.py` for deprecated tools.
-- Update `docs/API_MCP*.md` with retirement timeline and replacement commands.
+- Update `docs/reference/en/API_MCP*.md` with retirement timeline and replacement commands.
 - Coordinate with docs owner to schedule PR reviews.
 
 ### Wave 1
@@ -45,7 +45,7 @@ Owner: Assistant (Tech Lead)
 
 ### Wave 4
 - Update Makefile to drop legacy CLI entrypoints and reference backoffice commands.
-- Archive CLI chat scripts and add pointers in `docs/MCP_GUIDE.md`.
+- Archive CLI chat scripts and add pointers in `docs/guides/en/MCP_GUIDE.md`.
 - Remove tests/integration referencing Mistral wrapper.
 
 ## Coordination & Approvals

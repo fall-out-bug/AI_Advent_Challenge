@@ -13,7 +13,7 @@
 | Команды | `channels list/add/remove`, `digest run/last` реализованы |
 | Форматы вывода | Таблица (по умолчанию), JSON (`--json`) |
 | Observability | Prometheus метрики (`cli_command_total`, `cli_command_duration_seconds`, `cli_command_errors_total`) |
-| Документация | `docs/API_BOT_BACKOFFICE.md` / `.ru.md`, `docs/CHANGELOG_MCP.md` |
+| Документация | `docs/reference/en/API_BOT_BACKOFFICE.md` / `docs/reference/ru/API_BOT_BACKOFFICE.ru.md`, `docs/archive/release_notes/CHANGELOG_MCP.md` |
 | Тесты | Юнит + интеграционные (см. раздел ниже) |
 
 ## Timeline
@@ -41,5 +41,3 @@ poetry run pytest src/tests/presentation/cli/backoffice -q
 - Реализовать команды бэклога (`channels refresh`, `digest export`, `nlp test`)
 - Добавить поддержу batch операций/CSV (EP03/EP04)
 - Расширить тесты для реальной БД (auth-ready fixtures) и e2e CLI сценариев
-
-

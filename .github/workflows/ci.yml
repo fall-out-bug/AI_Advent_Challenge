@@ -11,30 +11,30 @@ jobs:
   lint:
     name: Code Quality & Linting
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e .
           pip install -e packages/multipass-reviewer
           pip install black flake8 mypy bandit pytest pytest-cov pytest-asyncio
-      
+
       - name: Run Black
         run: black --check src/ tests/ packages/multipass-reviewer/multipass_reviewer
-      
+
       - name: Run Flake8
         run: flake8 src/ tests/ packages/multipass-reviewer/multipass_reviewer --max-line-length=88 --extend-ignore=E203,W503
-      
+
       - name: Run MyPy (legacy)
         run: mypy src/ --ignore-missing-imports
 
@@ -85,24 +85,24 @@ jobs:
   test-unit:
     name: Unit Tests
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e .
           pip install -e packages/multipass-reviewer
           pip install pytest pytest-cov pytest-asyncio
-      
+
       - name: Run unit tests (application layer)
         run: |
           pytest src/tests/unit -v
@@ -110,7 +110,7 @@ jobs:
       - name: Run unit tests (shared SDK)
         run: |
           pytest shared/tests -v
-      
+
       - name: Upload coverage report
         uses: actions/upload-artifact@v3
         with:
@@ -121,24 +121,27 @@ jobs:
   test-integration:
     name: Integration Tests
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e .
           pip install -e packages/multipass-reviewer
           pip install pytest pytest-asyncio
-      
+
+      - name: Bootstrap shared infrastructure
+        run: python scripts/ci/bootstrap_shared_infra.py --mongo-port 37017 --mock-port 19080
+
       - name: Run shared infra connectivity test
         run: |
           pytest tests/integration/shared_infra/test_shared_infra_connectivity.py -v
@@ -146,7 +149,11 @@ jobs:
       - name: Run modular review service integration test
         run: |
           pytest tests/integration/test_modular_review_service.py -v
-      
+
+      - name: Cleanup shared infrastructure
+        if: always()
+        run: python scripts/ci/cleanup_shared_infra.py
+
       - name: Upload test results
         uses: actions/upload-artifact@v3
         with:
@@ -159,30 +166,34 @@ jobs:
     name: Coverage Report
     runs-on: ubuntu-latest
     needs: [test-unit, test-integration]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e .
           pip install -e packages/multipass-reviewer
           pip install pytest pytest-cov pytest-asyncio
-      
+
+      - name: Bootstrap shared infrastructure
+        run: python scripts/ci/bootstrap_shared_infra.py --mongo-port 37017 --mock-port 19080
+
       - name: Run all tests with coverage
         run: |
           pytest \
-            src/tests/unit \
+            tests/unit \
             tests/integration/shared_infra/test_shared_infra_connectivity.py \
             tests/integration/test_modular_review_service.py \
+            tests/legacy/src \
             shared/tests \
             --cov=src \
             --cov=shared/shared_package \
@@ -191,14 +202,18 @@ jobs:
             --cov-report=html \
             --cov-report=xml \
             --cov-fail-under=80
-      
+
+      - name: Cleanup shared infrastructure
+        if: always()
+        run: python scripts/ci/cleanup_shared_infra.py
+
       - name: Upload coverage report
         uses: actions/upload-artifact@v3
         with:
           name: coverage-report
           path: htmlcov/
         continue-on-error: true
-      
+
       - name: Upload coverage XML
         uses: actions/upload-artifact@v3
         with:
@@ -209,24 +224,24 @@ jobs:
   security:
     name: Security Scan
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install bandit
-      
+
       - name: Run Bandit security scan
         run: bandit -r src/ -f json -o bandit-report.json || true
-      
+
       - name: Upload Bandit report
         uses: actions/upload-artifact@v3
         with:
@@ -237,14 +252,14 @@ jobs:
     name: Build Butler Bot Docker Image
     runs-on: ubuntu-latest
     needs: [lint, test-unit]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Build Butler Bot Docker image
         uses: docker/build-push-action@v5
         with:
@@ -254,13 +269,13 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: false
-      
+
       - name: Verify Butler Bot Docker image
         run: |
           docker run --rm ai-challenge-bot:latest python --version
           docker run --rm ai-challenge-bot:latest python -c "import sys; sys.exit(0)"
           echo "Butler Bot Docker image verified successfully"
-      
+
       - name: Test Docker Compose syntax
         run: |
           docker-compose -f docker-compose.butler.yml config
@@ -270,14 +285,14 @@ jobs:
     name: Docker Build & Test (Legacy)
     runs-on: ubuntu-latest
     needs: [lint, test-unit]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
@@ -287,7 +302,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: false
-      
+
       - name: Verify Docker image
         run: |
           docker run --rm ai-challenge:latest python --version

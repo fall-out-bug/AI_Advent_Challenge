@@ -10,7 +10,7 @@
 
 **Обновления:** Мы публикуем новости и дайджесты в Telegram-канале [Высоконагруженный кабанчик](https://t.me/data_intensive_boar).
 
-**Текущий статус:** ✅ День 17 завершен – Мультипроходной код-ревью с MCP-публикацией и анализом логов
+**Текущий статус:** ✅ Stage 06_04 (финальная верификация и передача) — CI-автоматизация для shared infra включена, плейбук мейнтейнеров опубликован, идёт закрепление sign-off.
 
 **Статус проекта:**
 - ✅ 17 ежедневных задач завершено
@@ -38,6 +38,7 @@
 - ✅ Hotreload для разработки (uvicorn --reload + watchdog)
 - ✅ **Multi-Pass Code Review** (3-проходная архитектура для анализа домашних работ)
 - ✅ **LLM-as-Judge оценка качества** (автоматическая оценка суммаризаций)
+- ✅ **Stage 05 RU-бенчмарки** (качество дайджестов и ревью с релизной периодичностью)
 - ✅ **Самосовершенствующаяся система** (автоматический файнтюнинг на качественных данных)
 - ✅ **Асинхронная длинная суммаризация** (обработка через очередь с таймаутом 600s)
 - ✅ **Pass 4 анализ логов** (LLM-группировка, классификация и поиск корневых причин)
@@ -45,6 +46,19 @@
 - ✅ **MCP-публикация первичного класса** (LLM вызывает инструмент HW Checker MCP с HTTP-фолбеком)
 - ✅ **Генерация хайку** (поэтичный постскриптум к отчёту)
 - ✅ **Интеграционные контракты** (OpenAPI, JSON Schema, cURL/Python примеры)
+
+### Stage 05 · Бенчмарк (Dry Run)
+
+```bash
+poetry run python scripts/quality/benchmark/run_benchmark.py \
+  --scenario channel_digest_ru \
+  --dataset data/benchmarks/benchmark_digest_ru_v1/2025-11-09_samples.jsonl \
+  --dry-run --fail-on-warn
+```
+
+Опция `--dry-run` использует сохранённые оценки судьи и подходит для CI/локальных
+проверок без вызова LLM. Для полноценного прогона уберите флаг и заранее загрузите
+переменные окружения доступа к общему LLM и Mongo.
 
 ## Быстрый старт
 
@@ -62,7 +76,7 @@ make run-api
 make run-cli
 ```
 
-Подробные инструкции по настройке см. в [DEVELOPMENT.md](docs/DEVELOPMENT.md).
+Подробные инструкции по настройке см. в [DEVELOPMENT.md](docs/guides/en/DEVELOPMENT.md) и [Maintainer Playbook](docs/MAINTAINERS_GUIDE.md).
 
 ## Структура проекта
 
@@ -76,7 +90,7 @@ AI_Challenge/
 ├── tasks/           # Архив ежедневных челленджей
 ├── archive/legacy/local_models/    # Архивная инфраструктура локальных моделей (устарела)
 ├── shared/          # Унифицированный SDK для взаимодействия с моделями
-├── scripts/         # Утилитарные скрипты
+├── scripts/         # Утилитарные скрипты (infra, maintenance, quality)
 ├── config/          # Конфигурационные файлы
 └── docs/            # Полная документация
 ```
@@ -124,7 +138,7 @@ response = await client.chat("Привет, мир!")
 - **Диагностика рантайма**: Связка `LogParserImpl` + `LogNormalizer` формирует группы, которые анализируются `LLMLogAnalyzer` с порогами по уровню логов.
 - **Творческий постскриптум**: Автоматическое хайку фиксирует тон ревью и ключевые риски.
 - **Публикация результатов**: LLM вызывает внешний HW Checker MCP-инструмент (`submit_review_result`) через `MCPHTTPClient`; при сбоях используется HTTP-фолбек `ExternalAPIClient`.
-- **Интеграционные активы**: Каталог `contracts/` (OpenAPI, JSON Schema, примеры) и подробные описания в `docs/day17/` и `docs/review_system_architecture.md`.
+- **Интеграционные активы**: Каталог `contracts/` (OpenAPI, JSON Schema, примеры) и подробные описания в `docs/day17/` и `docs/reference/en/review_system_architecture.md`.
 - **Наблюдаемость**: Структурированные логи ревью, метрики Prometheus и аудиторский след в MongoDB.
 
 ## Docker Compose файлы
@@ -223,13 +237,13 @@ make day-11-up
 ## Документация
 
 Основная документация:
-- [DEVELOPMENT.md](docs/DEVELOPMENT.md) - Настройка, деплой и операции
-- [ARCHITECTURE.md](docs/ARCHITECTURE.md) - Архитектура системы
-- [USER_GUIDE.md](docs/USER_GUIDE.md) - Руководство пользователя
-- [API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md) - Справочник по API
-- [AGENT_INTEGRATION.ru.md](docs/AGENT_INTEGRATION.ru.md) - Руководство по интеграции MCP-aware агента
-- [MONITORING.md](docs/MONITORING.md) - Настройка мониторинга и Grafana дашборды
-- [SECURITY.md](docs/SECURITY.md) - Политики безопасности и практики
+- [DEVELOPMENT.md](docs/guides/en/DEVELOPMENT.md) - Настройка, деплой и операции
+- [ARCHITECTURE.md](docs/reference/en/ARCHITECTURE.md) - Архитектура системы
+- [USER_GUIDE.md](docs/guides/en/USER_GUIDE.md) - Руководство пользователя
+- [API_DOCUMENTATION.md](docs/reference/en/API_DOCUMENTATION.md) - Справочник по API
+- [AGENT_INTEGRATION.ru.md](docs/guides/ru/AGENT_INTEGRATION.ru.md) - Руководство по интеграции MCP-aware агента
+- [MONITORING.md](docs/reference/en/MONITORING.md) - Настройка мониторинга и Grafana дашборды
+- [SECURITY.md](docs/reference/en/SECURITY.md) - Политики безопасности и практики
 
 Документация День 15 (текущая):
 - [Руководство по оценке качества и файнтюнингу](docs/day15/README.md)
@@ -259,7 +273,7 @@ docker-compose -f docker-compose.butler.yml up -d prometheus grafana
 3. **Post Fetcher & PDF Metrics** - Метрики сбора постов и генерации PDF
 4. **Quality Assessment Metrics** - Оценки качества, запуски файнтюнинга, рост датасета
 
-См. [MONITORING.md](docs/MONITORING.md) для подробной настройки.
+См. [MONITORING.md](docs/reference/en/MONITORING.md) для подробной настройки.
 
 ## Как внести свой вклад
 

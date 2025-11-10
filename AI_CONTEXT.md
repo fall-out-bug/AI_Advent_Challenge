@@ -237,7 +237,7 @@ Multiple summarization approaches for different content lengths:
 - Preserves semantic boundaries
 - Avoids splitting sentences/paragraphs
 
-**Implementation**: 
+**Implementation**:
 - `src/infrastructure/llm/summarizers/map_reduce_summarizer.py`
 - `src/infrastructure/llm/summarizers/adaptive_summarizer.py`
 - `src/infrastructure/llm/chunking/semantic_chunker.py`
@@ -298,7 +298,7 @@ response = await llm_client.make_request(
 6. Generates markdown report via `generate_detailed_markdown_report()`
 7. Returns report as file to user
 
-**Files**: 
+**Files**:
 - `src/domain/agents/handlers/homework_handler.py`
 - `src/domain/agents/multi_pass_reviewer.py`
 - `src/infrastructure/reporting/homework_report_generator.py`
@@ -344,10 +344,10 @@ async def test_task_handler():
     """Test task handler functionality."""
     # Arrange
     handler = TaskHandler(...)
-    
+
     # Act
     result = await handler.handle(context, "Create task")
-    
+
     # Assert
     assert "Task created" in result
 ```
@@ -623,8 +623,7 @@ make mcp-demo          # Run MCP demo
 
 ## Questions?
 
-- See `docs/ARCHITECTURE.md` for detailed architecture
-- See `docs/DEVELOPMENT.md` for setup instructions
+- See `docs/reference/en/ARCHITECTURE.md` for detailed architecture
+- See `docs/guides/en/DEVELOPMENT.md` for setup instructions
 - See `.cursorrules` for coding standards
 - See `README.md` for project overview
-

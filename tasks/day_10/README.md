@@ -81,11 +81,11 @@ from src.presentation.mcp.client import MCPClient
 
 async def example():
     client = MCPClient()
-    
+
     # Discover tools
     tools = await client.discover_tools()
     print(f"Found {len(tools)} tools")
-    
+
     # Generate code
     result = await client.call_tool(
         "generate_code",
@@ -108,9 +108,9 @@ async def example():
         conversation_repo=repo,
         model_name="mistral"
     )
-    
+
     await orchestrator.initialize()
-    
+
     # Handle message
     response = await orchestrator.handle_message(
         "Create a calculator class",
@@ -198,8 +198,8 @@ make coverage
 - [Phase 4 Summary](PHASE4_FINAL_SUMMARY.md) - Complete implementation details
 - [Phase 4 Guide](README.phase4.md) - Detailed usage guide
 - [Deployment Guide](DEPLOYMENT.md) - Docker and production deployment
-- [Performance Benchmarks](../../docs/PERFORMANCE_BENCHMARKS.md) - Performance metrics
-- [Migration Guide](../../docs/MIGRATION_GUIDE.md) - Upgrading to Day 10
+- [Performance Benchmarks](../../docs/reference/en/PERFORMANCE_BENCHMARKS.md) - Performance metrics
+- [Migration Guide](../../docs/guides/en/MIGRATION_GUIDE.md) - Upgrading to Day 10
 
 ## 🛠️ Development
 
@@ -278,4 +278,3 @@ MIT License - See LICENSE file for details
 - Built with [FastMCP](https://github.com/jlowin/fastmcp)
 - Based on Clean Architecture principles
 - Inspired by SOLID design patterns
-

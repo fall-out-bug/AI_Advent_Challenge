@@ -7,12 +7,12 @@
 ## 📋 PHASE 0: Pre-Implementation (1 день)
 
 ### Задачи
-1. **Analize Current State** 
+1. **Analize Current State**
    - [ ] Cursor проанализирует существующий код через **AI Reviewer**
    - [ ] Выдаст отчёт по: token cost, функциям >30 строк, архитектурным проблемам
    - [ ] Определит "God Classes" и файлы для рефакторинга
 
-2. **Architecture Review** 
+2. **Architecture Review**
    - [ ] **Chief Architect** проверит SOLID нарушения
    - [ ] Определит правильные слои: presentation, domain, infrastructure, application
    - [ ] Выявит циклические зависимости между MCP, LLM, MongoDB
@@ -35,12 +35,12 @@
 ```python
 class ButtlerOrchestrator:
     """Управляет режимами работы и маршрутизирует запросы.
-    
+
     - Mode classification через Mistral-7B
     - Delegated handlers для 4 режимов
     - Graceful error handling
     """
-    
+
     async def handle_user_message(user_id, message, session_id) -> str:
         # Режимы: TASK, DATA, REMINDERS, IDLE
         pass
@@ -87,7 +87,7 @@ class DialogContext:
 - `src/domain/agents/handlers/chat_handler.py`
 
 **Требования:**
-- [ ] **Chief Architect**: 
+- [ ] **Chief Architect**:
   - Каждый handler имплементирует интерфейс `Handler`
   - Зависимости через DI
   - No circular imports
@@ -111,7 +111,7 @@ class TaskHandler(Handler):
         self.intent_orch = intent_orch
         self.mcp_client = mcp_client
         self.mongodb = mongodb
-    
+
     async def handle(self, context, message) -> str:
         # Делегировать на intent_orch
         # Сохранить через MCP
@@ -128,12 +128,12 @@ class TaskHandler(Handler):
 ```python
 class MistralClient:
     """Асинхронная обёртка для Mistral-7B через chat_api.py"""
-    
+
     async def make_request(prompt, max_tokens, temperature) -> dict:
         # HTTP call to localhost:8001/chat
         # Retry logic, timeout handling
         pass
-    
+
     async def classify_mode(message) -> str:
         # Intent classification
         pass
@@ -157,18 +157,18 @@ class MistralClient:
 ```python
 class MCPToolsRegistry:
     """Unified schema validation для всех MCP tools"""
-    
+
     @dataclass
     class ToolSchema:
         name: str
         category: ToolCategory
         parameters: List[ToolParameter]  # с типами и validation
         returns: Dict[str, str]
-    
+
     async def validate_tool_call(tool_name, params) -> Tuple[bool, Optional[str]]:
         # Strict validation
         pass
-    
+
     async def call_tool(tool_name, params, user_id) -> dict:
         # With retry logic (использовать ваш RobustMCPClient)
         pass
@@ -192,30 +192,30 @@ class MCPToolsRegistry:
 ```python
 class CreateTaskUseCase:
     """Бизнес-логика создания задачи.
-    
+
     - Парсинг intent через IntentOrchestrator
     - Валидация данных
     - Сохранение через MCP
     - Возврат результата
     """
-    
+
     def __init__(self, intent_orch, mcp_client, mongodb):
         self.intent_orch = intent_orch
         self.mcp_client = mcp_client
         self.mongodb = mongodb
-    
+
     async def execute(self, user_id, message) -> TaskCreationResult:
         intent = await self.intent_orch.parse_task_intent(message)
-        
+
         if intent.needs_clarification:
             return TaskCreationResult(clarification=intent.questions[0])
-        
+
         # Сохранить через MCP
         result = await self.mcp_client.call_tool(
             "create_task",
             intent.to_mcp_params()
         )
-        
+
         return TaskCreationResult(created=True, task_id=result['id'])
 ```
 
@@ -236,7 +236,7 @@ class CollectDataUseCase:
     async def get_channels_digest(self, user_id) -> DigestResult:
         result = await self.mcp_client.call_tool(...)
         return DigestResult(digests=result['digests'])
-    
+
     async def get_student_stats(self, teacher_id) -> StatsResult:
         result = await self.mcp_client.call_tool(...)
         return StatsResult(stats=result['stats'])
@@ -260,13 +260,13 @@ butler_router = Router()
 @butler_router.message()
 async def handle_any_message(message: Message) -> None:
     """Главный entry point для сообщений."""
-    
+
     user_id = message.from_user.id
     session_id = f"{user_id}:{message.message_id}"
-    
+
     butler = get_butler_orchestrator()
     response = await butler.handle_user_message(user_id, message.text, session_id)
-    
+
     await message.answer(response, parse_mode="Markdown")
 ```
 
@@ -284,28 +284,28 @@ async def handle_any_message(message: Message) -> None:
 async def main():
     # 1. Initialize MongoDB
     mongodb = AsyncClient(MONGODB_URL).butler_db
-    
+
     # 2. Initialize services
     mcp_client = RobustMCPClient()
     mistral_client = MistralClient(MISTRAL_API_URL)
     intent_orch = IntentOrchestrator()
-    
+
     # 3. Initialize use cases
     create_task_uc = CreateTaskUseCase(intent_orch, mcp_client, mongodb)
     collect_data_uc = CollectDataUseCase(mcp_client)
-    
+
     # 4. Initialize orchestrator
     butler = ButtlerOrchestrator(
         mongodb, mistral_client, mcp_client, intent_orch,
         create_task_uc, collect_data_uc
     )
     set_butler_orchestrator(butler)
-    
+
     # 5. Setup Telegram
     bot = Bot(TELEGRAM_BOT_TOKEN)
     dp = Dispatcher()
     dp.include_router(butler_router)
-    
+
     await dp.start_polling(bot)
 ```
 
@@ -373,7 +373,7 @@ tests/e2e/
 ## 📊 PHASE 6: Documentation (Parallel)
 
 ### 6.1 Architecture Documentation
-**Файл:** `docs/ARCHITECTURE.md`
+**Файл:** `docs/reference/en/ARCHITECTURE.md`
 
 ```markdown
 # Butler Agent Architecture
@@ -396,7 +396,7 @@ User message → Handler → Orchestrator → Use Case → MCP/DB → Response
 - [ ] **Chief Architect**: UML class diagrams
 
 ### 6.2 API Documentation
-**Файл:** `docs/API.md`
+**Файл:** `docs/reference/en/API.md`
 
 ```markdown
 # Butler API
@@ -412,7 +412,7 @@ User message → Handler → Orchestrator → Use Case → MCP/DB → Response
 - [ ] **Technical Writer**: Examples for each endpoint
 
 ### 6.3 Deployment Guide
-**Файл:** `docs/DEPLOYMENT.md`
+**Файл:** `docs/guides/en/DEPLOYMENT.md`
 
 **Requirements:**
 - [ ] **DevOps**: Step-by-step deployment
@@ -431,12 +431,12 @@ version: '3.9'
 services:
   mongodb:
     image: mongo:7.0
-    
+
   mistral-api:
     build: ./services/mistral
     environment:
       MODEL_NAME: mistralai/Mistral-7B-Instruct-v0.2
-      
+
   butler-bot:
     build: ./services/butler
     environment:
@@ -692,7 +692,7 @@ globalRules:
 
 ## 📅 Timeline (Итого ~2-3 недели)
 
-| Phase | Task | Дни | Cursor Rules | 
+| Phase | Task | Дни | Cursor Rules |
 |-------|------|------|-------------|
 | 0 | Analysis | 1 | AI Reviewer, Chief Architect |
 | 1 | Domain Layer | 2-3 | Python Zen, Chief Architect, Technical Writer |

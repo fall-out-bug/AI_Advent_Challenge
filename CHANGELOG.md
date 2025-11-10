@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tenacity-backed retry policy for all modular reviewer LLM calls (shared package + bridge service)
 - Partial-failure handling in `MultiPassReport` with status/error metadata and trace-aware logging
 - Negative test suites for modular reviewer integration (`tests/unit/application/services/test_modular_review_service.py`)
-- Latency benchmarking helper for Qwen (`/v1/chat/completions`) and documentation updates (`docs/USER_GUIDE.md`, `docs/PERFORMANCE_BENCHMARKS.md`)
+- Latency benchmarking helper for Qwen (`/v1/chat/completions`) and documentation updates (`docs/guides/en/USER_GUIDE.md`, `docs/reference/en/PERFORMANCE_BENCHMARKS.md`)
 
 ### Changed
 - `ModularReviewService` wires Prometheus checker/pass metrics and trace-aware logging end-to-end
@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Health script instructions clarified for authenticated Mongo URLs pointing at shared infra
 
 ### Performance
-- Dummy LLM review averages 0.00068s; Qwen via `/v1/chat/completions` averages 4.08s across 5 runs (see docs/PERFORMANCE_BENCHMARKS.md)
+- Dummy LLM review averages 0.00068s; Qwen via `/v1/chat/completions` averages 4.08s across 5 runs (see docs/reference/en/PERFORMANCE_BENCHMARKS.md)
 
 ## [Day 18] - 2025-11-07
 
@@ -188,7 +188,7 @@ See [docs/release_notes/day_15.md](docs/release_notes/day_15.md) for complete re
 - Graceful shutdown manager (`GracefulShutdown`) for clean service termination
 - Prometheus metrics integration for agent operations
 - Path utilities (`path_utils.py`) for centralized shared package imports
-- Agent integration documentation (`docs/AGENT_INTEGRATION.md` and `.ru.md`)
+- Agent integration documentation (`docs/guides/en/AGENT_INTEGRATION.md` and `docs/guides/ru/AGENT_INTEGRATION.ru.md`)
 - Comprehensive test suite for agent components (26+ tests)
 
 ### Changed
@@ -247,9 +247,9 @@ See [docs/release_notes/day_15.md](docs/release_notes/day_15.md) for complete re
 - Enhanced intent orchestrator with context-aware parsing (Russian/English)
 - Domain value objects for task summary and digest formatting (`TaskSummary`, `DigestMessage`)
 - Comprehensive test suite: unit, integration, E2E, and contract tests
-- MCP tools API documentation with examples (`docs/API_MCP_TOOLS.md`)
-- Architecture diagrams for FSM flow (`docs/ARCHITECTURE_FSM.md`)
-- Quick start guide for Day 11 features (`docs/QUICK_START_DAY11.md`)
+- MCP tools API documentation with examples (`docs/reference/en/API_MCP_TOOLS.md`)
+- Architecture diagrams for FSM flow (`docs/reference/en/ARCHITECTURE_FSM.md`)
+- Quick start guide for Day 11 features (`docs/archive/2023-day11/QUICK_START_DAY11.md`)
 - Telegram bot menu integration with summary and digest callbacks
 - State persistence middleware for FSM conversations
 - Natural language task creation with intent parsing
@@ -359,4 +359,3 @@ See [docs/release_notes/day_15.md](docs/release_notes/day_15.md) for complete re
 - **Removed** for now removed features
 - **Fixed** for any bug fixes
 - **Security** in case of vulnerabilities
-

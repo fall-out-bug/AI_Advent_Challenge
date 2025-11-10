@@ -35,7 +35,7 @@ with the modular reviewer era.
 - `docs/specs/epic_02/mcp_tool_matrix.md` – finalised tool catalogue with lifecycle notes.
 - CLI backoffice (`src/presentation/cli/backoffice/…`) with tests/documentation.
 - Telegram bot scope reduction (channels/digest only) and updated manuals.
-- Public changelog entries (`docs/CHANGELOG_MCP.md`) capturing freeze and CLI rollout.
+- Public changelog entries (`docs/archive/release_notes/CHANGELOG_MCP.md`) capturing freeze and CLI rollout.
 - Stage worklogs (`stage_02_01_worklog.md`, `stage_02_02_worklog.md`, `stage_02_03_worklog.md`) and manual checklist.
 
 ## Metrics & Evidence
@@ -60,10 +60,10 @@ with the modular reviewer era.
 - Ops/Support: consulted for CLI rollout and operator training.
 
 ## Risk & Mitigation Snapshot
-- **Risk:** CLI and MCP APIs drift apart.  
+- **Risk:** CLI and MCP APIs drift apart.
   **Mitigation:** Share adapter layer between CLI and MCP; stage tests hitting
   both surfaces.
-- **Risk:** Localisation mismatches in Telegram flows.  
+- **Risk:** Localisation mismatches in Telegram flows.
   **Mitigation:** Institute localisation review checklist in Stage 02_03 and run
   RU copy tests.
 
@@ -74,7 +74,5 @@ with the modular reviewer era.
 
 ## References
 - `docs/specs/epic_00/stage_00_01.md` MCP tool inventory.
-- `docs/API_MCP.md`, `docs/API_BOT_BACKOFFICE.md` – existing drafts to refresh.
+- `docs/reference/en/API_MCP.md`, `docs/reference/en/API_BOT_BACKOFFICE.md` – existing drafts to refresh.
 - `docs/specs/operations.md` – shared infra commands required by CLI.
-
-

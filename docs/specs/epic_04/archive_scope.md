@@ -54,12 +54,12 @@ required sign-offs so that Stage 04_02 migrations can proceed without risk.
 
 | Document | Status | Successor / Replacement | Dependencies Found | Special Handling | Owner Sign-off |
 |----------|--------|-------------------------|--------------------|------------------|----------------|
-| `docs/AGENT_INTEGRATION.md` / `.ru.md` | Archive | Modular reviewer integration guide + specs | See dependency map (`Soft`) | Link archive copy from README index | Docs Owner |
-| `docs/MCP_HOMEWORK_REVIEW.md` | Archive | Updated MCP API reference (`docs/API_MCP.md`) | See dependency map (`Soft`) | Ensure EN/RU copies removed | Docs Owner |
-| `docs/MCP_DEMO_GUIDE.md` | Archive | CLI backoffice demo instructions | See dependency map (`Soft`) | Capture video references in archive README | Docs Owner |
-| `docs/MCP_GUIDE.md` | Archive | MCP tool matrix + API docs | See dependency map (`Soft`) | Update navigation index | Docs Owner |
-| `docs/MCP_TOOL_USAGE.md` | Archive | CLI/MCP combined operations guide | See dependency map (`Soft`) | Replace links in specs | Docs Owner |
-| `docs/MODEL_SETUP.md` | Archive | Operations guide shared infra section | See dependency map (`Soft`) | Confirm local model references removed from scripts | Ops Owner |
+| `docs/guides/en/AGENT_INTEGRATION.md` / `docs/guides/ru/AGENT_INTEGRATION.ru.md` | Archive | Modular reviewer integration guide + specs | See dependency map (`Soft`) | Link archive copy from README index | Docs Owner |
+| `docs/guides/en/MCP_HOMEWORK_REVIEW.md` | Archive | Updated MCP API reference (`docs/reference/en/API_MCP.md`) | See dependency map (`Soft`) | Ensure EN/RU copies removed | Docs Owner |
+| `docs/guides/en/MCP_DEMO_GUIDE.md` | Archive | CLI backoffice demo instructions | See dependency map (`Soft`) | Capture video references in archive README | Docs Owner |
+| `docs/guides/en/MCP_GUIDE.md` | Archive | MCP tool matrix + API docs | See dependency map (`Soft`) | Update navigation index | Docs Owner |
+| `docs/guides/en/MCP_TOOL_USAGE.md` | Archive | CLI/MCP combined operations guide | See dependency map (`Soft`) | Replace links in specs | Docs Owner |
+| `docs/reference/en/MODEL_SETUP.md` | Archive | Operations guide shared infra section | See dependency map (`Soft`) | Confirm local model references removed from scripts | Ops Owner |
 | `docs/architecture/mcp_agent_prompt_tuning_report.md` | Archive | Modular reviewer prompt docs | See dependency map (`No blockers`) | Preserve metrics tables in archive README | Docs Owner |
 | `docs/archive/local_models/**` (if any) | Confirm archive | Git history + new archive wave | See dependency map (`No blockers`) | Move remaining notes into `archive/ep04_2025-11/docs/` | Docs Owner |
 
@@ -67,13 +67,13 @@ required sign-offs so that Stage 04_02 migrations can proceed without risk.
 
 | Script / Folder | Status | Successor / Replacement | Dependencies Found | Special Handling | Owner Sign-off |
 |-----------------|--------|-------------------------|--------------------|------------------|----------------|
-| `scripts/start_models.sh` | Archived 2025-11-09 | Shared infra bootstrap (`make day-12-up`) | See dependency map (`Soft`) | Docs updated to reference `scripts/start_shared_infra.sh` | Ops Owner |
-| `scripts/check_model_status.sh` | Archived 2025-11-09 | Shared infra health checks (`scripts/test_review_system.py`) | See dependency map (`Soft`) | README updated with new verification steps | Ops Owner |
+| `scripts/start_models.sh` | Archived 2025-11-09 | Shared infra bootstrap (`make day-12-up`) | See dependency map (`Soft`) | Docs updated to reference `scripts/infra/start_shared_infra.sh` | Ops Owner |
+| `scripts/infra/check_model_status.sh` | Archived 2025-11-09 | Shared infra health checks (`scripts/quality/test_review_system.py`) | See dependency map (`Soft`) | README updated with new verification steps | Ops Owner |
 | `scripts/wait_for_model.sh` | Archived 2025-11-09 | Shared infra readiness checks | See dependency map (`Soft`) | README updated with readiness guidance | Ops Owner |
 | `scripts/ci/test_day10.sh` | Archived 2025-11-09 | Updated CI pipelines (EP01) | See dependency map (`Soft`) | Makefile/doc references dropped | Ops Owner |
 | `scripts/day12_run.py` | Archived 2025-11-09 | `make day-12-up` + CLI commands | See dependency map (`Soft`) | Shared infra wrapper + Makefile update in place | Ops Owner |
 | `scripts/mcp_comprehensive_demo.py` | Archived 2025-11-09 | CLI backoffice demo script | See dependency map (`Soft`) | Backoffice CLI tests cover discovery | EP02 TL |
-| `scripts/healthcheck_mcp.py` | Archived 2025-11-09 | `scripts/test_review_system.py --metrics` | See dependency map (`Soft`) | Ops docs reference review system script | EP03 TL |
+| `scripts/infra/healthcheck_mcp.py` | Archived 2025-11-09 | `scripts/quality/test_review_system.py --metrics` | See dependency map (`Soft`) | Ops docs reference review system script | EP03 TL |
 | `scripts/telegram_channel_reader.session` | Delete | Not required (credential artifact) | See dependency map (`No blockers`) | Ensure secret rotation policy referenced | Ops Owner |
 
 ## Prompts & Resources

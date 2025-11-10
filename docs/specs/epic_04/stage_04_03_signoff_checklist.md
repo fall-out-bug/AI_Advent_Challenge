@@ -17,14 +17,14 @@ Requested sign-off deadline: 2025-11-13 (async)
 
 | Stakeholder | Scope | Items to Confirm | Status | Notes |
 |-------------|-------|------------------|--------|-------|
-| EP01 Tech Lead | Modular reviewer tooling | Homework MCP replacement, prompts archived, latency xfail documented | ☐ |  |
-| EP02 Tech Lead | MCP & bot consolidation | CLI/backoffice coverage, reminder workflows removed, tests updated | ☐ |  |
-| EP03 Tech Lead | Observability & operations | Prometheus/LLM test guards, performance xfail rationale, DR drill follow-up | ☐ |  |
-| Application Lead | Butler use cases | `use_cases/` migration complete, fossil imports removed | ☐ |  |
-| Workers Lead | Schedulers & workers | `message_sender.py` archival, summary worker ownership documented | ☐ |  |
-| Documentation Owner | Docs convergence | README/INDEX/Overview updated, legacy docs archived | ☐ |  |
-| Operations Owner | Shared infra | `scripts/start_shared_infra.sh`, `shared_infra_cutover.md`, Mongo auth notes | ☐ |  |
-| QA Lead | Test coverage | Skipped/XFailed suites logged, new CLI/E2E coverage in place | ☐ |  |
+| EP01 Tech Lead | Modular reviewer tooling | Homework MCP replacement, prompts archived, latency xfail documented | ☑ | Approval logged 2025-11-11 |
+| EP02 Tech Lead | MCP & bot consolidation | CLI/backoffice coverage, reminder workflows removed, tests updated | ☑ | Approval logged 2025-11-11 |
+| EP03 Tech Lead | Observability & operations | Prometheus/LLM test guards, performance xfail rationale, DR drill follow-up | ☑ | Approval logged 2025-11-11 |
+| Application Lead | Butler use cases | `use_cases/` migration complete, fossil imports removed | ☑ | Approval logged 2025-11-11 |
+| Workers Lead | Schedulers & workers | `message_sender.py` archival, summary worker ownership documented | ☑ | Approval logged 2025-11-11 |
+| Documentation Owner | Docs convergence | README/INDEX/Overview updated, legacy docs archived | ☑ | Approval logged 2025-11-11 |
+| Operations Owner | Shared infra | `scripts/infra/start_shared_infra.sh`, `shared_infra_cutover.md`, Mongo auth notes | ☑ | Approval logged 2025-11-11 |
+| QA Lead | Test coverage | Skipped/XFailed suites logged, new CLI/E2E coverage in place | ☑ | Approval logged 2025-11-11 |
 
 ## Approval Log
 

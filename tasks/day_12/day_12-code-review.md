@@ -312,16 +312,16 @@ Comprehensive code review plan integrating principles from:
 
 ### Documentation
 
-23. `docs/SECURITY.md` - New
-24. `docs/MONITORING.md` - New (Grafana setup guide)
-25. `docs/ML_MONITORING.md` - New
+23. `docs/reference/en/SECURITY.md` - New
+24. `docs/reference/en/MONITORING.md` - New (Grafana setup guide)
+25. `docs/reference/en/ML_MONITORING.md` - New
 26. `README.md` - Update (add monitoring section)
 
 ### QA/TDD
 
 27. `tests/baseline_results.txt` - New (baseline test results)
 28. `tests/baseline_coverage.json` - New (baseline coverage)
-29. `scripts/qa/smoke_tests.sh` - New (post-deployment smoke tests)
+29. `scripts/quality/qa/smoke_tests.sh` - New (post-deployment smoke tests)
 30. `.github/workflows/ci.yml` - Update (add regression checks)
 
 ## Verification Steps
@@ -376,7 +376,7 @@ Comprehensive code review plan integrating principles from:
 25. Run CI pipeline: Verify all checks pass
 26. Test deployment: `make day-11-up` or `make day-12-up`
 27. Check healthchecks: All services healthy
-28. Run smoke tests: `scripts/qa/smoke_tests.sh`
+28. Run smoke tests: `scripts/quality/qa/smoke_tests.sh`
 
 ### Regression Testing
 

@@ -9,14 +9,14 @@
 ## Stage Outcomes
 | Stage | Highlights | Evidence |
 |-------|------------|----------|
-| 02_01 | Finalised MCP tool matrix, lifecycle metadata, feature flag for deprecated tools, documentation refresh. | `mcp_tool_matrix.md`, `tools_registry.py`, `docs/CHANGELOG_MCP.md`. |
+| 02_01 | Finalised MCP tool matrix, lifecycle metadata, feature flag for deprecated tools, documentation refresh. | `mcp_tool_matrix.md`, `tools_registry.py`, `docs/archive/release_notes/CHANGELOG_MCP.md`. |
 | 02_02 | Delivered deterministic CLI (`channels list/add/remove`, `digest run/last`), dual-format output, Prometheus metrics, comprehensive tests. | `src/presentation/cli/backoffice/…`, CLI unit/integration tests, updated backoffice docs. |
 | 02_03 | Removed reminder/task bot flows, aligned menus/factory, pruned tests, refreshed README & Telegram guides, drafted manual checklist. | `src/presentation/bot/…`, Stage manual checklist, updated README EN/RU. |
 
 ## Key Metrics
-- **Testing:**  
-  - MCP impacted suites kept healthy (`pytest` selective runs; deprecated suites marked xfail/skip).  
-  - CLI backoffice: `poetry run pytest src/tests/presentation/cli/backoffice -q` → 16 passed.  
+- **Testing:**
+  - MCP impacted suites kept healthy (`pytest` selective runs; deprecated suites marked xfail/skip).
+  - CLI backoffice: `poetry run pytest src/tests/presentation/cli/backoffice -q` → 16 passed.
   - Bot scope: `poetry run pytest tests/presentation/bot -q` → 11 passed.
 - **Documentation:** 10+ artefacts updated/created (tool matrix, migration bulletin, CLI docs EN/RU, MCP changelog, README EN/RU, Telegram guides, Stage worklogs, manual checklist).
 - **Monitoring:** MCP registered-tools gauge, CLI command counters/timers/errors.
@@ -41,5 +41,3 @@
 - Stage worklogs: `stage_02_01_worklog.md`, `stage_02_02_worklog.md`, `stage_02_03_worklog.md`.
 - Specifications: `stage_02_01.md`, `stage_02_02.md`, `stage_02_03.md`.
 - Supporting docs: `mcp_tool_matrix.md`, `mcp_migration_bulletin.md`, `API_MCP*.md`, `API_BOT_BACKOFFICE*.md`.
-
-

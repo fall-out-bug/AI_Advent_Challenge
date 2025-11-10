@@ -2,9 +2,9 @@
 
 ## Overview
 
-- **Stage:** 02_01 – MCP Tool Catalogue Freeze  
-- **Date:** 2025-11-09  
-- **Tech lead:** Assistant (with user oversight)  
+- **Stage:** 02_01 – MCP Tool Catalogue Freeze
+- **Date:** 2025-11-09
+- **Tech lead:** Assistant (with user oversight)
 - **Developers:** Assistant agents (implementation), user (approvals, guidance)
 
 ## Summary
@@ -17,10 +17,10 @@
 
 ## Timeline
 
-1. **Инвентаризация** – сверка Stage 00 каталога, подтверждение статусов keep/rework/archive.  
-2. **Кодовые правки** – регистрация инструментов с учётом статусов, флаг для legacy, предупреждения в deprecated модулях.  
-3. **Документация** – матрица, миграционный бюллетень, обновление API/операционных заметок, подготовка EP04.  
-4. **Тесты** – пометка устаревших тестов (xfail/skip), сохранение активных проверок digest/channel/NLP.  
+1. **Инвентаризация** – сверка Stage 00 каталога, подтверждение статусов keep/rework/archive.
+2. **Кодовые правки** – регистрация инструментов с учётом статусов, флаг для legacy, предупреждения в deprecated модулях.
+3. **Документация** – матрица, миграционный бюллетень, обновление API/операционных заметок, подготовка EP04.
+4. **Тесты** – пометка устаревших тестов (xfail/skip), сохранение активных проверок digest/channel/NLP.
 5. **Финализация** – подготовка worklog, smoke test, CHANGELOG, handoff для Stage 02_02 (текущий шаг).
 
 ## Roles & Responsibilities
@@ -55,7 +55,7 @@
 | Флаги/конфигурации | 1 новый флаг (`MCP_INCLUDE_DEPRECATED_TOOLS`) |
 
 ### Smoke Test Status
-- `poetry run pytest src/tests/presentation/mcp/test_digest_tools.py -v` — **не выполнено** (Mongo требует аутентификации; окружение без `MONGODB_URL` с кредами).  
+- `poetry run pytest src/tests/presentation/mcp/test_digest_tools.py -v` — **не выполнено** (Mongo требует аутентификации; окружение без `MONGODB_URL` с кредами).
 - Рекомендация: повторить на окружении с `TEST_MONGODB_URL`/`MONGODB_URL` из shared infra либо добавить фикстуру с моками.
 
 ## Open Questions
@@ -71,8 +71,6 @@
 - `docs/specs/epic_02/mcp_tool_matrix.md`
 - `docs/specs/epic_02/mcp_migration_bulletin.md`
 - `docs/specs/epic_04/coordination_stage_02_01.md`
-- `docs/API_MCP.md`, `docs/API_MCP.ru.md`
+- `docs/reference/en/API_MCP.md`, `docs/reference/ru/API_MCP.ru.md`
 - `src/presentation/mcp/tools_registry.py`
 - `tests/` (PDF/homework/reminder suites)
-
-

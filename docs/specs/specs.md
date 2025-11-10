@@ -39,7 +39,7 @@
 | Day 12 | Deployment scripts, quick starts | Ensure docs remain valid post-archive. |
 | Day 15 | Modular reviewer rollout | New package supersedes legacy multi-pass agent. |
 | Day 17 | Integration contracts | Align MCP adapters and review flows. |
-| Day 18 | Performance benchmarks | Document results in `docs/PERFORMANCE_BENCHMARKS.md`. |
+| Day 18 | Performance benchmarks | Document results in `docs/reference/en/PERFORMANCE_BENCHMARKS.md`. |
 
 ## 4. Workstreams Emerging from Audit
 - Reviewer hardening (tests, lint, doc updates) → EP01.

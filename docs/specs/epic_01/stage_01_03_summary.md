@@ -8,8 +8,8 @@
 ## Updated Artifacts
 - `packages/multipass-reviewer/pyproject.toml` — version `0.3.0`.
 - `packages/multipass-reviewer/CHANGELOG.md` & `README.md` — release notes/status.
-- `docs/MODULAR_REVIEWER_INTEGRATION_GUIDE.{md,ru.md}` — installation + Stage 01_03 snapshot.
-- `docs/API_MCP.md` — MCP note about mandatory modular reviewer.
+- `docs/guides/en/MODULAR_REVIEWER_INTEGRATION_GUIDE.md` / `docs/guides/ru/MODULAR_REVIEWER_INTEGRATION_GUIDE.ru.md` — installation + Stage 01_03 snapshot.
+- `docs/reference/en/API_MCP.md` — MCP note about mandatory modular reviewer.
 - `docs/specs/epic_01/stage_01_03_rollout_checklist.md` — runbook + migration guide.
 
 ## Validation Evidence
@@ -35,4 +35,3 @@
 | QA | ☑ | Assistant | CI evidence attached; all tests green |
 | Operations | ☑ | User | Rollout checklist reviewed |
 | Product/Programme | ☑ | Assistant | Programme tracker updated; epic ready to close |
-

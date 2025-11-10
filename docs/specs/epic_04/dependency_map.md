@@ -19,7 +19,7 @@ using repository searches (saved under `docs/specs/epic_04/evidence/`).
 |-------|----------------|-------------|--------|
 | `src/application/usecases/` | Previously imported by bot factory, tests, docs | Migrated to `src/application/use_cases/` + `src/application/dtos/butler_use_case_dtos.py`; archive directory | Completed 2025-11-09 |
 | `src/domain/agents/*` | Previously wired into bot factory, orchestrator, and integration tests | Replaced by `src/presentation/bot/orchestrator.py` and handlers under `src/presentation/bot/handlers/`; tests updated accordingly | Completed |
-| `src/presentation/mcp/tools/homework_review_tool.py` | Registered in `src/presentation/mcp/server.py`, referenced in docs (`docs/API_REVIEWER*.md`) | Refactored 2025-11-09 to modular reviewer MCP; registry updated, docs next | Completed |
+| `src/presentation/mcp/tools/homework_review_tool.py` | Registered in `src/presentation/mcp/server.py`, referenced in docs (`docs/reference/en/API_REVIEWER.md`, `docs/reference/ru/API_REVIEWER.ru.md`) | Refactored 2025-11-09 to modular reviewer MCP; registry updated, docs next | Completed |
 | `src/presentation/mcp/adapters/orchestration_adapter.py` | Previously instantiated in `src/presentation/mcp/adapters.py`, referenced by tests | Archived 2025-11-09; MCPApplicationAdapter now chains generation+review adapters | Completed |
 | `src/presentation/mcp/orchestrators/mcp_mistral_wrapper.py` | Used by CLI chat scripts, integration tests, examples | Archived 2025-11-09; backoffice CLI replaces interactive chat flows | Completed |
 | `src/workers/message_sender.py` | Previously imported by `src/workers/summary_worker.py` | Archived 2025-11-09; summary worker now sends notifications directly | Completed |
@@ -29,14 +29,14 @@ using repository searches (saved under `docs/specs/epic_04/evidence/`).
 
 | Asset | References | Required Update | Status |
 |-------|------------|-----------------|--------|
-| `src/presentation/mcp/cli/interactive_mistral_chat.py` | Invoked from `Makefile`, documented in `docs/MCP_GUIDE.md` | Removed from Makefile/docs; archived under `archive/ep04_2025-11/` | Completed 2025-11-09 |
+| `src/presentation/mcp/cli/interactive_mistral_chat.py` | Invoked from `Makefile`, documented in `docs/guides/en/MCP_GUIDE.md` | Removed from Makefile/docs; archived under `archive/ep04_2025-11/` | Completed 2025-11-09 |
 | `src/presentation/mcp/cli/streaming_chat.py` | Invoked from `Makefile`, docs, day tasks | Removed from Makefile/docs; archived | Completed 2025-11-09 |
-| `scripts/start_models.sh` / `wait_for_model.sh` / `check_model_status.sh` | Referenced in docs and older scripts | Docs updated 2025-11-09 to point at `scripts/start_shared_infra.sh`; legacy scripts archived | Completed 2025-11-09 |
+| `scripts/start_models.sh` / `wait_for_model.sh` / `check_model_status.sh` | Referenced in docs and older scripts | Docs updated 2025-11-09 to point at `scripts/infra/start_shared_infra.sh`; legacy scripts archived | Completed 2025-11-09 |
 | `scripts/ci/test_day10.sh` | Mentioned in CI docs (`docs/specs/epic_00/stage_00_01.md`) | Makefile/docs updated; archive entry recorded | Completed 2025-11-09 |
 | `scripts/day12_run.py` | Referenced in docs and scripts README | Stub + Makefile update replaced with shared infra wrapper | Completed 2025-11-09 |
 | `scripts/mcp_comprehensive_demo.py` | Linked in MCP guides | Makefile/docs now reference backoffice CLI; integration test archived | Completed 2025-11-09 |
-| `scripts/healthcheck_mcp.py` | Linked in ops docs | Ops docs direct to `scripts/test_review_system.py --metrics`; script stub archived | Completed 2025-11-09 |
-| `docs/AGENT_INTEGRATION*.md`, `docs/MCP_*` guides, `docs/MODEL_SETUP.md` | Linked from doc index, README, day guides | Update indices to point at successor docs | Planned |
+| `scripts/infra/healthcheck_mcp.py` | Linked in ops docs | Ops docs direct to `scripts/quality/test_review_system.py --metrics`; script stub archived | Completed 2025-11-09 |
+| `docs/guides/*/AGENT_INTEGRATION*.md`, `docs/guides/en/MCP_*` guides, `docs/reference/en/MODEL_SETUP.md` | Linked from doc index, README, day guides | Update indices to point at successor docs | Planned |
 | `prompts/v1/pass_*`, `src/presentation/mcp/prompts/**` | Referenced in modular reviewer docs and CLI | Move to package resources; update imports | Planned |
 | `scripts/telegram_channel_reader.session` | Mentioned in `docs/telegram_setup.md`, `scripts/init_pyrogram.py` | Document new credential flow; delete file | Planned |
 

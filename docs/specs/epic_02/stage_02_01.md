@@ -41,5 +41,4 @@ documenting replacements, and updating registry metadata.
 
 ## Open Questions
 - **Preserve archived tools behind feature flag?** ✅ Да — `MCP_INCLUDE_DEPRECATED_TOOLS` включает deprecated/archived инструменты до завершения CLI миграции.
-- **Публиковать ли публичный CHANGELOG?** ✅ Да — см. `docs/CHANGELOG_MCP.md` (добавлен в рамках closing steps).
-
+- **Публиковать ли публичный CHANGELOG?** ✅ Да — см. `docs/archive/release_notes/CHANGELOG_MCP.md` (добавлен в рамках closing steps).

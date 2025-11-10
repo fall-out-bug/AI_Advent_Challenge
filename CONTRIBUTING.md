@@ -827,9 +827,9 @@ class BadHandler:
 ## Getting Help
 
 - **Documentation**: See [docs/](docs/)
-  - [Architecture Documentation](docs/ARCHITECTURE.md)
-  - [API Documentation](docs/API.md)
-  - [Deployment Guide](docs/DEPLOYMENT.md)
+  - [Architecture Documentation](docs/reference/en/ARCHITECTURE.md)
+  - [API Documentation](docs/reference/en/API.md)
+  - [Deployment Guide](docs/guides/en/DEPLOYMENT.md)
 - **Questions**: Open an issue
 - **Bugs**: Report in issues
 - **Features**: Discuss in issues first
