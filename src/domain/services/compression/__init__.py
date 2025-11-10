@@ -7,9 +7,7 @@ Following the Zen of Python:
 """
 
 from src.domain.services.compression.compressor import CompressionService
-from src.domain.services.compression.strategies.base_compressor import (
-    BaseCompressor,
-)
+from src.domain.services.compression.strategies.base_compressor import BaseCompressor
 from src.domain.services.compression.strategies.keyword_compressor import (
     KeywordCompressor,
 )

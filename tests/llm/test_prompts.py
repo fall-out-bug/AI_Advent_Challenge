@@ -11,5 +11,3 @@ def test_reduce_prompt_en_contains_controls():
     s = get_reduce_prompt("s1\n\ns2", "en", max_sentences=7)
     assert "Combine" in s and "FINAL SUMMARY" in s
     assert "7" in s
-
-

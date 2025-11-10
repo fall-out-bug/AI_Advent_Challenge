@@ -6,8 +6,8 @@ Following TDD principles and testing best practices.
 import pytest
 from unittest.mock import AsyncMock
 
-from src.domain.agents.handlers.chat_handler import ChatHandler
-from src.domain.agents.state_machine import DialogContext, DialogState
+from src.application.dtos.butler_dialog_dtos import DialogContext, DialogState
+from src.presentation.bot.handlers.chat import ChatHandler
 
 
 class MockLLMClient:
@@ -33,9 +33,7 @@ class TestChatHandler:
         return ChatHandler(llm_client=mock_llm_client, default_model="mistral")
 
     @pytest.mark.asyncio
-    async def test_handle_returns_llm_response(
-        self, handler, mock_llm_client
-    ):
+    async def test_handle_returns_llm_response(self, handler, mock_llm_client):
         """Test handler returns LLM response."""
         context = DialogContext(
             state=DialogState.IDLE,
@@ -47,9 +45,7 @@ class TestChatHandler:
         mock_llm_client.make_request.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_handle_uses_correct_prompt(
-        self, handler, mock_llm_client
-    ):
+    async def test_handle_uses_correct_prompt(self, handler, mock_llm_client):
         """Test handler uses correct prompt format."""
         context = DialogContext(
             state=DialogState.IDLE,
@@ -63,9 +59,7 @@ class TestChatHandler:
         assert "Butler" in prompt
 
     @pytest.mark.asyncio
-    async def test_handle_handles_llm_error(
-        self, handler, mock_llm_client
-    ):
+    async def test_handle_handles_llm_error(self, handler, mock_llm_client):
         """Test error handling when LLM fails."""
         context = DialogContext(
             state=DialogState.IDLE,
@@ -74,5 +68,9 @@ class TestChatHandler:
         )
         mock_llm_client.make_request = AsyncMock(side_effect=Exception("LLM error"))
         response = await handler.handle(context, "Hello")
-        assert "help" in response.lower() or "task" in response.lower()
-
+        response_lower = response.lower()
+        assert (
+            "помочь" in response_lower
+            or "создать задачу" in response_lower
+            or "help" in response_lower
+        )

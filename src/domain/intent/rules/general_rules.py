@@ -24,7 +24,9 @@ GENERAL_RULES: list[Tuple[re.Pattern, IntentType, float, Dict[str, Callable]]] =
         {},
     ),
     (
-        re.compile(r"(что нового|what's new|что случилось|what happened)", re.IGNORECASE),
+        re.compile(
+            r"(что нового|what's new|что случилось|what happened)", re.IGNORECASE
+        ),
         IntentType.GENERAL_CHAT,
         0.75,
         {},
@@ -49,4 +51,3 @@ GENERAL_RULES: list[Tuple[re.Pattern, IntentType, float, Dict[str, Callable]]] =
         {},
     ),
 ]
-

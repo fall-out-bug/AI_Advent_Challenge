@@ -32,16 +32,12 @@ class LLMParseError(IntentParseError):
     Raised when LLM parsing fails or returns invalid response.
     """
 
-    pass
-
 
 class FallbackParseError(IntentParseError):
     """Error during fallback deterministic parsing.
 
     Raised when fallback parser encounters unexpected input.
     """
-
-    pass
 
 
 class IntentValidationError(IntentParseError):
@@ -50,14 +46,9 @@ class IntentValidationError(IntentParseError):
     Raised when parsed intent fails validation checks.
     """
 
-    pass
-
 
 class ClarificationGenerationError(IntentParseError):
     """Error during clarification question generation.
 
     Raised when clarification questions cannot be generated.
     """
-
-    pass
-

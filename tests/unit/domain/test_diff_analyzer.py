@@ -80,4 +80,3 @@ def test_diff_analyzer_empty_code():
     assert diff.lines_added == 0
     assert diff.lines_removed == 0
     assert diff.change_ratio == 0.0
-

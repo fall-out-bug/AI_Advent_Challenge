@@ -20,8 +20,8 @@ def _clean_path(path: str) -> str:
     if not path or path == "N/A":
         return path
     # Remove common temp directory patterns
-    path = re.sub(r'/tmp/homework_review_[^/]+/', '', path)
-    path = re.sub(r'/tmp/[^/]+/', '', path)
+    path = re.sub(r"/tmp/homework_review_[^/]+/", "", path)
+    path = re.sub(r"/tmp/[^/]+/", "", path)
     return path
 
 
@@ -41,7 +41,7 @@ def _clean_linter_issue_path(issue_text: str) -> str:
     if not issue_text:
         return issue_text
     # Extract path (part before first colon that contains path-like content)
-    path_match = re.match(r'^(/tmp/[^:]+|/[^:]+)', issue_text)
+    path_match = re.match(r"^(/tmp/[^:]+|/[^:]+)", issue_text)
     if path_match:
         full_path = path_match.group(1)
         cleaned_path = _clean_path(full_path)
@@ -190,4 +190,3 @@ def format_static_analysis_markdown(linter_results: Dict[str, Any]) -> str:
             md_parts.append("")
 
     return "\n".join(md_parts)
-

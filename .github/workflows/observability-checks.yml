@@ -1,0 +1,59 @@
+name: Observability Checks
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  observability:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install -e packages/multipass-reviewer
+          pip install -r requirements.txt || true
+          pip install pytest pytest-asyncio yamllint
+
+      - name: Validate Prometheus configuration
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE/prometheus:/workspace" \
+            prom/prometheus:v2.52.0 \
+            promtool check config /workspace/prometheus.yml
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE/prometheus:/workspace" \
+            prom/prometheus:v2.52.0 \
+            promtool check rules /workspace/alerts.yml
+
+      - name: Validate Alertmanager configuration
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE/prometheus:/workspace" \
+            prom/prometheus:v2.52.0 \
+            promtool check config /workspace/alertmanager.yml
+
+      - name: Lint Grafana dashboards
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          dashboards = Path('grafana/dashboards')
+          for dashboard in dashboards.glob('*.json'):
+              with dashboard.open('r', encoding='utf-8') as fh:
+                  json.load(fh)
+          PY
+
+      - name: Run observability integration tests
+        run: |
+          pytest tests/integration/observability -q

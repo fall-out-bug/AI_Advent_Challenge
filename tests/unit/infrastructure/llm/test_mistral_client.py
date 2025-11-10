@@ -138,9 +138,7 @@ class TestMistralClient:
                 model_name="mistral", prompt="", max_tokens=100
             )
 
-    async def test_make_request_timeout_retry(
-        self, mistral_client, mock_httpx_client
-    ):
+    async def test_make_request_timeout_retry(self, mistral_client, mock_httpx_client):
         """Test retry logic on timeout error.
 
         Args:
@@ -155,9 +153,7 @@ class TestMistralClient:
                 httpx.TimeoutException("Request timeout"),
                 MagicMock(
                     status_code=200,
-                    json=lambda: {
-                        "choices": [{"message": {"content": "Success"}}]
-                    },
+                    json=lambda: {"choices": [{"message": {"content": "Success"}}]},
                     raise_for_status=MagicMock(),
                 ),
             ]
@@ -203,9 +199,7 @@ class TestMistralClient:
             assert mock_httpx_client.post.call_count >= 3
             await client.close()
 
-    async def test_check_availability_success(
-        self, mistral_client, mock_httpx_client
-    ):
+    async def test_check_availability_success(self, mistral_client, mock_httpx_client):
         """Test successful health check.
 
         Args:
@@ -228,9 +222,7 @@ class TestMistralClient:
             assert available is True
             await client.close()
 
-    async def test_check_availability_failure(
-        self, mistral_client, mock_httpx_client
-    ):
+    async def test_check_availability_failure(self, mistral_client, mock_httpx_client):
         """Test health check failure.
 
         Args:
@@ -315,9 +307,7 @@ class TestMistralClient:
             client = MistralClient()
 
             # Act
-            response = await client.make_request(
-                model_name="mistral", prompt="Test"
-            )
+            response = await client.make_request(model_name="mistral", prompt="Test")
 
             # Assert
             assert response == "Response"
@@ -333,6 +323,7 @@ class TestMistralClient:
         """Test that MISTRAL_API_URL environment variable is used."""
         # Arrange
         import os
+
         original_url = os.environ.get("MISTRAL_API_URL")
 
         try:
@@ -348,4 +339,3 @@ class TestMistralClient:
                 os.environ["MISTRAL_API_URL"] = original_url
             elif "MISTRAL_API_URL" in os.environ:
                 del os.environ["MISTRAL_API_URL"]
-

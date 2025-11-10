@@ -1,13 +1,12 @@
 """FastMCP server exposing AI Challenge capabilities."""
-import sys
+
+import os
 from pathlib import Path
 from typing import Any, Dict
-from mcp.server import fastmcp
-FastMCP = fastmcp.FastMCP
 
-# Add root to path for imports when running as script
-_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(_root))
+from mcp.server import fastmcp
+
+FastMCP = fastmcp.FastMCP
 
 # Create FastMCP server
 mcp = FastMCP(
@@ -15,58 +14,98 @@ mcp = FastMCP(
     instructions="Expose SDK and agent capabilities via MCP protocol",
 )
 
+
 # Register tools AFTER mcp is created to avoid circular imports
 # Import modules so their @mcp.tool decorators execute and register tools
-def _register_all_tools():
+def _register_all_tools() -> None:
     """Register all tool modules by importing them."""
-    import sys
-    import traceback
-    
-    tool_modules = [
-        ("reminder_tools", "src.presentation.mcp.tools.reminder_tools"),
-        ("nlp_tools", "src.presentation.mcp.tools.nlp_tools"),
-        ("digest_tools", "src.presentation.mcp.tools.digest_tools"),
-        ("pdf_digest_tools", "src.presentation.mcp.tools.pdf_digest_tools"),
-        # Explicitly import channels module to ensure tools are registered
-        ("channels", "src.presentation.mcp.tools.channels"),
-        ("homework_review_tool", "src.presentation.mcp.tools.homework_review_tool"),
-    ]
-    
+
     from src.infrastructure.logging import get_logger
-    
+    from src.infrastructure.monitoring.mcp_metrics import set_registered_tools
+
+    include_deprecated = os.getenv(
+        "MCP_INCLUDE_DEPRECATED_TOOLS", "0"
+    ).lower() not in {"", "0", "false", "no"}
+
+    tool_modules = [
+        ("nlp_tools", "src.presentation.mcp.tools.nlp_tools", "supported", ""),
+        (
+            "digest_tools",
+            "src.presentation.mcp.tools.digest_tools",
+            "supported",
+            "",
+        ),
+        (
+            "channels",
+            "src.presentation.mcp.tools.channels",
+            "supported",
+            "Channel bulk management migrates to CLI backoffice in Stage 02_02.",
+        ),
+        (
+            "homework_review_tool",
+            "src.presentation.mcp.tools.homework_review_tool",
+            "supported",
+            "Modular reviewer MCP tool backed by shared reviewer service.",
+        ),
+    ]
+
     logger = get_logger(__name__)
-    
-    for name, module_path in tool_modules:
+
+    for name, module_path, status, note in tool_modules:
+        if status == "deprecated" and not include_deprecated:
+            logger.info(
+                "Skipping deprecated MCP tool %s (enable MCP_INCLUDE_DEPRECATED_TOOLS "
+                "to register).",
+                name,
+            )
+            continue
+
         try:
             __import__(module_path)
-            logger.info(f"Registered tools from {name}")
-        except Exception as e:
-            logger.error(f"Failed to import {name} from {module_path}: {e}", exc_info=True)
+            if status == "deprecated":
+                logger.warning("Registered deprecated MCP tool %s: %s", name, note)
+            else:
+                logger.info("Registered tools from %s", name)
+            if note and status != "deprecated":
+                logger.debug(note)
+        except Exception as exc:
+            logger.error(
+                "Failed to import %s from %s: %s", name, module_path, exc, exc_info=True
+            )
+
+    try:
+        tools_registered = len(mcp._tool_manager._tools)
+    except AttributeError:
+        tools_registered = 0
+    set_registered_tools(tools_registered)
 
 # Register tools immediately when module loads
 _register_all_tools()
 
-# Import MCP resources and prompts
-from src.presentation.mcp.resources.prompts import (
-    get_python_developer_prompt,
-    get_architect_prompt,
-    get_technical_writer_prompt,
-    get_coding_standards,
-)
-from src.presentation.mcp.resources.templates import (
-    get_project_structure_template,
-    get_pytest_template,
-    get_class_template,
-)
 from src.presentation.mcp.prompts.code_review import code_review_prompt
 from src.presentation.mcp.prompts.test_generation import test_generation_prompt
+
+# Import MCP resources and prompts
+from src.presentation.mcp.resources.prompts import (
+    get_architect_prompt,
+    get_coding_standards,
+    get_python_developer_prompt,
+    get_technical_writer_prompt,
+)
+from src.presentation.mcp.resources.templates import (
+    get_class_template,
+    get_project_structure_template,
+    get_pytest_template,
+)
 
 # Import adapters lazily to avoid circular imports
 _adapters_module = None
 
+
 def _get_adapters_module():
     """Lazy import of adapters module."""
     import importlib.util
+
     global _adapters_module
     if _adapters_module is None:
         # Import the actual adapters.py file (not the package __init__)
@@ -75,6 +114,7 @@ def _get_adapters_module():
         _adapters_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(_adapters_module)
     return _adapters_module
+
 
 # Initialize adapter (will be singleton)
 _adapter = None
@@ -91,7 +131,8 @@ def get_adapter():
         adapters = _get_adapters_module()
         _adapter = adapters.MCPApplicationAdapter()
     return _adapter
- 
+
+
 # Task Formalization Tool
 @mcp.tool()
 async def formalize_task(informal_request: str, context: str = "") -> Dict[str, Any]:
@@ -106,7 +147,6 @@ async def formalize_task(informal_request: str, context: str = "") -> Dict[str, 
     """
     adapter = get_adapter()
     return await adapter.formalize_task(informal_request, context)
-
 
 
 # Calculator Tools (Demo)
@@ -234,7 +274,9 @@ def count_tokens(text: str) -> Dict[str, int]:
 
 # Test Generation Tool
 @mcp.tool()
-async def generate_tests(code: str, test_framework: str = "pytest", coverage_target: int = 80) -> Dict[str, Any]:
+async def generate_tests(
+    code: str, test_framework: str = "pytest", coverage_target: int = 80
+) -> Dict[str, Any]:
     """Generate comprehensive tests for provided code.
 
     Args:
@@ -251,7 +293,9 @@ async def generate_tests(code: str, test_framework: str = "pytest", coverage_tar
 
 # Code Formatting Tool
 @mcp.tool()
-def format_code(code: str, formatter: str = "black", line_length: int = 100) -> Dict[str, Any]:
+def format_code(
+    code: str, formatter: str = "black", line_length: int = 100
+) -> Dict[str, Any]:
     """Format code according to style guidelines.
 
     Args:
@@ -327,9 +371,11 @@ def class_template_resource() -> str:
 
 # MCP Dynamic Prompts
 @mcp.prompt("code-review")
-def code_review_prompt_resource(code: str, language: str = "python", style: str = "pep8") -> str:
+def code_review_prompt_resource(
+    code: str, language: str = "python", style: str = "pep8"
+) -> str:
     """Generate code review prompt dynamically.
-    
+
     Args:
         code: Code to review
         language: Programming language
@@ -341,7 +387,7 @@ def code_review_prompt_resource(code: str, language: str = "python", style: str 
 @mcp.prompt("test-generation")
 def test_generation_prompt_resource(code: str, framework: str = "pytest") -> str:
     """Generate test generation prompt dynamically.
-    
+
     Args:
         code: Code to generate tests for
         framework: Testing framework
@@ -352,4 +398,3 @@ def test_generation_prompt_resource(code: str, framework: str = "pytest") -> str
 if __name__ == "__main__":
     # Run MCP server via stdio
     mcp.run()
-

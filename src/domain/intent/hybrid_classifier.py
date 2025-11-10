@@ -8,9 +8,8 @@ Following Python Zen: Simple is better than complex.
 """
 
 import time
-from typing import Optional
 
-from src.domain.intent.intent_classifier import IntentClassifierProtocol, IntentResult, IntentType
+from src.domain.intent.intent_classifier import IntentResult, IntentType
 from src.domain.intent.llm_classifier import LLMClassifier
 from src.domain.intent.rule_based_classifier import RuleBasedClassifier
 from src.infrastructure.cache.intent_cache import IntentCache
@@ -95,7 +94,7 @@ class HybridIntentClassifier:
         # Layer 1: Try rule-based classification FIRST (fast, synchronous)
         # Rules should always be checked before cache, as they are more reliable
         rule_result = self.rule_classifier.classify(message)
-        rule_latency_ms = rule_result.latency_ms
+        rule_result.latency_ms
 
         # Check if rule-based result meets confidence threshold
         if rule_result.confidence >= self.confidence_threshold:
@@ -184,4 +183,3 @@ class HybridIntentClassifier:
                 latency_seconds=total_latency_ms / 1000.0,
             )
             return rule_result
-

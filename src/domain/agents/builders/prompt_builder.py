@@ -12,7 +12,7 @@ from src.domain.agents.schemas import AgentRequest, ToolMetadata
 
 class PromptBuilder:
     """Builder for agent prompts with tool descriptions.
-    
+
     Single responsibility: construct prompts with tool context.
     """
 
@@ -71,62 +71,74 @@ class PromptBuilder:
 
     def build_prompt(self, request: AgentRequest, tools: List[ToolMetadata]) -> str:
         """Build prompt with tools description.
-        
+
         Args:
             request: Agent request
             tools: List of available tools
-            
+
         Returns:
             Formatted prompt string
         """
         relevant_tool_names = {
-            "add_channel", "list_channels", "delete_channel", "get_channel_digest",
-            "get_channel_digest_by_name", "get_channel_metadata", "save_posts_to_db",
-            "get_posts_from_db", "summarize_posts", "format_digest_markdown",
-            "combine_markdown_sections", "convert_markdown_to_pdf"
+            "add_channel",
+            "list_channels",
+            "delete_channel",
+            "get_channel_digest",
+            "get_channel_digest_by_name",
+            "get_channel_metadata",
+            "save_posts_to_db",
+            "get_posts_from_db",
+            "summarize_posts",
+            "format_digest_markdown",
+            "combine_markdown_sections",
+            "convert_markdown_to_pdf",
         }
-        
+
         filtered_tools = [t for t in tools if t.name in relevant_tool_names]
-        tools_prompt = self.build_compact_tools_prompt(filtered_tools if filtered_tools else tools[:10])
-        
-        system_prompt = self.SYSTEM_PROMPT_TEMPLATE.format(
-            tools_prompt=tools_prompt
+        tools_prompt = self.build_compact_tools_prompt(
+            filtered_tools if filtered_tools else tools[:10]
         )
-        
+
+        system_prompt = self.SYSTEM_PROMPT_TEMPLATE.format(tools_prompt=tools_prompt)
+
         user_message = self.build_user_message(request)
-        
+
         return f"{system_prompt}\n\n{user_message}\n\nОтвет:"
 
     def build_compact_tools_prompt(self, tools: List[ToolMetadata]) -> str:
         """Build compact tools prompt with only essential info.
-        
+
         Args:
             tools: List of tools
-            
+
         Returns:
             Compact prompt string
         """
         if not tools:
             return "Нет доступных инструментов."
-        
+
         sections = []
         for tool in tools:
             required = tool.input_schema.get("required", [])
             params = [f"{p}*" for p in required[:3]]
             param_str = ", ".join(params) if params else "no params"
-            
-            desc = tool.description.split('.')[0] if '.' in tool.description else tool.description[:100]
-            
+
+            desc = (
+                tool.description.split(".")[0]
+                if "." in tool.description
+                else tool.description[:100]
+            )
+
             sections.append(f"- {tool.name}: {desc} ({param_str})")
-        
+
         return "\n".join(sections[:15])
 
     def build_user_message(self, request: AgentRequest) -> str:
         """Build user message part of prompt.
-        
+
         Args:
             request: Agent request
-            
+
         Returns:
             Formatted user message string
         """
@@ -135,4 +147,3 @@ class PromptBuilder:
             context_str = ", ".join(f"{k}={v}" for k, v in request.context.items())
             user_message += f"\nКонтекст: {context_str}"
         return user_message
-

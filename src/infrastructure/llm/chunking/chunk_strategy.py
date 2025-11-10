@@ -87,9 +87,7 @@ class FixedSizeChunkStrategy:
         while start < text_length:
             end = min(start + self.chunk_size, text_length)
             chunk_text = text[start:end]
-            chunks.append(
-                TextChunk(text=chunk_text, token_count=0, chunk_id=chunk_id)
-            )
+            chunks.append(TextChunk(text=chunk_text, token_count=0, chunk_id=chunk_id))
             chunk_id += 1
             start = end - self.overlap_chars
 

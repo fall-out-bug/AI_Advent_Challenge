@@ -13,4 +13,3 @@ with DAG(
         task_id="train_model",
         bash_command="python train.py",
     )
-

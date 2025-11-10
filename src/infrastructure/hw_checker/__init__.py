@@ -7,4 +7,3 @@ Following Python Zen: Simple is better than complex.
 from src.infrastructure.hw_checker.client import HWCheckerClient
 
 __all__ = ["HWCheckerClient"]
-

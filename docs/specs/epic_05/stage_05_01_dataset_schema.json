@@ -1,0 +1,76 @@
+{
+  "dataset_id": "benchmark_digest_ru_v1",
+  "description": "Release-cycle benchmark samples for RU Telegram channel digests.",
+  "locale": "ru",
+  "created_at": "2025-11-10T00:00:00Z",
+  "source": {
+    "collection": "digests",
+    "query_window_hours": 24,
+    "filters": {
+      "language": "ru",
+      "feature_flags": {
+        "use_new_summarization": "recorded",
+        "enable_quality_evaluation": "recorded",
+        "enable_async_long_summarization": "recorded"
+      }
+    },
+    "exclusions": [
+      "channels_flagged_in_epic04_known_issues"
+    ]
+  },
+  "evaluation": {
+    "judge_model": "gpt-4o",
+    "prompt_version": "benchmark-2025-11-v1",
+    "rubric": [
+      "coverage",
+      "accuracy",
+      "coherence",
+      "informativeness"
+    ],
+    "verdict_scale": [
+      "BELOW_EXPECTATIONS",
+      "MEETS_EXPECTATIONS",
+      "EXCEEDS_EXPECTATIONS"
+    ],
+    "latency_metric": "review_pipeline_latency_seconds"
+  },
+  "samples": [
+    {
+      "sample_id": "digest-2025-11-09-0001",
+      "channel": "@placeholder_channel",
+      "language": "ru",
+      "timestamp": "2025-11-09T19:05:00Z",
+      "source_text": "...",
+      "summary_markdown": "...",
+      "metadata": {
+        "posts_count": 0,
+        "time_range_hours": 24,
+        "llm_model": "qwen-7b",
+        "feature_flags": {
+          "use_new_summarization": true,
+          "enable_quality_evaluation": true,
+          "enable_async_long_summarization": true
+        }
+      },
+      "ground_truth": {
+        "llm_judge": {
+          "judge_model": "gpt-4o",
+          "prompt_version": "benchmark-2025-11-v1",
+          "scores": {
+            "coverage": 0.0,
+            "accuracy": 0.0,
+            "coherence": 0.0,
+            "informativeness": 0.0
+          },
+          "verdict": "MEETS_EXPECTATIONS",
+          "notes": "Placeholder sample; replace with real data during Stage 05_01 seeding."
+        }
+      }
+    }
+  ],
+  "retention": {
+    "in_repo_until": "Stage 05_02 completion",
+    "external_storage": "s3://REDACTED/minio/summarisation-benchmarks/",
+    "post_migration": "retain anonymised snapshot reference and metadata only"
+  }
+}

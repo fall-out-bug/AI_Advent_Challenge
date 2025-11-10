@@ -15,7 +15,9 @@ class BaseCompressor(ABC):
         """Initialize base compressor."""
         self.token_analyzer = token_analyzer
 
-    def compress(self, text: str, max_tokens: int, model_name: str = "default") -> CompressionResult:
+    def compress(
+        self, text: str, max_tokens: int, model_name: str = "default"
+    ) -> CompressionResult:
         """Template method for compression."""
         original_tokens = self._count_original_tokens(text)
 
@@ -33,7 +35,9 @@ class BaseCompressor(ABC):
         """Check if compression is needed."""
         return original_tokens > max_tokens
 
-    def _no_compression_result(self, text: str, original_tokens: int) -> CompressionResult:
+    def _no_compression_result(
+        self, text: str, original_tokens: int
+    ) -> CompressionResult:
         """Create result when no compression is needed."""
         compression_ratio = CompressionRatio(
             original_size=original_tokens, compressed_size=original_tokens, ratio=1.0
@@ -43,7 +47,9 @@ class BaseCompressor(ABC):
             compression_ratio=compression_ratio, method="no_compression"
         )
 
-    def _build_result(self, original_text: str, compressed_text: str, original_tokens: int) -> CompressionResult:
+    def _build_result(
+        self, original_text: str, compressed_text: str, original_tokens: int
+    ) -> CompressionResult:
         """Build final compression result."""
         compressed_tokens = self._count_original_tokens(compressed_text)
         ratio = compressed_tokens / original_tokens if original_tokens > 0 else 1.0
@@ -66,9 +72,7 @@ class BaseCompressor(ABC):
     @abstractmethod
     def _perform_compression(self, text: str, max_tokens: int) -> str:
         """Perform actual compression."""
-        pass
 
     @abstractmethod
     def _get_strategy_name(self) -> str:
         """Get strategy name for result."""
-        pass

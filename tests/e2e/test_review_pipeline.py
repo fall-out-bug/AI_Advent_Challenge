@@ -111,7 +111,7 @@ async def test_full_review_pipeline_with_real_zips(
     """Test complete review pipeline with real ZIP archives.
 
     Purpose:
-        E2E test that verifies the entire review process using MultiPassReviewerAgent:
+        E2E test that verifies the entire review process using modular reviewer:
         1. Extract archives
         2. Analyze diff
         3. Run multi-pass review
@@ -201,9 +201,7 @@ async def test_full_review_pipeline_with_real_zips(
 
 
 @pytest.mark.asyncio
-async def test_review_pipeline_first_submission(
-    real_mongodb, new_submission_zip
-):
+async def test_review_pipeline_first_submission(real_mongodb, new_submission_zip):
     """Test review pipeline for first submission (no previous).
 
     Prerequisites:

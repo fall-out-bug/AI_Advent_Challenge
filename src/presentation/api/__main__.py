@@ -6,13 +6,9 @@ from src.application.use_cases.generate_code import GenerateCodeUseCase
 from src.application.use_cases.review_code import ReviewCodeUseCase
 from src.infrastructure.clients.model_client import ModelClient
 from src.infrastructure.clients.simple_model_client import SimpleModelClient
-from src.infrastructure.config.settings import Settings, get_settings
-from src.infrastructure.repositories.json_agent_repository import (
-    JsonAgentRepository,
-)
-from src.infrastructure.repositories.model_repository import (
-    InMemoryModelRepository,
-)
+from src.infrastructure.config.settings import get_settings
+from src.infrastructure.repositories.json_agent_repository import JsonAgentRepository
+from src.infrastructure.repositories.model_repository import InMemoryModelRepository
 from src.presentation.api.agent_routes import create_agent_router
 from src.presentation.api.dashboard_routes import create_dashboard_router
 from src.presentation.api.experiment_routes import create_experiment_router
@@ -86,8 +82,11 @@ def create_app() -> FastAPI:
         get_status_use_case = GetReviewStatusUseCase(tasks_repo, review_repo)
 
         from src.infrastructure.config.settings import get_settings
+
         settings = get_settings()
-        review_router = create_review_router(enqueue_use_case, get_status_use_case, settings)
+        review_router = create_review_router(
+            enqueue_use_case, get_status_use_case, settings
+        )
         app.include_router(review_router)
 
     app.include_router(agent_router)

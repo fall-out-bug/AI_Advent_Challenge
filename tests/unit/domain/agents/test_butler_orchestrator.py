@@ -6,13 +6,13 @@ Following TDD principles and testing best practices.
 import pytest
 from unittest.mock import AsyncMock, Mock
 
-from src.domain.agents.butler_orchestrator import ButlerOrchestrator
-from src.domain.agents.handlers.chat_handler import ChatHandler
-from src.domain.agents.handlers.data_handler import DataHandler
-from src.domain.agents.handlers.reminders_handler import RemindersHandler
-from src.domain.agents.handlers.task_handler import TaskHandler
-from src.domain.agents.services.mode_classifier import DialogMode, ModeClassifier
-from src.domain.agents.state_machine import DialogContext, DialogState
+from src.application.dtos.butler_dialog_dtos import DialogContext, DialogMode, DialogState
+from src.application.services.mode_classifier import ModeClassifier
+from src.presentation.bot.handlers.chat import ChatHandler
+from src.presentation.bot.handlers.data import DataHandler
+from src.presentation.bot.handlers.homework import HomeworkHandler
+from src.presentation.bot.handlers.task import TaskHandler
+from src.presentation.bot.orchestrator import ButlerOrchestrator
 
 
 class MockMongoDB:
@@ -58,7 +58,7 @@ class TestButlerOrchestrator:
         return {
             "task": Mock(spec=TaskHandler),
             "data": Mock(spec=DataHandler),
-            "reminders": Mock(spec=RemindersHandler),
+            "homework": Mock(spec=HomeworkHandler),
             "chat": Mock(spec=ChatHandler),
         }
 
@@ -70,7 +70,7 @@ class TestButlerOrchestrator:
             mode_classifier=mock_mode_classifier,
             task_handler=mock_handlers["task"],
             data_handler=mock_handlers["data"],
-            reminders_handler=mock_handlers["reminders"],
+            homework_handler=mock_handlers["homework"],
             chat_handler=mock_handlers["chat"],
             mongodb=mongodb,
         )
@@ -115,17 +115,20 @@ class TestButlerOrchestrator:
         mock_handlers["data"].handle.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_handle_user_message_routes_to_reminders_handler(
+    async def test_handle_user_message_unknown_mode_falls_back_to_chat(
         self, orchestrator, mock_mode_classifier, mock_handlers
     ):
-        """Test routing to reminders handler."""
-        mock_mode_classifier.classify = AsyncMock(return_value=DialogMode.REMINDERS)
-        mock_handlers["reminders"].handle = AsyncMock(return_value="Reminders")
+        """Test unknown modes fall back to chat handler."""
+        class FakeMode:
+            value = "legacy"
+
+        mock_mode_classifier.classify = AsyncMock(return_value=FakeMode())
+        mock_handlers["chat"].handle = AsyncMock(return_value="Fallback")
         response = await orchestrator.handle_user_message(
-            user_id="123", message="Show reminders", session_id="456"
+            user_id="123", message="legacy reminder", session_id="456"
         )
-        assert response == "Reminders"
-        mock_handlers["reminders"].handle.assert_called_once()
+        assert response == "Fallback"
+        mock_handlers["chat"].handle.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_handle_user_message_saves_context(
@@ -137,7 +140,7 @@ class TestButlerOrchestrator:
         await orchestrator.handle_user_message(
             user_id="123", message="Hi", session_id="456"
         )
-        saved = await orchestrator.context_collection.find_one({"session_id": "456"})
+        saved = await orchestrator._contexts.find_one({"session_id": "456"})
         assert saved is not None
         assert saved["user_id"] == "123"
 
@@ -151,4 +154,3 @@ class TestButlerOrchestrator:
             user_id="123", message="Hi", session_id="456"
         )
         assert "error" in response.lower() or "sorry" in response.lower()
-

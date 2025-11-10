@@ -89,6 +89,7 @@ async def test_deduplication_by_content_hash(real_mongodb):
 
     # Calculate content hash (simplified - actual implementation may differ)
     import hashlib
+
     content_hash = hashlib.md5(post1["text"].encode()).hexdigest()
     post1["content_hash"] = content_hash
 

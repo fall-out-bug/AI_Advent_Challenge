@@ -49,4 +49,3 @@ class LogAnalyzer(Protocol):
                 print(result.classification)  # "critical"
         """
         ...
-

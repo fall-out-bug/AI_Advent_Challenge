@@ -1,14 +1,8 @@
 """Adapter for code generation operations."""
-import sys
-from pathlib import Path
+
 from typing import Any, Optional
 
-_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(_root))
-sys.path.insert(0, str(_root / "shared"))
-
 from src.domain.agents.code_generator import CodeGeneratorAgent
-from src.domain.agents.base_agent import TaskMetadata
 from src.domain.messaging.message_schema import CodeGenerationRequest
 from src.presentation.mcp.exceptions import MCPAgentError, MCPValidationError
 
@@ -16,6 +10,7 @@ from src.presentation.mcp.exceptions import MCPAgentError, MCPValidationError
 def _get_model_client_adapter():
     """Import ModelClientAdapter at runtime to avoid circular imports."""
     from src.presentation.mcp.adapters.model_client_adapter import ModelClientAdapter
+
     return ModelClientAdapter
 
 
@@ -27,7 +22,9 @@ class GenerationAdapter:
         self.unified_client = unified_client
         self.model_name = model_name
 
-    async def generate_code(self, description: str, model: Optional[str] = None) -> dict[str, Any]:
+    async def generate_code(
+        self, description: str, model: Optional[str] = None
+    ) -> dict[str, Any]:
         """Generate code using CodeGeneratorAgent."""
         try:
             self._validate_description(description)
@@ -49,9 +46,7 @@ class GenerationAdapter:
     def _validate_description(self, description: str) -> None:
         """Validate description input."""
         if not description or not description.strip():
-            raise MCPValidationError(
-                "Description cannot be empty", field="description"
-            )
+            raise MCPValidationError("Description cannot be empty", field="description")
 
     def _create_request(self, description: str, model: str) -> CodeGenerationRequest:
         """Create generation request."""

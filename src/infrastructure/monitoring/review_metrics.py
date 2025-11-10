@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from prometheus_client import Counter, Histogram, Gauge
+from prometheus_client import Counter, Gauge, Histogram
 
 # Review task metrics
 review_tasks_total = Counter(
@@ -52,3 +52,8 @@ review_external_api_publishes_total = Counter(
     ["status"],  # success, failure
 )
 
+review_pipeline_duration = Histogram(
+    "review_pipeline_duration_seconds",
+    "End-to-end latency for modular review executions",
+    buckets=[30, 60, 120, 180, 300, 600, 900],
+)

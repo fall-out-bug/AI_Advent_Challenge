@@ -14,8 +14,10 @@ MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow:5000")
 DATA_DIR = pathlib.Path("/opt/airflow/data/movielens")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
+
 def download_and_unzip():
     import requests, zipfile
+
     zip_path = DATA_DIR / "ml-latest.zip"
 
     url = "https://files.grouplens.org/datasets/movielens/ml-latest.zip"
@@ -29,12 +31,13 @@ def download_and_unzip():
     with zipfile.ZipFile(zip_path, "r") as z:
         z.extractall(DATA_DIR)
 
+
 def upload_to_minio():
     from minio import Minio
     import os
 
     client = Minio(
-        endpoint=MINIO_ENDPOINT.replace("http://","").replace("https://",""),
+        endpoint=MINIO_ENDPOINT.replace("http://", "").replace("https://", ""),
         access_key=MINIO_ACCESS_KEY,
         secret_key=MINIO_SECRET_KEY,
         secure=MINIO_ENDPOINT.startswith("https://"),
@@ -45,11 +48,18 @@ def upload_to_minio():
 
     # Ищем каталог, где реально лежат CSV
     candidates = [
-        DATA_DIR / "ml-latest",                       # правильный путь после исправления
+        DATA_DIR / "ml-latest",  # правильный путь после исправления
         DATA_DIR / "ml-latest" / "ml-latest",  # случай двойной вложенности (на всякий)
-        DATA_DIR,                                          # запасной вариант
+        DATA_DIR,  # запасной вариант
     ]
-    src_dir = next((p for p in candidates if (p / "ratings.csv").exists() and (p / "movies.csv").exists()), None)
+    src_dir = next(
+        (
+            p
+            for p in candidates
+            if (p / "ratings.csv").exists() and (p / "movies.csv").exists()
+        ),
+        None,
+    )
     if src_dir is None:
         raise FileNotFoundError(f"Не нашёл csv в {candidates}")
 
@@ -75,7 +85,6 @@ with DAG(
     catchup=False,
     description="HW3: Download → MinIO → Spark FE (train/test) → Redis(test) → train+MLflow",
 ) as dag:
-
     get_dataset = PythonOperator(
         task_id="get_dataset",
         python_callable=download_and_unzip,
@@ -118,31 +127,44 @@ with DAG(
     )
 
     spark_common_fe = [
-        "--master", "spark://spark-master:7077",
-        "--deploy-mode", "client",
-
+        "--master",
+        "spark://spark-master:7077",
+        "--deploy-mode",
+        "client",
         # одинаковый Python в драйвере и на executors
-        "--conf", "spark.pyspark.python=/usr/bin/python3",
-        "--conf", "spark.pyspark.driver.python=/usr/bin/python3",
-        "--conf", "spark.executorEnv.PYSPARK_PYTHON=/usr/bin/python3",
-
+        "--conf",
+        "spark.pyspark.python=/usr/bin/python3",
+        "--conf",
+        "spark.pyspark.driver.python=/usr/bin/python3",
+        "--conf",
+        "spark.executorEnv.PYSPARK_PYTHON=/usr/bin/python3",
         # ресурсы (подгони под свою машину; если воркеру тесно — уменьши)
-        "--executor-memory", "6g",
-        "--driver-memory", "2g",
-        "--conf", "spark.executor.memoryOverhead=1024m",
-
+        "--executor-memory",
+        "6g",
+        "--driver-memory",
+        "2g",
+        "--conf",
+        "spark.executor.memoryOverhead=1024m",
         # шафл/IO
-        "--conf", "spark.serializer=org.apache.spark.serializer.KryoSerializer",
-        "--conf", "spark.sql.adaptive.enabled=true",
-        "--conf", "spark.sql.shuffle.partitions=400",
-        "--conf", "spark.sql.files.maxPartitionBytes=134217728",
-
+        "--conf",
+        "spark.serializer=org.apache.spark.serializer.KryoSerializer",
+        "--conf",
+        "spark.sql.adaptive.enabled=true",
+        "--conf",
+        "spark.sql.shuffle.partitions=400",
+        "--conf",
+        "spark.sql.files.maxPartitionBytes=134217728",
         # S3A/MinIO
-        "--conf", "spark.hadoop.fs.s3a.endpoint=http://minio:9000",
-        "--conf", "spark.hadoop.fs.s3a.path.style.access=true",
-        "--conf", "spark.hadoop.fs.s3a.connection.ssl.enabled=false",
-        "--conf", "spark.hadoop.fs.s3a.access.key=${MINIO_ROOT_USER}",
-        "--conf", "spark.hadoop.fs.s3a.secret.key=${MINIO_ROOT_PASSWORD}",
+        "--conf",
+        "spark.hadoop.fs.s3a.endpoint=http://minio:9000",
+        "--conf",
+        "spark.hadoop.fs.s3a.path.style.access=true",
+        "--conf",
+        "spark.hadoop.fs.s3a.connection.ssl.enabled=false",
+        "--conf",
+        "spark.hadoop.fs.s3a.access.key=${MINIO_ROOT_USER}",
+        "--conf",
+        "spark.hadoop.fs.s3a.secret.key=${MINIO_ROOT_PASSWORD}",
     ]
 
     split_dataset = BashOperator(
@@ -158,7 +180,11 @@ with DAG(
 
     features_engineering_train = BashOperator(
         task_id="fe_train",
-        bash_command=" ".join(["/opt/spark/bin/spark-submit"] + spark_common_fe + ["/opt/airflow/spark-jobs/features_events.py"]),
+        bash_command=" ".join(
+            ["/opt/spark/bin/spark-submit"]
+            + spark_common_fe
+            + ["/opt/airflow/spark-jobs/features_events.py"]
+        ),
         env={
             "MINIO_ROOT_USER": MINIO_ACCESS_KEY,
             "MINIO_ROOT_PASSWORD": MINIO_SECRET_KEY,
@@ -170,7 +196,11 @@ with DAG(
 
     features_engineering_test = BashOperator(
         task_id="fe_test",
-        bash_command=" ".join(["/opt/spark/bin/spark-submit"] + spark_common_fe + ["/opt/airflow/spark-jobs/features_events.py"]),
+        bash_command=" ".join(
+            ["/opt/spark/bin/spark-submit"]
+            + spark_common_fe
+            + ["/opt/airflow/spark-jobs/features_events.py"]
+        ),
         env={
             "MINIO_ROOT_USER": MINIO_ACCESS_KEY,
             "MINIO_ROOT_PASSWORD": MINIO_SECRET_KEY,
@@ -213,4 +243,12 @@ with DAG(
         },
     )
 
-    get_dataset >> put_dataset >> split_dataset >> features_engineering_train >> features_engineering_test >> load_features >> train_and_save_model
+    (
+        get_dataset
+        >> put_dataset
+        >> split_dataset
+        >> features_engineering_train
+        >> features_engineering_test
+        >> load_features
+        >> train_and_save_model
+    )

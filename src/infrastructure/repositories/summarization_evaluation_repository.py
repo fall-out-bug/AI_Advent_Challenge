@@ -7,9 +7,7 @@ from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from src.domain.value_objects.summarization_evaluation import (
-    SummarizationEvaluation,
-)
+from src.domain.value_objects.summarization_evaluation import SummarizationEvaluation
 from src.infrastructure.logging import get_logger
 
 logger = get_logger("evaluation_repository")
@@ -23,9 +21,7 @@ class SummarizationEvaluationRepository:
         self._db = db
         self._collection = db.summarization_evaluations
 
-    async def save_evaluation(
-        self, evaluation: SummarizationEvaluation
-    ) -> str:
+    async def save_evaluation(self, evaluation: SummarizationEvaluation) -> str:
         """Save evaluation to MongoDB."""
         doc = {
             "summary_id": evaluation.summary_id,
@@ -92,17 +88,19 @@ class SummarizationEvaluationRepository:
 
         dataset = []
         for eval_doc in evaluations:
-            dataset.append({
-                "prompt": f"Summarize:\n{eval_doc['original_text']}",
-                "completion": eval_doc["summary_text"],
-                "score": eval_doc["overall_score"],
-                "metrics": {
-                    "coverage": eval_doc["coverage_score"],
-                    "accuracy": eval_doc["accuracy_score"],
-                    "coherence": eval_doc["coherence_score"],
-                    "informativeness": eval_doc["informativeness_score"],
-                },
-            })
+            dataset.append(
+                {
+                    "prompt": f"Summarize:\n{eval_doc['original_text']}",
+                    "completion": eval_doc["summary_text"],
+                    "score": eval_doc["overall_score"],
+                    "metrics": {
+                        "coverage": eval_doc["coverage_score"],
+                        "accuracy": eval_doc["accuracy_score"],
+                        "coherence": eval_doc["coherence_score"],
+                        "informativeness": eval_doc["informativeness_score"],
+                    },
+                }
+            )
 
         logger.info(
             f"Exported {len(dataset)} samples for fine-tuning "

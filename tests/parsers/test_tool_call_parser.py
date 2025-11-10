@@ -12,14 +12,17 @@ from src.domain.parsers.tool_call_parser import (
     [
         (
             '{"tool": "get_channel_digest_by_name", "params": {"channel_name": "Набока"}}',
-            {"tool": "get_channel_digest_by_name", "params": {"channel_name": "Набока"}},
+            {
+                "tool": "get_channel_digest_by_name",
+                "params": {"channel_name": "Набока"},
+            },
         ),
         (
             """Вот JSON:\n```json\n{\"tool\": \"list_channels\", \"params\": {}}\n```\n""",
             {"tool": "list_channels", "params": {}},
         ),
         (
-            "Пример:\n{\n  \"tool\": \"add_channel\",\n  \"params\": {\n    \"channel_name\": \"python\"\n  }\n}\n",
+            'Пример:\n{\n  "tool": "add_channel",\n  "params": {\n    "channel_name": "python"\n  }\n}\n',
             {"tool": "add_channel", "params": {"channel_name": "python"}},
         ),
         (
@@ -30,7 +33,10 @@ from src.domain.parsers.tool_call_parser import (
     "days": 3
   }
 }""",
-            {"tool": "get_channel_digest_by_name", "params": {"channel_name": "Набока", "days": 3}},
+            {
+                "tool": "get_channel_digest_by_name",
+                "params": {"channel_name": "Набока", "days": 3},
+            },
         ),
     ],
 )
@@ -80,5 +86,3 @@ def test_parse_with_fallback_fragments():
 """
     parsed = ToolCallParser.parse_with_fallback(text)
     assert parsed == {"tool": "list_channels", "params": {}}
-
-

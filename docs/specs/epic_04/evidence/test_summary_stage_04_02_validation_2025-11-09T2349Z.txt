@@ -1,0 +1,18 @@
+Stage 04_02 Validation Summary — 2025-11-09T23:49Z
+===================================================
+
+Commands executed:
+
+1. poetry run pytest src/tests/infrastructure/monitoring/test_prometheus_metrics.py -q
+   Result: PASS (9 tests)
+
+2. poetry run pytest tests/integration/presentation/cli/test_backoffice_cli.py -q
+   Result: PASS (2 tests)
+
+3. poetry run pytest -q
+   Result: 405 passed, 8 failed, 18 errors
+   Failure summary:
+     - MongoDB-backed suites require authenticated shared infra; error: pymongo.errors.OperationFailure (code 13).
+     - Presentation bot suites import legacy handlers (src.presentation.bot.handlers.tasks) and use old ButlerBot constructor signature.
+     - MCP performance/error suites rely on deprecated tooling; latency assertions exceeded (0.88s > 0.5s, 0.93s > 0.2s).
+   Action: Documented for Stage 04_03 cleanup and test realignment.

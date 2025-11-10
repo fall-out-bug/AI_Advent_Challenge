@@ -6,7 +6,7 @@ Following DevOps best practices: explicit metrics for ML services.
 from typing import Optional
 
 try:
-    from prometheus_client import Counter, Histogram, Gauge  # type: ignore
+    from prometheus_client import Counter, Gauge, Histogram  # type: ignore
 
     # LLM Inference Metrics
     llm_inference_latency_seconds = Histogram(
@@ -113,4 +113,3 @@ def get_ml_metrics_registry() -> Optional[object]:
         return REGISTRY
     except ImportError:
         return None
-

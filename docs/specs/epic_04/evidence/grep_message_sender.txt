@@ -1,0 +1,6 @@
+CHANGELOG.md:197:  - Extracted `message_sender.py` for message sending with retry logic and error handling
+docs/ARCHITECTURE.md:145:├── message_sender.py     # Message sending with retry
+docs/ARCHITECTURE.md:152:- `message_sender.py`: Send messages with exponential backoff retry
+docs/specs/epic_00/stage_00_01.md:181:| `message_sender.py` | Archive | Dependent on reminder flows; confirm before removal. |
+src/workers/message_sender.py:15:logger = get_logger("message_sender")
+src/workers/summary_worker.py:30:from src.workers.message_sender import send_with_retry

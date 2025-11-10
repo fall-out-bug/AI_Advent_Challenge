@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from src.domain.interfaces.review_publisher import ReviewPublisher
 from src.infrastructure.config.settings import Settings
 
 logger = logging.getLogger(__name__)

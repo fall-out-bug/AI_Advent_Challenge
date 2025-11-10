@@ -37,7 +37,7 @@ class TestSessionManager:
     def test_load_all_findings(self):
         """Test loading all findings."""
         session = SessionManager.create()
-        
+
         session.save_findings("pass_1", {"findings": {}})
         session.save_findings("pass_2_docker", {"findings": {}})
 
@@ -48,16 +48,19 @@ class TestSessionManager:
     def test_context_summary_generation(self):
         """Test context summary generation."""
         session = SessionManager.create()
-        
-        session.save_findings("pass_1", {
-            "findings": {
-                "critical": ["Issue 1"],
-                "major": ["Issue 2"],
-                "minor": []
+
+        session.save_findings(
+            "pass_1",
+            {
+                "findings": {
+                    "critical": ["Issue 1"],
+                    "major": ["Issue 2"],
+                    "minor": [],
+                },
+                "recommendations": ["Rec 1"],
+                "summary": "Test summary",
             },
-            "recommendations": ["Rec 1"],
-            "summary": "Test summary"
-        })
+        )
 
         context = session.get_context_summary_for_next_pass()
         assert "PASS_1" in context or "pass_1" in context.lower()
@@ -93,4 +96,3 @@ class TestSessionManager:
 
         session.cleanup()
         assert not session_dir.exists()
-

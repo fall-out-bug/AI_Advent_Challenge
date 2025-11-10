@@ -38,7 +38,9 @@ class QualityScore:
             ("coherence_score", self.coherence_score),
         ]:
             if not 0.0 <= value <= 1.0:
-                raise ValueError(f"{field_name} must be between 0.0 and 1.0, got {value}")
+                raise ValueError(
+                    f"{field_name} must be between 0.0 and 1.0, got {value}"
+                )
 
 
 class SummaryQualityChecker:
@@ -148,14 +150,18 @@ class SummaryQualityChecker:
             Length score (0.0-1.0).
         """
         if len(summary) < self.min_length:
-            issues.append(f"Summary too short ({len(summary)} chars, min: {self.min_length})")
+            issues.append(
+                f"Summary too short ({len(summary)} chars, min: {self.min_length})"
+            )
             return 0.0
 
         # Score based on length (between min and ideal)
         ideal_length = 500  # Reasonable default
         if len(summary) < ideal_length:
             # Linear scale from min_length to ideal_length
-            return min(1.0, (len(summary) - self.min_length) / (ideal_length - self.min_length))
+            return min(
+                1.0, (len(summary) - self.min_length) / (ideal_length - self.min_length)
+            )
         else:
             # Slight penalty for very long summaries, but still acceptable
             return max(0.7, 1.0 - (len(summary) - ideal_length) / ideal_length)
@@ -246,9 +252,7 @@ class SummaryQualityChecker:
         if len(sentences) > 0:
             # Check that sentences end properly
             proper_endings = sum(
-                1
-                for s in sentences
-                if s.rstrip().endswith((".", "!", "?"))
+                1 for s in sentences if s.rstrip().endswith((".", "!", "?"))
             )
             if proper_endings < len(sentences) * 0.8:
                 issues.append("Many sentences missing proper endings")

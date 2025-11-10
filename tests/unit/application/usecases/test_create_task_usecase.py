@@ -4,8 +4,8 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock
 from typing import Dict, Any
 
-from src.application.usecases.create_task_usecase import CreateTaskUseCase
-from src.application.usecases.result_types import TaskCreationResult
+from src.application.dtos.butler_use_case_dtos import TaskCreationResult
+from src.application.use_cases.create_task_use_case import CreateTaskUseCase
 from src.application.orchestration.intent_orchestrator import IntentOrchestrator
 from src.domain.entities.intent import IntentParseResult
 from src.domain.interfaces.tool_client import ToolClientProtocol
@@ -118,9 +118,7 @@ class TestCreateTaskUseCase:
     ):
         """Test error handling when intent parsing fails."""
         # Setup intent parsing to raise exception
-        mock_intent_orch.parse_task_intent.side_effect = Exception(
-            "Parsing failed"
-        )
+        mock_intent_orch.parse_task_intent.side_effect = Exception("Parsing failed")
 
         # Execute
         result = await usecase.execute(user_id=123, message="Buy milk")
@@ -134,9 +132,7 @@ class TestCreateTaskUseCase:
         mock_tool_client.call_tool.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_mcp_tool_error(
-        self, usecase, mock_intent_orch, mock_tool_client
-    ):
+    async def test_mcp_tool_error(self, usecase, mock_intent_orch, mock_tool_client):
         """Test error handling when MCP tool call fails."""
         # Setup intent parsing result
         intent_result = IntentParseResult(
@@ -217,7 +213,4 @@ class TestCreateTaskUseCase:
         context = {"previous_message": "Create a task"}
         await usecase.execute(user_id=123, message="Buy milk", context=context)
 
-        mock_intent_orch.parse_task_intent.assert_called_once_with(
-            "Buy milk", context
-        )
-
+        mock_intent_orch.parse_task_intent.assert_called_once_with("Buy milk", context)

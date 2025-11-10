@@ -9,9 +9,7 @@ import shutil
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-
-from src.domain.models.code_review_models import PassFindings
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -29,13 +27,13 @@ class SessionManager:
     Example:
         # Create new session
         session = SessionManager.create()
-        
+
         # Save findings
         session.save_findings("pass_1", findings_dict)
-        
+
         # Load context for next pass
         context = session.get_context_summary_for_next_pass()
-        
+
         # Persist to disk
         session.persist()
     """
@@ -292,4 +290,3 @@ class SessionManager:
 
         logger.info(f"Cleaned up {cleaned} old sessions (older than {hours} hours)")
         return cleaned
-

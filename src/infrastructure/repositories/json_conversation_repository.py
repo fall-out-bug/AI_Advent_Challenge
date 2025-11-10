@@ -65,7 +65,9 @@ class JsonConversationRepository(ConversationRepository):
             List of conversations
         """
         data = self._load_data()
-        return [self._deserialize_conversation(conv_data) for conv_data in data.values()]
+        return [
+            self._deserialize_conversation(conv_data) for conv_data in data.values()
+        ]
 
     async def delete(self, conversation_id: str) -> bool:
         """
@@ -98,7 +100,11 @@ class JsonConversationRepository(ConversationRepository):
         return conversation_id in data
 
     async def add_message(
-        self, conversation_id: str, role: str, content: str, metadata: Optional[dict] = None
+        self,
+        conversation_id: str,
+        role: str,
+        content: str,
+        metadata: Optional[dict] = None,
     ) -> None:
         """
         Add message to conversation.
@@ -194,4 +200,3 @@ class JsonConversationRepository(ConversationRepository):
             created_at=datetime.fromisoformat(data["created_at"]),
             updated_at=datetime.fromisoformat(data["updated_at"]),
         )
-

@@ -4,11 +4,10 @@ Uses regex patterns to classify user messages with confidence scores.
 Following Python Zen: Simple is better than complex.
 """
 
-import re
 import time
 from typing import Optional
 
-from src.domain.intent.intent_classifier import IntentClassifierProtocol, IntentResult, IntentType
+from src.domain.intent.intent_classifier import IntentResult, IntentType
 from src.domain.intent.rules import ALL_RULES
 from src.infrastructure.logging import get_logger
 
@@ -115,4 +114,3 @@ class RuleBasedClassifier:
             entities={},
             latency_ms=latency_ms,
         )
-

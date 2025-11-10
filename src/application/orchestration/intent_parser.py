@@ -36,7 +36,7 @@ except ImportError:
 # Always use ResilientLLMClient as fallback
 if not LLM_AVAILABLE:
     try:
-        from src.infrastructure.clients.llm_client import ResilientLLMClient
+        pass
 
         LLM_AVAILABLE = True
         USE_UNIFIED_CLIENT = False
@@ -79,12 +79,16 @@ class IntentLLMParser:
         try:
             if USE_UNIFIED_CLIENT:
                 self.llm_client = UnifiedModelClient(timeout=30.0)
-                logger.info(f"IntentLLMParser initialized with UnifiedModelClient: {self.model_name}")
+                logger.info(
+                    f"IntentLLMParser initialized with UnifiedModelClient: {self.model_name}"
+                )
             else:
                 from src.infrastructure.clients.llm_client import ResilientLLMClient
 
                 self._fallback_llm_client = ResilientLLMClient()
-                logger.info(f"IntentLLMParser initialized with ResilientLLMClient: {self.model_name}")
+                logger.info(
+                    f"IntentLLMParser initialized with ResilientLLMClient: {self.model_name}"
+                )
         except Exception as e:
             logger.warning(f"Failed to initialize LLM client: {e}")
 
@@ -122,7 +126,9 @@ class IntentLLMParser:
         prompt = get_intent_parse_prompt(text, language=language, context=context)
 
         try:
-            logger.debug(f"Calling LLM with model={self.model_name}, max_tokens={self.max_tokens}")
+            logger.debug(
+                f"Calling LLM with model={self.model_name}, max_tokens={self.max_tokens}"
+            )
 
             response_text = await self._call_llm(prompt)
             if not response_text:
@@ -196,7 +202,9 @@ class IntentLLMParser:
                 logger.debug("Successfully parsed JSON from response")
                 return parsed
             except json.JSONDecodeError as e:
-                logger.warning(f"Failed to parse extracted JSON: {e}, text: {json_match.group(0)[:200]}")
+                logger.warning(
+                    f"Failed to parse extracted JSON: {e}, text: {json_match.group(0)[:200]}"
+                )
 
         # Try parsing entire response as JSON
         try:
@@ -204,6 +212,7 @@ class IntentLLMParser:
             logger.debug("Successfully parsed entire response as JSON")
             return parsed
         except json.JSONDecodeError as e:
-            logger.warning(f"Failed to parse LLM response as JSON: {e}, response: {response_text[:200]}")
+            logger.warning(
+                f"Failed to parse LLM response as JSON: {e}, response: {response_text[:200]}"
+            )
             return None
-

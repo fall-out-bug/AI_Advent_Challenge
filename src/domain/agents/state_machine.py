@@ -5,9 +5,9 @@ Following Python Zen:
 - Explicit is better than implicit
 """
 
-from enum import Enum
 from dataclasses import dataclass, field
-from typing import Dict, Any
+from enum import Enum
+from typing import Any, Dict
 
 
 class DialogState(Enum):
@@ -22,7 +22,6 @@ class DialogState(Enum):
     TASK_CREATE_DESC = "task_create_desc"
     TASK_CONFIRM = "task_confirm"
     DATA_COLLECTING = "data_collecting"
-    REMINDERS_LISTING = "reminders_listing"
 
 
 @dataclass
@@ -101,4 +100,3 @@ class DialogContext:
             'My task'
         """
         self.data[key] = value
-

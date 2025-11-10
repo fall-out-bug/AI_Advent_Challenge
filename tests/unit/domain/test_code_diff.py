@@ -60,4 +60,3 @@ def test_code_diff_validation_invalid_ratio():
             lines_changed=8,
             change_ratio=150.0,
         )
-

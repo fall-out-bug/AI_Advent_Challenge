@@ -1,0 +1,10 @@
+docs/MCP_GUIDE.md:41:    ├── orchestration_adapter.py
+docs/specs/epic_00/stage_00_01.md:106:- MCP `orchestration_adapter.py` can be sunset alongside the workflow.
+docs/specs/epic_00/stage_00_01.md:157:| `adapters/orchestration_adapter.py` | Archive | Tied to deprecated multi-agent workflow. |
+src/presentation/mcp/adapters.py:14:from src.presentation.mcp.adapters.orchestration_adapter import OrchestrationAdapter
+src/presentation/mcp/adapters.py:67:        self._orchestration_adapter = OrchestrationAdapter(self._unified_client)
+src/presentation/mcp/adapters.py:152:            orchestrate = self._orchestration_adapter.orchestrate_generation_and_review
+src/presentation/mcp/adapters/__init__.py:8:from .orchestration_adapter import OrchestrationAdapter
+src/tests/presentation/mcp/test_adapters.py:8:from src.presentation.mcp.adapters.orchestration_adapter import OrchestrationAdapter
+src/tests/presentation/mcp/test_validation.py:7:from src.presentation.mcp.adapters.orchestration_adapter import OrchestrationAdapter
+tasks/day_09/day_09-review-plan.plan.md:108:4. Create `src/presentation/mcp/adapters/orchestration_adapter.py` - Multi-agent workflows

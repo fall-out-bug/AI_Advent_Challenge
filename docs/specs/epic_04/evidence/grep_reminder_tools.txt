@@ -1,0 +1,33 @@
+CHANGELOG.md:258:- Refactored `reminder_tools.py`: extracted query builder and stats calculator into helpers
+docs/architecture/SUMMARIZATION_CURRENT_STATE.md:39:│  │ - reminder_tools │  │ (handlers)     │  │ - summary_   ││
+docs/architecture/SUMMARIZATION_CURRENT_STATE.md:436:**Файл:** `src/presentation/mcp/tools/reminder_tools.py`
+docs/architecture/SUMMARIZATION_CURRENT_STATE.md:561:    MCP Tool: get_summary (reminder_tools.py)
+docs/architecture/SUMMARIZATION_CURRENT_STATE.md:687:│           ├── reminder_tools.py           # get_summary MCP tool
+docs/architecture/SUMMARIZATION_CURRENT_STATE.md:707:| `reminder_tools.py` | 240 | MCP tools для задач |
+docs/architecture/SUMMARIZATION_CURRENT_STATE.md:1378:- ✅ Summary helpers (`test_reminder_tools_summary_helpers.py`)
+docs/architecture/SUMMARIZATION_CURRENT_STATE.md:1458:│  - reminder_tools    │                                       │
+docs/specs/epic_00/stage_00_01.md:60:| Reminder tools | `reminder_tools.py` | Reminders and tasks | Archive |
+docs/specs/epic_00/stage_00_01.md:116:| `reminder_tools.py` | Archive | Reminders/tasks scenario dropped per decisions. |
+src/presentation/mcp/tools/reminder_tools.py:17:logger = get_logger("mcp.reminder_tools")
+src/tests/e2e/test_bot_flows.py:27:    from src.presentation.mcp.tools.reminder_tools import (
+src/tests/e2e/test_bot_flows.py:139:    from src.presentation.mcp.tools.reminder_tools import list_tasks
+src/tests/e2e/test_bot_flows.py:163:    from src.presentation.mcp.tools.reminder_tools import add_task, list_tasks
+src/tests/e2e/test_bot_flows.py:191:    from src.presentation.mcp.tools.reminder_tools import add_task
+src/tests/e2e/test_scheduled_notifications.py:31:    from src.presentation.mcp.tools.reminder_tools import add_task
+src/tests/presentation/mcp/test_reminder_tools.py:46:    from src.presentation.mcp.tools.reminder_tools import (
+tasks/day_11/day-11-improvements.plan.md:83:2. `src/presentation/mcp/tools/reminder_tools.py` (382 lines, `get_summary` is 180 lines)
+tasks/day_11/day-11-improvements.plan.md:261:     - `get_summary` (reminder_tools.py): 180 lines → TARGET: 4 functions of 15 lines each
+tasks/day_11/day-11-improvements.plan.md:268:   - `reminder_tools.py`: 382 lines ≈ 4,600 tokens (HIGH - split into 2 files)
+tasks/day_11/day-11-improvements.plan.md:278:   - `reminder_tools.py` →
+tasks/day_11/day-11-improvements.plan.md:279:     - `reminder_tools.py` (CRUD tools, ~200 lines)
+tasks/day_11/day-11-improvements.plan.md:415:- Refactored reminder_tools.py: extracted query builder (4600→3000 tokens, -35%)
+tasks/day_11/day-11-improvements.plan.md:520:- [ ] Refactor reminder_tools.py get_summary method - extract query building and stats
+tasks/day_11/day_11-build.plan.peplexity.md:434:**File**: `mcp_server/src/tools/reminder_tools.py`
+tasks/day_11/day_11-improvements2.perplexity.md:434:**File**: `mcp_server/src/tools/reminder_tools.py`
+tasks/day_11/day_11-phase-01-summary.md:8:- MCP Reminder tools (registered on shared server): `src/presentation/mcp/tools/reminder_tools.py`
+tasks/day_11/day_11-phase-01-summary.md:14:  - Tools: `src/tests/presentation/mcp/test_reminder_tools.py`
+tasks/day_11/day_11-phase-01.plan.cursor.md:27:- Add: `src/presentation/mcp/tools/reminder_tools.py`
+tasks/day_11/day_11-phase-01.plan.cursor.md:30:- Import `src/presentation/mcp/tools/reminder_tools` so tools register on the shared `mcp`
+tasks/day_11/day_11-phase-01.plan.cursor.md:36:- Add: `src/tests/presentation/mcp/test_reminder_tools.py` (async)
+tasks/day_11/day_11-phase-05-summary.md:32:- **MCP Tools** (`src/presentation/mcp/tools/reminder_tools.py`):
+tasks/day_11/day_11-phase-05.plan.cursor.md:36:- Change: `src/presentation/mcp/tools/reminder_tools.py` and `digest_tools.py`

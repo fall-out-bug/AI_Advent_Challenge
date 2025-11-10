@@ -3,11 +3,10 @@
 Following Clean Architecture principles and the Zen of Python.
 """
 
-import subprocess
 import logging
+import subprocess
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-import json
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +32,9 @@ class CodeQualityChecker:
         Args:
             code_path: Path to code directory
         """
-        self.code_path = Path(code_path) if not isinstance(code_path, Path) else code_path
+        self.code_path = (
+            Path(code_path) if not isinstance(code_path, Path) else code_path
+        )
         self.logger = logging.getLogger(__name__)
 
     def run_flake8(self) -> Dict[str, Any]:
@@ -57,13 +58,17 @@ class CodeQualityChecker:
                         # Parse flake8 output: path:line:col: code message
                         parts = line.split(":", 3)
                         if len(parts) >= 4:
-                            issues.append({
-                                "file": parts[0],
-                                "line": parts[1],
-                                "column": parts[2],
-                                "code": parts[3].split()[0] if parts[3].split() else "",
-                                "message": parts[3].strip() if parts[3] else "",
-                            })
+                            issues.append(
+                                {
+                                    "file": parts[0],
+                                    "line": parts[1],
+                                    "column": parts[2],
+                                    "code": parts[3].split()[0]
+                                    if parts[3].split()
+                                    else "",
+                                    "message": parts[3].strip() if parts[3] else "",
+                                }
+                            )
 
             return {
                 "tool": "flake8",
@@ -344,7 +349,8 @@ class CodeQualityChecker:
 
             # Run isort in check mode
             result = subprocess.run(
-                ["isort", "--check-only", "--diff"] + [str(f) for f in python_files[:10]],
+                ["isort", "--check-only", "--diff"]
+                + [str(f) for f in python_files[:10]],
                 capture_output=True,
                 text=True,
                 timeout=60,
@@ -417,7 +423,8 @@ class CodeQualityChecker:
             "summary": {
                 "total_issues": total_issues,
                 "tools_run": len(results),
-                "tools_successful": sum(1 for r in results.values() if r.get("success", False)),
+                "tools_successful": sum(
+                    1 for r in results.values() if r.get("success", False)
+                ),
             },
         }
-

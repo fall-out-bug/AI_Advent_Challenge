@@ -1,0 +1,24 @@
+CONTRIBUTING.md:503:1. **Location:** `src/application/usecases/`
+archive/ep04_2025-11/ARCHIVE_MANIFEST.md:65:| src/application/usecases/ | code/src/application/usecases/ | Butler legacy task/data use cases migrated to new `use_cases/` namespace | 2025-11-09 | Assistant | Pending |
+archive/ep04_2025-11/code/README.md:7:- `src/application/usecases/` — legacy Butler task/data use cases archived after migration to `use_cases/`
+docs/specs/epic_00/stage_00_01.md:85:| `src/application/usecases` (legacy) | Older use-case implementations | Archive | Superseded by new `use_cases/`. |
+docs/specs/epic_04/archive_scope.md:25:| `src/application/usecases/` | Archive | `src/application/use_cases/` (new modular orchestrations) | See dependency map (`Hard`: legacy imports) | Move surviving helpers into `use_cases/` if referenced | Application TL |
+docs/specs/epic_04/archive_scope.md:26:| `src/application/usecases/` | Archived 2025-11-09 | Logic migrated to `src/application/use_cases/` (+ DTOs) | Resolved | Preserve legacy implementation snapshot in archive bundle | Application TL |
+docs/specs/epic_04/dependency_map.md:20:| `src/application/usecases/` | Previously imported by bot factory, tests, docs | Migrated to `src/application/use_cases/` + `src/application/dtos/butler_use_case_dtos.py`; archive directory | Completed 2025-11-09 |
+docs/specs/epic_04/stage_04_02.md:96:- Migrated Butler legacy usecases to `src/application/use_cases/`; archived `src/application/usecases/`
+tasks/day_13/day_13-refactoring.md:190:**Файл:** `src/application/usecases/create_task_usecase.py`
+tasks/day_13/day_13-refactoring.md:232:**Файл:** `src/application/usecases/collect_data_usecase.py`
+tasks/day_13/phase0/04_refactoring_priorities.md:290:5. application/usecases/create_task_usecase.py - 4h
+tasks/day_13/phase0/04_refactoring_priorities.md:291:6. application/usecases/collect_data_usecase.py - 4h
+tasks/day_13/phase3/README.md:13:src/application/usecases/
+tasks/day_13/phase3/README.md:22:tests/unit/application/usecases/
+tasks/day_13/phase3/README.md:145:src/application/usecases/__init__.py                   4      0 100.00%
+tasks/day_13/phase3/README.md:146:src/application/usecases/collect_data_usecase.py      22      0 100.00%
+tasks/day_13/phase3/README.md:147:src/application/usecases/create_task_usecase.py       41      1  97.56%
+tasks/day_13/phase3/README.md:148:src/application/usecases/result_types.py              13      0 100.00%
+tasks/day_13/phase3/README.md:187:pytest tests/unit/application/usecases/ -v
+tasks/day_13/phase3/README.md:190:pytest tests/unit/application/usecases/ --cov=src/application/usecases --cov-report=term-missing
+tasks/day_13/phase3/README.md:193:pytest tests/unit/application/usecases/ -q
+tasks/day_13/phase3/README.md:316:- Можно добавить позже в `tests/integration/application/usecases/`
+tasks/day_13/phase3/README.md:345:- **Production код:** `src/application/usecases/`
+tasks/day_13/phase3/README.md:346:- **Тесты:** `tests/unit/application/usecases/`

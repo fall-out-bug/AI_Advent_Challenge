@@ -1,2 +1,0 @@
-"""MCP presentation layer tests."""
-

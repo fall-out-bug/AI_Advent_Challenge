@@ -8,11 +8,12 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
 
+from src.application.dtos.butler_dialog_dtos import DialogContext, DialogMode, DialogState
+from src.application.services.mode_classifier import ModeClassifier
 from src.domain.intent import HybridIntentClassifier, IntentType
-from src.domain.agents.services.mode_classifier import ModeClassifier, DialogMode
-from src.domain.agents.handlers.data_handler import DataHandler
-from src.domain.interfaces.tool_client import ToolClientProtocol
 from src.domain.interfaces.llm_client import LLMClientProtocol
+from src.domain.interfaces.tool_client import ToolClientProtocol
+from src.presentation.bot.handlers.data import DataHandler
 
 
 @pytest.mark.asyncio
@@ -76,7 +77,7 @@ class TestIntentIntegration:
     ):
         """Test ModeClassifier uses HybridIntentClassifier."""
         mode = await mode_classifier.classify("Дай мои подписки")
-        
+
         assert mode == DialogMode.DATA
         # Verify hybrid classifier was used (no LLM call should happen for high-confidence rule)
 
@@ -85,31 +86,33 @@ class TestIntentIntegration:
         self, data_handler, mock_tool_client, hybrid_classifier
     ):
         """Test DataHandler uses HybridIntentClassifier for routing."""
-        from src.domain.agents.state_machine import DialogContext
-
         # Mock list_channels tool response
         mock_tool_client.call_tool.return_value = {
             "channels": [
                 {"channel_username": "naboka", "title": "Набока", "active": True},
-                {"channel_username": "xor_journal", "title": "XOR Journal", "active": True},
+                {
+                    "channel_username": "xor_journal",
+                    "title": "XOR Journal",
+                    "active": True,
+                },
             ]
         }
 
         context = DialogContext(
             user_id="12345",
             session_id="test_session",
-            state="IDLE",
+            state=DialogState.IDLE,
             data={},
         )
 
         # Test subscription list request
         response = await data_handler.handle(context, "Дай мои подписки")
-        
+
         # Verify tool was called
         mock_tool_client.call_tool.assert_called_once()
         call_args = mock_tool_client.call_tool.call_args
         assert call_args[0][0] == "list_channels"
-        
+
         # Verify response contains subscription info
         assert response is not None
         assert len(response) > 0
@@ -121,42 +124,40 @@ class TestIntentIntegration:
         """Test hybrid classifier flow: rules → LLM fallback."""
         # Message that matches rule with low confidence (or ambiguous)
         message = "tell me about tasks"
-        
+
         # Mock LLM response
-        mock_llm_client.make_request.return_value = '''{
+        mock_llm_client.make_request.return_value = """{
             "intent": "TASK_LIST",
             "confidence": 0.8,
             "entities": {}
-        }'''
-        
+        }"""
+
         result = await hybrid_classifier.classify(message)
-        
+
         # Should use LLM (since rule confidence likely low)
         # Result depends on actual rule matching, but LLM should be called if needed
         assert result.intent in IntentType
         assert result.confidence > 0
 
     @pytest.mark.asyncio
-    async def test_hybrid_classifier_caching(
-        self, hybrid_classifier, mock_llm_client
-    ):
+    async def test_hybrid_classifier_caching(self, hybrid_classifier, mock_llm_client):
         """Test hybrid classifier caches LLM results."""
         message = "some very ambiguous request that won't match rules"
-        
+
         # Mock LLM response
-        mock_llm_client.make_request.return_value = '''{{
+        mock_llm_client.make_request.return_value = """{{
             "intent": "GENERAL_CHAT",
             "confidence": 0.8,
             "entities": {{}}
-        }}'''
-        
+        }}"""
+
         # First call - should use LLM (rule confidence will be low)
         result1 = await hybrid_classifier.classify(message)
         # Should have called LLM (unless rule matched with high confidence)
-        
+
         # Second call - should use cache if LLM was used and result was meaningful
         result2 = await hybrid_classifier.classify(message)
-        
+
         # If result1 used LLM and was meaningful, result2 should use cache
         # But result1 might use rule if it matches, so we check both cases
         assert result2.intent == result1.intent
@@ -167,9 +168,7 @@ class TestIntentIntegration:
                 assert result2.intent == result1.intent
 
     @pytest.mark.asyncio
-    async def test_mode_classifier_fallback(
-        self, mock_llm_client
-    ):
+    async def test_mode_classifier_fallback(self, mock_llm_client):
         """Test ModeClassifier falls back to keyword matching if hybrid fails."""
         # Create ModeClassifier without hybrid_classifier
         mode_classifier = ModeClassifier(
@@ -177,8 +176,7 @@ class TestIntentIntegration:
             default_model="mistral",
             hybrid_classifier=None,  # No hybrid classifier
         )
-        
+
         # Should use keyword matching
         mode = await mode_classifier.classify("Дай мои подписки")
         assert mode == DialogMode.DATA
-

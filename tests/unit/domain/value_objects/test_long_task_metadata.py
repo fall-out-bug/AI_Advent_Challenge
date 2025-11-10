@@ -64,4 +64,3 @@ class TestLongTaskMetadata:
         assert "new_commit" not in task.metadata
         assert "old_commit" not in task.metadata
         assert "logs_zip_path" not in task.metadata
-

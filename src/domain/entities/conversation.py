@@ -46,7 +46,9 @@ class Conversation:
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
 
-    def add_message(self, role: str, content: str, metadata: Optional[Dict] = None) -> None:
+    def add_message(
+        self, role: str, content: str, metadata: Optional[Dict] = None
+    ) -> None:
         """Add message to conversation.
 
         Args:
@@ -59,7 +61,7 @@ class Conversation:
                 role=role,
                 content=content,
                 timestamp=datetime.utcnow(),
-                metadata=metadata or {}
+                metadata=metadata or {},
             )
         )
         self.updated_at = datetime.utcnow()
@@ -125,4 +127,3 @@ class ExecutionPlan:
     steps: List[ExecutionStep] = field(default_factory=list)
     estimated_time: float = 0.0
     dependencies: List[str] = field(default_factory=list)
-

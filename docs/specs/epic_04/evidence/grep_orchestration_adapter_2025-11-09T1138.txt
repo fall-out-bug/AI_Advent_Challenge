@@ -1,0 +1,16 @@
+docs/specs/epic_00/stage_00_01.md:106:- MCP `orchestration_adapter.py` can be sunset alongside the workflow.
+docs/specs/epic_00/stage_00_01.md:157:| `adapters/orchestration_adapter.py` | Archive | Tied to deprecated multi-agent workflow. |
+docs/specs/epic_04/archive_scope.md:33:| `src/presentation/mcp/adapters/orchestration_adapter.py` | Archived 2025-11-09 | MCPApplicationAdapter sequential workflow using modular reviewer services | Resolved | Legacy multi-agent adapter retired; MCPApplicationAdapter handles orchestration inline | EP02 TL |
+docs/specs/epic_04/dependency_map.md:23:| `src/presentation/mcp/adapters/orchestration_adapter.py` | Previously instantiated in `src/presentation/mcp/adapters.py`, referenced by tests | Archived 2025-11-09; MCPApplicationAdapter now chains generation+review adapters | Completed |
+docs/specs/epic_04/evidence/README.md:10:- `grep_orchestration_adapter.txt`
+docs/specs/epic_04/evidence/grep_orchestration_adapter.txt:1:docs/MCP_GUIDE.md:41:    ├── orchestration_adapter.py
+docs/specs/epic_04/evidence/grep_orchestration_adapter.txt:2:docs/specs/epic_00/stage_00_01.md:106:- MCP `orchestration_adapter.py` can be sunset alongside the workflow.
+docs/specs/epic_04/evidence/grep_orchestration_adapter.txt:3:docs/specs/epic_00/stage_00_01.md:157:| `adapters/orchestration_adapter.py` | Archive | Tied to deprecated multi-agent workflow. |
+docs/specs/epic_04/evidence/grep_orchestration_adapter.txt:4:src/presentation/mcp/adapters.py:14:from src.presentation.mcp.adapters.orchestration_adapter import OrchestrationAdapter
+docs/specs/epic_04/evidence/grep_orchestration_adapter.txt:5:src/presentation/mcp/adapters.py:67:        self._orchestration_adapter = OrchestrationAdapter(self._unified_client)
+docs/specs/epic_04/evidence/grep_orchestration_adapter.txt:6:src/presentation/mcp/adapters.py:152:            orchestrate = self._orchestration_adapter.orchestrate_generation_and_review
+docs/specs/epic_04/evidence/grep_orchestration_adapter.txt:7:src/presentation/mcp/adapters/__init__.py:8:from .orchestration_adapter import OrchestrationAdapter
+docs/specs/epic_04/evidence/grep_orchestration_adapter.txt:8:src/tests/presentation/mcp/test_adapters.py:8:from src.presentation.mcp.adapters.orchestration_adapter import OrchestrationAdapter
+docs/specs/epic_04/evidence/grep_orchestration_adapter.txt:9:src/tests/presentation/mcp/test_validation.py:7:from src.presentation.mcp.adapters.orchestration_adapter import OrchestrationAdapter
+docs/specs/epic_04/evidence/grep_orchestration_adapter.txt:10:tasks/day_09/day_09-review-plan.plan.md:108:4. Create `src/presentation/mcp/adapters/orchestration_adapter.py` - Multi-agent workflows
+tasks/day_09/day_09-review-plan.plan.md:108:4. Create `src/presentation/mcp/adapters/orchestration_adapter.py` - Multi-agent workflows

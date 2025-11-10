@@ -30,13 +30,13 @@ async def real_mongodb():
     """
     settings = get_settings()
     mongodb_url = os.getenv("TEST_MONGODB_URL", settings.mongodb_url)
-    
+
     # Use test database
     client = AsyncIOMotorClient(mongodb_url)
     db = client.get_database("ai_challenge_test")
-    
+
     yield db
-    
+
     # Cleanup: close connection
     client.close()
 
@@ -57,18 +57,18 @@ async def real_llm_client():
         Tests will be skipped if LLM_URL not configured.
     """
     llm_url = os.getenv("TEST_LLM_URL", os.getenv("LLM_URL", ""))
-    
+
     if not llm_url:
         pytest.skip("LLM_URL not configured for E2E tests")
-    
+
     client = ResilientLLMClient(url=llm_url)
-    
+
     # Test connection
     try:
         await client.generate("test", max_tokens=10)
     except Exception as e:
         pytest.skip(f"LLM service unavailable: {e}")
-    
+
     yield client
 
 
@@ -90,10 +90,10 @@ def telegram_test_channel():
         Tests will be skipped if not configured.
     """
     channel_username = os.getenv("TEST_CHANNEL_USERNAME", "")
-    
+
     if not channel_username:
         pytest.skip("TEST_CHANNEL_USERNAME not configured for E2E tests")
-    
+
     return {
         "username": channel_username.lstrip("@"),
         "api_id": os.getenv("TELEGRAM_API_ID"),
@@ -122,7 +122,7 @@ async def cleanup_test_data(real_mongodb):
         real_mongodb: Test MongoDB database.
     """
     yield
-    
+
     # Cleanup test data
     # Note: Be careful not to delete production data
     # Only delete data with test markers

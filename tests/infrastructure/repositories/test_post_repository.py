@@ -22,7 +22,9 @@ def event_loop():
 def _set_test_db_env(monkeypatch):
     """Set test database environment variables."""
     monkeypatch.setenv("DB_NAME", "butler_test")
-    monkeypatch.setenv("MONGODB_URL", os.getenv("MONGODB_URL", "mongodb://localhost:27017"))
+    monkeypatch.setenv(
+        "MONGODB_URL", os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+    )
 
 
 @pytest.fixture
@@ -73,7 +75,9 @@ def _create_test_post(
 
 async def test_save_post_saves_new_post_successfully(repo):
     """Test that save_post saves a new post successfully."""
-    post = _create_test_post(channel_username="test_channel", message_id="1", text="New post")
+    post = _create_test_post(
+        channel_username="test_channel", message_id="1", text="New post"
+    )
 
     post_id = await repo.save_post(post)
 
@@ -106,7 +110,9 @@ async def test_save_post_deduplication_by_message_id(repo):
     assert post_id2 is None or post_id2 == post_id1
 
     # Verify only one post exists
-    posts = await repo.get_posts_by_channel("test_channel", since=datetime.utcnow() - timedelta(hours=1))
+    posts = await repo.get_posts_by_channel(
+        "test_channel", since=datetime.utcnow() - timedelta(hours=1)
+    )
     assert len(posts) == 1
 
 
@@ -136,7 +142,9 @@ async def test_save_post_deduplication_by_content_hash(repo):
     assert post_id2 is None
 
     # Verify only one post exists
-    posts = await repo.get_posts_by_channel("test_channel", since=datetime.utcnow() - timedelta(days=8))
+    posts = await repo.get_posts_by_channel(
+        "test_channel", since=datetime.utcnow() - timedelta(days=8)
+    )
     assert len(posts) == 1
 
 
@@ -170,9 +178,18 @@ async def test_save_post_allows_duplicate_after_message_id_window(repo):
 async def test_get_posts_by_user_subscriptions_filters_correctly(repo):
     """Test that get_posts_by_user_subscriptions filters by user subscriptions."""
     # Create posts for different users
-    post1 = _create_test_post(user_id=1, channel_username="channel1", message_id="1", text="User 1 post")
-    post2 = _create_test_post(user_id=2, channel_username="channel2", message_id="2", text="User 2 post")
-    post3 = _create_test_post(user_id=1, channel_username="channel1", message_id="3", text="Another User 1 post")
+    post1 = _create_test_post(
+        user_id=1, channel_username="channel1", message_id="1", text="User 1 post"
+    )
+    post2 = _create_test_post(
+        user_id=2, channel_username="channel2", message_id="2", text="User 2 post"
+    )
+    post3 = _create_test_post(
+        user_id=1,
+        channel_username="channel1",
+        message_id="3",
+        text="Another User 1 post",
+    )
 
     await repo.save_post(post1)
     await repo.save_post(post2)
@@ -180,8 +197,11 @@ async def test_get_posts_by_user_subscriptions_filters_correctly(repo):
 
     # Mock channels collection - user 1 subscribes to channel1
     from src.infrastructure.database.mongo import get_db
+
     db = await get_db()
-    await db.channels.insert_one({"user_id": 1, "channel_username": "channel1", "active": True})
+    await db.channels.insert_one(
+        {"user_id": 1, "channel_username": "channel1", "active": True}
+    )
 
     # Get posts for user 1
     posts = await repo.get_posts_by_user_subscriptions(user_id=1, hours=24)
@@ -192,7 +212,9 @@ async def test_get_posts_by_user_subscriptions_filters_correctly(repo):
 
 async def test_get_posts_by_user_subscriptions_empty_subscriptions(repo):
     """Test that get_posts_by_user_subscriptions returns empty list for user with no subscriptions."""
-    post = _create_test_post(user_id=1, channel_username="channel1", message_id="1", text="Post")
+    post = _create_test_post(
+        user_id=1, channel_username="channel1", message_id="1", text="Post"
+    )
     await repo.save_post(post)
 
     # User has no subscriptions
@@ -220,14 +242,18 @@ async def test_get_posts_by_channel_with_date_filtering(repo):
     await repo.save_post(new_post)
 
     # Get posts from last hour only
-    posts = await repo.get_posts_by_channel("test_channel", since=now - timedelta(hours=1))
+    posts = await repo.get_posts_by_channel(
+        "test_channel", since=now - timedelta(hours=1)
+    )
     assert len(posts) == 1
     assert posts[0]["message_id"] == "new"
 
 
 async def test_get_posts_by_channel_empty_results(repo):
     """Test that get_posts_by_channel returns empty list when no posts found."""
-    posts = await repo.get_posts_by_channel("nonexistent_channel", since=datetime.utcnow() - timedelta(hours=1))
+    posts = await repo.get_posts_by_channel(
+        "nonexistent_channel", since=datetime.utcnow() - timedelta(hours=1)
+    )
     assert len(posts) == 0
 
 
@@ -255,7 +281,9 @@ async def test_delete_old_posts_removes_expired_posts(repo):
     assert deleted_count >= 1
 
     # Verify old post is deleted, new post remains
-    posts = await repo.get_posts_by_channel("test_channel", since=now - timedelta(days=10))
+    posts = await repo.get_posts_by_channel(
+        "test_channel", since=now - timedelta(days=10)
+    )
     assert len(posts) == 1
     assert posts[0]["message_id"] == "new"
 
@@ -264,7 +292,7 @@ async def test_save_post_error_handling_invalid_input(repo):
     """Test that save_post handles invalid input gracefully."""
     # Missing required fields
     invalid_post = {"text": "Missing fields"}
-    
+
     with pytest.raises(ValueError):
         await repo.save_post(invalid_post)
 
@@ -279,7 +307,7 @@ async def test_save_post_edge_case_empty_text(repo):
 async def test_get_posts_by_user_subscriptions_time_filtering(repo):
     """Test that get_posts_by_user_subscriptions respects hours parameter."""
     now = datetime.utcnow()
-    
+
     # Create posts at different times
     old_post = _create_test_post(
         user_id=1,
@@ -301,8 +329,11 @@ async def test_get_posts_by_user_subscriptions_time_filtering(repo):
 
     # Mock channels collection
     from src.infrastructure.database.mongo import get_db
+
     db = await get_db()
-    await db.channels.insert_one({"user_id": 1, "channel_username": "channel1", "active": True})
+    await db.channels.insert_one(
+        {"user_id": 1, "channel_username": "channel1", "active": True}
+    )
 
     # Get posts from last 24 hours
     posts = await repo.get_posts_by_user_subscriptions(user_id=1, hours=24)
@@ -312,8 +343,12 @@ async def test_get_posts_by_user_subscriptions_time_filtering(repo):
 
 async def test_deduplication_message_id_different_channels(repo):
     """Test that same message_id in different channels is allowed."""
-    post1 = _create_test_post(channel_username="channel1", message_id="123", text="Post 1")
-    post2 = _create_test_post(channel_username="channel2", message_id="123", text="Post 2")
+    post1 = _create_test_post(
+        channel_username="channel1", message_id="123", text="Post 1"
+    )
+    post2 = _create_test_post(
+        channel_username="channel2", message_id="123", text="Post 2"
+    )
 
     post_id1 = await repo.save_post(post1)
     post_id2 = await repo.save_post(post2)
@@ -321,4 +356,3 @@ async def test_deduplication_message_id_different_channels(repo):
     assert post_id1 is not None
     assert post_id2 is not None
     assert post_id1 != post_id2
-

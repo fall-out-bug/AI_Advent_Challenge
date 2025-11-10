@@ -10,9 +10,7 @@ from src.infrastructure.database.mongo import get_db
 from src.infrastructure.repositories.task_repository import TaskRepository
 
 
-def _build_summary_query(
-    user_id: int, timeframe: str, now: datetime
-) -> dict[str, Any]:
+def _build_summary_query(user_id: int, timeframe: str, now: datetime) -> dict[str, Any]:
     """Build MongoDB query for task summary.
 
     Args:
@@ -52,7 +50,9 @@ def _compute_task_stats(tasks: list[dict], now_iso: str) -> dict[str, Any]:
     with_deadline = sum(
         1
         for t in tasks
-        if t.get("deadline") and datetime.fromisoformat(t["deadline"].replace("Z", "+00:00")) > datetime.now(timezone.utc)
+        if t.get("deadline")
+        and datetime.fromisoformat(t["deadline"].replace("Z", "+00:00"))
+        > datetime.now(timezone.utc)
     )
 
     return {

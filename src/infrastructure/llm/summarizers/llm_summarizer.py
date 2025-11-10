@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from src.domain.services.summarizer import SummarizerService
 from src.domain.services.summary_quality_checker import (
     QualityScore,
     SummaryQualityChecker,
@@ -125,7 +124,7 @@ class LLMSummarizer:
                 if not self.quality_checker.should_retry(quality):
                     break
 
-            except Exception as e:
+            except Exception:
                 if attempt == self.max_retries - 1:
                     # Last attempt failed, use fallback
                     summary_text = self._fallback_summary(cleaned_text, language)
@@ -182,33 +181,38 @@ class LLMSummarizer:
             if cleaned and len(cleaned) > 20:
                 # Increased limit to 1000 chars per post for better context
                 cleaned_posts.append(cleaned[:1000])
-        
+
         # Verify all posts belong to the same channel (if context provided)
         if context and context.channel_username:
             wrong_channel_posts = [
-                i for i, post in enumerate(posts)
-                if post.channel_username and post.channel_username != context.channel_username
+                i
+                for i, post in enumerate(posts)
+                if post.channel_username
+                and post.channel_username != context.channel_username
             ]
             if wrong_channel_posts:
                 from src.infrastructure.logging import get_logger
+
                 logger = get_logger("llm_summarizer")
                 logger.warning(
                     f"Found {len(wrong_channel_posts)} posts from different channel in LLMSummarizer. "
                     f"Expected: {context.channel_username}, filtering them out."
                 )
                 cleaned_posts = [
-                    cleaned for i, cleaned in enumerate(cleaned_posts)
+                    cleaned
+                    for i, cleaned in enumerate(cleaned_posts)
                     if i not in wrong_channel_posts
                 ]
                 posts = [
-                    post for i, post in enumerate(posts)
-                    if i not in wrong_channel_posts
+                    post for i, post in enumerate(posts) if i not in wrong_channel_posts
                 ]
 
         if not cleaned_posts:
             # Fallback: return empty summary
             return SummaryResult(
-                text="Нет пригодных постов для суммаризации." if language == "ru" else "No suitable posts for summarization.",
+                text="Нет пригодных постов для суммаризации."
+                if language == "ru"
+                else "No suitable posts for summarization.",
                 sentences_count=0,
                 method="direct",
                 confidence=0.0,
@@ -216,16 +220,19 @@ class LLMSummarizer:
             )
 
         # Combine posts into text
-        combined_text = "\n".join(f"{i+1}. {text}" for i, text in enumerate(cleaned_posts))
+        combined_text = "\n".join(
+            f"{i+1}. {text}" for i, text in enumerate(cleaned_posts)
+        )
 
         # Summarize combined text
         return await self.summarize_text(
-            combined_text, max_sentences=max_sentences, language=language, context=context
+            combined_text,
+            max_sentences=max_sentences,
+            language=language,
+            context=context,
         )
 
-    def _finalize_summary(
-        self, summary: str, max_sentences: int, language: str
-    ) -> str:
+    def _finalize_summary(self, summary: str, max_sentences: int, language: str) -> str:
         """Finalize summary: ensure proper sentence count and format.
 
         Args:

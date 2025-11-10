@@ -32,7 +32,12 @@ class SemanticChunker:
         overlap_tokens: Target tokens to keep from the end of the previous chunk.
     """
 
-    def __init__(self, token_counter: TokenCounter, max_tokens: int = 3000, overlap_tokens: int = 200) -> None:
+    def __init__(
+        self,
+        token_counter: TokenCounter,
+        max_tokens: int = 3000,
+        overlap_tokens: int = 200,
+    ) -> None:
         self.token_counter = token_counter
         self.max_tokens = max_tokens
         self.overlap_tokens = overlap_tokens
@@ -69,7 +74,11 @@ class SemanticChunker:
             if current_tokens + tok > self.max_tokens and current_sentences:
                 chunk_text = " ".join(current_sentences)
                 chunks.append(
-                    TextChunk(text=chunk_text, token_count=current_tokens, chunk_id=len(chunks))
+                    TextChunk(
+                        text=chunk_text,
+                        token_count=current_tokens,
+                        chunk_id=len(chunks),
+                    )
                 )
 
                 # Build overlap from the end backward
@@ -93,9 +102,9 @@ class SemanticChunker:
         if current_sentences:
             chunk_text = " ".join(current_sentences)
             chunks.append(
-                TextChunk(text=chunk_text, token_count=current_tokens, chunk_id=len(chunks))
+                TextChunk(
+                    text=chunk_text, token_count=current_tokens, chunk_id=len(chunks)
+                )
             )
 
         return chunks
-
-

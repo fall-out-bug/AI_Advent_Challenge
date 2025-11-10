@@ -1,0 +1,4 @@
+tasks/day_13/BUTLER_AGENT_DOCS.md:188:### RemindersHandler
+tasks/day_13/phase4/README.md:34:7. Domain handlers (TaskHandler, DataHandler, RemindersHandler, ChatHandler)
+tasks/day_13/phase4/README.md:257:      ├── TaskHandler, DataHandler, RemindersHandler, ChatHandler
+tasks/day_13/phase6/README.md:23:- Documented all handlers: TaskHandler, DataHandler, RemindersHandler, ChatHandler

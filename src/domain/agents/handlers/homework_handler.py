@@ -9,7 +9,7 @@ import logging
 import re
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from src.domain.agents.handlers.handler import Handler
 from src.domain.agents.state_machine import DialogContext
@@ -173,7 +173,9 @@ class HomeworkHandler(Handler):
                 # Escape markdown
                 safe_archive = _escape_markdown(archive_name)
                 safe_assignment = _escape_markdown(assignment)
-                safe_hash = _escape_markdown(commit_hash)  # Full commit hash, not truncated
+                safe_hash = _escape_markdown(
+                    commit_hash
+                )  # Full commit hash, not truncated
 
                 lines.append(f"{status_emoji} {safe_assignment}: {safe_archive}")
                 lines.append(f"   Коммит: {safe_hash}")
@@ -223,9 +225,7 @@ class HomeworkHandler(Handler):
 
         return 1
 
-    async def _review_homework(
-        self, context: DialogContext, commit_hash: str
-    ) -> str:
+    async def _review_homework(self, context: DialogContext, commit_hash: str) -> str:
         """Review homework by commit hash.
 
         Args:
@@ -240,26 +240,31 @@ class HomeworkHandler(Handler):
 
         try:
             # Download archive
-            logger.info(f"Downloading archive for commit {commit_hash[:20]}... (full length: {len(commit_hash)})")
+            logger.info(
+                f"Downloading archive for commit {commit_hash[:20]}... (full length: {len(commit_hash)})"
+            )
             archive_bytes = await self.hw_checker_client.download_archive(commit_hash)
 
             # Save to shared temp directory (accessible by both butler-bot and mcp-server)
             # Use /app/archive if available (shared volume), otherwise fallback to /tmp
             import os
+
             shared_temp_dir = "/app/archive"
             if os.path.exists(shared_temp_dir):
                 temp_dir = shared_temp_dir
             else:
                 temp_dir = tempfile.gettempdir()
-            
+
             temp_file = tempfile.NamedTemporaryFile(
                 delete=False, suffix=".zip", prefix="homework_review_", dir=temp_dir
             )
             temp_file.write(archive_bytes)
             temp_path = temp_file.name
             temp_file.close()
-            
-            logger.info(f"Saved archive to {temp_path} (size: {len(archive_bytes)} bytes)")
+
+            logger.info(
+                f"Saved archive to {temp_path} (size: {len(archive_bytes)} bytes)"
+            )
 
             try:
                 # Call review tool
@@ -276,14 +281,14 @@ class HomeworkHandler(Handler):
 
                 # Extract markdown report
                 markdown_report = result.get("markdown_report", "")
-                
+
                 # Log result info for debugging
                 logger.info(
                     f"Review completed: success={result.get('success')}, "
                     f"total_findings={result.get('total_findings')}, "
                     f"markdown_length={len(markdown_report) if markdown_report else 0}"
                 )
-                
+
                 # Check if markdown_report is empty or whitespace-only
                 if not markdown_report or not markdown_report.strip():
                     # If no report, try to provide helpful error message
@@ -305,8 +310,12 @@ class HomeworkHandler(Handler):
                 # Return special format for file sending
                 # Format: "FILE:<filename>:<base64_content>"
                 filename = f"review_{commit_hash[:12]}.md"
-                content_b64 = base64.b64encode(markdown_report.encode("utf-8")).decode("ascii")
-                logger.info(f"Sending markdown report as file: {filename} ({len(markdown_report)} chars)")
+                content_b64 = base64.b64encode(markdown_report.encode("utf-8")).decode(
+                    "ascii"
+                )
+                logger.info(
+                    f"Sending markdown report as file: {filename} ({len(markdown_report)} chars)"
+                )
                 return f"FILE:{filename}:{content_b64}"
 
             finally:
@@ -331,9 +340,13 @@ class HomeworkHandler(Handler):
                     f"• Коммит не содержит архива домашней работы\n"
                     f"• Проверьте правильность хеша коммита"
                 )
-            if "connection" in error_msg.lower() or "connection error" in error_msg.lower():
+            if (
+                "connection" in error_msg.lower()
+                or "connection error" in error_msg.lower()
+            ):
                 return f"❌ Не удалось подключиться к серверу проверки домашних работ. Проверьте доступность серверов."
             if "timeout" in error_msg.lower():
-                return f"❌ Превышено время ожидания ответа от сервера. Попробуйте позже."
+                return (
+                    f"❌ Превышено время ожидания ответа от сервера. Попробуйте позже."
+                )
             return f"❌ Ошибка при ревью домашней работы: {error_msg[:150]}"
-

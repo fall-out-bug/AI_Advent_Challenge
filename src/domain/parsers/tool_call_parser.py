@@ -17,7 +17,6 @@ import logging
 import re
 from typing import Any, Dict, List, Optional
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -82,7 +81,9 @@ def extract_json_from_text(text: str) -> Optional[Dict[str, Any]]:
             if fixed and fixed != candidate:
                 try:
                     result = json.loads(fixed)
-                    if isinstance(result, dict) and ("tool" in result or "params" in result):
+                    if isinstance(result, dict) and (
+                        "tool" in result or "params" in result
+                    ):
                         logger.debug("JSON from fixed braces parse successful")
                         return result
                 except json.JSONDecodeError:
@@ -115,24 +116,24 @@ def extract_json_from_text(text: str) -> Optional[Dict[str, Any]]:
 
 def _fix_unquoted_json(text: str) -> Optional[str]:
     """Fix common JSON issues: unquoted keys and string values.
-    
+
     Args:
         text: JSON-like string with potential unquoted keys/values.
-        
+
     Returns:
         Fixed JSON string or None if not fixable.
     """
     if not text or not text.strip().startswith("{"):
         return None
-    
+
     try:
         # Try to add quotes around keys
         # Pattern: {key: value} -> {"key": value}
         import re
-        
+
         # Fix keys: word after { or , or whitespace, followed by :
-        fixed = re.sub(r'([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:', r'\1"\2":', text)
-        
+        fixed = re.sub(r"([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:", r'\1"\2":', text)
+
         # Fix string values that look like words (after : and before , or })
         # But avoid numbers and booleans
         def fix_value(match):
@@ -141,12 +142,12 @@ def _fix_unquoted_json(text: str) -> Optional[str]:
             if val in ("true", "false", "null") or val.replace(".", "").isdigit():
                 return match.group(0)
             # Add quotes if it's a word-like value
-            if re.match(r'^[a-zA-Zа-яА-ЯЁё][a-zA-Z0-9а-яА-ЯЁё\s\-_]*$', val):
+            if re.match(r"^[a-zA-Zа-яА-ЯЁё][a-zA-Z0-9а-яА-ЯЁё\s\-_]*$", val):
                 return f': "{val}"'
             return match.group(0)
-        
-        fixed = re.sub(r':\s*([^,}\]]+?)(?=\s*[,}\]])', fix_value, fixed)
-        
+
+        fixed = re.sub(r":\s*([^,}\]]+?)(?=\s*[,}\]])", fix_value, fixed)
+
         return fixed
     except Exception:
         return None
@@ -199,14 +200,14 @@ def extract_tool_from_text_heuristic(text: str) -> Optional[Dict[str, Any]]:
         r'canal[" ]*:?\s*["\']?([^"\'}\n]+)',
         r'канал\s*["\']?([^"\'}\n]+)',
         r'["\']?channel_name["\']?\s*:\s*["\']?([^"\'}\n]+)',
-        r'по\s+([^\s\n]+)\s+за',  # e.g., "по Набока за 3 дня"
+        r"по\s+([^\s\n]+)\s+за",  # e.g., "по Набока за 3 дня"
     ]
     # For listing, do not force channel extraction
     if detected != "list_channels":
         for pattern in channel_patterns:
             m = re.search(pattern, text, re.IGNORECASE)
             if m:
-                value = m.group(1).strip().strip('"\'')
+                value = m.group(1).strip().strip("\"'")
                 if value:
                     params["channel_name"] = value
                     break
@@ -265,7 +266,9 @@ class ToolCallParser:
         return None
 
     @staticmethod
-    def parse_with_fallback(text: str, max_attempts: int = 3) -> Optional[Dict[str, Any]]:
+    def parse_with_fallback(
+        text: str, max_attempts: int = 3
+    ) -> Optional[Dict[str, Any]]:
         """Parse with multiple attempts and fragment fallbacks.
 
         Args:
@@ -342,5 +345,3 @@ class ToolCallParser:
         for pattern in remove_patterns:
             cleaned = re.sub(pattern, "", cleaned, flags=re.DOTALL | re.IGNORECASE)
         return cleaned.strip()
-
-

@@ -7,9 +7,9 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from src.presentation.mcp.server import mcp
 from src.application.use_cases.resolve_channel_name import ResolveChannelNameUseCase
 from src.infrastructure.logging import get_logger
+from src.presentation.mcp.server import mcp
 
 logger = get_logger("channel_resolution")
 
@@ -56,7 +56,9 @@ async def resolve_channel_name(
     )
 
     try:
-        use_case = ResolveChannelNameUseCase(allow_telegram_search=allow_telegram_search)
+        use_case = ResolveChannelNameUseCase(
+            allow_telegram_search=allow_telegram_search
+        )
         result = await use_case.execute(
             user_id=user_id,
             input_name=input_name,
@@ -85,4 +87,3 @@ async def resolve_channel_name(
             "source": "error",
             "reason": f"Error during resolution: {str(e)}",
         }
-

@@ -16,7 +16,9 @@ class IntentValidator:
     Single responsibility: validate intent parse results.
     """
 
-    def validate_completeness(self, result: IntentParseResult) -> Tuple[bool, List[str]]:
+    def validate_completeness(
+        self, result: IntentParseResult
+    ) -> Tuple[bool, List[str]]:
         """Validate intent completeness.
 
         Args:
@@ -38,7 +40,9 @@ class IntentValidator:
                 missing.append("priority")
             return (len(missing) == 0, missing)
         except Exception as e:
-            raise IntentValidationError(f"Validation failed: {e}", original_error=e) from e
+            raise IntentValidationError(
+                f"Validation failed: {e}", original_error=e
+            ) from e
 
     def is_valid_priority(self, priority: str) -> bool:
         """Check if priority is valid.
@@ -60,5 +64,8 @@ class IntentValidator:
         Returns:
             True if all required fields present
         """
-        return bool(result.title) and result.deadline_iso is not None and self.is_valid_priority(result.priority)
-
+        return (
+            bool(result.title)
+            and result.deadline_iso is not None
+            and self.is_valid_priority(result.priority)
+        )

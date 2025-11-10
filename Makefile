@@ -1,4 +1,4 @@
-.PHONY: help install test lint format clean docker-build docker-up docker-down coverage integration e2e maintenance-cleanup maintenance-backup maintenance-export maintenance-validate day-07 day-08 day-11 day-11-up day-11-down day-11-build day-11-logs day-11-logs-bot day-11-logs-worker day-11-logs-mcp day-11-logs-mistral day-11-ps day-11-restart day-11-clean day-11-setup day-12 day-12-up day-12-down day-12-build day-12-logs day-12-logs-bot day-12-logs-worker day-12-logs-post-fetcher day-12-logs-mcp day-12-logs-mistral day-12-ps day-12-restart day-12-clean day-12-setup day-12-test day-12-metrics butler butler-up butler-down butler-build butler-logs butler-logs-bot butler-logs-worker butler-logs-mcp butler-logs-post-fetcher butler-logs-mistral butler-ps butler-restart butler-clean butler-setup butler-test butler-metrics mcp-discover mcp-demo test-mcp test-mcp-comprehensive mcp-chat mcp-chat-streaming mcp-server-start mcp-server-stop mcp-chat-docker mcp-demo-start mcp-demo-stop mcp-demo-logs demo-mcp-comprehensive
+.PHONY: help install test lint format clean docker-build docker-up docker-down coverage integration e2e maintenance-cleanup maintenance-backup maintenance-export maintenance-validate day-07 day-08 day-11 day-11-up day-11-down day-11-build day-11-logs day-11-logs-bot day-11-logs-worker day-11-logs-mcp day-11-ps day-11-restart day-11-clean day-11-setup day-12 day-12-up day-12-down day-12-build day-12-logs day-12-logs-bot day-12-logs-worker day-12-logs-post-fetcher day-12-logs-mcp day-12-ps day-12-restart day-12-clean day-12-setup day-12-test day-12-metrics butler butler-up butler-down butler-build butler-logs butler-logs-bot butler-logs-worker butler-logs-mcp butler-logs-post-fetcher butler-ps butler-restart butler-clean butler-setup butler-test butler-metrics mcp-discover mcp-demo test-mcp test-mcp-comprehensive mcp-chat mcp-chat-streaming mcp-server-start mcp-server-stop mcp-chat-docker mcp-demo-start mcp-demo-stop mcp-demo-logs demo-mcp-comprehensive
 
 help:
 	@echo "Available commands:"
@@ -38,7 +38,6 @@ help:
 	@echo "  make day-11-logs-bot   - View bot logs"
 	@echo "  make day-11-logs-worker - View worker logs"
 	@echo "  make day-11-logs-mcp   - View MCP server logs"
-	@echo "  make day-11-logs-mistral - View Mistral LLM logs"
 	@echo "  make day-11-ps         - Show service status"
 	@echo "  make day-11-restart    - Restart all services"
 	@echo "  make day-11-clean      - Remove all containers and volumes"
@@ -51,10 +50,9 @@ help:
 	@echo "  make butler-build      - Rebuild Butler Docker images"
 	@echo "  make butler-logs       - View logs from all services"
 	@echo "  make butler-logs-bot   - View bot logs"
-	@echo "  make butler-logs-worker - View summary worker logs"
+	@echo "  make butler-logs-worker - View unified task worker logs"
 	@echo "  make butler-logs-post-fetcher - View post fetcher worker logs"
 	@echo "  make butler-logs-mcp   - View MCP server logs"
-	@echo "  make butler-logs-mistral - View Mistral LLM logs"
 	@echo "  make butler-ps         - Show service status"
 	@echo "  make butler-restart    - Restart all services"
 	@echo "  make butler-clean      - Remove all containers and volumes"
@@ -118,8 +116,23 @@ coverage: test-coverage
 
 lint:
 	poetry run flake8 src
-	poetry run mypy src
+	poetry run mypy src --ignore-missing-imports
+	poetry run mypy packages/multipass-reviewer/multipass_reviewer --strict
 	poetry run bandit -r src
+
+lint-allowlist:
+	poetry run flake8 --config packages/multipass-reviewer/.flake8 packages/multipass-reviewer/multipass_reviewer
+	poetry run flake8 --config shared/.flake8 shared/shared_package/agents shared/shared_package/clients
+	poetry run flake8 --max-line-length=120 src/application/services/modular_review_service.py src/application/use_cases/review_submission_use_case.py
+	poetry run mypy shared/shared_package/agents shared/shared_package/clients
+	poetry run mypy packages/multipass-reviewer/multipass_reviewer
+	poetry run mypy --ignore-missing-imports src/application/services/modular_review_service.py src/application/use_cases/review_submission_use_case.py
+
+lint-debt:
+	poetry run flake8 --count --exit-zero src tests shared packages
+
+dev:
+	docker compose -f docker-compose.dev.yml run --rm dev
 
 format:
 	poetry run black src tests
@@ -166,25 +179,11 @@ mcp-demo:
 test-mcp:
 	poetry run pytest src/tests/presentation/mcp -v
 
-test-mcp-comprehensive:
-	@echo "Running comprehensive MCP integration tests..."
-	poetry run pytest tests/integration/test_mcp_comprehensive_demo.py -v
+backoffice-cli:
+	poetry run python -m src.presentation.cli.backoffice.main --help
 
-mcp-chat:
-	poetry run python src/presentation/mcp/cli/interactive_mistral_chat.py
-
-mcp-chat-streaming:
-	poetry run python src/presentation/mcp/cli/streaming_chat.py
-
-mcp-chat-docker:
-	@echo "Starting chat with Docker MCP server..."
-	@echo "Make sure MCP server is running: make mcp-server-start"
-	MCP_USE_DOCKER=true poetry run python src/presentation/mcp/cli/streaming_chat.py
-
-demo-mcp-comprehensive:
-	@echo "Running comprehensive MCP demo..."
-	@echo "Make sure MCP server is running: make mcp-server-start"
-	poetry run python scripts/mcp_comprehensive_demo.py
+backoffice-digest-help:
+	poetry run python -m src.presentation.cli.backoffice.main digest --help
 
 mcp-server-start:
 	docker-compose -f docker-compose.mcp-demo.yml up -d
@@ -245,9 +244,6 @@ day-11-logs-worker:
 day-11-logs-mcp:
 	docker compose -f archive/docker-compose/docker-compose.day11.yml logs -f mcp-server
 
-day-11-logs-mistral:
-	docker compose -f archive/docker-compose/docker-compose.day11.yml logs -f mistral-chat
-
 day-11-ps:
 	docker compose -f archive/docker-compose/docker-compose.day11.yml ps
 
@@ -305,7 +301,6 @@ day-12-logs-bot: butler-logs-bot
 day-12-logs-worker: butler-logs-worker
 day-12-logs-post-fetcher: butler-logs-post-fetcher
 day-12-logs-mcp: butler-logs-mcp
-day-12-logs-mistral: butler-logs-mistral
 day-12-ps: butler-ps
 day-12-restart: butler-restart
 day-12-clean: butler-clean
@@ -320,16 +315,13 @@ butler-logs-bot:
 	docker-compose -f docker-compose.butler.yml logs -f butler-bot
 
 butler-logs-worker:
-	docker-compose -f docker-compose.butler.yml logs -f summary-worker
+	docker-compose -f docker-compose.butler.yml logs -f unified-task-worker
 
 butler-logs-post-fetcher:
 	docker-compose -f docker-compose.butler.yml logs -f post-fetcher-worker
 
 butler-logs-mcp:
 	docker-compose -f docker-compose.butler.yml logs -f mcp-server
-
-butler-logs-mistral:
-	docker-compose -f docker-compose.butler.yml logs -f mistral-chat
 
 butler-ps:
 	docker-compose -f docker-compose.butler.yml ps
@@ -355,8 +347,8 @@ butler-setup:
 	fi
 
 butler-test:
-	@echo "Running Butler tests..."
-	python scripts/day12_run.py test
+	@echo "Running Butler integration tests..."
+	poetry run pytest tests/integration/butler -q
 
 butler-metrics:
 	@echo "Fetching Prometheus metrics from MCP server..."
@@ -384,6 +376,15 @@ docs-check:
 	@echo "Checking markdown links..."
 	@command -v markdown-link-check >/dev/null && find . -name "*.md" -not -path "./.venv/*" -not -path "./node_modules/*" -exec markdown-link-check {} \; || echo "markdown-link-check not installed, skipping"
 
+repo-cleanup-dry-run:
+	poetry run python -m tools.repo_cleanup --config docs/specs/epic_06/repo_cleanup_plan.json --base-dir $(PWD)
+
+repo-cleanup-apply:
+	poetry run python -m tools.repo_cleanup --config docs/specs/epic_06/repo_cleanup_plan.json --base-dir $(PWD) --execute
+
+repo-cleanup-apply-git:
+	poetry run python -m tools.repo_cleanup --config docs/specs/epic_06/repo_cleanup_plan.json --base-dir $(PWD) --execute --use-git
+
 # Pre-commit hooks
 hook:
 	@echo "Installing pre-commit hooks..."
@@ -407,8 +408,12 @@ unified-task-worker:
 	poetry run python -m src.workers
 
 review-test:
-	@echo "Running review system tests..."
-	poetry run pytest tests/unit/domain/test_review*.py tests/unit/domain/test_code_diff.py tests/unit/domain/test_submission_archive.py tests/unit/application/test_enqueue_review_task.py -v
+	@echo "Running review system smoke tests..."
+	poetry run pytest \
+		tests/legacy/src/application/services/test_modular_review_service.py \
+		tests/legacy/src/application/use_cases/test_review_submission_use_case.py \
+		tests/legacy/src/infrastructure/clients/test_llm_client.py \
+		-v
 
 review-e2e:
 	@echo "Running review E2E tests..."
@@ -421,4 +426,4 @@ review-health-check:
 	@echo "Running review system health check..."
 	@echo "This will test all components: MongoDB, archives, diff, use cases, pipeline"
 	@echo "Note: Full pipeline test requires LLM_URL environment variable"
-	poetry run python scripts/test_review_system.py
+	poetry run python scripts/quality/test_review_system.py

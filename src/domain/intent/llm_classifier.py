@@ -10,7 +10,7 @@ import re
 import time
 from typing import Optional
 
-from src.domain.intent.intent_classifier import IntentClassifierProtocol, IntentResult, IntentType
+from src.domain.intent.intent_classifier import IntentResult, IntentType
 from src.domain.interfaces.llm_client import LLMClientProtocol
 from src.infrastructure.logging import get_logger
 
@@ -23,7 +23,6 @@ INTENT_CLASSIFICATION_PROMPT = """You are an intent classifier for a Telegram bo
 Classify the user message into one of these intent types:
 - TASK, TASK_CREATE, TASK_LIST, TASK_UPDATE, TASK_DELETE
 - DATA, DATA_DIGEST, DATA_SUBSCRIPTION_LIST, DATA_SUBSCRIPTION_ADD, DATA_SUBSCRIPTION_REMOVE, DATA_STATS
-- REMINDERS, REMINDER_SET, REMINDER_LIST, REMINDER_DELETE
 - IDLE, GENERAL_CHAT, GENERAL_QUESTION
 
 Return ONLY a JSON object with this structure:
@@ -203,14 +202,21 @@ class LLMClassifier:
         # Try to find matching IntentType
         intent_str_upper = intent_str.strip().upper()
         for intent_type in IntentType:
-            if intent_type.name == intent_str_upper or intent_type.value.upper() == intent_str_upper:
+            if (
+                intent_type.name == intent_str_upper
+                or intent_type.value.upper() == intent_str_upper
+            ):
                 return intent_type
 
         # Try partial matching
         for intent_type in IntentType:
-            if intent_str_upper in intent_type.name or intent_str_upper in intent_type.value.upper():
+            if (
+                intent_str_upper in intent_type.name
+                or intent_str_upper in intent_type.value.upper()
+            ):
                 return intent_type
 
-        logger.warning(f"Unknown intent type from LLM: {intent_str}, defaulting to IDLE")
+        logger.warning(
+            f"Unknown intent type from LLM: {intent_str}, defaulting to IDLE"
+        )
         return IntentType.IDLE
-

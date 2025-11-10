@@ -10,13 +10,14 @@ This module provides:
 - Default prompt templates
 """
 
-from typing import Dict, Any, List
 from dataclasses import dataclass
+from typing import Any, Dict, List
 
 
 @dataclass
 class AgentConfig:
     """Configuration for an agent."""
+
     max_tokens: int = 2000
     temperature: float = 0.7
     max_retries: int = 3
@@ -26,21 +27,31 @@ class AgentConfig:
 @dataclass
 class CodeGeneratorConfig(AgentConfig):
     """Configuration for code generator agent."""
+
     max_tokens: int = 4000  # More tokens for code generation
     temperature: float = 0.7  # Balanced creativity
     supported_languages: List[str] = None
-    
+
     def __post_init__(self):
         if self.supported_languages is None:
             self.supported_languages = [
-                "python", "javascript", "typescript", "java", 
-                "go", "rust", "c++", "c", "ruby", "php"
+                "python",
+                "javascript",
+                "typescript",
+                "java",
+                "go",
+                "rust",
+                "c++",
+                "c",
+                "ruby",
+                "php",
             ]
 
 
 @dataclass
 class CodeReviewerConfig(AgentConfig):
     """Configuration for code reviewer agent."""
+
     max_tokens: int = 2000
     temperature: float = 0.3  # Lower temperature for consistent review
     check_pep8: bool = True
@@ -65,76 +76,76 @@ MODEL_AGENT_COMPATIBILITY: Dict[str, Dict[str, Any]] = {
     "qwen": {
         "code_generator": {
             "recommended": True,
-            "config": {"max_tokens": 4000, "temperature": 0.7}
+            "config": {"max_tokens": 4000, "temperature": 0.7},
         },
         "code_reviewer": {
             "recommended": True,
-            "config": {"max_tokens": 2000, "temperature": 0.3}
-        }
+            "config": {"max_tokens": 2000, "temperature": 0.3},
+        },
     },
     "mistral": {
         "code_generator": {
             "recommended": True,
-            "config": {"max_tokens": 4000, "temperature": 0.7}
+            "config": {"max_tokens": 4000, "temperature": 0.7},
         },
         "code_reviewer": {
             "recommended": True,
-            "config": {"max_tokens": 2000, "temperature": 0.3}
-        }
+            "config": {"max_tokens": 2000, "temperature": 0.3},
+        },
     },
     "tinyllama": {
         "code_generator": {
             "recommended": False,
-            "config": {"max_tokens": 2000, "temperature": 0.7}
+            "config": {"max_tokens": 2000, "temperature": 0.7},
         },
         "code_reviewer": {
             "recommended": False,
-            "config": {"max_tokens": 1000, "temperature": 0.3}
-        }
+            "config": {"max_tokens": 1000, "temperature": 0.3},
+        },
     },
     "starcoder": {
         "code_generator": {
             "recommended": True,
-            "config": {"max_tokens": 4000, "temperature": 0.7}
+            "config": {"max_tokens": 4000, "temperature": 0.7},
         },
         "code_reviewer": {
             "recommended": True,
-            "config": {"max_tokens": 2000, "temperature": 0.3}
-        }
+            "config": {"max_tokens": 2000, "temperature": 0.3},
+        },
     },
     "perplexity": {
         "code_generator": {
             "recommended": True,
-            "config": {"max_tokens": 3000, "temperature": 0.7}
+            "config": {"max_tokens": 3000, "temperature": 0.7},
         },
         "code_reviewer": {
             "recommended": True,
-            "config": {"max_tokens": 1500, "temperature": 0.3}
-        }
+            "config": {"max_tokens": 1500, "temperature": 0.3},
+        },
     },
     "chadgpt": {
         "code_generator": {
             "recommended": True,
-            "config": {"max_tokens": 3000, "temperature": 0.7}
+            "config": {"max_tokens": 3000, "temperature": 0.7},
         },
         "code_reviewer": {
             "recommended": True,
-            "config": {"max_tokens": 1500, "temperature": 0.3}
-        }
-    }
+            "config": {"max_tokens": 1500, "temperature": 0.3},
+        },
+    },
 }
 
 
 def get_agent_config(agent_name: str) -> AgentConfig:
     """
     Get configuration for an agent.
-    
+
     Args:
         agent_name: Name of the agent
-        
+
     Returns:
         AgentConfig: Agent configuration
-        
+
     Raises:
         KeyError: If agent not found
     """
@@ -146,37 +157,37 @@ def get_agent_config(agent_name: str) -> AgentConfig:
 def get_model_config_for_agent(model_name: str, agent_name: str) -> Dict[str, Any]:
     """
     Get model-specific configuration for an agent.
-    
+
     Args:
         model_name: Name of the model
         agent_name: Name of the agent
-        
+
     Returns:
         Dict[str, Any]: Model-agent specific configuration
-        
+
     Raises:
         KeyError: If model or agent not found
     """
     if model_name not in MODEL_AGENT_COMPATIBILITY:
         raise KeyError(f"Unknown model: {model_name}")
-    
+
     if agent_name not in MODEL_AGENT_COMPATIBILITY[model_name]:
         raise KeyError(f"Model {model_name} not compatible with agent {agent_name}")
-    
+
     return MODEL_AGENT_COMPATIBILITY[model_name][agent_name]
 
 
 def is_model_recommended_for_agent(model_name: str, agent_name: str) -> bool:
     """
     Check if a model is recommended for an agent.
-    
+
     Args:
         model_name: Name of the model
         agent_name: Name of the agent
-        
+
     Returns:
         bool: True if model is recommended
-        
+
     Raises:
         KeyError: If model or agent not found
     """
@@ -187,10 +198,10 @@ def is_model_recommended_for_agent(model_name: str, agent_name: str) -> bool:
 def get_compatible_models(agent_name: str) -> List[str]:
     """
     Get list of compatible models for an agent.
-    
+
     Args:
         agent_name: Name of the agent
-        
+
     Returns:
         List[str]: List of compatible model names
     """
@@ -207,10 +218,10 @@ def get_compatible_models(agent_name: str) -> List[str]:
 def get_recommended_models(agent_name: str) -> List[str]:
     """
     Get list of recommended models for an agent.
-    
+
     Args:
         agent_name: Name of the agent
-        
+
     Returns:
         List[str]: List of recommended model names
     """
@@ -259,24 +270,24 @@ Review:"""
 def get_prompt_template(agent_name: str) -> str:
     """
     Get prompt template for an agent.
-    
+
     Args:
         agent_name: Name of the agent
-        
+
     Returns:
         str: Prompt template
-        
+
     Raises:
         KeyError: If agent not found
     """
     templates = {
         "code_generator": CODE_GENERATOR_PROMPT_TEMPLATE,
-        "code_reviewer": CODE_REVIEWER_PROMPT_TEMPLATE
+        "code_reviewer": CODE_REVIEWER_PROMPT_TEMPLATE,
     }
-    
+
     if agent_name not in templates:
         raise KeyError(f"Unknown agent: {agent_name}")
-    
+
     return templates[agent_name]
 
 
@@ -295,5 +306,5 @@ __all__ = [
     "get_recommended_models",
     "get_prompt_template",
     "CODE_GENERATOR_PROMPT_TEMPLATE",
-    "CODE_REVIEWER_PROMPT_TEMPLATE"
+    "CODE_REVIEWER_PROMPT_TEMPLATE",
 ]

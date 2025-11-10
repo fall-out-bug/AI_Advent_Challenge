@@ -4,41 +4,28 @@ from __future__ import annotations
 
 import json
 import logging
-import sys
-from pathlib import Path
-from typing import Any, Optional
+from dataclasses import dataclass
+from typing import Any, Optional, cast, Callable
 
-# Add shared to path for imports
-_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(_root))
-shared_path = _root / "shared"
-sys.path.insert(0, str(shared_path))
-
-# Try to import UnifiedModelClient with fallbacks
-_UNIFIED_CLIENT_AVAILABLE = False
 try:
-    from shared_package.clients.unified_client import UnifiedModelClient
-    _UNIFIED_CLIENT_AVAILABLE = True
+    from shared_package.clients.unified_client import UnifiedModelClient  # type: ignore[import-not-found]
 except ImportError:
     try:
-        from shared.clients.unified_client import UnifiedModelClient
-        _UNIFIED_CLIENT_AVAILABLE = True
-    except ImportError:
-        shared_package_path = _root / "shared" / "shared_package"
-        if shared_package_path.exists():
-            sys.path.insert(0, str(shared_package_path.parent))
-            try:
-                from shared_package.clients.unified_client import UnifiedModelClient
-                _UNIFIED_CLIENT_AVAILABLE = True
-            except ImportError:
-                pass
+        from shared.clients.unified_client import UnifiedModelClient  # type: ignore[import-not-found]
+    except ImportError as exc:  # pragma: no cover - defensive guard
+        raise RuntimeError(
+            "UnifiedModelClient not available. Shared SDK is not installed."
+        ) from exc
 
-if not _UNIFIED_CLIENT_AVAILABLE:
-    class UnifiedModelClient:
-        def __init__(self, *args, **kwargs):
-            raise RuntimeError("UnifiedModelClient not available. Shared package not installed.")
 
-from src.domain.agents.multi_pass_reviewer import MultiPassReviewerAgent
+from multipass_reviewer.application.config import ReviewConfig
+
+from src.application.services.modular_review_service import ModularReviewService
+from src.application.services.review_rate_limiter import (
+    ReviewRateLimiter,
+    ReviewRateLimiterConfig,
+    ReviewRateLimitExceeded,
+)
 from src.domain.interfaces.archive_reader import ArchiveReader
 from src.domain.interfaces.log_analyzer import LogAnalyzer
 from src.domain.interfaces.log_parser import LogParser
@@ -46,10 +33,13 @@ from src.domain.interfaces.review_publisher import ReviewPublisher
 from src.domain.interfaces.tool_client import ToolClientProtocol
 from src.domain.services.diff_analyzer import DiffAnalyzer
 from src.domain.value_objects.long_summarization_task import LongTask
-from src.infrastructure.config.settings import Settings
-from src.infrastructure.logs.log_normalizer import LogNormalizer
-from src.infrastructure.adapters.multi_pass_model_adapter import MultiPassModelAdapter
+from src.domain.models.code_review_models import MultiPassReport
+from src.infrastructure.archive.archive_service import ZipArchiveService
+from src.infrastructure.config.settings import Settings, get_settings
 from src.infrastructure.logging.review_logger import ReviewLogger
+from src.infrastructure.logs.llm_log_analyzer import LLMLogAnalyzer
+from src.infrastructure.logs.log_normalizer import LogNormalizer
+from src.infrastructure.logs.log_parser_impl import LogParserImpl
 from src.infrastructure.repositories.homework_review_repository import (
     HomeworkReviewRepository,
 )
@@ -58,12 +48,31 @@ from src.infrastructure.repositories.long_tasks_repository import LongTasksRepos
 logger = logging.getLogger(__name__)
 
 
+@dataclass(frozen=True)
+class _ReviewTaskContext:
+    """Aggregated task metadata for review execution."""
+
+    task: LongTask
+    new_submission_path: str
+    previous_submission_path: Optional[str]
+    assignment_id: str
+    new_commit: str
+    old_commit: Optional[str]
+    logs_zip_path: Optional[str]
+    student_id: str
+
+    @property
+    def repo_name(self) -> str:
+        """Return repository identifier for storage."""
+        return f"{self.student_id}_{self.assignment_id}"
+
+
 class ReviewSubmissionUseCase:
     """Use case for reviewing code submissions from archives.
 
     Purpose:
-        Orchestrates the complete review process using MultiPassReviewerAgent:
-        extracts archives, analyzes diff, runs multi-pass review, saves results,
+        Orchestrates the complete review process using the reusable modular reviewer:
+        extracts archives, analyzes diff, runs modular multi-pass review, saves results,
         and publishes to external API.
 
     Args:
@@ -84,10 +93,10 @@ class ReviewSubmissionUseCase:
         review_repository: HomeworkReviewRepository,
         tasks_repository: LongTasksRepository,
         publisher: ReviewPublisher,
-        log_parser: LogParser,
-        log_normalizer: LogNormalizer,
-        log_analyzer: LogAnalyzer,
-        settings: Settings,
+        log_parser: Optional[LogParser] = None,
+        log_normalizer: Optional[LogNormalizer] = None,
+        log_analyzer: Optional[LogAnalyzer] = None,
+        settings: Optional[Settings] = None,
         token_budget: int = 12000,
         mcp_client: Optional[ToolClientProtocol] = None,
         fallback_publisher: Optional[ReviewPublisher] = None,
@@ -117,188 +126,241 @@ class ReviewSubmissionUseCase:
         self.publisher = publisher
         self.fallback_publisher = fallback_publisher or publisher
         self.mcp_client = mcp_client
-        self.log_parser = log_parser
-        self.log_normalizer = log_normalizer
-        self.log_analyzer = log_analyzer
-        self.settings = settings
-
-        # Create review logger
-        review_logger = ReviewLogger(session_id=None)
-
-        # Create MultiPassReviewerAgent with adapter
-        self.reviewer_agent = MultiPassReviewerAgent(
+        self.settings = settings or get_settings()
+        self.log_parser = log_parser or LogParserImpl()
+        self.log_normalizer = log_normalizer or LogNormalizer()
+        self.log_analyzer = log_analyzer or LLMLogAnalyzer(
             unified_client=unified_client,
-            token_budget=token_budget,
-            review_logger=review_logger,
+            timeout=self.settings.log_analysis_timeout,
+            retries=self.settings.review_max_retries,
         )
 
+        # Create review logger shared across review workflow
+        self.review_logger = ReviewLogger(session_id=None)
+
+        if not isinstance(archive_reader, ZipArchiveService):
+            raise ValueError(
+                "ModularReviewService requires ZipArchiveService as archive reader"
+            )
+
+        review_config = ReviewConfig(token_budget=token_budget)
+        self.modular_service = ModularReviewService(
+            archive_service=archive_reader,
+            diff_analyzer=diff_analyzer,
+            llm_client=unified_client,
+            review_config=review_config,
+            review_logger=self.review_logger,
+            settings=self.settings,
+        )
+
+        limiter_config = ReviewRateLimiterConfig(
+            window_seconds=self.settings.review_rate_limit_window_seconds,
+            per_student=self.settings.review_rate_limit_per_student,
+            per_assignment=self.settings.review_rate_limit_per_assignment,
+        )
+        self.rate_limiter = ReviewRateLimiter(self.tasks_repository, limiter_config)
+
     async def execute(self, task: LongTask) -> str:
-        """Process review task.
+        """Process review task via modular reviewer workflow."""
+        context = self._extract_task_context(task)
+        await self._enforce_rate_limits(context)
+        logger.info(
+            "Processing review task: task_id=%s, student_id=%s, assignment_id=%s",
+            context.task.task_id,
+            context.student_id,
+            context.assignment_id,
+        )
 
-        Purpose:
-            Extracts archives, runs multi-pass review, saves results,
-            and publishes to external API.
+        try:
+            report = await self._run_review(context)
+            await self._append_log_analysis(report, context)
+            await self._attach_haiku(report)
+            report_markdown = await self._persist_report(report, context)
+            await self._publish_review_report(report, context, report_markdown)
+            await self._mark_task_complete(context.task, cast(str, report.session_id))
+            return cast(str, report.session_id)
+        except Exception as exc:
+            await self._mark_task_failed(context.task, exc)
+            raise
 
-        Args:
-            task: Review task to process
-
-        Returns:
-            Review session ID
-
-        Raises:
-            ValueError: If task metadata is invalid
-            Exception: On processing failure
-        """
+    def _extract_task_context(self, task: LongTask) -> _ReviewTaskContext:
+        """Collect and validate metadata required for review processing."""
         if task.task_type.value != "code_review":
             raise ValueError(f"Task type must be CODE_REVIEW, got {task.task_type}")
-
-        # Extract task metadata
         metadata = task.metadata
         new_submission_path = metadata.get("new_submission_path")
-        previous_submission_path = metadata.get("previous_submission_path")
-        assignment_id = metadata.get("assignment_id", "unknown")
         new_commit = metadata.get("new_commit")
-        old_commit = metadata.get("old_commit")
-        logs_zip_path = metadata.get("logs_zip_path")
-        student_id = str(task.user_id)  # user_id stores student_id for review tasks
-
         if not new_submission_path:
             raise ValueError("new_submission_path is required in task metadata")
         if not new_commit:
             raise ValueError("new_commit is required in task metadata")
-
-        logger.info(
-            f"Processing review task: task_id={task.task_id}, "
-            f"student_id={student_id}, assignment_id={assignment_id}"
+        return _ReviewTaskContext(
+            task=task,
+            new_submission_path=new_submission_path,
+            previous_submission_path=metadata.get("previous_submission_path"),
+            assignment_id=metadata.get("assignment_id", "unknown"),
+            new_commit=new_commit,
+            old_commit=metadata.get("old_commit"),
+            logs_zip_path=metadata.get("logs_zip_path"),
+            student_id=str(task.user_id),
         )
 
+    async def _enforce_rate_limits(self, context: _ReviewTaskContext) -> None:
+        """Ensure review execution stays within configured rate limits."""
         try:
-            # 1. Run multi-pass review from archives
-            report = await self.reviewer_agent.review_from_archives(
-                archive_reader=self.archive_reader,
-                diff_analyzer=self.diff_analyzer,
-                new_archive_path=new_submission_path,
-                previous_archive_path=previous_submission_path,
-                assignment_id=assignment_id,
-                student_id=student_id,
+            await self.rate_limiter.ensure_within_limits(
+                context.student_id, context.assignment_id
             )
-
-            session_id = report.session_id
-
-            # 2. Run Pass 4: Log Analysis (if enabled and logs provided)
-            if (
-                self.settings.enable_log_analysis
-                and logs_zip_path
-                and hasattr(self.archive_reader, "extract_logs")
-            ):
-                try:
-                    logger.info(f"Starting Pass 4: Log analysis for {logs_zip_path}")
-                    pass_4_results = await self._run_pass_4_log_analysis(logs_zip_path)
-                    report.pass_4_logs = pass_4_results
-                    logger.info(
-                        f"Pass 4 completed: {pass_4_results.get('log_groups_analyzed', 0)} groups analyzed"
-                    )
-                except Exception as e:
-                    logger.warning(f"Pass 4 (log analysis) failed: {e}", exc_info=True)
-                    report.pass_4_logs = {
-                        "status": "error",
-                        "error": str(e)[:200],
-                    }
-            elif logs_zip_path and not self.settings.enable_log_analysis:
-                report.pass_4_logs = {
-                    "status": "skipped",
-                    "reason": "Log analysis disabled in settings",
-                }
-            elif not logs_zip_path:
-                report.pass_4_logs = {
-                    "status": "skipped",
-                    "reason": "No logs archive provided",
-                }
-
-            # 3. Save review session to repository
-            repo_name = f"{student_id}_{assignment_id}"
-            report_json = report.to_dict()
-            report_markdown = report.to_markdown()
-
-            # Get logs from review logger (if available)
-            logs = {}
-            if self.reviewer_agent.review_logger:
-                logs = self.reviewer_agent.review_logger.get_all_logs()
-
-            await self.review_repository.save_review_session(
-                session_id=session_id,
-                repo_name=repo_name,
-                assignment_type=assignment_id,
-                logs=logs,
-                report={"markdown": report_markdown, "json": report_json},
-                metadata={
-                    "task_id": task.task_id,
-                    "student_id": student_id,
-                    "diff_metrics": report.pass_1.metadata.get("diff_metrics")
-                    if report.pass_1
-                    else None,
-                },
+        except ReviewRateLimitExceeded as exc:
+            logger.warning(
+                "Review rate limit exceeded: student_id=%s, assignment_id=%s, error=%s",
+                context.student_id,
+                context.assignment_id,
+                exc,
             )
-
-            logger.info(f"Saved review session: session_id={session_id}")
-
-            # 4. Generate haiku
-            if hasattr(self.reviewer_agent, "client") and self.reviewer_agent.client:
-                try:
-                    from src.infrastructure.reporting.homework_report_generator import (
-                        _generate_haiku_from_model,
-                    )
-                    top_titles = (
-                        [f.title[:40] for f in report.pass_1.findings[:3]]
-                        if report.pass_1 and report.pass_1.findings
-                        else []
-                    )
-                    haiku = await _generate_haiku_from_model(
-                        client=self.reviewer_agent.client,
-                        critical_count=report.critical_count,
-                        major_count=report.major_count,
-                        component=(
-                            report.detected_components[0]
-                            if report.detected_components
-                            else "code"
-                        ),
-                        top_issues=top_titles,
-                    )
-                    report.haiku = haiku
-                    logger.info("Generated haiku for report")
-                except Exception as e:
-                    logger.warning(f"Failed to generate haiku: {e}")
-                    report.haiku = (
-                        "Code flows onward,\n"
-                        "Issues found, lessons learned—\n"
-                        "Improvement awaits."
-                    )
-
-            # 5. Publish via MCP with fallback
-            overall_score = self._extract_overall_score(report)
-            await self._publish_review_via_mcp(
-                student_id=student_id,
-                assignment_id=assignment_id,
-                submission_hash=new_commit,
-                review_markdown=report_markdown,
-                session_id=session_id,
-                overall_score=overall_score,
-                task_id=task.task_id,
-            )
-
-            # 6. Mark task as completed
-            await self.tasks_repository.complete(task.task_id, session_id)
-            logger.info(f"Review task completed: task_id={task.task_id}, session_id={session_id}")
-
-            return session_id
-
-        except Exception as e:
-            logger.error(f"Failed to process review task: {e}", exc_info=True)
-            error_msg = str(e)[:1000]
-            await self.tasks_repository.fail(task.task_id, error_msg)
             raise
 
-    def _extract_overall_score(self, report) -> int:
+    async def _run_review(self, context: _ReviewTaskContext) -> MultiPassReport:
+        """Run modular review service and return generated report."""
+        report = await self.modular_service.review_submission(
+            new_archive_path=context.new_submission_path,
+            previous_archive_path=context.previous_submission_path,
+            assignment_id=context.assignment_id,
+            student_id=context.student_id,
+        )
+        return cast(MultiPassReport, report)
+
+    async def _append_log_analysis(
+        self, report: Any, context: _ReviewTaskContext
+    ) -> None:
+        """Attach log analysis results to report when configured."""
+        logs_zip = context.logs_zip_path
+        if not logs_zip:
+            self._set_log_analysis_status(report, "skipped", "No logs archive provided")
+            return
+        if not self.settings.enable_log_analysis:
+            self._set_log_analysis_status(
+                report, "skipped", "Log analysis disabled in settings"
+            )
+            return
+        if not hasattr(self.archive_reader, "extract_logs"):
+            self._set_log_analysis_status(
+                report, "skipped", "Archive reader cannot extract logs"
+            )
+            return
+        try:
+            logger.info("Starting Pass 4: Log analysis for %s", logs_zip)
+            result = await self._run_pass_4_log_analysis(logs_zip)
+            report.pass_4_logs = result
+            logger.info(
+                "Pass 4 completed: %s groups analyzed",
+                result.get("log_groups_analyzed", 0),
+            )
+        except Exception as exc:
+            self._handle_log_analysis_error(report, exc)
+
+    async def _attach_haiku(self, report: Any) -> None:
+        """Generate haiku summary using LLM client when available."""
+        if not hasattr(self.unified_client, "make_request"):
+            return
+        try:
+            from src.infrastructure.reporting.homework_report_generator import (
+                _generate_haiku_from_model,
+            )
+
+            top_titles = self._top_issue_titles(report)
+            report.haiku = await _generate_haiku_from_model(
+                client=self.unified_client,
+                critical_count=report.critical_count,
+                major_count=report.major_count,
+                component=(
+                    report.detected_components[0]
+                    if report.detected_components
+                    else "code"
+                ),
+                top_issues=top_titles,
+            )
+            logger.info("Generated haiku for report")
+        except Exception as exc:
+            logger.warning("Failed to generate haiku: %s", exc)
+            report.haiku = (
+                "Code flows onward,\n"
+                "Issues found, lessons learned—\n"
+                "Improvement awaits."
+            )
+
+    def _set_log_analysis_status(self, report: Any, status: str, reason: str) -> None:
+        """Set pass 4 status with a provided reason."""
+        report.pass_4_logs = {"status": status, "reason": reason}
+
+    def _handle_log_analysis_error(self, report: Any, exc: Exception) -> None:
+        """Handle log analysis errors with structured logging."""
+        logger.warning("Pass 4 (log analysis) failed: %s", exc, exc_info=True)
+        report.pass_4_logs = {"status": "error", "error": str(exc)[:200]}
+
+    async def _persist_report(self, report: Any, context: _ReviewTaskContext) -> str:
+        """Persist review outputs and return markdown representation."""
+        session_id = report.session_id
+        report_json = report.to_dict()
+        report_markdown = report.to_markdown()
+        logs = self.review_logger.get_all_logs() if self.review_logger else {}
+        metadata = {
+            "task_id": context.task.task_id,
+            "student_id": context.student_id,
+            "diff_metrics": (
+                report.pass_1.metadata.get("diff_metrics") if report.pass_1 else None
+            ),
+        }
+        await self.review_repository.save_review_session(
+            session_id=session_id,
+            repo_name=context.repo_name,
+            assignment_type=context.assignment_id,
+            logs=logs,
+            report={"markdown": report_markdown, "json": report_json},
+            metadata=metadata,
+        )
+        logger.info("Saved review session: session_id=%s", session_id)
+        return cast(str, report_markdown)
+
+    async def _publish_review_report(
+        self,
+        report: Any,
+        context: _ReviewTaskContext,
+        report_markdown: str,
+    ) -> None:
+        """Publish review using MCP with fallback options."""
+        overall_score = self._extract_overall_score(report)
+        await self._publish_review_via_mcp(
+            student_id=context.student_id,
+            assignment_id=context.assignment_id,
+            submission_hash=context.new_commit,
+            review_markdown=report_markdown,
+            session_id=report.session_id,
+            overall_score=overall_score,
+            task_id=context.task.task_id,
+        )
+
+    async def _mark_task_complete(self, task: LongTask, session_id: str) -> None:
+        """Mark task as completed and log outcome."""
+        await self.tasks_repository.complete(task.task_id, session_id)
+        logger.info(
+            "Review task completed: task_id=%s, session_id=%s",
+            task.task_id,
+            session_id,
+        )
+
+    async def _mark_task_failed(self, task: LongTask, exc: Exception) -> None:
+        """Persist failure state for review task."""
+        logger.error("Failed to process review task: %s", exc, exc_info=True)
+        await self.tasks_repository.fail(task.task_id, str(exc)[:1000])
+
+    def _top_issue_titles(self, report: Any) -> list[str]:
+        """Return truncated titles for top critical findings."""
+        if not (report.pass_1 and getattr(report.pass_1, "findings", None)):
+            return []
+        return [finding.title[:40] for finding in report.pass_1.findings[:3]]
+
+    def _extract_overall_score(self, report: MultiPassReport) -> int:
         """Extract overall score from MultiPassReport.
 
         Purpose:
@@ -334,9 +396,7 @@ class ReviewSubmissionUseCase:
         else:
             return 40
 
-    async def _run_pass_4_log_analysis(
-        self, logs_zip_path: str
-    ) -> dict[str, Any]:
+    async def _run_pass_4_log_analysis(self, logs_zip_path: str) -> dict[str, Any]:
         """Run Pass 4: Runtime log analysis.
 
         Purpose:
@@ -354,7 +414,11 @@ class ReviewSubmissionUseCase:
         from src.domain.value_objects.log_analysis import LogEntry
 
         # 1. Extract logs from archive
-        logs_dict = self.archive_reader.extract_logs(logs_zip_path)
+        extractor = cast(
+            Callable[[str], dict[str, str]],
+            getattr(self.archive_reader, "extract_logs"),
+        )
+        logs_dict = extractor(logs_zip_path)
         if not logs_dict:
             return {
                 "status": "skipped",
@@ -399,9 +463,7 @@ class ReviewSubmissionUseCase:
             }
 
         # 4. Group and normalize
-        grouped = self.log_normalizer.group_by_component_and_severity(
-            filtered_entries
-        )
+        grouped = self.log_normalizer.group_by_component_and_severity(filtered_entries)
         log_groups = self.log_normalizer.create_log_groups(grouped)
 
         # 5. Limit groups to analyze
@@ -566,8 +628,8 @@ class ReviewSubmissionUseCase:
         tool_schema = json.dumps(tools[0].get("input_schema", {}), indent=2)
         prompt_with_schema = (
             f"{prompt}\n\nTool input schema:\n{tool_schema}\n\n"
-            "Respond with JSON: {\n  \"tool\": \"submit_review_result\",\n"
-            "  \"arguments\": { ... }\n}."
+            'Respond with JSON: {\n  "tool": "submit_review_result",\n'
+            '  "arguments": { ... }\n}.'
         )
 
         try:
@@ -596,9 +658,7 @@ class ReviewSubmissionUseCase:
         )
         return arguments
 
-    def _parse_tool_call_response(
-        self, response_text: str
-    ) -> Optional[dict[str, Any]]:
+    def _parse_tool_call_response(self, response_text: str) -> Optional[dict[str, Any]]:
         """Parse LLM response for tool call arguments.
 
         Purpose:
@@ -787,4 +847,3 @@ class ReviewSubmissionUseCase:
 
         prompt = "\n".join(prompt_lines)
         return prompt, [submit_tool]
-

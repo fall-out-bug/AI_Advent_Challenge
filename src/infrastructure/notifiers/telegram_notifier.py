@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from aiogram import Bot
-from aiogram.exceptions import TelegramBadRequest, TelegramAPIError
+from aiogram.exceptions import TelegramAPIError, TelegramBadRequest
 
 from src.infrastructure.logging import get_logger
 
@@ -46,7 +46,9 @@ class TelegramNotifier:
         """
         try:
             await self.bot.send_message(chat_id=chat_id, text=text)
-            logger.info(f"Sent message to chat: chat_id={chat_id}, text_length={len(text)}")
+            logger.info(
+                f"Sent message to chat: chat_id={chat_id}, text_length={len(text)}"
+            )
         except TelegramBadRequest as e:
             logger.error(
                 f"Failed to send message (bad request): chat_id={chat_id}, error={str(e)}"
@@ -63,4 +65,3 @@ class TelegramNotifier:
                 exc_info=True,
             )
             raise
-

@@ -6,10 +6,11 @@ Following the Zen of Python:
 - Explicit is better than implicit
 """
 
-import yaml
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+import yaml
 
 # Configure logging
 logger = logging.getLogger(__name__)

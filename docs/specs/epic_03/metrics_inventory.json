@@ -1,0 +1,173 @@
+[
+  {
+    "metric": "butler_messages_total",
+    "type": "counter",
+    "component": "presentation.bot",
+    "status": "exists",
+    "source": "src/infrastructure/metrics/butler_metrics.py",
+    "labels": ["status"],
+    "sli_candidate": "bot.success_rate",
+    "notes": "Counts total Butler bot messages processed; differentiates success vs error."
+  },
+  {
+    "metric": "butler_errors_total",
+    "type": "counter",
+    "component": "presentation.bot",
+    "status": "exists",
+    "source": "src/infrastructure/metrics/butler_metrics.py",
+    "labels": ["error_type", "handler"],
+    "sli_candidate": "bot.error_rate",
+    "notes": "Captures Butler bot failures by handler; required for alert diagnostics."
+  },
+  {
+    "metric": "butler_message_duration_seconds",
+    "type": "histogram",
+    "component": "presentation.bot",
+    "status": "exists",
+    "source": "src/infrastructure/metrics/butler_metrics.py",
+    "labels": ["mode", "handler_type"],
+    "sli_candidate": "bot.latency",
+    "notes": "Measures message processing latency; forms basis for user facing P95 latency."
+  },
+  {
+    "metric": "butler_bot_healthy",
+    "type": "gauge",
+    "component": "presentation.bot",
+    "status": "exists",
+    "source": "src/infrastructure/metrics/butler_metrics.py",
+    "labels": [],
+    "sli_candidate": "bot.availability",
+    "notes": "Manual health gauge set by bot runtime; referenced by ButlerBotUnhealthy alert."
+  },
+  {
+    "metric": "post_fetcher_posts_saved_total",
+    "type": "counter",
+    "component": "workers.post_fetcher",
+    "status": "exists",
+    "source": "src/infrastructure/monitoring/prometheus_metrics.py",
+    "labels": ["channel_username"],
+    "sli_candidate": null,
+    "notes": "Tracks harvested posts per channel; useful for volume baselines."
+  },
+  {
+    "metric": "post_fetcher_duration_seconds",
+    "type": "histogram",
+    "component": "workers.post_fetcher",
+    "status": "exists",
+    "source": "src/infrastructure/monitoring/prometheus_metrics.py",
+    "labels": [],
+    "sli_candidate": "post_fetcher.latency",
+    "notes": "Processing latency for post fetcher; referenced by PostFetcherSlowProcessing alert."
+  },
+  {
+    "metric": "pdf_generation_duration_seconds",
+    "type": "histogram",
+    "component": "workers.pdf_generation",
+    "status": "exists",
+    "source": "src/infrastructure/monitoring/prometheus_metrics.py",
+    "labels": [],
+    "sli_candidate": "pdf.latency",
+    "notes": "PDF generation latency distribution; supports HighLatency alert."
+  },
+  {
+    "metric": "bot_digest_requests_total",
+    "type": "counter",
+    "component": "presentation.bot",
+    "status": "exists",
+    "source": "src/infrastructure/monitoring/prometheus_metrics.py",
+    "labels": [],
+    "sli_candidate": "digest.throughput",
+    "notes": "Total digest requests served; needed for demand forecasting."
+  },
+  {
+    "metric": "multipass_pass_runtime_seconds",
+    "type": "histogram",
+    "component": "application.review_pipeline",
+    "status": "exists",
+    "source": "packages/multipass-reviewer/multipass_reviewer/infrastructure/monitoring/metrics.py",
+    "labels": ["pass_name"],
+    "sli_candidate": "review.latency",
+    "notes": "Runtime per review pass; exported within modular reviewer package."
+  },
+  {
+    "metric": "multipass_llm_tokens_total",
+    "type": "counter",
+    "component": "application.review_pipeline",
+    "status": "exists",
+    "source": "packages/multipass-reviewer/multipass_reviewer/infrastructure/monitoring/metrics.py",
+    "labels": ["model", "direction"],
+    "sli_candidate": null,
+    "notes": "Tracks token usage for prompt vs response; required for cost monitoring."
+  },
+  {
+    "metric": "http_requests_total",
+    "type": "counter",
+    "component": "presentation.http (generic)",
+    "status": "missing",
+    "source": null,
+    "labels": ["service", "endpoint", "status"],
+    "sli_candidate": "api.error_rate",
+    "notes": "Referenced in Grafana dashboards but not instrumented in MCP or API layers."
+  },
+  {
+    "metric": "mcp_requests_total",
+    "type": "counter",
+    "component": "presentation.mcp",
+    "status": "missing",
+    "source": "prometheus/alerts.yml",
+    "labels": ["tool", "status"],
+    "sli_candidate": "mcp.success_rate",
+    "notes": "Alerts expect this counter, but no MCP instrumentation currently emits it."
+  },
+  {
+    "metric": "mcp_request_duration_seconds",
+    "type": "histogram",
+    "component": "presentation.mcp",
+    "status": "missing",
+    "source": "prometheus/alerts.yml",
+    "labels": ["tool"],
+    "sli_candidate": "mcp.latency",
+    "notes": "Alert rules use histogram buckets for P95 latency, but server lacks implementation."
+  },
+  {
+    "metric": "unified_worker_tasks_total",
+    "type": "counter",
+    "component": "workers.unified",
+    "status": "missing",
+    "source": null,
+    "labels": ["task_type", "status"],
+    "sli_candidate": "worker.success_rate",
+    "notes": "Unified task worker processes code reviews and digests without any metrics."
+  },
+  {
+    "metric": "review_pipeline_duration_seconds",
+    "type": "histogram",
+    "component": "application.review_pipeline",
+    "status": "missing",
+    "source": null,
+    "labels": ["pipeline_stage"],
+    "sli_candidate": "review.latency",
+    "notes": "Need end-to-end review latency metric to back SLO of 95% within 5 minutes."
+  },
+  {
+    "metric": "llm_error_rate_total",
+    "type": "counter",
+    "component": "infrastructure.llm",
+    "status": "partial",
+    "source": "prometheus/alerts.yml",
+    "labels": ["error_type"],
+    "sli_candidate": "llm.error_rate",
+    "notes": "Alert references this metric; LLM clients currently log errors but do not update counters."
+  },
+  {
+    "metric": "structured_log_events_total",
+    "type": "counter",
+    "component": "observability.logging",
+    "status": "missing",
+    "source": null,
+    "labels": ["service", "level"],
+    "sli_candidate": null,
+    "notes": "Would enable log-based SLIs and integration with log aggregation systems."
+  }
+]
+

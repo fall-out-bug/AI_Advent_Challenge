@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-from src.domain.services.summarizer import SummarizerService
 from src.domain.value_objects.post_content import PostContent
 from src.domain.value_objects.summarization_context import SummarizationContext
 from src.domain.value_objects.summary_result import SummaryResult
@@ -118,12 +115,14 @@ class AdaptiveSummarizer:
             if cleaned and len(cleaned) > 20:
                 # Increased limit to 1000 chars per post for better context
                 cleaned_posts.append(cleaned[:1000])
-        
+
         # Verify all posts belong to the same channel (if context provided)
         if context and context.channel_username:
             wrong_channel_posts = [
-                i for i, post in enumerate(posts)
-                if post.channel_username and post.channel_username != context.channel_username
+                i
+                for i, post in enumerate(posts)
+                if post.channel_username
+                and post.channel_username != context.channel_username
             ]
             if wrong_channel_posts:
                 logger.warning(
@@ -131,17 +130,19 @@ class AdaptiveSummarizer:
                     f"Expected: {context.channel_username}, filtering them out."
                 )
                 cleaned_posts = [
-                    cleaned for i, cleaned in enumerate(cleaned_posts)
+                    cleaned
+                    for i, cleaned in enumerate(cleaned_posts)
                     if i not in wrong_channel_posts
                 ]
                 posts = [
-                    post for i, post in enumerate(posts)
-                    if i not in wrong_channel_posts
+                    post for i, post in enumerate(posts) if i not in wrong_channel_posts
                 ]
 
         if not cleaned_posts:
             return SummaryResult(
-                text="Нет пригодных постов для суммаризации." if language == "ru" else "No suitable posts.",
+                text="Нет пригодных постов для суммаризации."
+                if language == "ru"
+                else "No suitable posts.",
                 sentences_count=0,
                 method="direct",
                 confidence=0.0,
@@ -149,9 +150,10 @@ class AdaptiveSummarizer:
             )
 
         combined_text = "\n\n".join(cleaned_posts)
-        
+
         # Log before summarization for debugging
         from src.infrastructure.logging import get_logger
+
         logger = get_logger("adaptive_summarizer")
         logger.info(
             f"Summarizing posts: posts_count={len(posts)}, "
@@ -159,10 +161,13 @@ class AdaptiveSummarizer:
             f"combined_text_length={len(combined_text)}, "
             f"max_sentences={max_sentences}, language={language}"
         )
-        
+
         try:
             result = await self.summarize_text(
-                combined_text, max_sentences=max_sentences, language=language, context=context
+                combined_text,
+                max_sentences=max_sentences,
+                language=language,
+                context=context,
             )
             logger.info(
                 f"Summary generated: method={result.method}, "
@@ -176,7 +181,7 @@ class AdaptiveSummarizer:
                 f"Error in adaptive summarization: type={type(e).__name__}, "
                 f"error={str(e)}, posts_count={len(posts)}, "
                 f"cleaned_posts_count={len(cleaned_posts)}",
-                exc_info=True
+                exc_info=True,
             )
             # Return error summary instead of raising
             return SummaryResult(

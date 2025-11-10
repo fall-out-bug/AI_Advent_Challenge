@@ -32,4 +32,3 @@ class ArchiveReader(Protocol):
             FileNotFoundError: If archive path doesn't exist
         """
         ...
-

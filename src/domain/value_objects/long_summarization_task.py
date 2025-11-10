@@ -174,7 +174,7 @@ class LongTask:
                 user_id = abs(hash(user_id)) % (10**9)
         elif user_id is None:
             raise ValueError("user_id is required")
-        
+
         task = cls(
             task_id=data["task_id"],
             task_type=task_type,
@@ -195,4 +195,3 @@ class LongTask:
 
 # Backward compatibility alias
 LongSummarizationTask = LongTask
-

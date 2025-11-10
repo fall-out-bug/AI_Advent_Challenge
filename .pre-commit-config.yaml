@@ -42,16 +42,43 @@ repos:
         types: [python]
         exclude: ^(tests/|src/tests/)
 
-  # Type checking (optional, can be slow)
-  - repo: local
+  # Type checking (strict)
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.10.0
     hooks:
       - id: mypy
-        name: MyPy type checker
-        entry: bash -c 'mypy src/ --ignore-missing-imports || true'
+        name: MyPy type checker (strict)
+        args:
+          - --strict
+          - --pretty
+          - src/
+          - packages/multipass-reviewer/multipass_reviewer/
+          - shared/
+        additional_dependencies:
+          - types-requests
+        pass_filenames: false
+  # Static analysis with pylint
+  - repo: https://github.com/PyCQA/pylint
+    rev: v3.1.0
+    hooks:
+      - id: pylint
+        name: Pylint
+        args:
+          - --rcfile=pyproject.toml
+          - src/
+          - packages/multipass-reviewer/multipass_reviewer/
+        types: [python]
+        pass_filenames: false
+
+  # Coverage enforcement (>=80%)
+  - repo: local
+    hooks:
+      - id: coverage
+        name: Pytest coverage (>=80%)
+        entry: bash -c 'poetry run pytest tests/ --cov=src --cov=packages/multipass-reviewer/multipass_reviewer --cov-report=term --cov-fail-under=80'
         language: system
         pass_filenames: false
         always_run: false
-        stages: [commit]
 
   # Security scanning
   - repo: https://github.com/PyCQA/bandit
@@ -79,7 +106,13 @@ repos:
     hooks:
       - id: interrogate
         name: interrogate docstring coverage
-        args: [-c, 100, --ignore-init-module, --ignore-init-method, src/]
+        args:
+          - -c
+          - '100'
+          - --ignore-init-module
+          - --ignore-init-method
+          - src/
+          - packages/multipass-reviewer/multipass_reviewer/
         types: [python]
 
   # Spell checking
@@ -107,7 +140,7 @@ repos:
     hooks:
       - id: unit-tests
         name: Unit Tests
-        entry: bash -c 'poetry run pytest src/tests/unit/ -v --tb=short -q || true'
+        entry: bash -c 'poetry run pytest tests/unit/ -v --tb=short -q || true'
         language: system
         pass_filenames: false
         always_run: false

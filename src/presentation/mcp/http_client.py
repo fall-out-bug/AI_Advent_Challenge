@@ -1,7 +1,7 @@
 """HTTP client for MCP server over network."""
-import asyncio
 import logging
 from typing import Any, Dict, List, Optional
+
 import httpx
 
 # Configure logging
@@ -21,21 +21,25 @@ class MCPHTTPClient:
         self.base_url = base_url.rstrip("/")
         # Increased timeout for long-running operations like digest generation
         # Digest can take up to 5 minutes (fetching posts + summarization)
-        self.timeout = httpx.Timeout(600.0, connect=10.0)  # 10 min total, 10 sec connect
+        self.timeout = httpx.Timeout(
+            600.0, connect=10.0
+        )  # 10 min total, 10 sec connect
 
-    async def _make_request(self, method: str, endpoint: str, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def _make_request(
+        self, method: str, endpoint: str, data: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Make HTTP request to MCP server.
-        
+
         Args:
             method: HTTP method
             endpoint: API endpoint
             data: Request data
-            
+
         Returns:
             Response data
         """
         url = f"{self.base_url}{endpoint}"
-        
+
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 if method == "GET":
@@ -44,7 +48,7 @@ class MCPHTTPClient:
                     response = await client.post(url, json=data)
                 else:
                     raise ValueError(f"Unsupported method: {method}")
-                
+
                 response.raise_for_status()
                 return response.json()
         except httpx.HTTPError as e:
@@ -53,7 +57,7 @@ class MCPHTTPClient:
 
     async def check_health(self) -> bool:
         """Check if MCP server is healthy.
-        
+
         Returns:
             True if healthy, False otherwise
         """
@@ -91,9 +95,7 @@ class MCPHTTPClient:
         """
         try:
             result = await self._make_request(
-                "POST", 
-                "/call",
-                data={"tool_name": tool_name, "arguments": arguments}
+                "POST", "/call", data={"tool_name": tool_name, "arguments": arguments}
             )
             return result.get("result", {})
         except Exception as e:

@@ -1,7 +1,6 @@
 """FastAPI routes for review API."""
 
-import os
-import tempfile
+import logging
 from pathlib import Path
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
@@ -9,16 +8,9 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from src.application.use_cases.enqueue_review_task_use_case import (
     EnqueueReviewTaskUseCase,
 )
-from src.application.use_cases.get_review_status_use_case import (
-    GetReviewStatusUseCase,
-)
+from src.application.use_cases.get_review_status_use_case import GetReviewStatusUseCase
 from src.infrastructure.config.settings import Settings
-from src.presentation.api.schemas.review_schemas import (
-    CreateReviewRequest,
-    ReviewStatusResponse,
-)
-
-import logging
+from src.presentation.api.schemas.review_schemas import ReviewStatusResponse
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +31,7 @@ def create_review_router(
         Configured APIRouter
     """
     router = APIRouter(prefix="/api/v1/reviews", tags=["reviews"])
-    
+
     # Directory for storing uploaded archives
     review_archives_dir = Path("review_archives")
     review_archives_dir.mkdir(exist_ok=True)
@@ -94,7 +86,10 @@ def create_review_router(
                     status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                     detail=f"new_zip exceeds size limit: {max_archive_size_mb}MB",
                 )
-            new_submission_path = review_archives_dir / f"{student_id}_{assignment_id}_new_{new_zip.filename}"
+            new_submission_path = (
+                review_archives_dir
+                / f"{student_id}_{assignment_id}_new_{new_zip.filename}"
+            )
             with open(new_submission_path, "wb") as f:
                 content = await new_zip.read()
                 f.write(content)
@@ -107,7 +102,10 @@ def create_review_router(
                         status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                         detail=f"old_zip exceeds size limit: {max_archive_size_mb}MB",
                     )
-                previous_submission_path = review_archives_dir / f"{student_id}_{assignment_id}_old_{old_zip.filename}"
+                previous_submission_path = (
+                    review_archives_dir
+                    / f"{student_id}_{assignment_id}_old_{old_zip.filename}"
+                )
                 with open(previous_submission_path, "wb") as f:
                     content = await old_zip.read()
                     f.write(content)
@@ -120,7 +118,10 @@ def create_review_router(
                         status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                         detail=f"logs_zip exceeds size limit: {max_archive_size_mb}MB",
                     )
-                logs_zip_path = review_archives_dir / f"{student_id}_{assignment_id}_logs_{logs_zip.filename}"
+                logs_zip_path = (
+                    review_archives_dir
+                    / f"{student_id}_{assignment_id}_logs_{logs_zip.filename}"
+                )
                 with open(logs_zip_path, "wb") as f:
                     content = await logs_zip.read()
                     f.write(content)
@@ -131,7 +132,9 @@ def create_review_router(
                 student_id=student_id,
                 assignment_id=assignment_id,
                 new_submission_path=str(new_submission_path),
-                previous_submission_path=str(previous_submission_path) if previous_submission_path else None,
+                previous_submission_path=str(previous_submission_path)
+                if previous_submission_path
+                else None,
                 new_commit=new_commit_value,
                 old_commit=old_commit,
                 logs_zip_path=str(logs_zip_path) if logs_zip_path else None,

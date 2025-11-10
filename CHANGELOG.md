@@ -5,6 +5,58 @@ All notable changes to the AI Challenge project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Day 19] - 2025-11-08
+
+### Added
+- Tenacity-backed retry policy for all modular reviewer LLM calls (shared package + bridge service)
+- Partial-failure handling in `MultiPassReport` with status/error metadata and trace-aware logging
+- Negative test suites for modular reviewer integration (`tests/unit/application/services/test_modular_review_service.py`)
+- Latency benchmarking helper for Qwen (`/v1/chat/completions`) and documentation updates (`docs/guides/en/USER_GUIDE.md`, `docs/reference/en/PERFORMANCE_BENCHMARKS.md`)
+
+### Changed
+- `ModularReviewService` wires Prometheus checker/pass metrics and trace-aware logging end-to-end
+- UnifiedModelClient alias handling tightened; OpenAI-compatible endpoint recommended for shared `llm-api`
+- Documentation refreshed to cover new environment variables (`LLM_URL`, `LLM_MODEL=qwen`) and failover guidance
+
+### Fixed
+- Reviewer integration now skips checker metrics when a pass fails and surfaces package errors in legacy reports
+- Health script instructions clarified for authenticated Mongo URLs pointing at shared infra
+
+### Performance
+- Dummy LLM review averages 0.00068s; Qwen via `/v1/chat/completions` averages 4.08s across 5 runs (see docs/reference/en/PERFORMANCE_BENCHMARKS.md)
+
+## [Day 18] - 2025-11-07
+
+### Added
+- **Shared Infra Cutover**: Application connects to `infra_shared`/`infra_infra_db-network`
+  services (MongoDB, Prometheus, Grafana, Mistral) with integration and e2e tests.
+- **Reusable Multipass Reviewer Package**: `packages/multipass-reviewer` published with
+  Clean Architecture layout, prompt embedding, configurable passes, Spark/Airflow and
+  MLOps/Data checkers, plus metrics wiring.
+- **Bridge Service**: `ModularReviewService` adapts the new package to existing
+  repositories, adds checker-level Prometheus counters and structured logging.
+- **Documentation Refresh**: Updated user guide, development guide, API docs, and new
+  troubleshooting matrix for shared infra scenarios.
+
+### Changed
+- **ReviewSubmissionUseCase**: Optional dependencies default to production-grade log
+  parser/normalizer/analyzer, uses feature flag to switch to modular reviewer, and reuses
+  shared logger.
+- **LLM Client Integration**: Added alias adapter translating package model names to shared
+  infrastructure identifiers (normalises `mistral-7b-instruct-v0.2` → `mistral`).
+- **E2E Pipeline**: Runs inside a dual-network container, exercising shared services,
+  modular reviewer flag, and haiku generation.
+- **Compose & Env**: Docker stack and `.env` defaults updated to drop local Mongo/LLM and
+  rely on shared services.
+
+### Fixed
+- Prevented `Unknown model: summary` and Pydantic validation errors by normalising model
+  aliases before delegating to `UnifiedModelClient`.
+- Eliminated flaky e2e skips by ensuring tests attach to shared networks and supplying
+  authenticated Mongo URLs.
+
+---
+
 ## [Day 17] - 2025-11-07
 
 ### Added
@@ -136,7 +188,7 @@ See [docs/release_notes/day_15.md](docs/release_notes/day_15.md) for complete re
 - Graceful shutdown manager (`GracefulShutdown`) for clean service termination
 - Prometheus metrics integration for agent operations
 - Path utilities (`path_utils.py`) for centralized shared package imports
-- Agent integration documentation (`docs/AGENT_INTEGRATION.md` and `.ru.md`)
+- Agent integration documentation (`docs/guides/en/AGENT_INTEGRATION.md` and `docs/guides/ru/AGENT_INTEGRATION.ru.md`)
 - Comprehensive test suite for agent components (26+ tests)
 
 ### Changed
@@ -195,9 +247,9 @@ See [docs/release_notes/day_15.md](docs/release_notes/day_15.md) for complete re
 - Enhanced intent orchestrator with context-aware parsing (Russian/English)
 - Domain value objects for task summary and digest formatting (`TaskSummary`, `DigestMessage`)
 - Comprehensive test suite: unit, integration, E2E, and contract tests
-- MCP tools API documentation with examples (`docs/API_MCP_TOOLS.md`)
-- Architecture diagrams for FSM flow (`docs/ARCHITECTURE_FSM.md`)
-- Quick start guide for Day 11 features (`docs/QUICK_START_DAY11.md`)
+- MCP tools API documentation with examples (`docs/reference/en/API_MCP_TOOLS.md`)
+- Architecture diagrams for FSM flow (`docs/reference/en/ARCHITECTURE_FSM.md`)
+- Quick start guide for Day 11 features (`docs/archive/2023-day11/QUICK_START_DAY11.md`)
 - Telegram bot menu integration with summary and digest callbacks
 - State persistence middleware for FSM conversations
 - Natural language task creation with intent parsing
@@ -307,4 +359,3 @@ See [docs/release_notes/day_15.md](docs/release_notes/day_15.md) for complete re
 - **Removed** for now removed features
 - **Fixed** for any bug fixes
 - **Security** in case of vulnerabilities
-
