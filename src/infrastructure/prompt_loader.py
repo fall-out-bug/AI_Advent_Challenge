@@ -4,7 +4,7 @@ Following Clean Architecture principles and the Zen of Python.
 """
 
 import logging
-from pathlib import Path
+from importlib import resources
 from typing import List
 
 import yaml
@@ -13,11 +13,12 @@ logger = logging.getLogger(__name__)
 
 
 class PromptLoader:
-    """Load prompts from prompts/v1/ directory.
+    """Load prompts embedded in the `prompts.reviewer` package.
 
     Purpose:
-        Provides centralized prompt loading from versioned prompt files.
-        Manages prompt registry for discovery and versioning.
+        Provides centralized prompt loading from versioned files packaged as
+        importable resources. Manages a registry for discovery and versioning
+        without depending on file-system access at runtime.
 
     Example:
         loader = PromptLoader()
@@ -28,8 +29,8 @@ class PromptLoader:
         )
     """
 
-    PROMPTS_DIR = Path(__file__).parent.parent.parent / "prompts" / "v1"
-    REGISTRY_FILE = PROMPTS_DIR / "prompt_registry.yaml"
+    PROMPTS_PACKAGE = "prompts.reviewer"
+    REGISTRY_FILENAME = "prompt_registry.yaml"
 
     @classmethod
     def load_prompt(cls, prompt_name: str) -> str:
@@ -62,19 +63,26 @@ class PromptLoader:
             )
 
         prompt_info = registry["prompts"][prompt_name]
-        prompt_file = cls.PROMPTS_DIR / prompt_info["filename"]
+        prompt_filename = prompt_info["filename"]
 
-        if not prompt_file.exists():
-            raise FileNotFoundError(
-                f"Prompt file not found: {prompt_file}. "
-                f"Expected path: {cls.PROMPTS_DIR}"
+        try:
+            prompt_content = (
+                resources.files(cls.PROMPTS_PACKAGE)
+                .joinpath(prompt_filename)
+                .read_text(encoding="utf-8")
             )
+        except (FileNotFoundError, ModuleNotFoundError) as exc:
+            raise FileNotFoundError(
+                f"Prompt file '{prompt_filename}' not found in package "
+                f"{cls.PROMPTS_PACKAGE}."
+            ) from exc
 
-        logger.debug(f"Loading prompt '{prompt_name}' from {prompt_file}")
-        with open(prompt_file, "r", encoding="utf-8") as f:
-            content = f.read()
-
-        return content
+        logger.debug(
+            "Loading prompt '%s' from package resource %s",
+            prompt_name,
+            prompt_filename,
+        )
+        return prompt_content
 
     @classmethod
     def _load_registry(cls) -> dict:
@@ -87,39 +95,26 @@ class PromptLoader:
             FileNotFoundError: If registry file does not exist
             yaml.YAMLError: If registry file is invalid YAML
         """
-        if not cls.REGISTRY_FILE.exists():
-            logger.warning(
-                f"Registry file not found: {cls.REGISTRY_FILE}. "
-                "Creating default registry structure..."
+        try:
+            registry_text = (
+                resources.files(cls.PROMPTS_PACKAGE)
+                .joinpath(cls.REGISTRY_FILENAME)
+                .read_text(encoding="utf-8")
             )
-            cls._create_default_registry()
+        except (FileNotFoundError, ModuleNotFoundError) as exc:
+            raise FileNotFoundError(
+                f"Prompt registry '{cls.REGISTRY_FILENAME}' not found in package "
+                f"{cls.PROMPTS_PACKAGE}."
+            ) from exc
 
-        with open(cls.REGISTRY_FILE, "r", encoding="utf-8") as f:
-            try:
-                registry = yaml.safe_load(f)
-                if registry is None:
-                    registry = {"prompts": {}}
-                return registry
-            except yaml.YAMLError as e:
-                logger.error(f"Failed to parse registry YAML: {e}")
-                raise
-
-    @classmethod
-    def _create_default_registry(cls) -> None:
-        """Create default registry structure if missing."""
-        default_registry = {
-            "version": "1.0",
-            "created_at": "2025-01-XX",
-            "author": "multi_pass_review_system",
-            "description": "Multi-pass code review prompts for Docker, Airflow, Spark, MLflow",
-            "prompts": {},
-        }
-
-        cls.PROMPTS_DIR.mkdir(parents=True, exist_ok=True)
-        with open(cls.REGISTRY_FILE, "w", encoding="utf-8") as f:
-            yaml.dump(default_registry, f, default_flow_style=False)
-
-        logger.info(f"Created default registry at {cls.REGISTRY_FILE}")
+        try:
+            registry = yaml.safe_load(registry_text)
+            if registry is None:
+                registry = {"prompts": {}}
+            return registry
+        except yaml.YAMLError as exc:
+            logger.error("Failed to parse prompt registry YAML: %s", exc)
+            raise
 
     @classmethod
     def list_prompts(cls) -> List[str]:
@@ -150,4 +145,3 @@ class PromptLoader:
             return prompt_name in registry.get("prompts", {})
         except Exception:
             return False
-

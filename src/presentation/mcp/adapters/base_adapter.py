@@ -1,12 +1,6 @@
 """Base adapter with common utilities for MCP adapters."""
 
-import sys
-from pathlib import Path
 from typing import Any, Callable, TypeVar
-
-_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(_root))
-sys.path.insert(0, str(_root / "shared"))
 
 from src.presentation.mcp.exceptions import MCPBaseException
 
@@ -16,12 +10,14 @@ T = TypeVar("T")
 def _get_unified_client():
     """Import UnifiedModelClient at runtime."""
     from shared_package.clients.unified_client import UnifiedModelClient
+
     return UnifiedModelClient
 
 
 def _get_model_configs():
     """Import MODEL_CONFIGS at runtime."""
     from shared_package.config.models import MODEL_CONFIGS
+
     return MODEL_CONFIGS
 
 
@@ -69,4 +65,3 @@ class BaseMCPAdapter:
     def get_model_configs(self) -> dict[str, Any]:
         """Get model configurations for lazy import."""
         return _get_model_configs()
-

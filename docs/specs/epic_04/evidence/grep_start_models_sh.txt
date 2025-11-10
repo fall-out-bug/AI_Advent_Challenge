@@ -1,0 +1,2 @@
+README_HOMEWORK_REVIEW.md:11:./scripts/start_models.sh
+docs/specs/epic_00/stage_00_01.md:209:| `test_review_system.py`, `check_model_status.sh`, `start_models.sh`, `wait_for_model.sh` | Rework/Archive | Update to use modular reviewer & shared infra; remove local model steps where obsolete. |

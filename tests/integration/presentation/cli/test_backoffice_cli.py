@@ -1,0 +1,165 @@
+"""Integration-style tests for the backoffice CLI entry point."""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from pathlib import Path
+
+import pytest
+import importlib
+
+from click.testing import CliRunner
+
+digest_module = importlib.import_module(
+    "src.presentation.cli.backoffice.commands.digest"
+)
+from src.application.dtos.digest_dtos import ChannelDigest
+from src.domain.value_objects.summary_result import SummaryResult
+from src.presentation.cli.backoffice.main import cli
+
+
+def _fake_digest(channel: str = "example_channel") -> ChannelDigest:
+    """Create a deterministic digest payload for CLI tests."""
+    return ChannelDigest(
+        channel_username=channel,
+        channel_title="Example Channel",
+        summary=SummaryResult(
+            text="Sample summary text.",
+            sentences_count=2,
+            method="direct",
+            confidence=0.92,
+            metadata={"words": 42},
+        ),
+        post_count=3,
+        time_window_hours=24,
+        tags=["news"],
+        generated_at=datetime.now(timezone.utc),
+    )
+
+
+def test_backoffice_cli_digest_help_lists_export_command() -> None:
+    """Ensure digest group exposes the export subcommand."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["digest", "--help"])
+
+    assert result.exit_code == 0
+    assert "export" in result.output
+    assert "run" in result.output
+
+
+def test_backoffice_cli_channels_help_is_available() -> None:
+    """Ensure channels group remains discoverable."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["channels", "--help"])
+
+    assert result.exit_code == 0
+    assert "list" in result.output
+
+
+def test_digest_run_outputs_table(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Running digest without channel uses GenerateChannelDigestUseCase."""
+    digest = _fake_digest()
+
+    async def fake_run_digest(
+        user_id: int,
+        channel: str | None,
+        hours: int,
+        content_format: str,
+        as_json: bool,
+    ) -> None:
+        assert user_id == 101
+        assert channel is None
+        assert hours == 24
+        assert content_format == "markdown"
+        assert as_json is False
+        print(f"{digest.channel_username}: {digest.summary.text}")
+
+    monkeypatch.setattr(
+        digest_module,
+        "_run_digest",
+        fake_run_digest,
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["digest", "run", "--user-id", "101"])
+
+    assert result.exit_code == 0
+    assert digest.summary.text in result.output
+    assert digest.channel_username in result.output
+
+
+def test_digest_run_for_specific_channel_returns_json(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Running digest with --channel uses the by-name use case and yields JSON."""
+    digest = _fake_digest(channel="breaking_news")
+
+    async def fake_run_digest(
+        user_id: int,
+        channel: str | None,
+        hours: int,
+        content_format: str,
+        as_json: bool,
+    ) -> None:
+        assert user_id == 102
+        assert channel == "breaking_news"
+        assert hours == 24
+        assert content_format == "markdown"
+        assert as_json is True
+        print(
+            f'{{"channel": "{digest.channel_username}", '
+            f'"summary": "{digest.summary.text}"}}'
+        )
+
+    monkeypatch.setattr(
+        digest_module,
+        "_run_digest",
+        fake_run_digest,
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["digest", "run", "--user-id", "102", "--channel", "breaking_news", "--json"],
+    )
+
+    assert result.exit_code == 0
+    assert '"channel": "breaking_news"' in result.output
+    assert '"Sample summary text."' in result.output
+
+
+def test_digest_export_reports_destination(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Digest export command should surface the destination path."""
+    destination = tmp_path / "digest.pdf"
+
+    async def fake_export(**_: object):
+        return destination
+
+    monkeypatch.setattr(
+        digest_module,
+        "export_digest_to_file",
+        fake_export,
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "digest",
+            "export",
+            "--user-id",
+            "77",
+            "--channel",
+            "updates",
+            "--output",
+            str(destination),
+            "--format",
+            "pdf",
+            "--overwrite",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert f"Digest saved to {destination}" in result.output

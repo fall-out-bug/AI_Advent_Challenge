@@ -13,7 +13,7 @@ alerting:
   alertmanagers:
     - static_configs:
         - targets:
-          # - alertmanager:9093  # Uncomment when Alertmanager is deployed
+          - alertmanager:9093
 
 # Load alert rules
 rule_files:
@@ -45,25 +45,15 @@ scrape_configs:
     scrape_interval: 15s
     honor_labels: true
 
-  # Summary Worker metrics (if metrics endpoint is added)
-  - job_name: 'summary-worker'
+  # Unified Task Worker metrics
+  - job_name: 'unified-task-worker'
     static_configs:
-      - targets: ['summary-worker:8000']  # Update if worker exposes metrics endpoint
+      - targets: ['unified-task-worker:9092']
         labels:
-          service: 'summary-worker'
+          service: 'unified-task-worker'
           layer: 'workers'
-    metrics_path: '/metrics'
-    scrape_interval: 30s
-    honor_labels: true
-
-  # Post Fetcher Worker metrics (if metrics endpoint is added)
-  - job_name: 'post-fetcher-worker'
-    static_configs:
-      - targets: ['post-fetcher-worker:8000']  # Update if worker exposes metrics endpoint
-        labels:
-          service: 'post-fetcher-worker'
-          layer: 'workers'
-    metrics_path: '/metrics'
+          component: 'unified-task-worker'
+    metrics_path: '/'
     scrape_interval: 30s
     honor_labels: true
 

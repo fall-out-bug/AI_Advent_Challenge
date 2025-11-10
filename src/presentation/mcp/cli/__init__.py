@@ -1,2 +1,1 @@
 """MCP CLI modules."""
-

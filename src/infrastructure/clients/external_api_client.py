@@ -93,4 +93,3 @@ class ExternalAPIClient(ReviewPublisher):
             except Exception as e:
                 logger.error(f"Unexpected error publishing to external API: {e}")
                 raise
-

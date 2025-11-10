@@ -21,4 +21,3 @@ Return JSON array (1-2 tools max): [{{"tool": "...", "args": {{...}}}}]
 JSON:"""
 
 CLARIFICATION_PROMPT = """Ask 1-3 concise questions about: {unclear_aspects}"""
-

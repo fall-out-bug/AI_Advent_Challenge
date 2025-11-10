@@ -41,8 +41,8 @@ python examples/basic_usage.py
 ### Running Workflow Examples
 
 ```bash
-# Ensure local_models docker-compose is running
-cd local_models && docker-compose up -d
+# Ensure legacy local_models docker-compose is running (optional)
+cd archive/legacy/local_models && docker-compose up -d mistral-chat
 
 # Run full workflow examples
 python examples/full_workflow.py
@@ -88,6 +88,6 @@ make test
 
 ## Additional Resources
 
-- [Development Guide](../docs/DEVELOPMENT.md) - Complete setup and deployment guide
-- [User Guide](../docs/USER_GUIDE.md) - User documentation
-- [MCP Guide](../docs/MCP_GUIDE.md) - MCP integration guide
+- [Development Guide](../docs/guides/en/DEVELOPMENT.md) - Complete setup and deployment guide
+- [User Guide](../docs/guides/en/USER_GUIDE.md) - User documentation
+- [MCP Guide](../docs/guides/en/MCP_GUIDE.md) - MCP integration guide

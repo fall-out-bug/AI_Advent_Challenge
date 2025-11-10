@@ -1,0 +1,29 @@
+name: Stage 05 Benchmark Smoke
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  benchmark-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install -e packages/multipass-reviewer
+      - name: Run RU digest benchmark (dry run)
+        env:
+          BENCHMARK_DATASET: data/benchmarks/benchmark_digest_ru_v1/2025-11-09_samples.jsonl
+        run: |
+          python scripts/benchmark/run_benchmark.py \
+            --scenario channel_digest_ru \
+            --dataset "${BENCHMARK_DATASET}" \
+            --dry-run --fail-on-warn

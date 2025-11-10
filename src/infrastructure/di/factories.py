@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from src.application.use_cases.generate_channel_digest import GenerateChannelDigestUseCase
+from src.application.use_cases.generate_channel_digest import (
+    GenerateChannelDigestUseCase,
+)
 from src.application.use_cases.generate_channel_digest_by_name import (
     GenerateChannelDigestByNameUseCase,
 )
@@ -51,15 +53,15 @@ def create_channel_digest_use_case() -> GenerateChannelDigestUseCase:
     """
     from src.infrastructure.config.settings import get_settings
     from src.infrastructure.di.container import SummarizationContainer
-    
+
     # Create dependencies directly
     settings = get_settings()
     container = SummarizationContainer()
     container.config.from_dict({})
-    
+
     # Get summarizer from container (doesn't depend on async resources directly)
     summarizer = container.adaptive_summarizer()
-    
+
     # Create use case directly with dependencies
     # post_repository=None means it will be created lazily in async context when needed
     use_case = GenerateChannelDigestUseCase(
@@ -67,7 +69,7 @@ def create_channel_digest_use_case() -> GenerateChannelDigestUseCase:
         summarizer=summarizer,
         settings=settings,
     )
-    
+
     return use_case
 
 
@@ -97,15 +99,15 @@ def create_channel_digest_by_name_use_case() -> GenerateChannelDigestByNameUseCa
     """
     from src.infrastructure.config.settings import get_settings
     from src.infrastructure.di.container import SummarizationContainer
-    
+
     # Create dependencies directly
     settings = get_settings()
     container = SummarizationContainer()
     container.config.from_dict({})
-    
+
     # Get summarizer from container (doesn't depend on async resources directly)
     summarizer = container.adaptive_summarizer()
-    
+
     # Create use case directly with dependencies
     # post_repository=None means it will be created lazily in async context when needed
     use_case = GenerateChannelDigestByNameUseCase(
@@ -113,7 +115,7 @@ def create_channel_digest_by_name_use_case() -> GenerateChannelDigestByNameUseCa
         summarizer=summarizer,
         settings=settings,
     )
-    
+
     return use_case
 
 
@@ -127,13 +129,15 @@ def create_adaptive_summarizer_with_long_timeout() -> AdaptiveSummarizer:
     Returns:
         Configured AdaptiveSummarizer instance with extended timeout.
     """
+    from src.domain.services.summary_quality_checker import SummaryQualityChecker
+    from src.domain.services.text_cleaner import TextCleanerService
     from src.infrastructure.config.settings import get_settings
     from src.infrastructure.llm.clients.resilient_client import ResilientLLMClient
     from src.infrastructure.llm.summarizers.llm_summarizer import LLMSummarizer
-    from src.infrastructure.llm.summarizers.map_reduce_summarizer import MapReduceSummarizer
+    from src.infrastructure.llm.summarizers.map_reduce_summarizer import (
+        MapReduceSummarizer,
+    )
     from src.infrastructure.llm.token_counter import TokenCounter
-    from src.domain.services.text_cleaner import TextCleanerService
-    from src.domain.services.summary_quality_checker import SummaryQualityChecker
 
     settings = get_settings()
 
@@ -159,6 +163,7 @@ def create_adaptive_summarizer_with_long_timeout() -> AdaptiveSummarizer:
 
     # Create chunker and map-reduce summarizer
     from src.infrastructure.llm.chunking.semantic_chunker import SemanticChunker
+
     semantic_chunker = SemanticChunker(
         token_counter=token_counter,
         max_tokens=3000,

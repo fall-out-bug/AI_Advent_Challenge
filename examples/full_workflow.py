@@ -1,4 +1,4 @@
-"""Full workflow examples for MCP and Mistral orchestration.
+"""Full workflow examples for MCP tooling.
 
 Demonstrates complete multi-step workflows with conversation handling.
 """
@@ -62,66 +62,12 @@ async def demo_mcp_workflow():
         print(f"Error: {e}")
 
 
-async def demo_mistral_workflow():
-    """Demonstrate Mistral orchestration workflow."""
-    print("\n" + "=" * 70)
-    print("Mistral Orchestration Demo")
-    print("=" * 70)
-
-    try:
-        from shared_package.clients.unified_client import UnifiedModelClient
-        from src.application.orchestrators.mistral_orchestrator import MistralChatOrchestrator
-        from src.infrastructure.repositories.json_conversation_repository import (
-            JsonConversationRepository,
-        )
-        from src.presentation.mcp.orchestrators.mcp_mistral_wrapper import MCPMistralWrapper
-
-        # Setup
-        conversations_path = Path("data/conversations/conversations.json")
-        conversation_repo = JsonConversationRepository(conversations_path)
-        unified_client = UnifiedModelClient()
-
-        wrapper = MCPMistralWrapper(
-            server_script="src/presentation/mcp/server.py",
-            orchestrator=None,
-        )
-        await wrapper.initialize()
-
-        orchestrator = MistralChatOrchestrator(
-            unified_client=unified_client,
-            conversation_repo=conversation_repo,
-            model_name="mistral",
-            mcp_wrapper=wrapper,
-        )
-
-        await orchestrator.initialize()
-        conversation_id = "demo_workflow"
-
-        # Example 1: Simple request
-        print("\nExample 1: Code Generation Request")
-        response = await orchestrator.handle_message(
-            "Create a fibonacci function", conversation_id
-        )
-        print(f"Response: {response[:200]}...")
-
-        # Example 2: Follow-up
-        print("\nExample 2: Follow-up Request")
-        response = await orchestrator.handle_message(
-            "Add tests for the fibonacci function", conversation_id
-        )
-        print(f"Response: {response[:200]}...")
-
-    except Exception as e:
-        print(f"Error: {e}")
-
-
 async def main():
     """Run all workflow demos."""
     print("Full Workflow Demonstrations")
-    print("Assumes local_models docker-compose is running")
+    print("Assumes local MCP stack is running (see docs/guides/en/MCP_GUIDE.md)")
 
     await demo_mcp_workflow()
-    await demo_mistral_workflow()
 
     print("\n" + "=" * 70)
     print("Demo Complete")
@@ -130,4 +76,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

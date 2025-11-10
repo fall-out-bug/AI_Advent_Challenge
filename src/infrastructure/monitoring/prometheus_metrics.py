@@ -9,7 +9,7 @@ Following the Zen of Python:
 from typing import Optional
 
 try:
-    from prometheus_client import Counter, Histogram, Gauge  # type: ignore
+    from prometheus_client import Counter, Gauge, Histogram  # type: ignore
 
     # Post Fetcher Worker Metrics
     post_fetcher_posts_saved_total = Counter(
@@ -146,4 +146,3 @@ def get_metrics_registry() -> Optional[object]:
         return REGISTRY
     except ImportError:
         return None
-

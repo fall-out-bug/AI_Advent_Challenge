@@ -1,0 +1,6 @@
+Makefile:179:	poetry run python src/presentation/mcp/cli/streaming_chat.py
+Makefile:184:	MCP_USE_DOCKER=true poetry run python src/presentation/mcp/cli/streaming_chat.py
+docs/MCP_GUIDE.md:234:MCP_USE_DOCKER=true poetry run python src/presentation/mcp/cli/streaming_chat.py
+docs/specs/epic_00/stage_00_01.md:162:| `cli/streaming_chat.py` | Archive | Same as above; move to historical docs if needed. |
+tasks/day_10/README.md:59:python src/presentation/mcp/cli/streaming_chat.py
+tasks/day_10/day_10-phase-04.plan.cursor.md:155:**Create**: `src/presentation/mcp/cli/streaming_chat.py`

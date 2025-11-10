@@ -73,9 +73,7 @@ def sample_tools():
 class TestMCPToolsRegistryV2:
     """Test suite for MCPToolsRegistryV2."""
 
-    async def test_validate_tool_call_success(
-        self, mock_tool_client, sample_tools
-    ):
+    async def test_validate_tool_call_success(self, mock_tool_client, sample_tools):
         """Test successful validation of valid tool call.
 
         Args:
@@ -115,9 +113,7 @@ class TestMCPToolsRegistryV2:
         assert is_valid is False
         assert "Missing required parameters" in error
 
-    async def test_validate_tool_call_wrong_type(
-        self, mock_tool_client, sample_tools
-    ):
+    async def test_validate_tool_call_wrong_type(self, mock_tool_client, sample_tools):
         """Test validation fails for wrong parameter type.
 
         Args:
@@ -175,9 +171,7 @@ class TestMCPToolsRegistryV2:
         registry = MCPToolsRegistryV2(tool_client=mock_tool_client)
 
         # Act
-        result = await registry.call_tool(
-            "create_task", {"title": "Test"}, "user123"
-        )
+        result = await registry.call_tool("create_task", {"title": "Test"}, "user123")
 
         # Assert
         assert result == expected_result
@@ -185,9 +179,7 @@ class TestMCPToolsRegistryV2:
             tool_name="create_task", arguments={"title": "Test"}
         )
 
-    async def test_call_tool_validation_failure(
-        self, mock_tool_client, sample_tools
-    ):
+    async def test_call_tool_validation_failure(self, mock_tool_client, sample_tools):
         """Test tool call fails when validation fails.
 
         Args:
@@ -225,9 +217,7 @@ class TestMCPToolsRegistryV2:
         assert schema.category == ToolCategory.TASK
         assert len(schema.parameters) > 0
 
-    async def test_get_tool_schema_not_found(
-        self, mock_tool_client, sample_tools
-    ):
+    async def test_get_tool_schema_not_found(self, mock_tool_client, sample_tools):
         """Test retrieving non-existent tool schema.
 
         Args:
@@ -244,9 +234,7 @@ class TestMCPToolsRegistryV2:
         # Assert
         assert schema is None
 
-    async def test_list_tools_by_category(
-        self, mock_tool_client, sample_tools
-    ):
+    async def test_list_tools_by_category(self, mock_tool_client, sample_tools):
         """Test listing tools by category.
 
         Args:
@@ -276,9 +264,7 @@ class TestMCPToolsRegistryV2:
         registry = MCPToolsRegistryV2(tool_client=mock_tool_client, strict_mode=False)
 
         # Act
-        is_valid, error = await registry.validate_tool_call(
-            "create_task", {}
-        )
+        is_valid, error = await registry.validate_tool_call("create_task", {})
 
         # Assert
         # In non-strict mode, validation may pass even with missing params
@@ -302,11 +288,6 @@ class TestMCPToolsRegistryV2:
                 "description": "Get channel data digest",
                 "input_schema": {"type": "object", "properties": {}},
             },
-            {
-                "name": "set_reminder",
-                "description": "Set a reminder",
-                "input_schema": {"type": "object", "properties": {}},
-            },
         ]
         mock_tool_client.discover_tools = AsyncMock(return_value=tools)
         registry = MCPToolsRegistryV2(tool_client=mock_tool_client)
@@ -314,10 +295,7 @@ class TestMCPToolsRegistryV2:
         # Act
         task_schema = await registry.get_tool_schema("create_task")
         data_schema = await registry.get_tool_schema("get_digest")
-        reminder_schema = await registry.get_tool_schema("set_reminder")
 
         # Assert
         assert task_schema.category == ToolCategory.TASK
         assert data_schema.category == ToolCategory.DATA
-        assert reminder_schema.category == ToolCategory.REMINDERS
-

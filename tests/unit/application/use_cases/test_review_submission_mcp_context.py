@@ -9,34 +9,34 @@ import pytest
 from src.application.use_cases.review_submission_use_case import (
     ReviewSubmissionUseCase,
 )
+from src.domain.services.diff_analyzer import DiffAnalyzer
+from src.infrastructure.archive.archive_service import ZipArchiveService
 from src.infrastructure.config.settings import Settings
 from src.presentation.mcp.http_client import MCPHTTPClient
 
 
 @pytest.fixture
-def review_use_case(monkeypatch: pytest.MonkeyPatch) -> ReviewSubmissionUseCase:
-    """Create ReviewSubmissionUseCase with patched reviewer agent."""
+def review_use_case() -> ReviewSubmissionUseCase:
+    """Create ReviewSubmissionUseCase with modular reviewer service."""
 
-    class _DummyAgent:
-        def __init__(self, *args, **kwargs) -> None:
-            return
-
-    monkeypatch.setattr(
-        "src.application.use_cases.review_submission_use_case.MultiPassReviewerAgent",
-        _DummyAgent,
-    )
+    settings = Settings()
+    archive_reader = ZipArchiveService(settings)
+    unified_client = MagicMock()
+    unified_client.make_request = AsyncMock()
+    tasks_repository = MagicMock()
+    tasks_repository.count_reviews_in_window = AsyncMock(return_value=0)
 
     return ReviewSubmissionUseCase(
-        archive_reader=MagicMock(),
-        diff_analyzer=MagicMock(),
-        unified_client=MagicMock(),
+        archive_reader=archive_reader,
+        diff_analyzer=DiffAnalyzer(),
+        unified_client=unified_client,
         review_repository=MagicMock(),
-        tasks_repository=MagicMock(),
+        tasks_repository=tasks_repository,
         publisher=MagicMock(),
         log_parser=MagicMock(),
         log_normalizer=MagicMock(),
         log_analyzer=MagicMock(),
-        settings=Settings(),
+        settings=settings,
     )
 
 
@@ -101,4 +101,3 @@ async def test_prepare_mcp_publish_context_raises_when_tool_missing(
             session_id="session-1",
             overall_score=90,
         )
-

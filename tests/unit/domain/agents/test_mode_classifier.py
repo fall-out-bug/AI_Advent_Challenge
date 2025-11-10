@@ -6,7 +6,8 @@ Following TDD principles and testing best practices.
 import pytest
 from unittest.mock import AsyncMock, Mock
 
-from src.domain.agents.services.mode_classifier import DialogMode, ModeClassifier
+from src.application.dtos.butler_dialog_dtos import DialogMode
+from src.application.services.mode_classifier import ModeClassifier
 from src.domain.interfaces.llm_client import LLMClientProtocol
 
 
@@ -16,6 +17,7 @@ class MockLLMClient:
     def __init__(self, response: str = "TASK"):
         self.response = response
         self.close_called = False
+        self.call_count = 0
 
     async def make_request(
         self,
@@ -25,6 +27,7 @@ class MockLLMClient:
         temperature: float = None,
     ) -> str:
         """Mock make_request."""
+        self.call_count += 1
         return self.response
 
     async def check_availability(self, model_name: str) -> bool:
@@ -46,10 +49,6 @@ class TestDialogMode:
     def test_data_mode_exists(self):
         """Test DATA mode exists."""
         assert DialogMode.DATA == DialogMode("data")
-
-    def test_reminders_mode_exists(self):
-        """Test REMINDERS mode exists."""
-        assert DialogMode.REMINDERS == DialogMode("reminders")
 
     def test_idle_mode_exists(self):
         """Test IDLE mode exists."""
@@ -74,14 +73,6 @@ class TestModeClassifier:
         classifier = ModeClassifier(mock_llm)
         mode = await classifier.classify("Show me channel digests")
         assert mode == DialogMode.DATA
-
-    @pytest.mark.asyncio
-    async def test_classify_reminders_mode(self):
-        """Test classifying REMINDERS mode."""
-        mock_llm = MockLLMClient(response="REMINDERS")
-        classifier = ModeClassifier(mock_llm)
-        mode = await classifier.classify("What are my reminders?")
-        assert mode == DialogMode.REMINDERS
 
     @pytest.mark.asyncio
     async def test_classify_idle_mode(self):
@@ -129,7 +120,14 @@ class TestModeClassifier:
         """Test classifier uses custom model."""
         mock_llm = MockLLMClient(response="TASK")
         classifier = ModeClassifier(mock_llm, default_model="custom-model")
-        await classifier.classify("Create task")
+        await classifier.classify("Need assistance with something ambiguous")
         # Verify make_request was called
         assert mock_llm.call_count == 1
 
+    @pytest.mark.asyncio
+    async def test_classify_unknown_mode_falls_back_to_idle(self):
+        """Test legacy response falls back to IDLE."""
+        mock_llm = MockLLMClient(response="REMINDERS")
+        classifier = ModeClassifier(mock_llm)
+        mode = await classifier.classify("What are my reminders?")
+        assert mode == DialogMode.IDLE

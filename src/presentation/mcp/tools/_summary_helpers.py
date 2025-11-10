@@ -28,15 +28,21 @@ def _build_summary_query(user_id: int, timeframe: str, now: datetime) -> Dict[st
     query: Dict[str, Any] = {"user_id": int(user_id)}
 
     if timeframe == "today":
-        start_dt = datetime(now.year, now.month, now.day, 0, 0, 0, 0, tzinfo=timezone.utc)
+        start_dt = datetime(
+            now.year, now.month, now.day, 0, 0, 0, 0, tzinfo=timezone.utc
+        )
         end_dt = start_dt + timedelta(days=1)
         query["deadline"] = {"$gte": start_dt.isoformat(), "$lt": end_dt.isoformat()}
     elif timeframe == "tomorrow":
-        start_dt = datetime(now.year, now.month, now.day, 0, 0, 0, 0, tzinfo=timezone.utc) + timedelta(days=1)
+        start_dt = datetime(
+            now.year, now.month, now.day, 0, 0, 0, 0, tzinfo=timezone.utc
+        ) + timedelta(days=1)
         end_dt = start_dt + timedelta(days=1)
         query["deadline"] = {"$gte": start_dt.isoformat(), "$lt": end_dt.isoformat()}
     elif timeframe == "week":
-        start_dt = datetime(now.year, now.month, now.day, 0, 0, 0, 0, tzinfo=timezone.utc)
+        start_dt = datetime(
+            now.year, now.month, now.day, 0, 0, 0, 0, tzinfo=timezone.utc
+        )
         end_dt = start_dt + timedelta(days=7)
         query["deadline"] = {"$gte": start_dt.isoformat(), "$lt": end_dt.isoformat()}
     elif timeframe == "last_7d":

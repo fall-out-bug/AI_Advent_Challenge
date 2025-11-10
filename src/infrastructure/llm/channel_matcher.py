@@ -79,7 +79,9 @@ class LlmChannelMatcher:
             # Generate prompt
             prompt = get_channel_matching_prompt_ru(query, channels_to_process)
 
-            logger.debug(f"Calling LLM for channel matching: query='{query}', channels={len(channels_to_process)}")
+            logger.debug(
+                f"Calling LLM for channel matching: query='{query}', channels={len(channels_to_process)}"
+            )
 
             # Call LLM
             response = await self.llm_client.generate(
@@ -89,35 +91,41 @@ class LlmChannelMatcher:
             # Parse JSON response
             result = self._parse_llm_response(response, query, channels_to_process)
 
-            if result and result.get("matched") and result.get("confidence", 0) >= MIN_CONFIDENCE:
+            if (
+                result
+                and result.get("matched")
+                and result.get("confidence", 0) >= MIN_CONFIDENCE
+            ):
                 matched_username = result.get("channel_username")
-                
+
                 # Find matching channel
                 matched_channel = None
                 for channel in channels_to_process:
                     if channel.get("username") == matched_username:
                         matched_channel = channel
                         break
-                
+
                 if matched_channel:
                     # Return single result with LLM score
                     confidence = result.get("confidence", 0.5)
                     llm_score = int(confidence * 100)  # Convert to 0-100 scale
-                    
+
                     logger.info(
                         f"LLM matched channel: query='{query}', "
                         f"username='{matched_username}', confidence={confidence:.2f}"
                     )
-                    
-                    return [{
-                        "username": matched_channel.get("username"),
-                        "title": matched_channel.get("title"),
-                        "description": matched_channel.get("description", "") or "",
-                        "chat_id": matched_channel.get("chat_id"),
-                        "score": llm_score,
-                        "llm_confidence": confidence,
-                        "llm_reason": result.get("reason", ""),
-                    }]
+
+                    return [
+                        {
+                            "username": matched_channel.get("username"),
+                            "title": matched_channel.get("title"),
+                            "description": matched_channel.get("description", "") or "",
+                            "chat_id": matched_channel.get("chat_id"),
+                            "score": llm_score,
+                            "llm_confidence": confidence,
+                            "llm_reason": result.get("reason", ""),
+                        }
+                    ]
 
             logger.debug(
                 f"LLM did not find confident match: query='{query}', "
@@ -128,7 +136,7 @@ class LlmChannelMatcher:
         except Exception as e:
             logger.error(
                 f"Error in LLM channel matching: query='{query}', error={e}",
-                exc_info=True
+                exc_info=True,
             )
             return []
 
@@ -151,12 +159,14 @@ class LlmChannelMatcher:
         try:
             # Remove markdown code blocks if present
             response_clean = response.strip()
-            
+
             # Try to extract JSON from markdown code blocks
-            json_match = re.search(r'\{[^{}]*"matched"[^{}]*\}', response_clean, re.DOTALL)
+            json_match = re.search(
+                r'\{[^{}]*"matched"[^{}]*\}', response_clean, re.DOTALL
+            )
             if json_match:
                 response_clean = json_match.group(0)
-            
+
             # Try to find JSON object
             if not response_clean.startswith("{"):
                 # Look for first {
@@ -166,7 +176,7 @@ class LlmChannelMatcher:
                 else:
                     logger.warning(f"No JSON found in LLM response: {response[:200]}")
                     return None
-            
+
             # Find matching closing brace
             brace_count = 0
             end_idx = -1
@@ -178,23 +188,23 @@ class LlmChannelMatcher:
                     if brace_count == 0:
                         end_idx = i + 1
                         break
-            
+
             if end_idx > 0:
                 response_clean = response_clean[:end_idx]
-            
+
             # Parse JSON
             result = json.loads(response_clean)
-            
+
             # Validate structure
             if not isinstance(result, dict):
                 logger.warning(f"LLM response is not a dict: {result}")
                 return None
-            
+
             # Validate required fields
             if "matched" not in result:
                 logger.warning(f"LLM response missing 'matched' field: {result}")
                 return None
-            
+
             return result
 
         except json.JSONDecodeError as e:
@@ -205,4 +215,3 @@ class LlmChannelMatcher:
         except Exception as e:
             logger.error(f"Error parsing LLM response: {e}", exc_info=True)
             return None
-

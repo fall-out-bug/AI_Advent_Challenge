@@ -75,4 +75,3 @@ class DateParser:
                 pass
 
         return parsed.isoformat()
-

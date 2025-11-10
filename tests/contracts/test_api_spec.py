@@ -46,13 +46,17 @@ def test_client() -> TestClient:
 class TestAPISpecCompliance:
     """Test API implementation against OpenAPI spec."""
 
-    def test_post_reviews_endpoint_exists(self, test_client: TestClient, openapi_spec: dict):
+    def test_post_reviews_endpoint_exists(
+        self, test_client: TestClient, openapi_spec: dict
+    ):
         """Test that POST /api/v1/reviews endpoint exists."""
         path = openapi_spec["paths"]["/api/v1/reviews"]
         assert "post" in path
         assert path["post"]["operationId"] == "createReview"
 
-    def test_get_reviews_endpoint_exists(self, test_client: TestClient, openapi_spec: dict):
+    def test_get_reviews_endpoint_exists(
+        self, test_client: TestClient, openapi_spec: dict
+    ):
         """Test that GET /api/v1/reviews/{task_id} endpoint exists."""
         path = openapi_spec["paths"]["/api/v1/reviews/{task_id}"]
         assert "get" in path
@@ -80,7 +84,10 @@ class TestAPISpecCompliance:
         assert properties["logs_zip"].get("nullable") is True
         assert "old_commit" in properties
         assert properties["old_commit"].get("nullable") is True
-        assert "nullable" not in properties["new_commit"] or properties["new_commit"].get("nullable") is False
+        assert (
+            "nullable" not in properties["new_commit"]
+            or properties["new_commit"].get("nullable") is False
+        )
         assert properties["new_commit"].get("minLength") == 1
 
     def test_review_status_response_schema(self, openapi_spec: dict):
@@ -88,12 +95,12 @@ class TestAPISpecCompliance:
         components = openapi_spec["components"]["schemas"]
         assert "ReviewStatusResponse" in components
         schema = components["ReviewStatusResponse"]
-        
+
         # Check required fields
         required = schema.get("required", [])
         assert "task_id" in required
         assert "status" in required
-        
+
         # Check properties
         properties = schema.get("properties", {})
         assert "task_id" in properties
@@ -101,7 +108,10 @@ class TestAPISpecCompliance:
         assert "status" in properties
         assert "enum" in properties["status"]
         assert set(properties["status"]["enum"]) == {
-            "queued", "running", "completed", "failed"
+            "queued",
+            "running",
+            "completed",
+            "failed",
         }
         assert "student_id" in properties
         assert "assignment_id" in properties
@@ -115,10 +125,10 @@ class TestAPISpecCompliance:
         components = openapi_spec["components"]["schemas"]
         assert "ErrorResponse" in components
         schema = components["ErrorResponse"]
-        
+
         required = schema.get("required", [])
         assert "detail" in required
-        
+
         properties = schema.get("properties", {})
         assert "detail" in properties
         assert properties["detail"]["type"] == "string"
@@ -138,4 +148,3 @@ class TestAPISpecCompliance:
         responses = path["get"]["responses"]
         assert "200" in responses
         assert "404" in responses
-

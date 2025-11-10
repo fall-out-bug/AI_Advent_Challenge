@@ -13,5 +13,3 @@ def system_prompt() -> str:
 
 def user_prompt(text: str, context: dict) -> str:
     return f"Text: {text}\nContext: {context}"
-
-

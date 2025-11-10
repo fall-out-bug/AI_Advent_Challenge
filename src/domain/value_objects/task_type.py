@@ -18,4 +18,3 @@ class TaskType(str, Enum):
 
     SUMMARIZATION = "summarization"
     CODE_REVIEW = "code_review"
-

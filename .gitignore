@@ -61,6 +61,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+poetry-cache/
 
 # IDE
 .vscode/
@@ -82,7 +83,7 @@ Thumbs.db
 api_key.txt
 .env
 .env.*
-local_models/.env
+archive/legacy/local_models/.env
 *.key
 *.pem
 

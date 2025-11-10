@@ -3,21 +3,20 @@
 from __future__ import annotations
 
 import asyncio
+
 from aiogram import Bot, Dispatcher, Router
 from aiogram.filters import Command
-from aiogram.types import Message
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import Message
 
+from src.presentation.bot.orchestrator import ButlerOrchestrator
 from src.infrastructure.logging import get_logger
-from src.infrastructure.shutdown.graceful_shutdown import GracefulShutdown
-from src.domain.agents.butler_orchestrator import ButlerOrchestrator
-from src.presentation.bot.middleware.state_middleware import StatePersistenceMiddleware
-from src.presentation.bot.handlers.tasks import tasks_router
-from src.presentation.bot.handlers.menu import router as menu_router
-from src.presentation.bot.handlers.butler_handler import setup_butler_handler
-from src.presentation.bot.metrics_server import MetricsServer
 from src.infrastructure.metrics import get_butler_metrics
-
+from src.infrastructure.shutdown.graceful_shutdown import GracefulShutdown
+from src.presentation.bot.handlers.butler_handler import setup_butler_handler
+from src.presentation.bot.handlers.menu import router as menu_router
+from src.presentation.bot.metrics_server import MetricsServer
+from src.presentation.bot.middleware.state_middleware import StatePersistenceMiddleware
 
 logger = get_logger("butler_bot")
 
@@ -49,12 +48,12 @@ class ButlerBot:
         self.orchestrator = orchestrator
         self._setup_handlers()
         self.dp.include_router(self.router)
-        
+
         # Initialize metrics server
         self.metrics_server = MetricsServer()
         self._metrics = get_butler_metrics()
         self._metrics.set_health_status(True)
-        
+
         self._shutdown_manager = GracefulShutdown()
         self._shutdown_manager.register_handler(self._shutdown_handler)
 
@@ -63,14 +62,18 @@ class ButlerBot:
         self.router.message(Command("start"))(self.cmd_start)
         self.router.message(Command("help"))(self.cmd_help)
         self.router.message(Command("menu"))(self.cmd_menu)
-        
-        # Include existing handler routers
-        from src.presentation.bot.handlers import menu, tasks, channels
 
+        # Include existing handler routers
+        from src.presentation.bot.handlers import channels, menu
+
+        if getattr(menu.router, "_parent_router", None) is not None:
+            menu.router._parent_router = None
         self.dp.include_router(menu.router)
-        self.dp.include_router(tasks.router)
+
+        if getattr(channels.router, "_parent_router", None) is not None:
+            channels.router._parent_router = None
         self.dp.include_router(channels.router)
-        
+
         # Include butler handler for natural language processing
         butler_router = setup_butler_handler(self.orchestrator)
         self.dp.include_router(butler_router)
@@ -78,16 +81,26 @@ class ButlerBot:
     async def cmd_start(self, message: Message) -> None:
         """Handle /start command."""
         try:
-            await message.answer("Hello! I'm your Butler. Use /help to see available commands.")
+            await message.answer(
+                "Hello! I'm your Butler. Use /help to see available commands."
+            )
         except Exception as e:
-            logger.error("Failed to send start message", user_id=message.from_user.id, error=str(e))
+            logger.error(
+                "Failed to send start message",
+                user_id=message.from_user.id,
+                error=str(e),
+            )
 
     async def cmd_help(self, message: Message) -> None:
         """Handle /help command."""
         try:
             await message.answer("Available commands: /start, /help, /menu")
         except Exception as e:
-            logger.error("Failed to send help message", user_id=message.from_user.id, error=str(e))
+            logger.error(
+                "Failed to send help message",
+                user_id=message.from_user.id,
+                error=str(e),
+            )
 
     async def cmd_menu(self, message: Message) -> None:
         """Show main menu."""
@@ -97,7 +110,9 @@ class ButlerBot:
             keyboard = build_main_menu()
             await message.answer("📋 Main Menu:", reply_markup=keyboard.as_markup())
         except Exception as e:
-            logger.error("Failed to show menu", user_id=message.from_user.id, error=str(e))
+            logger.error(
+                "Failed to show menu", user_id=message.from_user.id, error=str(e)
+            )
             await message.answer("❌ Sorry, I couldn't load the menu. Please try again.")
 
     async def run(self) -> None:
@@ -105,7 +120,7 @@ class ButlerBot:
         try:
             # Start metrics server
             await self.metrics_server.start()
-            
+
             self._shutdown_manager.setup_signal_handlers()
             logger.info("Starting bot polling...")
             await self.dp.start_polling(self.bot)
@@ -113,25 +128,31 @@ class ButlerBot:
             logger.info("Bot polling cancelled")
         finally:
             await self._shutdown_handler()
-    
+
     async def _shutdown_handler(self) -> None:
         """Handle bot shutdown gracefully.
-        
+
         Stops polling, closes bot session, and stops metrics server.
         """
         logger.info("Stopping bot...")
+        close_error: Exception | None = None
         try:
             self._metrics.set_health_status(False)
-            
-            # Stop metrics server
             await self.metrics_server.stop()
-            
             await self.dp.stop_polling()
-            await self.bot.session.close()
-            logger.info("Bot stopped successfully")
-        except Exception as e:
-            logger.error(f"Error during bot shutdown: {e}", exc_info=True)
+        except Exception as exc:  # noqa: BLE001
+            logger.error(f"Error during bot shutdown: {exc}", exc_info=True)
+        finally:
+            try:
+                await self.bot.session.close()
+            except Exception as exc:  # noqa: BLE001
+                close_error = exc
+                logger.error(
+                    f"Failed to close bot session: {exc}", exc_info=True
+                )
 
+        if close_error is None:
+            logger.info("Bot stopped successfully")
 
 
 def create_dispatcher() -> Dispatcher:
@@ -155,7 +176,6 @@ def create_dispatcher() -> Dispatcher:
     # Register outer middleware explicitly for aiogram v3 compatibility
     dp.update.outer_middleware.register(StatePersistenceMiddleware())
 
-    dp.include_router(tasks_router)
     dp.include_router(menu_router)
 
     return dp
@@ -163,15 +183,16 @@ def create_dispatcher() -> Dispatcher:
 
 async def main() -> None:  # pragma: no cover - manual run helper
     import os
+
     from src.presentation.bot.factory import create_butler_orchestrator
 
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
     if not token:
         raise RuntimeError("TELEGRAM_BOT_TOKEN is required")
-    
+
     # Create orchestrator using factory
     orchestrator = await create_butler_orchestrator()
-    
+
     # Create bot with orchestrator via DI
     bot = ButlerBot(token=token, orchestrator=orchestrator)
     await bot.run()
@@ -179,5 +200,3 @@ async def main() -> None:  # pragma: no cover - manual run helper
 
 if __name__ == "__main__":  # pragma: no cover
     asyncio.run(main())
-
-

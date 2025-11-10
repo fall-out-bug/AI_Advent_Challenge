@@ -34,5 +34,3 @@ class Handler(ABC):
         Raises:
             Exception: If handling fails
         """
-        pass
-

@@ -183,15 +183,19 @@ class ChannelScorer:
                 for title_token in title_tokens:
                     # Normalize for Russian declensions: remove common endings
                     # This handles "Набоки" (множественное) vs "Набока" (единственное)
-                    query_stem = query_token.rstrip('еиыаяую')
-                    title_stem = title_token.rstrip('еиыаяую')
-                    
+                    query_stem = query_token.rstrip("еиыаяую")
+                    title_stem = title_token.rstrip("еиыаяую")
+
                     # Check if query token contains title token or vice versa
                     # (handles Russian declensions)
-                    if (query_token in title_token or title_token in query_token or
-                        query_stem in title_stem or title_stem in query_stem or
-                        (len(query_stem) >= 4 and query_stem == title_stem) or
-                        (len(title_stem) >= 4 and title_stem == query_stem)):
+                    if (
+                        query_token in title_token
+                        or title_token in query_token
+                        or query_stem in title_stem
+                        or title_stem in query_stem
+                        or (len(query_stem) >= 4 and query_stem == title_stem)
+                        or (len(title_stem) >= 4 and title_stem == query_stem)
+                    ):
                         substring_matches += 1
                         break
 

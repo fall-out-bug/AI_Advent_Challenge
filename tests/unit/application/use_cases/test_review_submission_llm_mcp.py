@@ -14,35 +14,33 @@ from src.application.use_cases.review_submission_use_case import (
 from src.domain.value_objects.long_summarization_task import LongTask
 from src.domain.value_objects.task_status import TaskStatus
 from src.domain.value_objects.task_type import TaskType
+from src.domain.services.diff_analyzer import DiffAnalyzer
+from src.infrastructure.archive.archive_service import ZipArchiveService
 from src.infrastructure.config.settings import Settings
 
 
 @pytest.fixture
-def review_use_case_with_mcp(
-    monkeypatch: pytest.MonkeyPatch,
-) -> ReviewSubmissionUseCase:
+def review_use_case_with_mcp() -> ReviewSubmissionUseCase:
     """Create use case instance with MCP client and fallback publisher mocks."""
 
-    class _DummyAgent:
-        def __init__(self, *args, **kwargs) -> None:
-            return
-
-    monkeypatch.setattr(
-        "src.application.use_cases.review_submission_use_case.MultiPassReviewerAgent",
-        _DummyAgent,
-    )
+    settings = Settings()
+    archive_service = ZipArchiveService(settings)
+    unified_client = MagicMock()
+    unified_client.make_request = AsyncMock()
+    tasks_repository = MagicMock()
+    tasks_repository.count_reviews_in_window = AsyncMock(return_value=0)
 
     use_case = ReviewSubmissionUseCase(
-        archive_reader=MagicMock(),
-        diff_analyzer=MagicMock(),
-        unified_client=AsyncMock(),
+        archive_reader=archive_service,
+        diff_analyzer=DiffAnalyzer(),
+        unified_client=unified_client,
         review_repository=MagicMock(),
-        tasks_repository=MagicMock(),
+        tasks_repository=tasks_repository,
         publisher=AsyncMock(),
         log_parser=MagicMock(),
         log_normalizer=MagicMock(),
         log_analyzer=MagicMock(),
-        settings=Settings(),
+        settings=settings,
         mcp_client=AsyncMock(),
         fallback_publisher=AsyncMock(),
     )
@@ -195,32 +193,25 @@ async def test_publish_review_via_mcp_call_failure_triggers_fallback(
 
 
 @pytest.mark.asyncio
-async def test_publish_review_via_mcp_without_client_uses_fallback(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_publish_review_via_mcp_without_client_uses_fallback() -> None:
     """If MCP client is missing, the fallback publisher should handle output."""
 
-    class _DummyAgent:
-        def __init__(self, *args, **kwargs) -> None:
-            return
-
-    monkeypatch.setattr(
-        "src.application.use_cases.review_submission_use_case.MultiPassReviewerAgent",
-        _DummyAgent,
-    )
-
+    settings = Settings()
+    archive_service = ZipArchiveService(settings)
+    unified_client = MagicMock()
+    unified_client.make_request = AsyncMock()
     fallback = AsyncMock()
     use_case = ReviewSubmissionUseCase(
-        archive_reader=MagicMock(),
-        diff_analyzer=MagicMock(),
-        unified_client=AsyncMock(),
+        archive_reader=archive_service,
+        diff_analyzer=DiffAnalyzer(),
+        unified_client=unified_client,
         review_repository=MagicMock(),
         tasks_repository=MagicMock(),
         publisher=fallback,
         log_parser=MagicMock(),
         log_normalizer=MagicMock(),
         log_analyzer=MagicMock(),
-        settings=Settings(),
+        settings=settings,
         mcp_client=None,
         fallback_publisher=fallback,
     )
@@ -244,29 +235,6 @@ async def test_execute_publishes_via_mcp_successfully(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """End-to-end check: execute() publishes via MCP with valid data."""
-
-    class _DummyAgent:
-        def __init__(self, *args, **kwargs) -> None:
-            self.review_logger = None
-            self.client = None
-
-        async def review_from_archives(self, *args, **kwargs):
-            report = MagicMock()
-            report.session_id = "session-42"
-            report.to_dict.return_value = {}
-            report.to_markdown.return_value = "# Review"
-            report.pass_1 = MagicMock(metadata={"overall_score": 88}, findings=[])
-            report.pass_4_logs = None
-            report.total_findings = 0
-            report.critical_count = 0
-            report.major_count = 0
-            report.detected_components = []
-            return report
-
-    monkeypatch.setattr(
-        "src.application.use_cases.review_submission_use_case.MultiPassReviewerAgent",
-        _DummyAgent,
-    )
 
     unified_client = AsyncMock()
     unified_client.make_request.return_value = ModelResponse(
@@ -297,10 +265,27 @@ async def test_execute_publishes_via_mcp_successfully(
     tasks_repository = AsyncMock()
     tasks_repository.complete = AsyncMock()
     tasks_repository.fail = AsyncMock()
+    tasks_repository.count_reviews_in_window = AsyncMock(return_value=0)
+
+    report = MagicMock()
+    report.session_id = "session-42"
+    report.to_dict.return_value = {}
+    report.to_markdown.return_value = "# Review"
+    report.pass_1 = MagicMock(metadata={"overall_score": 88}, findings=[])
+    report.pass_4_logs = None
+    report.total_findings = 0
+    report.critical_count = 0
+    report.major_count = 0
+    report.detected_components = []
+
+    monkeypatch.setattr(
+        "src.application.use_cases.review_submission_use_case.ModularReviewService",
+        lambda **kwargs: MagicMock(review_submission=AsyncMock(return_value=report)),
+    )
 
     use_case = ReviewSubmissionUseCase(
-        archive_reader=MagicMock(),
-        diff_analyzer=MagicMock(),
+        archive_reader=ZipArchiveService(Settings()),
+        diff_analyzer=DiffAnalyzer(),
         unified_client=unified_client,
         review_repository=review_repository,
         tasks_repository=tasks_repository,
@@ -331,4 +316,3 @@ async def test_execute_publishes_via_mcp_successfully(
     fallback_publisher.publish_review.assert_not_awaited()  # type: ignore[attr-defined]
     review_repository.save_review_session.assert_awaited_once()  # type: ignore[attr-defined]
     tasks_repository.complete.assert_awaited_once()  # type: ignore[attr-defined]
-

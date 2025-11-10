@@ -83,11 +83,14 @@ make test-coverage
 pytest src/tests/unit/domain/test_agent_task.py -v
 ```
 
-### 4. Start Local Models (Optional)
+### 4. Start Local Models (Legacy)
+
+Local containers are deprecated; manifests remain in `archive/legacy/local_models/`
+for reference only.
 
 ```bash
-cd local_models
-docker-compose up -d
+cd archive/legacy/local_models
+docker-compose up -d mistral-chat
 
 # Verify models are running
 curl http://localhost:8000/health
@@ -454,22 +457,22 @@ from src.domain.agents.state_machine import DialogContext
 
 class MyNewHandler(Handler):
     """Handler for specific mode/functionality."""
-    
+
     def __init__(self, dependency: DependencyProtocol):
         """Initialize handler.
-        
+
         Args:
             dependency: Dependency implementing protocol (not concrete class)
         """
         self.dependency = dependency
-    
+
     async def handle(self, context: DialogContext, message: str) -> str:
         """Handle message in given context.
-        
+
         Args:
             context: Dialog context with state and data
             message: User message text
-            
+
         Returns:
             Response text to send to user
         """
@@ -497,37 +500,30 @@ def _get_handler_for_mode(self, mode: DialogMode) -> Handler:
 
 **Creating a New Use Case:**
 
-1. **Location:** `src/application/usecases/`
+1. **Location:** `src/application/use_cases/`
 
 2. **Structure:**
 ```python
-from src.application.usecases.result_types import ResultType
+from src.application.dtos.butler_use_case_dtos import TaskCreationResult
 from src.domain.interfaces.tool_client import ToolClientProtocol
 
 class MyNewUseCase:
     """Use case for specific business operation."""
-    
+
     def __init__(self, tool_client: ToolClientProtocol):
         """Initialize use case.
-        
+
         Args:
             tool_client: Tool client protocol (not concrete class)
         """
         self.tool_client = tool_client
-    
-    async def execute(self, param1: str, param2: int) -> ResultType:
-        """Execute use case.
-        
-        Args:
-            param1: First parameter
-            param2: Second parameter
-            
-        Returns:
-            Typed result (not raw dict)
-        """
+
+    async def execute(self, message: str) -> TaskCreationResult:
+        """Execute use case and return typed result."""
         # Implementation
-        pass
+        return TaskCreationResult(created=False, error="Not implemented")
 ```
+
 
 3. **Use Case Rules:**
    - **Stateless**: No instance state for business data
@@ -586,17 +582,17 @@ async def test_task_handler_creates_task_successfully():
     mock_tool_client = AsyncMock()
     mock_intent_orch.parse_task_intent.return_value = IntentResult(...)
     mock_tool_client.call_tool.return_value = {"id": "123"}
-    
+
     handler = TaskHandler(mock_intent_orch, mock_tool_client)
     context = DialogContext(
         state=DialogState.IDLE,
         user_id="123",
         session_id="456"
     )
-    
+
     # Act
     result = await handler.handle(context, "Buy milk")
-    
+
     # Assert
     assert "created" in result.lower()
     mock_tool_client.call_tool.assert_called_once()
@@ -618,14 +614,14 @@ async def test_orchestrator_routes_to_correct_handler(
     butler_orchestrator.mode_classifier.llm_client.make_request = AsyncMock(
         return_value={"content": "TASK"}
     )
-    
+
     # Execute
     response = await butler_orchestrator.handle_user_message(
         user_id="123",
         message="Buy milk",
         session_id="456"
     )
-    
+
     # Verify
     assert response is not None
     # Verify handler was called (check mocks)
@@ -647,14 +643,14 @@ async def test_telegram_bot_task_creation():
     orchestrator = await create_butler_orchestrator()
     bot = Bot(token="test")
     dp = Dispatcher()
-    
+
     # Configure orchestrator mocks
     # ...
-    
+
     # Act
     # Simulate user message
     # ...
-    
+
     # Assert
     # Verify bot response
     # ...
@@ -676,14 +672,14 @@ async def test_with_fixtures(
     mock_llm_client_protocol.make_request = AsyncMock(
         return_value="TASK"
     )
-    
+
     # Execute test
     response = await butler_orchestrator.handle_user_message(
         user_id="123",
         message=sample_task_message,
         session_id="456"
     )
-    
+
     # Verify
     assert response is not None
 ```
@@ -755,13 +751,13 @@ When adding new modes:
 async def handle(self, context: DialogContext, message: str) -> str:
     # Get user ID from context
     user_id = context.user_id
-    
+
     # Update context data
     context.update_data("key", "value")
-    
+
     # Transition state
     context.transition_to(DialogState.NEW_STATE)
-    
+
     # Get existing data
     existing_value = context.get_data("key", default="default")
 ```
@@ -771,7 +767,7 @@ async def handle(self, context: DialogContext, message: str) -> str:
 class BadHandler:
     def __init__(self):
         self.user_data = {}  # ❌ Stateless violation
-    
+
     async def handle(self, context, message):
         self.user_data[context.user_id] = message  # ❌ Wrong
 ```
@@ -785,7 +781,7 @@ from src.domain.interfaces.tool_client import ToolClientProtocol
 class MyHandler(Handler):
     def __init__(self, tool_client: ToolClientProtocol):
         self.tool_client = tool_client  # ✅ Protocol, not concrete
-    
+
     async def handle(self, context, message):
         result = await self.tool_client.call_tool(
             "tool_name",
@@ -831,9 +827,9 @@ class BadHandler:
 ## Getting Help
 
 - **Documentation**: See [docs/](docs/)
-  - [Architecture Documentation](docs/ARCHITECTURE.md)
-  - [API Documentation](docs/API.md)
-  - [Deployment Guide](docs/DEPLOYMENT.md)
+  - [Architecture Documentation](docs/reference/en/ARCHITECTURE.md)
+  - [API Documentation](docs/reference/en/API.md)
+  - [Deployment Guide](docs/guides/en/DEPLOYMENT.md)
 - **Questions**: Open an issue
 - **Bugs**: Report in issues
 - **Features**: Discuss in issues first
@@ -841,4 +837,3 @@ class BadHandler:
 ## License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.
-

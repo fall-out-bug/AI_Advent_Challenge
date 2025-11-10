@@ -8,7 +8,7 @@ from typing import Any, Dict, List
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from src.domain.entities.task import TaskIn, TaskUpdate
+from src.domain.entities.task import TaskIn
 
 
 class TaskRepository:
@@ -41,7 +41,9 @@ class TaskRepository:
         result = await self._db.tasks.insert_one(doc)
         return str(result.inserted_id)
 
-    async def list_tasks(self, user_id: int, status: str = "active", limit: int = 100) -> List[Dict[str, Any]]:
+    async def list_tasks(
+        self, user_id: int, status: str = "active", limit: int = 100
+    ) -> List[Dict[str, Any]]:
         """List tasks filtered by status for a user."""
 
         query: Dict[str, Any] = {"user_id": user_id}
@@ -83,5 +85,3 @@ def _to_object_id(task_id: str) -> ObjectId:
         return ObjectId(task_id)
     except Exception as exc:  # pragma: no cover - defensive
         raise ValueError("Invalid task_id") from exc
-
-

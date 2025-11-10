@@ -51,4 +51,3 @@ class CodeDiff:
             raise ValueError("lines_changed must be non-negative")
         if not 0.0 <= self.change_ratio <= 100.0:
             raise ValueError("change_ratio must be between 0 and 100")
-

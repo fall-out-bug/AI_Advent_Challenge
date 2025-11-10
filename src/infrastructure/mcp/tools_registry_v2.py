@@ -18,7 +18,6 @@ class ToolCategory:
 
     TASK = "task"
     DATA = "data"
-    REMINDERS = "reminders"
     IDLE = "idle"
 
 
@@ -47,7 +46,7 @@ class ToolSchema:
 
     Attributes:
         name: Tool name
-        category: Tool category (TASK, DATA, REMINDERS, IDLE)
+        category: Tool category (TASK, DATA, IDLE)
         parameters: List of tool parameters
         returns: Return type description
         description: Tool description
@@ -170,9 +169,7 @@ class MCPToolsRegistryV2:
             description=description,
         )
 
-    def _parse_parameters(
-        self, input_schema: Dict[str, Any]
-    ) -> List[ToolParameter]:
+    def _parse_parameters(self, input_schema: Dict[str, Any]) -> List[ToolParameter]:
         """Parse parameters from JSON schema.
 
         Args:
@@ -210,7 +207,7 @@ class MCPToolsRegistryV2:
             description: Tool description
 
         Returns:
-            Category string (TASK, DATA, REMINDERS, IDLE)
+            Category string (TASK, DATA, IDLE)
         """
         text_lower = (tool_name + " " + description).lower()
 
@@ -218,9 +215,6 @@ class MCPToolsRegistryV2:
             return ToolCategory.TASK
         if any(word in text_lower for word in ["data", "digest", "stats", "channel"]):
             return ToolCategory.DATA
-        if any(word in text_lower for word in ["reminder", "remind", "alert"]):
-            return ToolCategory.REMINDERS
-
         return ToolCategory.IDLE
 
     def _infer_returns(self, description: str) -> Dict[str, str]:
@@ -395,15 +389,12 @@ class MCPToolsRegistryV2:
         """List all tools in a category.
 
         Args:
-            category: Category name (TASK, DATA, REMINDERS, IDLE)
+            category: Category name (TASK, DATA, IDLE)
 
         Returns:
             List of ToolSchema objects
         """
         await self._ensure_initialized()
         return [
-            schema
-            for schema in self._schemas.values()
-            if schema.category == category
+            schema for schema in self._schemas.values() if schema.category == category
         ]
-

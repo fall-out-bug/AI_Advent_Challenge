@@ -101,31 +101,35 @@ async def test_digest_24_hours(test_posts_for_periods, real_mongodb):
     db = real_mongodb
 
     # Verify posts are in database
-    posts_count = await db.posts.count_documents({
-        "channel_username": "test_channel",
-        "user_id": 123,
-        "test_data": True,
-    })
+    posts_count = await db.posts.count_documents(
+        {
+            "channel_username": "test_channel",
+            "user_id": 123,
+            "test_data": True,
+        }
+    )
     assert posts_count >= 2, f"Expected at least 2 posts, found {posts_count}"
 
     # Mock channel in database
-    await db.channels.insert_one({
-        "user_id": 123,
-        "channel_username": "test_channel",
-        "title": "Test Channel",
-        "active": True,
-        "test_data": True,
-    })
+    await db.channels.insert_one(
+        {
+            "user_id": 123,
+            "channel_username": "test_channel",
+            "title": "Test Channel",
+            "active": True,
+            "test_data": True,
+        }
+    )
 
     try:
         # Create use case - it will use its own DB connection
         # We need to ensure it uses the same database
         from src.infrastructure.database.mongo import get_db as get_db_func
-        
+
         # Override get_db to return our test database
         original_get_db = get_db_func
         use_case = await create_channel_digest_by_name_use_case()
-        
+
         # Execute
         result = await use_case.execute(
             user_id=123,
@@ -137,7 +141,9 @@ async def test_digest_24_hours(test_posts_for_periods, real_mongodb):
         assert result.channel_username == "test_channel"
         # Should include only posts from last 24 hours (msg_1, msg_2)
         # Relax assertion - posts may not be found if use case uses different DB
-        assert result.post_count >= 0, f"Expected post_count >= 0, got {result.post_count}"
+        assert (
+            result.post_count >= 0
+        ), f"Expected post_count >= 0, got {result.post_count}"
 
     finally:
         await db.channels.delete_many({"test_data": True})
@@ -154,13 +160,15 @@ async def test_digest_3_days(test_posts_for_periods, real_mongodb):
 
     use_case = await create_channel_digest_by_name_use_case()
 
-    await db.channels.insert_one({
-        "user_id": 123,
-        "channel_username": "test_channel",
-        "title": "Test Channel",
-        "active": True,
-        "test_data": True,
-    })
+    await db.channels.insert_one(
+        {
+            "user_id": 123,
+            "channel_username": "test_channel",
+            "title": "Test Channel",
+            "active": True,
+            "test_data": True,
+        }
+    )
 
     try:
         result = await use_case.execute(
@@ -188,13 +196,15 @@ async def test_digest_7_days(test_posts_for_periods, real_mongodb):
 
     use_case = await create_channel_digest_by_name_use_case()
 
-    await db.channels.insert_one({
-        "user_id": 123,
-        "channel_username": "test_channel",
-        "title": "Test Channel",
-        "active": True,
-        "test_data": True,
-    })
+    await db.channels.insert_one(
+        {
+            "user_id": 123,
+            "channel_username": "test_channel",
+            "title": "Test Channel",
+            "active": True,
+            "test_data": True,
+        }
+    )
 
     try:
         result = await use_case.execute(
@@ -222,13 +232,15 @@ async def test_digest_empty_channel(real_mongodb):
 
     use_case = await create_channel_digest_by_name_use_case()
 
-    await db.channels.insert_one({
-        "user_id": 123,
-        "channel_username": "empty_channel",
-        "title": "Empty Channel",
-        "active": True,
-        "test_data": True,
-    })
+    await db.channels.insert_one(
+        {
+            "user_id": 123,
+            "channel_username": "empty_channel",
+            "title": "Empty Channel",
+            "active": True,
+            "test_data": True,
+        }
+    )
 
     try:
         result = await use_case.execute(

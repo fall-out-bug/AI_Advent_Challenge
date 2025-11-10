@@ -5,9 +5,7 @@ from typing import Optional
 from src.domain.entities.agent_task import AgentTask, TaskStatus, TaskType
 from src.domain.repositories.agent_repository import AgentRepository
 from src.domain.repositories.model_repository import ModelRepository
-from src.domain.services.code_quality_checker import (
-    CodeQualityChecker,
-)
+from src.domain.services.code_quality_checker import CodeQualityChecker
 from src.domain.services.token_analyzer import TokenAnalyzer
 from src.domain.value_objects.token_info import TokenInfo
 

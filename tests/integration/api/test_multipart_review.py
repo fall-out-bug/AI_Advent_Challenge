@@ -37,9 +37,7 @@ def test_client() -> TestClient:
 class TestMultipartReviewEndpoint:
     """Test multipart review endpoint."""
 
-    def test_create_review_with_multipart_files(
-        self, test_client: TestClient
-    ) -> None:
+    def test_create_review_with_multipart_files(self, test_client: TestClient) -> None:
         """Test creating review with multipart file upload."""
         # Create test ZIP files
         with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as new_zip:
@@ -69,9 +67,7 @@ class TestMultipartReviewEndpoint:
         finally:
             Path(new_zip_path).unlink()
 
-    def test_create_review_with_logs(
-        self, test_client: TestClient
-    ) -> None:
+    def test_create_review_with_logs(self, test_client: TestClient) -> None:
         """Test creating review with logs archive."""
         # Create test ZIP files
         with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as new_zip:
@@ -107,9 +103,7 @@ class TestMultipartReviewEndpoint:
             Path(new_zip_path).unlink()
             Path(logs_zip_path).unlink()
 
-    def test_create_review_missing_new_zip(
-        self, test_client: TestClient
-    ) -> None:
+    def test_create_review_missing_new_zip(self, test_client: TestClient) -> None:
         """Test creating review without required new_zip."""
         data = {
             "student_id": "2001",
@@ -147,4 +141,3 @@ class TestMultipartReviewEndpoint:
             assert response.json()["detail"] == "new_commit cannot be empty"
         finally:
             Path(new_zip_path).unlink()
-

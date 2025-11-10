@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -30,11 +30,7 @@ class LongTasksRepository:
     """
 
     def __init__(self, db: AsyncIOMotorDatabase) -> None:
-        """Initialize repository.
-
-        Args:
-            db: MongoDB database instance
-        """
+        """Initialize repository."""
         self._db = db
         self._indexes_created = False
 
@@ -44,56 +40,43 @@ class LongTasksRepository:
             return
 
         collection = self._db.long_tasks
-        # Index for picking next queued task by type
         await collection.create_index(
             [("task_type", 1), ("status", 1), ("created_at", 1)]
         )
-        # Index for status and created_at (backward compatibility)
         await collection.create_index([("status", 1), ("created_at", 1)])
-        # Index for user queries
         await collection.create_index([("user_id", 1), ("created_at", -1)])
-        # Unique index on task_id
+        await collection.create_index(
+            [("metadata.assignment_id", 1), ("created_at", -1)]
+        )
         await collection.create_index([("task_id", 1)], unique=True)
-        # TTL index for automatic cleanup
         await collection.create_index(
             [("created_at", 1)], expireAfterSeconds=604800
         )  # 7 days TTL
         self._indexes_created = True
 
     async def create(self, task: LongTask) -> str:
-        """Create new task.
-
-        Purpose:
-            Persist task to database with idempotency check.
-            If task with same task_id exists, returns existing task_id.
-
-        Args:
-            task: LongTask to create
-
-        Returns:
-            Task ID
-
-        Raises:
-            ValueError: If task data is invalid
-        """
+        """Create new task."""
         await self._ensure_indexes()
 
         collection = self._db.long_tasks
         task_dict = task.to_dict()
 
         try:
-            result = await collection.insert_one(task_dict)
+            await collection.insert_one(task_dict)
             logger.info(
-                f"Created long task: task_id={task.task_id}, "
-                f"type={task.task_type.value}, user_id={task.user_id}"
+                "Created long task: task_id=%s, type=%s, user_id=%s",
+                task.task_id,
+                task.task_type.value,
+                task.user_id,
             )
             return task.task_id
-        except Exception as e:
-            # Check if it's a duplicate key error
-            if "duplicate key" in str(e).lower() or "E11000" in str(e):
+        except Exception as exc:  # pragma: no cover - defensive
+            if "duplicate key" in str(exc).lower() or "E11000" in str(exc):
                 logger.warning(
-                    f"Task already exists (idempotent): task_id={task.task_id}, "
-                    f"type={task.task_type.value}, user_id={task.user_id}"
+                    "Task already exists (idempotent): task_id=%s, type=%s, user_id=%s",
+                    task.task_id,
+                    task.task_type.value,
+                    task.user_id,
                 )
                 return task.task_id
             raise
@@ -101,29 +84,14 @@ class LongTasksRepository:
     async def pick_next_queued(
         self, task_type: TaskType | None = None
     ) -> LongTask | None:
-        """Pick next queued task for processing.
-
-        Purpose:
-            Atomically finds and marks a queued task as running.
-            Prevents double-processing by using atomic update.
-            Optionally filters by task type.
-
-        Args:
-            task_type: Optional task type filter. If None, picks any queued task.
-
-        Returns:
-            LongTask if found, None otherwise
-        """
+        """Pick next queued task for processing."""
         await self._ensure_indexes()
 
         collection = self._db.long_tasks
-
-        # Build query with optional task type filter
         query: dict[str, Any] = {"status": TaskStatus.QUEUED.value}
         if task_type:
             query["task_type"] = task_type.value
 
-        # Atomic find and update to prevent race conditions
         result = await collection.find_one_and_update(
             query,
             {
@@ -132,7 +100,7 @@ class LongTasksRepository:
                     "started_at": datetime.utcnow(),
                 }
             },
-            sort=[("created_at", 1)],  # Oldest first
+            sort=[("created_at", 1)],
             return_document=ReturnDocument.AFTER,
         )
 
@@ -142,22 +110,25 @@ class LongTasksRepository:
         try:
             task = LongTask.from_dict(result)
             logger.info(
-                f"Picked queued task: task_id={task.task_id}, "
-                f"type={task.task_type.value}, user_id={task.user_id}"
+                "Picked queued task: task_id=%s, type=%s, user_id=%s",
+                task.task_id,
+                task.task_type.value,
+                task.user_id,
             )
             return task
-        except Exception as e:
+        except Exception as exc:  # pragma: no cover - defensive
             logger.error(
-                f"Failed to deserialize task: task_id={result.get('task_id')}, error={e}",
+                "Failed to deserialize task: task_id=%s, error=%s",
+                result.get("task_id"),
+                exc,
                 exc_info=True,
             )
-            # Mark as failed if deserialization fails
             await collection.update_one(
                 {"task_id": result.get("task_id")},
                 {
                     "$set": {
                         "status": TaskStatus.FAILED.value,
-                        "error": f"Deserialization error: {str(e)}",
+                        "error": f"Deserialization error: {exc}",
                         "finished_at": datetime.utcnow(),
                     }
                 },
@@ -165,11 +136,7 @@ class LongTasksRepository:
             return None
 
     async def mark_running(self, task_id: str) -> None:
-        """Mark task as running (idempotent).
-
-        Args:
-            task_id: Task ID
-        """
+        """Mark task as running (idempotent)."""
         await self._ensure_indexes()
 
         collection = self._db.long_tasks
@@ -184,21 +151,16 @@ class LongTasksRepository:
         )
 
         if result.modified_count > 0:
-            logger.info(f"Marked task as running: task_id={task_id}")
+            logger.info("Marked task as running: task_id=%s", task_id)
         else:
-            logger.debug(f"Task already running or not queued: task_id={task_id}")
+            logger.debug("Task already running or not queued: task_id=%s", task_id)
 
     async def complete(self, task_id: str, result_text: str) -> None:
-        """Mark task as succeeded with result.
-
-        Args:
-            task_id: Task ID
-            result_text: Generated summary text or session_id
-        """
+        """Mark task as succeeded with result."""
         await self._ensure_indexes()
 
         collection = self._db.long_tasks
-        result = await collection.update_one(
+        await collection.update_one(
             {"task_id": task_id},
             {
                 "$set": {
@@ -209,62 +171,38 @@ class LongTasksRepository:
             },
         )
 
-        if result.modified_count > 0:
-            logger.info(
-                f"Marked task as succeeded: task_id={task_id}, "
-                f"result_length={len(result_text)}"
-            )
-        else:
-            logger.warning(f"Task not found or already completed: task_id={task_id}")
-
     async def fail(self, task_id: str, error: str) -> None:
-        """Mark task as failed with error.
-
-        Args:
-            task_id: Task ID
-            error: Error message
-        """
+        """Mark task as failed with error."""
         await self._ensure_indexes()
 
         collection = self._db.long_tasks
-        result = await collection.update_one(
+        await collection.update_one(
             {"task_id": task_id},
             {
                 "$set": {
                     "status": TaskStatus.FAILED.value,
-                    "error": error[:1000],  # Limit error length
+                    "error": error[:1000],
                     "finished_at": datetime.utcnow(),
                 }
             },
         )
 
-        if result.modified_count > 0:
-            logger.warning(f"Marked task as failed: task_id={task_id}, error={error[:100]}")
-        else:
-            logger.warning(f"Task not found: task_id={task_id}")
-
     async def get_by_id(self, task_id: str) -> LongTask | None:
-        """Get task by ID.
-
-        Args:
-            task_id: Task ID
-
-        Returns:
-            LongTask if found, None otherwise
-        """
+        """Get task by ID."""
         await self._ensure_indexes()
 
         collection = self._db.long_tasks
         result = await collection.find_one({"task_id": task_id})
-
         if not result:
             return None
 
         try:
             return LongTask.from_dict(result)
-        except Exception as e:
+        except Exception as exc:  # pragma: no cover - defensive
             logger.error(
-                f"Failed to deserialize task: task_id={task_id}, error={e}",
+                "Failed to deserialize task: task_id=%s, error=%s",
+                task_id,
+                exc,
                 exc_info=True,
             )
             return None
@@ -276,17 +214,7 @@ class LongTasksRepository:
         status: TaskStatus | None = None,
         task_type: TaskType | None = None,
     ) -> list[LongTask]:
-        """Get tasks by user ID.
-
-        Args:
-            user_id: User ID
-            limit: Maximum number of tasks to return
-            status: Optional status filter
-            task_type: Optional task type filter
-
-        Returns:
-            List of LongTask
-        """
+        """Get tasks by user ID."""
         await self._ensure_indexes()
 
         collection = self._db.long_tasks
@@ -297,30 +225,19 @@ class LongTasksRepository:
             query["task_type"] = task_type.value
 
         cursor = collection.find(query).sort("created_at", -1).limit(limit)
-        tasks = []
+        tasks: list[LongTask] = []
 
         async for doc in cursor:
             try:
                 task = LongTask.from_dict(doc)
                 tasks.append(task)
-            except Exception as e:
-                logger.error(f"Failed to deserialize task: error={e}", exc_info=True)
+            except Exception as exc:  # pragma: no cover - defensive
+                logger.error("Failed to deserialize task: error=%s", exc, exc_info=True)
 
         return tasks
 
     async def get_queue_size(self, task_type: TaskType | None = None) -> int:
-        """Get number of queued tasks.
-
-        Purpose:
-            Returns count of tasks with QUEUED status.
-            Optionally filters by task type.
-
-        Args:
-            task_type: Optional task type filter
-
-        Returns:
-            Number of queued tasks
-        """
+        """Get number of queued tasks."""
         await self._ensure_indexes()
         collection = self._db.long_tasks
         query: dict[str, Any] = {"status": TaskStatus.QUEUED.value}
@@ -328,3 +245,25 @@ class LongTasksRepository:
             query["task_type"] = task_type.value
         return await collection.count_documents(query)
 
+    async def count_reviews_in_window(
+        self,
+        *,
+        user_id: int | None = None,
+        assignment_id: str | None = None,
+        window_seconds: int,
+    ) -> int:
+        """Count review tasks created within the specified time window."""
+        await self._ensure_indexes()
+
+        collection = self._db.long_tasks
+        threshold = datetime.utcnow() - timedelta(seconds=window_seconds)
+        query: dict[str, Any] = {
+            "task_type": TaskType.CODE_REVIEW.value,
+            "created_at": {"$gte": threshold},
+        }
+        if user_id is not None:
+            query["user_id"] = user_id
+        if assignment_id is not None:
+            query["metadata.assignment_id"] = assignment_id
+
+        return await collection.count_documents(query)

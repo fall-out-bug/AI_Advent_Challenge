@@ -71,7 +71,7 @@ Just respond naturally to what the user said. Be brief and helpful.
                     f"ChatHandler: intent={intent_result.intent.value}, "
                     f"confidence={intent_result.confidence:.2f}, entities={intent_result.entities}"
                 )
-                
+
                 # If intent is clearly NOT IDLE, log warning (but still respond as chat)
                 if intent_result.intent not in [
                     IntentType.IDLE,
@@ -99,7 +99,7 @@ Just respond naturally to what the user said. Be brief and helpful.
             return cleaned
         except Exception as e:
             logger.error(f"Chat handling failed: {e}", exc_info=True)
-            return "I'm here to help! Try asking me to create a task, show data, or list reminders."
+            return "I'm here to help! Try asking me to create a task or show data insights."
 
     def _clean_response(self, response: str) -> str:
         """Clean LLM response from formatting artifacts.
@@ -111,7 +111,7 @@ Just respond naturally to what the user said. Be brief and helpful.
             Cleaned response text
         """
         text = response.strip()
-        
+
         # Remove common prefixes if present (more aggressive)
         prefixes_to_remove = [
             "User:",
@@ -122,29 +122,31 @@ Just respond naturally to what the user said. Be brief and helpful.
         for prefix in prefixes_to_remove:
             # Remove at start
             if text.startswith(prefix):
-                text = text[len(prefix):].strip()
+                text = text[len(prefix) :].strip()
             # Remove anywhere in text (LLM sometimes includes it in middle)
-            text = re.sub(rf'^{re.escape(prefix)}\s*', '', text, flags=re.MULTILINE)
-            text = re.sub(rf'\s*{re.escape(prefix)}\s*', ' ', text)
-        
+            text = re.sub(rf"^{re.escape(prefix)}\s*", "", text, flags=re.MULTILINE)
+            text = re.sub(rf"\s*{re.escape(prefix)}\s*", " ", text)
+
         # Detect and remove bilingual responses (Russian + English)
         # Check if text contains both Russian and English
-        has_russian = bool(re.search(r'[а-яА-Я]', text))
-        has_english = bool(re.search(r'\b[A-Z][a-z]+', text))  # English words starting with capital
-        
+        has_russian = bool(re.search(r"[а-яА-Я]", text))
+        has_english = bool(
+            re.search(r"\b[A-Z][a-z]+", text)
+        )  # English words starting with capital
+
         if has_russian and has_english:
             # Split by periods, commas, or sentence boundaries
-            sentences = re.split(r'[.!?]\s+|,\s+(?=[A-ZА-Я])', text)
+            sentences = re.split(r"[.!?]\s+|,\s+(?=[A-ZА-Я])", text)
             russian_parts = []
             english_parts = []
-            
+
             for sent in sentences:
                 if not sent.strip():
                     continue
                 # Count Russian vs English characters
-                ru_chars = len(re.findall(r'[а-яА-Я]', sent))
-                en_words = len(re.findall(r'\b[A-Z][a-z]+', sent))
-                
+                ru_chars = len(re.findall(r"[а-яА-Я]", sent))
+                en_words = len(re.findall(r"\b[A-Z][a-z]+", sent))
+
                 # If Russian chars dominate, it's Russian
                 if ru_chars > en_words * 2:
                     russian_parts.append(sent.strip())
@@ -153,13 +155,13 @@ Just respond naturally to what the user said. Be brief and helpful.
                 elif ru_chars > 0:
                     # Mixed or mostly Russian
                     russian_parts.append(sent.strip())
-            
+
             # Keep Russian if we have Russian parts, otherwise keep what we have
             if russian_parts and len(russian_parts) >= len(english_parts):
-                text = '. '.join(russian_parts)
-                if text and not text.endswith(('.', '!', '?')):
-                    text += '.'
-        
+                text = ". ".join(russian_parts)
+                if text and not text.endswith((".", "!", "?")):
+                    text += "."
+
         # Remove duplicate text patterns (e.g., "Russian (English)")
         # Split by common separators and keep only first meaningful part
         if "\n\n" in text:
@@ -170,39 +172,42 @@ Just respond naturally to what the user said. Be brief and helpful.
                 second = parts[1].strip()
                 # If second part is shorter and doesn't contain Russian, likely translation
                 if first and second:
-                    first_has_ru = bool(re.search(r'[а-яА-Я]', first))
-                    second_has_ru = bool(re.search(r'[а-яА-Я]', second))
-                    if first_has_ru and not second_has_ru and len(second) < len(first) * 1.5:
+                    first_has_ru = bool(re.search(r"[а-яА-Я]", first))
+                    second_has_ru = bool(re.search(r"[а-яА-Я]", second))
+                    if (
+                        first_has_ru
+                        and not second_has_ru
+                        and len(second) < len(first) * 1.5
+                    ):
                         text = first
                     elif not first_has_ru and second_has_ru:
                         text = second
-        
+
         # Remove parenthetical translations like "(Hello there, user!)" or "(English text)"
         # More aggressive: remove any parentheses that contain English-only text
         def replace_parentheses(match):
             content = match.group(1)
             # If content is English-only (no Russian), remove it
-            if not re.search(r'[а-яА-Я]', content):
-                return ''
+            if not re.search(r"[а-яА-Я]", content):
+                return ""
             return match.group(0)  # Keep if contains Russian
-        
-        text = re.sub(r'\(([^)]+)\)', replace_parentheses, text)
-        
+
+        text = re.sub(r"\(([^)]+)\)", replace_parentheses, text)
+
         # Remove redundant greeting patterns
-        text = re.sub(r'^Здравствуйте[^!]*!\s*', '', text, flags=re.IGNORECASE)
-        
+        text = re.sub(r"^Здравствуйте[^!]*!\s*", "", text, flags=re.IGNORECASE)
+
         # Remove "User:", "Butler:", "User message:", "Response:" patterns anywhere in text
-        text = re.sub(r'User\s*(message)?\s*:\s*', '', text, flags=re.IGNORECASE)
-        text = re.sub(r'Butler\s*:\s*', '', text, flags=re.IGNORECASE)
-        text = re.sub(r'Response\s*:\s*', '', text, flags=re.IGNORECASE)
-        
+        text = re.sub(r"User\s*(message)?\s*:\s*", "", text, flags=re.IGNORECASE)
+        text = re.sub(r"Butler\s*:\s*", "", text, flags=re.IGNORECASE)
+        text = re.sub(r"Response\s*:\s*", "", text, flags=re.IGNORECASE)
+
         # Clean up multiple spaces
-        text = re.sub(r'\s+', ' ', text)
-        
+        text = re.sub(r"\s+", " ", text)
+
         # Final cleanup - remove any remaining prefix artifacts
         text = text.strip()
         # Remove leading punctuation that might be left from prefix removal
-        text = re.sub(r'^[:\-\s]+', '', text)
-        
-        return text.strip()
+        text = re.sub(r"^[:\-\s]+", "", text)
 
+        return text.strip()

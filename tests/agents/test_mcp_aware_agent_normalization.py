@@ -36,11 +36,19 @@ async def test_days_to_hours_and_user_id_injection():
     agent = MCPAwareAgent(mcp_client=mcp, llm_client=llm)
 
     tools = [
-        type("T", (), {
-            "name": "get_channel_digest_by_name",
-            "description": "",
-            "input_schema": {"type": "object", "properties": {"user_id": {}, "channel_username": {}, "hours": {}}, "required": ["user_id", "channel_username", "hours"]},
-        })()
+        type(
+            "T",
+            (),
+            {
+                "name": "get_channel_digest_by_name",
+                "description": "",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {"user_id": {}, "channel_username": {}, "hours": {}},
+                    "required": ["user_id", "channel_username", "hours"],
+                },
+            },
+        )()
     ]
 
     params = {"channel_name": "Набока", "days": 3}
@@ -67,11 +75,19 @@ async def test_list_channels_injects_user_id():
     agent = MCPAwareAgent(mcp_client=mcp, llm_client=llm)
 
     tools = [
-        type("T", (), {
-            "name": "list_channels",
-            "description": "",
-            "input_schema": {"type": "object", "properties": {"user_id": {}}, "required": ["user_id"]},
-        })()
+        type(
+            "T",
+            (),
+            {
+                "name": "list_channels",
+                "description": "",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {"user_id": {}},
+                    "required": ["user_id"],
+                },
+            },
+        )()
     ]
 
     result = await agent._stage_execution(
@@ -114,7 +130,7 @@ async def test_channel_username_resolution_unresolved_returns_none():
     llm = DummyLLMClient()
     agent = MCPAwareAgent(mcp_client=mcp, llm_client=llm)
 
-    resolved = await agent._resolve_channel_username_via_metadata("Неизвестный", user_id=1)
+    resolved = await agent._resolve_channel_username_via_metadata(
+        "Неизвестный", user_id=1
+    )
     assert resolved is None
-
-

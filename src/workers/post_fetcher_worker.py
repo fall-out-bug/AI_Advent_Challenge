@@ -10,24 +10,24 @@ from __future__ import annotations
 import asyncio
 import os
 import signal
+import time
 from datetime import datetime, timedelta
 from typing import Optional
 
+from src.infrastructure.clients.telegram_utils import fetch_channel_posts
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.database.mongo import get_db
 from src.infrastructure.logging import get_logger
 from src.infrastructure.monitoring.prometheus_metrics import (
-    post_fetcher_posts_saved_total,
     post_fetcher_channels_processed_total,
-    post_fetcher_errors_total,
     post_fetcher_duration_seconds,
+    post_fetcher_errors_total,
+    post_fetcher_last_run_timestamp,
+    post_fetcher_posts_saved_total,
     post_fetcher_posts_skipped_total,
     post_fetcher_worker_running,
-    post_fetcher_last_run_timestamp,
 )
-from src.infrastructure.clients.telegram_utils import fetch_channel_posts
 from src.presentation.mcp.client import get_mcp_client
-import time
 
 logger = get_logger("post_fetcher_worker")
 
@@ -62,6 +62,7 @@ class PostFetcherWorker:
 
     def _setup_signal_handlers(self) -> None:
         """Register signal handlers for graceful shutdown."""
+
         def signal_handler(signum, frame):
             logger.info(f"Received shutdown signal: signal={signum}")
             self.stop()
@@ -86,9 +87,9 @@ class PostFetcherWorker:
                             )
                     await asyncio.sleep(CHECK_INTERVAL_SECONDS)
                 except Exception as e:
-                    logger.error("Worker error in main loop",
-                               error=str(e),
-                               exc_info=True)
+                    logger.error(
+                        "Worker error in main loop", error=str(e), exc_info=True
+                    )
                     post_fetcher_errors_total.labels(error_type="main_loop").inc()
                     await asyncio.sleep(300)  # Wait 5 min on error
         finally:
@@ -112,7 +113,7 @@ class PostFetcherWorker:
         """
         if self._last_run is None:
             return True
-        
+
         interval_seconds = self.settings.post_fetch_interval_hours * 3600
         elapsed = (datetime.utcnow() - self._last_run).total_seconds()
         return elapsed >= interval_seconds
@@ -129,27 +130,27 @@ class PostFetcherWorker:
             db = await get_db()
             channels_cursor = db.channels.find({"active": True})
             channels = await channels_cursor.to_list(length=1000)
-            
+
             if not channels:
                 logger.info("No active channels to process")
                 return
 
             logger.info(f"Processing channels: channel_count={len(channels)}")
-            
+
             stats = {
                 "channels_processed": 0,
                 "channels_failed": 0,
                 "total_posts_saved": 0,
                 "total_posts_skipped": 0,
             }
-            
+
             for channel in channels:
                 try:
                     result = await self._process_channel(channel, db)
                     stats["channels_processed"] += 1
                     stats["total_posts_saved"] += result.get("saved", 0)
                     stats["total_posts_skipped"] += result.get("skipped", 0)
-                    
+
                     # Record metrics per channel
                     channel_username = channel.get("channel_username", "unknown")
                     post_fetcher_posts_saved_total.labels(
@@ -161,21 +162,19 @@ class PostFetcherWorker:
                 except Exception as e:
                     stats["channels_failed"] += 1
                     await self._handle_channel_error(channel, e)
-            
+
             # Record metrics
             post_fetcher_channels_processed_total.inc(stats["channels_processed"])
             duration = time.time() - start_time
             post_fetcher_duration_seconds.observe(duration)
-            
+
             logger.info(f"Channel processing completed: statistics={stats}")
-            
+
         except Exception as e:
             logger.error(f"Error processing channels: error={str(e)}", exc_info=True)
             post_fetcher_errors_total.labels(error_type="process_channels").inc()
 
-    async def _process_channel(
-        self, channel: dict, db
-    ) -> dict[str, int]:
+    async def _process_channel(self, channel: dict, db) -> dict[str, int]:
         """Process a single channel.
 
         Purpose:
@@ -194,9 +193,9 @@ class PostFetcherWorker:
         """
         channel_username = channel.get("channel_username", "")
         user_id = channel.get("user_id")
-        
+
         # Validate channel_username: ensure it's a valid username (not a title)
-        # If channel_username looks like a title (contains Cyrillic, spaces, etc.), 
+        # If channel_username looks like a title (contains Cyrillic, spaces, etc.),
         # fetch metadata to get the real username
         if not channel_username or self._looks_like_title(channel_username):
             logger.warning(
@@ -204,7 +203,10 @@ class PostFetcherWorker:
                 f"fetching metadata to get real username"
             )
             try:
-                from src.presentation.mcp.tools.channels.channel_metadata import get_channel_metadata
+                from src.presentation.mcp.tools.channels.channel_metadata import (
+                    get_channel_metadata,
+                )
+
                 metadata = await get_channel_metadata(channel_username, user_id=user_id)
                 if metadata.get("success") and metadata.get("channel_username"):
                     # Update channel document with correct username
@@ -212,7 +214,7 @@ class PostFetcherWorker:
                     if correct_username != channel_username:
                         await db.channels.update_one(
                             {"_id": channel["_id"]},
-                            {"$set": {"channel_username": correct_username}}
+                            {"$set": {"channel_username": correct_username}},
                         )
                         logger.info(
                             f"Updated channel username in database: "
@@ -246,12 +248,12 @@ class PostFetcherWorker:
                 raise ValueError(
                     f"Failed to resolve title-like username '{channel_username}': {e}"
                 )
-        
+
         # Determine since timestamp
         # For first fetch or if channel was never fetched, use 7 days lookback
         # For regular fetches, use configured interval (at least 24 hours)
         last_fetch = channel.get("last_fetch")
-        
+
         if not last_fetch:
             # First fetch: get posts from last 7 days to ensure we don't miss anything
             lookback_hours = 7 * 24  # 168 hours (7 days)
@@ -263,16 +265,20 @@ class PostFetcherWorker:
             # Regular fetch: use configured interval, but at least 24 hours
             lookback_hours = max(self.settings.post_fetch_interval_hours, 24)
             since = datetime.utcnow() - timedelta(hours=lookback_hours)
-            
+
             try:
                 if isinstance(last_fetch, str):
-                    last_fetch_dt = datetime.fromisoformat(last_fetch.replace("Z", "+00:00"))
+                    last_fetch_dt = datetime.fromisoformat(
+                        last_fetch.replace("Z", "+00:00")
+                    )
                 else:
                     last_fetch_dt = last_fetch
-                
+
                 # Use last_fetch only if it's more recent than our lookback window
                 # Otherwise use lookback window to ensure we get all posts
-                hours_since_last_fetch = (datetime.utcnow() - last_fetch_dt).total_seconds() / 3600
+                hours_since_last_fetch = (
+                    datetime.utcnow() - last_fetch_dt
+                ).total_seconds() / 3600
                 if hours_since_last_fetch < lookback_hours:
                     # If last fetch was recent, use it to avoid duplicates
                     # But still ensure we get at least 24 hours of posts
@@ -294,27 +300,27 @@ class PostFetcherWorker:
                     f"Failed to parse last_fetch for channel {channel_username}, "
                     f"using 7-day lookback"
                 )
-        
+
         logger.debug(
             f"Processing channel: channel={channel_username}, user_id={user_id}, "
             f"since={since.isoformat()}"
         )
-        
+
         # Fetch posts from Telegram
         posts = await fetch_channel_posts(
             channel_username=channel_username,
             since=since,
             user_id=user_id,
-            save_to_db=True  # Automatically save via repository
+            save_to_db=True,  # Automatically save via repository
         )
-        
+
         # Log if no posts found (might be normal if channel doesn't exist or has no posts)
         if not posts:
             logger.debug(
                 f"No posts found for channel: channel={channel_username}, "
                 f"since={since.isoformat()}"
             )
-        
+
         # Save posts via MCP tool for statistics
         result = {"saved": 0, "skipped": 0}
         if posts:
@@ -325,7 +331,7 @@ class PostFetcherWorker:
                         "posts": posts,
                         "channel_username": channel_username,
                         "user_id": user_id,
-                    }
+                    },
                 )
                 result["saved"] = save_result.get("saved", 0)
                 result["skipped"] = save_result.get("skipped", 0)
@@ -334,50 +340,50 @@ class PostFetcherWorker:
                     f"Failed to save posts via MCP tool: channel={channel_username}, "
                     f"error={str(e)}"
                 )
-        
+
         # Update last_fetch timestamp
         await db.channels.update_one(
             {"_id": channel["_id"]},
-            {"$set": {"last_fetch": datetime.utcnow().isoformat()}}
+            {"$set": {"last_fetch": datetime.utcnow().isoformat()}},
         )
-        
+
         logger.debug(
             f"Channel processed: channel={channel_username}, posts_fetched={len(posts)}, "
             f"saved={result['saved']}, skipped={result['skipped']}"
         )
-        
+
         return result
 
     def _looks_like_title(self, text: str) -> bool:
         """Check if text looks like a channel title rather than username.
-        
+
         Purpose:
-            Detect if channel_username is actually a title (e.g., "Набока") 
+            Detect if channel_username is actually a title (e.g., "Набока")
             instead of a username (e.g., "onaboka").
-        
+
         Args:
             text: Text to check
-            
+
         Returns:
             True if text looks like a title (contains Cyrillic, spaces, etc.)
         """
         if not text:
             return True
-        
+
         # Usernames are typically lowercase ASCII letters, numbers, underscores
         # They don't contain spaces, Cyrillic, or special characters
-        has_cyrillic = any('\u0400' <= char <= '\u04FF' for char in text)
-        has_spaces = ' ' in text
+        has_cyrillic = any("\u0400" <= char <= "\u04FF" for char in text)
+        has_spaces = " " in text
         has_uppercase = any(c.isupper() for c in text if c.isalpha())
-        
+
         # If contains Cyrillic, spaces, or uppercase (and not all uppercase), it's likely a title
         if has_cyrillic or has_spaces:
             return True
-        
+
         # If has uppercase letters in the middle (not just at start), might be a title
         if has_uppercase and not (text[0].isupper() and text[1:].islower()):
             return True
-        
+
         return False
 
     async def _handle_channel_error(self, channel: dict, error: Exception) -> None:
@@ -395,6 +401,5 @@ class PostFetcherWorker:
         logger.error(
             f"Error processing channel: channel={channel.get('channel_username')}, "
             f"user_id={channel.get('user_id')}, error={str(error)}",
-            exc_info=True
+            exc_info=True,
         )
-

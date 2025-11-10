@@ -1,0 +1,88 @@
+[1m============================= test session starts ==============================[0m
+platform linux -- Python 3.10.12, pytest-7.4.4, pluggy-1.6.0
+rootdir: /home/fall_out_bug/studies/AI_Challenge
+configfile: pytest.ini
+testpaths: src/tests
+plugins: cov-4.1.0, asyncio-0.21.2, anyio-4.11.0
+asyncio: mode=auto
+collected 431 items
+
+src/tests/application/test_date_parser.py [32m.[0m[32m.[0m[32m.[0m[32m                            [  0%][0m
+src/tests/application/test_intent_orchestrator.py [32m.[0m[32m.[0m[32m                     [  1%][0m
+src/tests/application/services/test_modular_review_service.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m       [  2%][0m
+src/tests/application/use_cases/test_review_submission_use_case.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m [  3%]
+[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                                                    [  4%][0m
+src/tests/domain/test_intent_models.py [32m.[0m[32m.[0m[32m.[0m[32m                               [  5%][0m
+src/tests/e2e/test_full_workflow.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                            [  7%][0m
+src/tests/infrastructure/test_summarizer.py [32m.[0m[32m.[0m[32m                           [  7%][0m
+src/tests/infrastructure/test_task_repository.py [32m.[0m[32m.[0m[32m                      [  8%][0m
+src/tests/infrastructure/test_telegram_utils.py [32m.[0m[32m.[0m[32m                       [  8%][0m
+src/tests/infrastructure/clients/test_llm_client.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m             [ 10%][0m
+src/tests/infrastructure/monitoring/test_prometheus_metrics.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m [ 12%]
+[0m[32m                                                                         [ 12%][0m
+src/tests/integration/test_agent_workflows.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                  [ 14%][0m
+src/tests/integration/maintenance/test_backup.py [32m.[0m[32m.[0m[32m                      [ 15%][0m
+src/tests/integration/maintenance/test_cleanup.py [32m.[0m[32m.[0m[32m.[0m[32m                    [ 15%][0m
+src/tests/integration/maintenance/test_export_data.py [32m.[0m[32m.[0m[32m                 [ 16%][0m
+src/tests/integration/maintenance/test_validate.py [32m.[0m[32m.[0m[32m.[0m[32m                   [ 16%][0m
+src/tests/presentation/test_api.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                 [ 18%][0m
+src/tests/presentation/bot/test_channels_handlers.py [32m.[0m[32m                   [ 18%][0m
+src/tests/presentation/bot/test_menu_navigation.py [32m.[0m[32m.[0m[32m                    [ 18%][0m
+src/tests/presentation/bot/test_natural_language_flow.py [32m.[0m[32m               [ 19%][0m
+src/tests/presentation/bot/test_tasks_handlers.py [32m.[0m[32m.[0m[32m                     [ 19%][0m
+src/tests/presentation/cli/backoffice/test_channels_commands.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m   [ 20%][0m
+src/tests/presentation/cli/backoffice/test_cli_flow.py [32m.[0m[32m                 [ 21%][0m
+src/tests/presentation/cli/backoffice/test_digest_commands.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m      [ 22%][0m
+src/tests/presentation/cli/backoffice/test_digest_exporter.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m       [ 23%][0m
+src/tests/presentation/cli/backoffice/test_formatters.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m            [ 24%][0m
+src/tests/presentation/mcp/test_adapters.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                 [ 26%][0m
+src/tests/presentation/mcp/test_digest_tools.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                  [ 28%][0m
+src/tests/presentation/mcp/test_error_handling.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m           [ 31%][0m
+src/tests/presentation/mcp/test_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                    [ 32%][0m
+src/tests/presentation/mcp/test_nlp_tools.py [32m.[0m[32m                           [ 32%][0m
+src/tests/presentation/mcp/test_performance.py [32m.[0m[33mx[0m[33mx[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                [ 35%][0m
+src/tests/presentation/mcp/test_server.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                          [ 36%][0m
+src/tests/presentation/mcp/test_validation.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                     [ 37%][0m
+src/tests/unit/application/test_multi_agent_orchestrator.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m [ 40%]
+[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                                                    [ 41%][0m
+src/tests/unit/application/test_orchestrator.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m              [ 44%][0m
+src/tests/unit/application/test_parallel_orchestrator.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m [ 47%]
+[0m[32m.[0m[32m.[0m[32m                                                                       [ 48%][0m
+src/tests/unit/application/test_use_cases.py [32m.[0m[32m.[0m[32m.[0m[32m                         [ 48%][0m
+src/tests/unit/domain/test_code_quality_checker.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                 [ 50%][0m
+src/tests/unit/domain/test_entities.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                            [ 51%][0m
+src/tests/unit/domain/test_model_config.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                        [ 52%][0m
+src/tests/unit/domain/test_token_info.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                          [ 54%][0m
+src/tests/unit/domain/agents/test_base_agent.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m         [ 58%][0m
+src/tests/unit/domain/agents/test_code_generator.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m        [ 61%][0m
+src/tests/unit/domain/agents/test_code_generator_integration.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m     [ 61%][0m
+src/tests/unit/domain/agents/test_code_reviewer.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m [ 66%]
+[0m[32m                                                                         [ 66%][0m
+src/tests/unit/domain/messaging/test_message_schema.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m  [ 70%][0m
+src/tests/unit/domain/services/test_auto_compression.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m     [ 73%][0m
+src/tests/unit/domain/services/test_riddle_evaluator.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m          [ 74%][0m
+src/tests/unit/domain/services/test_token_analyzer_enhanced.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m    [ 76%][0m
+src/tests/unit/domain/services/compression/test_compressor.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m    [ 77%][0m
+src/tests/unit/domain/templates/test_experiment_template.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m [ 80%]
+[0m[32m                                                                         [ 80%][0m
+src/tests/unit/infrastructure/test_exporter.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                    [ 82%][0m
+src/tests/unit/infrastructure/test_metrics_enhanced.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m            [ 83%][0m
+src/tests/unit/infrastructure/test_model_selector.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m [ 87%]
+[0m[32m                                                                         [ 87%][0m
+src/tests/unit/infrastructure/test_repositories.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                 [ 89%][0m
+src/tests/unit/infrastructure/clients/test_multi_model_support.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m [ 90%]
+[0m[32m                                                                         [ 90%][0m
+src/tests/unit/infrastructure/debug/test_debug_utils.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m           [ 91%][0m
+src/tests/unit/infrastructure/health/test_health_checker.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m         [ 92%][0m
+src/tests/unit/infrastructure/health/test_model_health.py [32m.[0m[32m.[0m[32m.[0m[32m            [ 93%][0m
+src/tests/unit/infrastructure/health/test_storage_health.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m         [ 94%][0m
+src/tests/unit/presentation/test_dashboard_routes.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m              [ 95%][0m
+src/tests/unit/presentation/test_health_routes.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                   [ 96%][0m
+src/tests/unit/presentation/mcp/test_base_adapter.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m              [ 98%][0m
+src/tests/workers/test_schedulers.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                [ 99%][0m
+src/tests/workers/test_summary_worker.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                            [100%][0m
+
+[36m[1m=========================== short test summary info ============================[0m
+[33mXFAIL[0m src/tests/presentation/mcp/test_performance.py::[1mTestPerformanceMetrics::test_calculator_tool_latency[0m - Latency thresholds need recalibration post-Stage 04_02; tracked for Stage 04_03 observability follow-up.
+[33mXFAIL[0m src/tests/presentation/mcp/test_performance.py::[1mTestPerformanceMetrics::test_token_counting_performance[0m - Latency thresholds need recalibration post-Stage 04_02; tracked for Stage 04_03 observability follow-up.
+[32m======================= [32m[1m429 passed[0m, [33m2 xfailed[0m[32m in 44.50s[0m[32m ========================[0m

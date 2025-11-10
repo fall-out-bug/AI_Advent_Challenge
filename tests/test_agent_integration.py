@@ -65,12 +65,15 @@ class MockMCPClient:
 
 
 class MockUnifiedModelClient:
-    async def make_request(self, model_name: str, prompt: str, max_tokens: int, temperature: float):
+    async def make_request(
+        self, model_name: str, prompt: str, max_tokens: int, temperature: float
+    ):
         # Legacy fallback path not used in primary flow; return simple text
         class R:
             response = "ok"
             response_tokens = 2
             input_tokens = 5
+
         return R()
 
 
@@ -87,7 +90,9 @@ class MockChatClient:
                         "type": "function",
                         "function": {
                             "name": "get_channel_digest_by_name",
-                            "arguments": json.dumps({"channel_name": "onaboka", "days": 2}),
+                            "arguments": json.dumps(
+                                {"channel_name": "onaboka", "days": 2}
+                            ),
                         },
                     }
                 ],
@@ -107,15 +112,17 @@ class MockChatClient:
 
 @pytest.mark.asyncio
 async def test_agent_digest_workflow_monkeypatch(monkeypatch):
-    agent = MCPAwareAgent(mcp_client=MockMCPClient(), llm_client=MockUnifiedModelClient())
+    agent = MCPAwareAgent(
+        mcp_client=MockMCPClient(), llm_client=MockUnifiedModelClient()
+    )
     # Inject mock chat client
     agent.chat_client = MockChatClient()
 
-    req = AgentRequest(user_id=123, message="Создай дайджест по Набока за 2 дня", session_id="s1")
+    req = AgentRequest(
+        user_id=123, message="Создай дайджест по Набока за 2 дня", session_id="s1"
+    )
     result = await agent.process(req)
 
     assert result.success is True
     assert "Дайджест" in result.text or "📌" in result.text or "постов" in result.text
     assert result.tools_used == ["get_channel_digest_by_name"]
-
-

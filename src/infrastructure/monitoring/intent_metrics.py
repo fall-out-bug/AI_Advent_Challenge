@@ -5,7 +5,6 @@ Following the Zen of Python:
 - Explicit is better than implicit
 """
 
-from typing import Optional
 
 try:
     from prometheus_client import Counter, Histogram  # type: ignore
@@ -69,7 +68,9 @@ class IntentMetrics:
     """
 
     @staticmethod
-    def record_classification(intent_type: str, source: str, latency_seconds: float) -> None:
+    def record_classification(
+        intent_type: str, source: str, latency_seconds: float
+    ) -> None:
         """Record intent classification.
 
         Args:
@@ -77,8 +78,12 @@ class IntentMetrics:
             source: Classification source ("rule", "llm", "cached")
             latency_seconds: Classification latency in seconds
         """
-        intent_classifications_total.labels(intent_type=intent_type, source=source).inc()
-        intent_classification_latency_seconds.labels(source=source).observe(latency_seconds)
+        intent_classifications_total.labels(
+            intent_type=intent_type, source=source
+        ).inc()
+        intent_classification_latency_seconds.labels(source=source).observe(
+            latency_seconds
+        )
 
     @staticmethod
     def record_cache_hit() -> None:
@@ -98,4 +103,3 @@ class IntentMetrics:
             error_type: Type of error (e.g., "timeout", "parse_error", "network_error")
         """
         intent_llm_failures_total.labels(error_type=error_type).inc()
-

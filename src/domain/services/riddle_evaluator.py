@@ -7,7 +7,7 @@ Following the Zen of Python:
 """
 
 import re
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 # Logical keywords for analyzing responses
 LOGICAL_KEYWORDS = [

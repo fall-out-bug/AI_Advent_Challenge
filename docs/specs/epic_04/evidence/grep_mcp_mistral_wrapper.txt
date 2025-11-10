@@ -1,0 +1,10 @@
+docs/specs/epic_00/stage_00_01.md:168:| `orchestrators/mcp_mistral_wrapper.py` | Archive | Legacy Mistral-specific wrapper; remove once modular reviewer fully adopted. |
+examples/full_workflow.py:77:        from src.presentation.mcp.orchestrators.mcp_mistral_wrapper import MCPMistralWrapper
+src/application/use_cases/mistral_chat_use_case.py:11:from src.presentation.mcp.orchestrators.mcp_mistral_wrapper import MCPMistralWrapper
+src/presentation/mcp/cli/interactive_mistral_chat.py:16:from src.presentation.mcp.orchestrators.mcp_mistral_wrapper import MCPMistralWrapper
+src/presentation/mcp/cli/streaming_chat.py:16:from src.presentation.mcp.orchestrators.mcp_mistral_wrapper import MCPMistralWrapper
+tasks/day_10/day_10-phase-03.plan.cursor.md:70:**File**: `src/presentation/mcp/orchestrators/mcp_mistral_wrapper.py`
+tasks/day_10/day_10-phase-03.plan.cursor.md:199:        │   └── mcp_mistral_wrapper.py               # NEW
+tasks/day_10/day_10-phase-04.plan.cursor.md:98:**Integrate**: `src/presentation/mcp/orchestrators/mcp_mistral_wrapper.py`
+tasks/day_10/day_10-phase-04.plan.cursor.md:110:**Update**: `src/presentation/mcp/orchestrators/mcp_mistral_wrapper.py`
+tests/integration/test_day10_e2e.py:22:from src.presentation.mcp.orchestrators.mcp_mistral_wrapper import MCPMistralWrapper

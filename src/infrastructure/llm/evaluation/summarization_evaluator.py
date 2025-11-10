@@ -9,13 +9,9 @@ from datetime import datetime, timezone
 from typing import Any
 
 from src.domain.value_objects.summarization_context import SummarizationContext
-from src.domain.value_objects.summarization_evaluation import (
-    SummarizationEvaluation,
-)
+from src.domain.value_objects.summarization_evaluation import SummarizationEvaluation
 from src.infrastructure.llm.clients.resilient_client import ResilientLLMClient
-from src.infrastructure.llm.prompts.evaluation_prompts import (
-    get_evaluation_prompt,
-)
+from src.infrastructure.llm.prompts.evaluation_prompts import get_evaluation_prompt
 from src.infrastructure.llm.token_counter import TokenCounter
 from src.infrastructure.logging import get_logger
 
@@ -133,9 +129,7 @@ class SummarizationEvaluator:
             evaluated_at=datetime.now(timezone.utc),
         )
 
-    def _truncate_for_evaluation(
-        self, text: str, max_tokens: int | None = None
-    ) -> str:
+    def _truncate_for_evaluation(self, text: str, max_tokens: int | None = None) -> str:
         """Truncate text to fit evaluation prompt.
 
         Args:

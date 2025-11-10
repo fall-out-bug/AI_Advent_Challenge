@@ -7,7 +7,7 @@ Following the Zen of Python:
 """
 
 import time
-from typing import Dict, List
+from typing import Dict
 
 import httpx
 from yaml import safe_load

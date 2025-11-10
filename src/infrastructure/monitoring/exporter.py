@@ -10,7 +10,6 @@ import csv
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
 
 from src.infrastructure.monitoring.metrics import MetricsCollector
 

@@ -1,0 +1,14 @@
+AI_CONTEXT.md:604:- `src/presentation/mcp/tools/homework_review_tool.py` - Review tool
+CHANGELOG.md:161:- Homework review integration via Telegram bot (`homework_review_tool`)
+README_HOMEWORK_REVIEW.md:54:from src.presentation.mcp.tools.homework_review_tool import review_homework_archive
+docs/API_REVIEWER.md:78:Location: `src/presentation/mcp/tools/homework_review_tool.py`
+docs/API_REVIEWER.ru.md:76:Файл: `src/presentation/mcp/tools/homework_review_tool.py`
+docs/MCP_TOOL_USAGE.md:71:from src.presentation.mcp.tools.homework_review_tool import review_homework_archive
+docs/MCP_TOOL_USAGE.md:116:    ("homework_review_tool", "src.presentation.mcp.tools.homework_review_tool"),
+docs/specs/epic_00/stage_00_01.md:55:| Homework review | `homework_review_tool.py` | Runs modular reviewer | Deprecate → replace with new tool built on refactored module |
+docs/specs/epic_00/stage_00_01.md:113:| `homework_review_tool.py` | Deprecate | Replace with new module built on modular reviewer API. |
+src/presentation/mcp/server.py:53:            "homework_review_tool",
+src/presentation/mcp/server.py:54:            "src.presentation.mcp.tools.homework_review_tool",
+tasks/day_14/INTEGRATION_STATUS.md:29:✅ **MCP Tool** (`src/presentation/mcp/tools/homework_review_tool.py`)
+tasks/day_14/INTEGRATION_STATUS.md:54:✅ **Unit Tests** (`tests/unit/presentation/mcp/tools/test_homework_review_tool.py`)
+tests/unit/presentation/mcp/tools/test_homework_review_tool.py:7:from src.presentation.mcp.tools.homework_review_tool import detect_assignment_type

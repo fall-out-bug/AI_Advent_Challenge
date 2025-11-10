@@ -298,4 +298,3 @@ class TestLogAnalysisResult:
         assert "1. Start Redis" in markdown
         assert "2. Check network" in markdown
         assert "95%" in markdown
-

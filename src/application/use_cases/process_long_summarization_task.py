@@ -5,7 +5,6 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from src.application.dtos.digest_dtos import ChannelDigest
 from src.domain.services.summarizer import SummarizerService
 from src.domain.value_objects.long_summarization_task import LongSummarizationTask
 from src.domain.value_objects.post_content import PostContent
@@ -13,8 +12,8 @@ from src.infrastructure.config.settings import get_settings
 from src.infrastructure.database.mongo import get_db
 from src.infrastructure.logging import get_logger
 from src.infrastructure.monitoring.agent_metrics import (
-    long_tasks_total,
     long_tasks_duration,
+    long_tasks_total,
 )
 from src.infrastructure.repositories.long_tasks_repository import LongTasksRepository
 from src.infrastructure.repositories.post_repository import PostRepository
@@ -149,18 +148,23 @@ class ProcessLongSummarizationTaskUseCase:
 
         # Get summarizer with long timeout
         if self._summarizer is None:
-            from src.infrastructure.di.factories import create_adaptive_summarizer_with_long_timeout
+            from src.infrastructure.di.factories import (
+                create_adaptive_summarizer_with_long_timeout,
+            )
 
             summarizer = create_adaptive_summarizer_with_long_timeout()
         else:
             summarizer = self._summarizer
 
         # Generate summary with extended timeout
-        max_sentences = task.context.max_sentences or self._settings.digest_summary_sentences
+        max_sentences = (
+            task.context.max_sentences or self._settings.digest_summary_sentences
+        )
         language = task.context.language or "ru"
-        max_chars = task.context.max_chars or self._settings.digest_summary_max_chars
+        task.context.max_chars or self._settings.digest_summary_max_chars
 
         import time
+
         start_time = time.time()
 
         try:
@@ -204,4 +208,3 @@ class ProcessLongSummarizationTaskUseCase:
             long_tasks_duration.labels(status="failed").observe(duration)
 
             raise RuntimeError(error_msg) from e
-

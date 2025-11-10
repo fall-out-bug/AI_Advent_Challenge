@@ -51,4 +51,3 @@ def test_submission_archive_validation_empty_path():
             archive_path="",
             extracted_path="/tmp/extracted",
         )
-

@@ -8,8 +8,6 @@ Following the Zen of Python:
 
 from typing import Dict, List, Optional
 
-from src.infrastructure.clients.model_client import ModelClient
-
 
 class MultiModelSupport:
     """

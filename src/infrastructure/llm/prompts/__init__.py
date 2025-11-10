@@ -12,6 +12,7 @@ _prompts_file = _llm_dir / "prompts.py"
 if _prompts_file.exists():
     # Import from the file directly using importlib
     import importlib.util
+
     spec = importlib.util.spec_from_file_location("llm_prompts", _prompts_file)
     if spec and spec.loader:
         prompts_module = importlib.util.module_from_spec(spec)
@@ -20,14 +21,20 @@ if _prompts_file.exists():
         get_intent_parse_prompt = prompts_module.get_intent_parse_prompt
     else:
         # Fallback stub
-        def get_intent_parse_prompt(text: str, language: str = "en", context: dict | None = None) -> str:
+        def get_intent_parse_prompt(
+            text: str, language: str = "en", context: dict | None = None
+        ) -> str:
             """Stub for intent parse prompt."""
             return f"Parse intent from: {text}"
+
 else:
     # Fallback stub
-    def get_intent_parse_prompt(text: str, language: str = "en", context: dict | None = None) -> str:
+    def get_intent_parse_prompt(
+        text: str, language: str = "en", context: dict | None = None
+    ) -> str:
         """Stub for intent parse prompt."""
         return f"Parse intent from: {text}"
+
 
 from .prompt_builder import PromptBuilder
 from .summarization_prompts import (

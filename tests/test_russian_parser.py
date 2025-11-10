@@ -37,5 +37,3 @@ class TestRussianParser:
         assert RussianInputParser.parse_digest_request("") is None
         assert RussianInputParser.parse_list_request("") is False
         assert RussianInputParser.parse_digest_request("привет как дела") is None
-
-

@@ -96,5 +96,3 @@ async def test_generate_raises_on_empty_content(monkeypatch):
 
     with pytest.raises(ValueError):
         await client.generate("hi")
-
-

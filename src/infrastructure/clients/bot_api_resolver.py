@@ -11,7 +11,7 @@ import asyncio
 from typing import Optional
 
 from aiogram import Bot
-from aiogram.exceptions import TelegramBadRequest, TelegramAPIError
+from aiogram.exceptions import TelegramAPIError, TelegramBadRequest
 
 from src.infrastructure.logging import get_logger
 
@@ -36,6 +36,7 @@ class BotApiChannelResolver:
             bot_token: Telegram Bot API token (defaults to BOT_TOKEN env var)
         """
         import os
+
         self.bot_token = bot_token or os.getenv("BOT_TOKEN")
         if not self.bot_token:
             logger.warning("BOT_TOKEN not set, Bot API resolver will be disabled")
@@ -49,10 +50,10 @@ class BotApiChannelResolver:
         """
         if not self.bot_token:
             return None
-        
+
         if self._bot is None:
             self._bot = Bot(token=self.bot_token)
-        
+
         return self._bot
 
     async def resolve_username(self, username: str) -> Optional[dict]:
@@ -96,13 +97,12 @@ class BotApiChannelResolver:
 
         try:
             logger.debug(f"Resolving channel via Bot API: username='{username_clean}'")
-            
+
             # Use timeout to prevent hanging
             chat = await asyncio.wait_for(
-                bot.get_chat(f"@{username_clean}"),
-                timeout=BOT_API_TIMEOUT
+                bot.get_chat(f"@{username_clean}"), timeout=BOT_API_TIMEOUT
             )
-            
+
             if not chat:
                 logger.debug(f"Bot API returned None for username: '{username_clean}'")
                 return None
@@ -153,7 +153,7 @@ class BotApiChannelResolver:
         except Exception as e:
             logger.error(
                 f"Unexpected error in Bot API resolver: username='{username_clean}', error={e}",
-                exc_info=True
+                exc_info=True,
             )
             return None
 
@@ -163,4 +163,3 @@ class BotApiChannelResolver:
             await self._bot.session.close()
             self._bot = None
             logger.debug("Bot API resolver closed")
-

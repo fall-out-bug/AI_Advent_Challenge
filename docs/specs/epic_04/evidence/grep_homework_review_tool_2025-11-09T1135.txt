@@ -1,0 +1,39 @@
+AI_CONTEXT.md:604:- `src/presentation/mcp/tools/homework_review_tool.py` - Review tool
+CHANGELOG.md:161:- Homework review integration via Telegram bot (`homework_review_tool`)
+README_HOMEWORK_REVIEW.md:54:from src.presentation.mcp.tools.homework_review_tool import review_homework_archive
+docs/API_REVIEWER.md:78:Location: `src/presentation/mcp/tools/homework_review_tool.py`
+docs/API_REVIEWER.ru.md:76:Файл: `src/presentation/mcp/tools/homework_review_tool.py`
+docs/specs/epic_00/stage_00_01.md:55:| Homework review | `homework_review_tool.py` | Runs modular reviewer | Deprecate → replace with new tool built on refactored module |
+docs/specs/epic_00/stage_00_01.md:113:| `homework_review_tool.py` | Deprecate | Replace with new module built on modular reviewer API. |
+docs/specs/epic_02/mcp_tool_matrix.md:22:| Homework review | `src/presentation/mcp/tools/homework_review_tool.py` | Deprecate (sunset) | EP01 reviewer lead | Modular Review Service, LLM API | Replacement arrives after reviewer refactor; MCP tool remains with warnings. |
+docs/specs/epic_04/archive_scope.md:29:| `src/presentation/mcp/tools/homework_review_tool.py` | Retain (Refactored) | Modular reviewer MCP wrapper shipped Stage 04_02 | Dependency resolved (`Completed`) | Remove deprecation notices; update docs to reference new workflow | EP01 TL |
+docs/specs/epic_04/archive_scope.md:44:| Homework review | `src/presentation/mcp/tools/homework_review_tool.py` | Active (Refactored) | Modular reviewer MCP tool (Stage 04_02) | Dependency resolved (`Completed`) | Remove feature flag docs; advertise CLI + MCP parity | EP01 TL |
+docs/specs/epic_04/coordination_stage_02_01.md:17:| Homework review legacy tool | `src/presentation/mcp/tools/homework_review_tool.py` | Deprecated | ModularReviewService, Mongo homework collection | Retire after EP01 ships replacement. |
+docs/specs/epic_04/dependency_map.md:22:| `src/presentation/mcp/tools/homework_review_tool.py` | Registered in `src/presentation/mcp/server.py`, referenced in docs (`docs/API_REVIEWER*.md`) | Refactored 2025-11-09 to modular reviewer MCP; registry updated, docs next | Completed |
+docs/specs/epic_04/dependency_map.md:48:| `tests/unit/presentation/mcp/tools/test_homework_review_tool.py` | Tests modular reviewer MCP workflow | Updated 2025-11-09; coverage migrated off deprecated flows | Completed |
+docs/specs/epic_04/evidence/README.md:5:- `grep_homework_review_tool.txt`
+docs/specs/epic_04/evidence/grep_homework_review_tool.txt:1:AI_CONTEXT.md:604:- `src/presentation/mcp/tools/homework_review_tool.py` - Review tool
+docs/specs/epic_04/evidence/grep_homework_review_tool.txt:2:CHANGELOG.md:161:- Homework review integration via Telegram bot (`homework_review_tool`)
+docs/specs/epic_04/evidence/grep_homework_review_tool.txt:3:README_HOMEWORK_REVIEW.md:54:from src.presentation.mcp.tools.homework_review_tool import review_homework_archive
+docs/specs/epic_04/evidence/grep_homework_review_tool.txt:4:docs/API_REVIEWER.md:78:Location: `src/presentation/mcp/tools/homework_review_tool.py`
+docs/specs/epic_04/evidence/grep_homework_review_tool.txt:5:docs/API_REVIEWER.ru.md:76:Файл: `src/presentation/mcp/tools/homework_review_tool.py`
+docs/specs/epic_04/evidence/grep_homework_review_tool.txt:6:docs/MCP_TOOL_USAGE.md:71:from src.presentation.mcp.tools.homework_review_tool import review_homework_archive
+docs/specs/epic_04/evidence/grep_homework_review_tool.txt:7:docs/MCP_TOOL_USAGE.md:116:    ("homework_review_tool", "src.presentation.mcp.tools.homework_review_tool"),
+docs/specs/epic_04/evidence/grep_homework_review_tool.txt:8:docs/specs/epic_00/stage_00_01.md:55:| Homework review | `homework_review_tool.py` | Runs modular reviewer | Deprecate → replace with new tool built on refactored module |
+docs/specs/epic_04/evidence/grep_homework_review_tool.txt:9:docs/specs/epic_00/stage_00_01.md:113:| `homework_review_tool.py` | Deprecate | Replace with new module built on modular reviewer API. |
+docs/specs/epic_04/evidence/grep_homework_review_tool.txt:10:src/presentation/mcp/server.py:53:            "homework_review_tool",
+docs/specs/epic_04/evidence/grep_homework_review_tool.txt:11:src/presentation/mcp/server.py:54:            "src.presentation.mcp.tools.homework_review_tool",
+docs/specs/epic_04/evidence/grep_homework_review_tool.txt:12:tasks/day_14/INTEGRATION_STATUS.md:29:✅ **MCP Tool** (`src/presentation/mcp/tools/homework_review_tool.py`)
+docs/specs/epic_04/evidence/grep_homework_review_tool.txt:13:tasks/day_14/INTEGRATION_STATUS.md:54:✅ **Unit Tests** (`tests/unit/presentation/mcp/tools/test_homework_review_tool.py`)
+docs/specs/epic_04/evidence/grep_homework_review_tool.txt:14:tests/unit/presentation/mcp/tools/test_homework_review_tool.py:7:from src.presentation.mcp.tools.homework_review_tool import detect_assignment_type
+src/presentation/mcp/server.py:45:            "homework_review_tool",
+src/presentation/mcp/server.py:46:            "src.presentation.mcp.tools.homework_review_tool",
+tasks/day_14/INTEGRATION_STATUS.md:29:✅ **MCP Tool** (`src/presentation/mcp/tools/homework_review_tool.py`)
+tasks/day_14/INTEGRATION_STATUS.md:54:✅ **Unit Tests** (`tests/unit/presentation/mcp/tools/test_homework_review_tool.py`)
+tests/unit/presentation/mcp/tools/test_homework_review_tool.py:17:from src.presentation.mcp.tools.homework_review_tool import (
+tests/unit/presentation/mcp/tools/test_homework_review_tool.py:116:        "src.presentation.mcp.tools.homework_review_tool.ZipArchiveService.extract_submission",
+tests/unit/presentation/mcp/tools/test_homework_review_tool.py:145:        "src.presentation.mcp.tools.homework_review_tool.ModularReviewService",
+tests/unit/presentation/mcp/tools/test_homework_review_tool.py:151:        "src.presentation.mcp.tools.homework_review_tool.generate_detailed_markdown_report",
+tests/unit/presentation/mcp/tools/test_homework_review_tool.py:170:        "src.presentation.mcp.tools.homework_review_tool.UnifiedModelClient",
+tests/unit/presentation/mcp/tools/test_homework_review_tool.py:179:        "src.presentation.mcp.tools.homework_review_tool.HomeworkReviewRepository",
+tests/unit/presentation/mcp/tools/test_homework_review_tool.py:183:        "src.presentation.mcp.tools.homework_review_tool.get_db",

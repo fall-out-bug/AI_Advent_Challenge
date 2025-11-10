@@ -172,7 +172,7 @@ Keep existing Clean Architecture (domain/application/infrastructure/presentation
 
 **Files to create**:
 
-- `docs/ARCHITECTURE_FSM.md` - FSM flow documentation
+- `docs/reference/en/ARCHITECTURE_FSM.md` - FSM flow documentation
 - `tests/integration/test_clarification_flow.py`
 - `tests/presentation/bot/test_natural_language_flow.py`
 
@@ -271,7 +271,7 @@ Keep existing Clean Architecture (domain/application/infrastructure/presentation
 
 3. File Splitting Strategy:
 
-   - `summary_worker.py` → 
+   - `summary_worker.py` →
      - `summary_worker.py` (core loop, ~150 lines)
      - `notification_sender.py` (send logic with retry, ~200 lines)
      - `message_formatters.py` (all formatting, ~150 lines)
@@ -281,7 +281,7 @@ Keep existing Clean Architecture (domain/application/infrastructure/presentation
 
 **Documentation Files to Create**:
 
-1. `docs/ARCHITECTURE_FSM.md` (500 lines, ~6K tokens):
+1. `docs/reference/en/ARCHITECTURE_FSM.md` (500 lines, ~6K tokens):
 ````markdown
 # FSM-Based Conversation Architecture
 
@@ -318,7 +318,7 @@ State for collecting answers to clarifying questions...
 
 ````
 
-2. `docs/API_MCP_TOOLS.md` (300 lines, ~3.5K tokens):
+2. `docs/reference/en/API_MCP_TOOLS.md` (300 lines, ~3.5K tokens):
 
 ```markdown
 # MCP Tools API Reference
@@ -355,7 +355,7 @@ result = await mcp.call_tool("add_task", {
 ```
 ````
 
-3. `docs/QUICK_START_DAY11.md` (400 lines, ~4.5K tokens):
+3. `docs/archive/2023-day11/QUICK_START_DAY11.md` (400 lines, ~4.5K tokens):
 
 ```markdown
 # Butler Bot Quick Start
@@ -433,24 +433,24 @@ Bot: "✅ Task added: Call mom
 ```python
 async def parse_task_intent(self, text: str, context: dict) -> IntentParseResult:
     """Parse natural language text into structured task intent.
-    
+
     Uses LLM to extract task components (title, deadline, priority) and
     generates clarifying questions for ambiguous inputs.
-    
+
     Args:
         text: User's natural language task description
               Example: "Call mom tomorrow"
         context: Conversation context with user history
                  Example: {"timezone": "UTC", "prev_tasks": [...]}
-        
+
     Returns:
         IntentParseResult with extracted fields and clarification questions.
         If needs_clarification=True, questions list will be non-empty.
-        
+
     Raises:
         LLMError: When LLM service unavailable after retries
         ValidationError: When intent structure is invalid
-        
+
     Example:
         >>> intent = await orchestrator.parse_task_intent(
         ...     "Remind me about meeting",

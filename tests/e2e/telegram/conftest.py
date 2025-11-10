@@ -101,4 +101,3 @@ def mock_dispatcher():
     dispatcher.stop_polling = AsyncMock()
     dispatcher.feed_update = AsyncMock()
     return dispatcher
-

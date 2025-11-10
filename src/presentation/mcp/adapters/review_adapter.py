@@ -1,14 +1,8 @@
 """Adapter for code review operations."""
-import sys
-from pathlib import Path
+
 from typing import Any, Optional
 
-_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(_root))
-sys.path.insert(0, str(_root / "shared"))
-
 from src.domain.agents.code_reviewer import CodeReviewerAgent
-from src.domain.agents.base_agent import TaskMetadata
 from src.domain.messaging.message_schema import CodeReviewRequest
 from src.presentation.mcp.exceptions import MCPAgentError, MCPValidationError
 
@@ -16,6 +10,7 @@ from src.presentation.mcp.exceptions import MCPAgentError, MCPValidationError
 def _get_model_client_adapter():
     """Import ModelClientAdapter at runtime to avoid circular imports."""
     from src.presentation.mcp.adapters.model_client_adapter import ModelClientAdapter
+
     return ModelClientAdapter
 
 
@@ -27,7 +22,9 @@ class ReviewAdapter:
         self.unified_client = unified_client
         self.model_name = model_name
 
-    async def review_code(self, code: str, model: Optional[str] = None) -> dict[str, Any]:
+    async def review_code(
+        self, code: str, model: Optional[str] = None
+    ) -> dict[str, Any]:
         """Review code using CodeReviewerAgent."""
         try:
             self._validate_code(code)
@@ -52,7 +49,7 @@ class ReviewAdapter:
         """Create review request."""
         # Create empty metadata dict instead of object
         metadata = {}
-        
+
         return CodeReviewRequest(
             task_description="Code review",
             generated_code=code,

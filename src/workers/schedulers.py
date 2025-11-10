@@ -25,7 +25,9 @@ def is_quiet_hours(dt: datetime, quiet_start: int, quiet_end: int) -> bool:
     return quiet_start <= current_hour < quiet_end
 
 
-def is_time_to_send(dt: datetime, target_time: time, tolerance_minutes: int = 1) -> bool:
+def is_time_to_send(
+    dt: datetime, target_time: time, tolerance_minutes: int = 1
+) -> bool:
     """Check if current time matches target within tolerance.
 
     Purpose:
@@ -43,4 +45,3 @@ def is_time_to_send(dt: datetime, target_time: time, tolerance_minutes: int = 1)
     if current_time.hour != target_time.hour:
         return False
     return abs(current_time.minute - target_time.minute) <= tolerance_minutes
-

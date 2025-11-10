@@ -158,10 +158,13 @@ class SemanticChunker:
                 words = sent.split()
                 current_word_chunk: List[str] = []
                 current_word_tokens = 0
-                
+
                 for word in words:
                     word_tokens = self.token_counter.count_tokens(word)
-                    if current_word_tokens + word_tokens > self.max_tokens and current_word_chunk:
+                    if (
+                        current_word_tokens + word_tokens > self.max_tokens
+                        and current_word_chunk
+                    ):
                         # Create chunk from words
                         word_chunk_text = " ".join(current_word_chunk)
                         chunks.append(
@@ -176,7 +179,7 @@ class SemanticChunker:
                     else:
                         current_word_chunk.append(word)
                         current_word_tokens += word_tokens
-                
+
                 # Add remaining words to current_sentences as a pseudo-sentence
                 if current_word_chunk:
                     sent = " ".join(current_word_chunk)
@@ -188,7 +191,9 @@ class SemanticChunker:
                 chunk_text = " ".join(current_sentences)
                 chunks.append(
                     TextChunk(
-                        text=chunk_text, token_count=current_tokens, chunk_id=len(chunks)
+                        text=chunk_text,
+                        token_count=current_tokens,
+                        chunk_id=len(chunks),
                     )
                 )
 

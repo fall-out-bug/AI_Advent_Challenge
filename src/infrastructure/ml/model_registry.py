@@ -118,4 +118,3 @@ def get_model_registry() -> ModelRegistry:
         ModelRegistry instance
     """
     return _model_registry
-

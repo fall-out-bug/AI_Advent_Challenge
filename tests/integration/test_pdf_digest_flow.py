@@ -32,7 +32,9 @@ pytestmark = pytest.mark.asyncio
 def _set_test_db_env(monkeypatch):
     """Set test database environment variables."""
     monkeypatch.setenv("DB_NAME", "butler_test")
-    monkeypatch.setenv("MONGODB_URL", os.getenv("MONGODB_URL", "mongodb://localhost:27017"))
+    monkeypatch.setenv(
+        "MONGODB_URL", os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+    )
 
 
 @pytest.fixture
@@ -58,6 +60,7 @@ async def repo(db):
 @pytest.fixture
 def mock_llm_client(monkeypatch):
     """Mock LLM client for summarization."""
+
     async def mock_summarize_posts(posts, max_sentences=5, llm=None):
         """Mock summarize_posts function."""
         if not posts:
@@ -65,6 +68,7 @@ def mock_llm_client(monkeypatch):
         return f"Summary of {len(posts)} posts with {max_sentences} sentences."
 
     from src.infrastructure.llm import summarizer
+
     monkeypatch.setattr(summarizer, "summarize_posts", mock_summarize_posts)
 
 
@@ -210,6 +214,7 @@ async def test_full_pdf_digest_flow(repo, db, mock_llm_client):
 
     # Verify PDF can be decoded
     import base64
+
     pdf_bytes = base64.b64decode(pdf_result["pdf_bytes"])
     assert len(pdf_bytes) == pdf_result["file_size"]
     assert pdf_bytes.startswith(b"%PDF")  # PDF magic number
@@ -313,4 +318,3 @@ async def test_pdf_digest_flow_error_handling(repo, db):
     result = await format_digest_markdown([], {})
     assert "markdown" in result
     assert result["sections_count"] == 0
-

@@ -109,7 +109,9 @@ def extract_archive_name(match: re.Match) -> str:
     if match.lastindex >= 1:
         archive = match.group(1).strip()
         # Check if it contains .zip or matches name_pattern (Name_Name_hw2)
-        if ".zip" in archive.lower() or re.search(r"[а-яА-Яa-zA-Z]+_[а-яА-Яa-zA-Z]+_hw\d+", archive, re.IGNORECASE):
+        if ".zip" in archive.lower() or re.search(
+            r"[а-яА-Яa-zA-Z]+_[а-яА-Яa-zA-Z]+_hw\d+", archive, re.IGNORECASE
+        ):
             return archive
     return ""
 
@@ -125,23 +127,28 @@ def extract_submission_identifier(match: re.Match) -> Dict[str, str]:
     """
     if match.lastindex >= 1:
         identifier = match.group(1).strip()
-        
+
         # Check if it's a commit hash (hex, 7+ chars)
         if re.match(r"^[a-f0-9]{7,}$", identifier, re.IGNORECASE):
             return {"commit_hash": identifier}
-        
+
         # Check if it's a UUID-like job_id
-        if re.match(r"^[a-zA-Z0-9_-]{8,}$", identifier) and ".zip" not in identifier.lower():
+        if (
+            re.match(r"^[a-zA-Z0-9_-]{8,}$", identifier)
+            and ".zip" not in identifier.lower()
+        ):
             return {"job_id": identifier}
-        
+
         # Check if it's an archive name
-        if ".zip" in identifier.lower() or re.search(r"[а-яА-Яa-zA-Z]+_[а-яА-Яa-zA-Z]+_hw\d+", identifier, re.IGNORECASE):
+        if ".zip" in identifier.lower() or re.search(
+            r"[а-яА-Яa-zA-Z]+_[а-яА-Яa-zA-Z]+_hw\d+", identifier, re.IGNORECASE
+        ):
             return {"archive_name": identifier}
-        
+
         # Default to archive_name if it has underscores (likely name_pattern)
         if "_" in identifier:
             return {"archive_name": identifier}
-    
+
     return {}
 
 
@@ -204,7 +211,8 @@ DATA_RULES: list[Tuple[re.Pattern, IntentType, float, Dict[str, Callable]]] = [
     # Match: "подпишись", "подпиш", "подпис", "subscribe", "добавь", "добав", "add"
     (
         re.compile(
-            r"(подпишись|подпиш[иь]|подпис[атьь]|subscribe|добавь|добав|add)\s+(?:на|to)?\s*@?([a-zA-Zа-яА-Я0-9_]+)", re.IGNORECASE
+            r"(подпишись|подпиш[иь]|подпис[атьь]|subscribe|добавь|добав|add)\s+(?:на|to)?\s*@?([a-zA-Zа-яА-Я0-9_]+)",
+            re.IGNORECASE,
         ),
         IntentType.DATA_SUBSCRIPTION_ADD,
         0.95,
@@ -222,7 +230,9 @@ DATA_RULES: list[Tuple[re.Pattern, IntentType, float, Dict[str, Callable]]] = [
     ),
     # Digest patterns (with channel and days extraction)
     (
-        re.compile(r"дайджест\s+(?:канала\s+)?по\s+([a-zA-Zа-яА-Я0-9_]+)", re.IGNORECASE),
+        re.compile(
+            r"дайджест\s+(?:канала\s+)?по\s+([a-zA-Zа-яА-Я0-9_]+)", re.IGNORECASE
+        ),
         IntentType.DATA_DIGEST,
         0.95,
         {"channel_name": extract_channel_name},
@@ -241,13 +251,19 @@ DATA_RULES: list[Tuple[re.Pattern, IntentType, float, Dict[str, Callable]]] = [
     ),
     (
         # More specific: "digest of CHANNEL" where CHANNEL is not a stop word
-        re.compile(r"digest\s+(?:of|for)\s+(?!(?:of|for|the|a|an|канала|channel)\s)([a-zA-Zа-яА-Я0-9_]{2,})", re.IGNORECASE),
+        re.compile(
+            r"digest\s+(?:of|for)\s+(?!(?:of|for|the|a|an|канала|channel)\s)([a-zA-Zа-яА-Я0-9_]{2,})",
+            re.IGNORECASE,
+        ),
         IntentType.DATA_DIGEST,
         0.95,
         {"channel_name": extract_channel_name},
     ),
     (
-        re.compile(r"digest\s+(?:of|for)\s+([a-zA-Zа-яА-Я0-9_]+)\s+for\s+(\d+)\s+days?", re.IGNORECASE),
+        re.compile(
+            r"digest\s+(?:of|for)\s+([a-zA-Zа-яА-Я0-9_]+)\s+for\s+(\d+)\s+days?",
+            re.IGNORECASE,
+        ),
         IntentType.DATA_DIGEST,
         0.95,
         {"channel_name": extract_channel_name, "days": extract_days},
@@ -260,7 +276,10 @@ DATA_RULES: list[Tuple[re.Pattern, IntentType, float, Dict[str, Callable]]] = [
     ),
     # General digest request (no channel specified)
     (
-        re.compile(r"(дайджест|digest|summary)\s*(?:за|for)?\s*(\d+)\s*(?:дн|days?|day)?", re.IGNORECASE),
+        re.compile(
+            r"(дайджест|digest|summary)\s*(?:за|for)?\s*(\d+)\s*(?:дн|days?|day)?",
+            re.IGNORECASE,
+        ),
         IntentType.DATA_DIGEST,
         0.90,
         {"days": extract_days},
@@ -273,7 +292,9 @@ DATA_RULES: list[Tuple[re.Pattern, IntentType, float, Dict[str, Callable]]] = [
     ),
     # Statistics patterns
     (
-        re.compile(r"(статистика|stats|statistics)\s+(студент|student|ученик)", re.IGNORECASE),
+        re.compile(
+            r"(статистика|stats|statistics)\s+(студент|student|ученик)", re.IGNORECASE
+        ),
         IntentType.DATA_STATS,
         0.90,
         {},
@@ -281,44 +302,65 @@ DATA_RULES: list[Tuple[re.Pattern, IntentType, float, Dict[str, Callable]]] = [
     # Homework status patterns (HIGH PRIORITY - should match before stats)
     # Most specific patterns first (highest confidence)
     (
-        re.compile(r"(дай|покажи|пока|show|give me)\s+(?:мне\s+)?(?:полный\s+)?статус\s+(?:всех\s+)?(?:проверок\s+)?домашних\s+(?:заданий|работ|домашек|домашк)", re.IGNORECASE),
+        re.compile(
+            r"(дай|покажи|пока|show|give me)\s+(?:мне\s+)?(?:полный\s+)?статус\s+(?:всех\s+)?(?:проверок\s+)?домашних\s+(?:заданий|работ|домашек|домашк)",
+            re.IGNORECASE,
+        ),
         IntentType.DATA_HW_STATUS,
         0.99,
         {},
     ),
     (
-        re.compile(r"(дай|покажи|show|give me)\s+статус\s+проверки\s+домашних\s+заданий", re.IGNORECASE),
+        re.compile(
+            r"(дай|покажи|show|give me)\s+статус\s+проверки\s+домашних\s+заданий",
+            re.IGNORECASE,
+        ),
         IntentType.DATA_HW_STATUS,
         0.98,
         {},
     ),
     (
-        re.compile(r"(статус\s+)?(?:всех\s+)?проверок\s+(?:домашних\s+)?(?:заданий|работ|домашек|домашк|homework|hw)", re.IGNORECASE),
+        re.compile(
+            r"(статус\s+)?(?:всех\s+)?проверок\s+(?:домашних\s+)?(?:заданий|работ|домашек|домашк|homework|hw)",
+            re.IGNORECASE,
+        ),
         IntentType.DATA_HW_STATUS,
         0.97,
         {},
     ),
     (
-        re.compile(r"(статус\s+)?проверки\s+(?:домашек|домашк|домашних\s+заданий|homework|hw)", re.IGNORECASE),
+        re.compile(
+            r"(статус\s+)?проверки\s+(?:домашек|домашк|домашних\s+заданий|homework|hw)",
+            re.IGNORECASE,
+        ),
         IntentType.DATA_HW_STATUS,
         0.96,
         {},
     ),
     (
-        re.compile(r"(покажи|show|дай|give me)\s+(?:статус\s+)?(?:проверки\s+)?(?:домашек|домашк|домашних\s+заданий|homework|hw)(?:\s+status)?", re.IGNORECASE),
+        re.compile(
+            r"(покажи|show|дай|give me)\s+(?:статус\s+)?(?:проверки\s+)?(?:домашек|домашк|домашних\s+заданий|homework|hw)(?:\s+status)?",
+            re.IGNORECASE,
+        ),
         IntentType.DATA_HW_STATUS,
         0.95,
         {},
     ),
     (
-        re.compile(r"(статус|status)\s+(?:проверки\s+)?(?:домашек|домашк|домашних\s+заданий|homework|hw)", re.IGNORECASE),
+        re.compile(
+            r"(статус|status)\s+(?:проверки\s+)?(?:домашек|домашк|домашних\s+заданий|homework|hw)",
+            re.IGNORECASE,
+        ),
         IntentType.DATA_HW_STATUS,
         0.92,
         {},
     ),
     # Homework queue status patterns
     (
-        re.compile(r"(покажи|show|дай|give me)\s+(?:статус\s+)?(?:очеред[ьи]|queue)(?:\s+status)?", re.IGNORECASE),
+        re.compile(
+            r"(покажи|show|дай|give me)\s+(?:статус\s+)?(?:очеред[ьи]|queue)(?:\s+status)?",
+            re.IGNORECASE,
+        ),
         IntentType.DATA_HW_QUEUE,
         0.95,
         {},
@@ -331,22 +373,30 @@ DATA_RULES: list[Tuple[re.Pattern, IntentType, float, Dict[str, Callable]]] = [
     ),
     # Homework retry patterns
     (
-        re.compile(r"(перезапусти|retry|restart|rerun)\s+(?:сабмит|submission)\s+([a-zA-Zа-яА-Я0-9_.-]+)", re.IGNORECASE),
+        re.compile(
+            r"(перезапусти|retry|restart|rerun)\s+(?:сабмит|submission)\s+([a-zA-Zа-яА-Я0-9_.-]+)",
+            re.IGNORECASE,
+        ),
         IntentType.DATA_HW_RETRY,
         0.95,
         {"submission_id": extract_submission_identifier},
     ),
     (
-        re.compile(r"(перезапусти|retry|restart|rerun)\s+([a-zA-Zа-яА-Я0-9_.-]+)\s+(?:для|for|сабмит|submission)", re.IGNORECASE),
+        re.compile(
+            r"(перезапусти|retry|restart|rerun)\s+([a-zA-Zа-яА-Я0-9_.-]+)\s+(?:для|for|сабмит|submission)",
+            re.IGNORECASE,
+        ),
         IntentType.DATA_HW_RETRY,
         0.90,
         {"submission_id": extract_submission_identifier},
     ),
     (
-        re.compile(r"(перезапусти|retry)\s+(?:сабмит|submission)(?:\s+(?:задания|assignment))?\s*(?:HW(\d+))?", re.IGNORECASE),
+        re.compile(
+            r"(перезапусти|retry)\s+(?:сабмит|submission)(?:\s+(?:задания|assignment))?\s*(?:HW(\d+))?",
+            re.IGNORECASE,
+        ),
         IntentType.DATA_HW_RETRY,
         0.85,
         {"assignment": extract_assignment},
     ),
 ]
-

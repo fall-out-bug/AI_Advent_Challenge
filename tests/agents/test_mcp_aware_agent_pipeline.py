@@ -9,7 +9,9 @@ from src.domain.agents.schemas import AgentRequest, ToolMetadata
 class FakeMCPClient:
     async def call_tool(self, name: str, args: dict):
         if name == "list_channels":
-            return {"channels": [{"channel_username": "python"}, {"channel_username": "ml"}]}
+            return {
+                "channels": [{"channel_username": "python"}, {"channel_username": "ml"}]
+            }
         if name == "get_channel_digest_by_name":
             ch = args.get("channel_name", "unknown")
             days = args.get("days", 3)
@@ -30,7 +32,9 @@ class FakeUnifiedModelClient:
     def queue_response(self, text: str) -> None:
         self._response_queue.append(text)
 
-    async def make_request(self, model_name: str, prompt: str, max_tokens: int, temperature: float):
+    async def make_request(
+        self, model_name: str, prompt: str, max_tokens: int, temperature: float
+    ):
         # Return queued responses in FIFO order
         text = self._response_queue.pop(0) if self._response_queue else "{}"
 
@@ -91,9 +95,9 @@ async def test_heuristic_when_no_json():
     # No JSON, heuristic should pick digest_by_name with days
     llm_client.queue_response("Хочу дайджест по каналу Набока за 3 дня")
 
-    req = AgentRequest(user_id=1, message="Хочу дайджест по каналу Набока за 3 дня", session_id="s3")
+    req = AgentRequest(
+        user_id=1, message="Хочу дайджест по каналу Набока за 3 дня", session_id="s3"
+    )
     resp = await agent.process(req)
     assert resp.success is True
     assert resp.tools_used[0] in ["get_channel_digest_by_name", "get_channel_digest"]
-
-

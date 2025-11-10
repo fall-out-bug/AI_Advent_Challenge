@@ -19,7 +19,8 @@ class TestTestGenerationAdapter:
         """Create adapter instance."""
         return TestGenerationAdapter(mock_unified_client, model_name="mistral")
 
-    def test_generate_tests_valid_code(self, adapter, mock_unified_client):
+    @pytest.mark.asyncio
+    async def test_generate_tests_valid_code(self, adapter, mock_unified_client):
         """Test generating tests for valid code."""
         # Mock response
         mock_response = {
@@ -33,62 +34,83 @@ def test_add_negative():
             "input_tokens": 30,
             "response_tokens": 20,
         }
-        
+
         # Mock adapter.generate
         async def mock_generate(*args, **kwargs):
             return mock_response
-        
-        with patch.object(adapter, '_get_model_client_adapter') as mock_get_adapter:
+
+        with patch(
+            "src.presentation.mcp.adapters.test_generation_adapter._get_model_client_adapter"
+        ) as mock_get_adapter:
+            mock_adapter_class = MagicMock()
             mock_adapter = MagicMock()
             mock_adapter.generate = AsyncMock(return_value=mock_response)
-            mock_get_adapter.return_value = lambda *args, **kwargs: mock_adapter
-            
+            mock_adapter_class.return_value = mock_adapter
+            mock_get_adapter.return_value = mock_adapter_class
+
             code = "def add(a, b):\n    return a + b"
-            result = adapter.generate_tests(code)
-            
+            result = await adapter.generate_tests(code)
+
             assert "test_code" in result
             assert "test_count" in result
             assert "coverage_estimate" in result
 
-    def test_generate_tests_empty_code_raises_error(self, adapter):
+    @pytest.mark.asyncio
+    async def test_generate_tests_empty_code_raises_error(self, adapter):
         """Test generating tests for empty code raises error."""
         with pytest.raises(MCPValidationError) as exc_info:
-            adapter.generate_tests("")
-        
+            await adapter.generate_tests("")
+
         assert "empty" in str(exc_info.value).lower()
 
-    def test_generate_tests_invalid_framework_raises_error(self, adapter):
+    @pytest.mark.asyncio
+    async def test_generate_tests_invalid_framework_raises_error(self, adapter):
         """Test invalid framework raises error."""
         code = "def func():\n    pass"
-        
+
         with pytest.raises(MCPValidationError) as exc_info:
-            adapter.generate_tests(code, test_framework="junit")
-        
+            await adapter.generate_tests(code, test_framework="junit")
+
         assert "framework" in str(exc_info.value).lower()
 
-    def test_generate_tests_pytest_framework(self, adapter):
+    @pytest.mark.asyncio
+    async def test_generate_tests_pytest_framework(self, adapter):
         """Test generating pytest tests."""
         # This is a placeholder - actual implementation needs proper mocking
         code = "def add(a, b):\n    return a + b"
-        
-        # Should not raise for pytest
-        try:
-            result = adapter.generate_tests(code, test_framework="pytest")
-            assert "test_code" in result
-        except MCPAgentError:
-            # Expected if model client is not properly mocked
-            pass
 
-    def test_generate_tests_unittest_framework(self, adapter):
+        # Should not raise for pytest
+        with patch(
+            "src.presentation.mcp.adapters.test_generation_adapter._get_model_client_adapter"
+        ) as mock_get_adapter:
+            mock_adapter_class = MagicMock()
+            mock_adapter = MagicMock()
+            mock_adapter.generate = AsyncMock(
+                return_value={"response": "def test_add():\n    pass"}
+            )
+            mock_adapter_class.return_value = mock_adapter
+            mock_get_adapter.return_value = mock_adapter_class
+            result = await adapter.generate_tests(code, test_framework="pytest")
+            assert "test_code" in result
+
+    @pytest.mark.asyncio
+    async def test_generate_tests_unittest_framework(self, adapter):
         """Test generating unittest tests."""
         code = "def multiply(x, y):\n    return x * y"
-        
+
         # Should not raise for unittest
-        try:
-            result = adapter.generate_tests(code, test_framework="unittest")
+        with patch(
+            "src.presentation.mcp.adapters.test_generation_adapter._get_model_client_adapter"
+        ) as mock_get_adapter:
+            mock_adapter_class = MagicMock()
+            mock_adapter = MagicMock()
+            mock_adapter.generate = AsyncMock(
+                return_value={"response": "class TestMultiply(unittest.TestCase):\n    pass"}
+            )
+            mock_adapter_class.return_value = mock_adapter
+            mock_get_adapter.return_value = mock_adapter_class
+            result = await adapter.generate_tests(code, test_framework="unittest")
             assert "test_code" in result
-        except MCPAgentError:
-            pass
 
     def test_extract_test_cases_from_code(self, adapter):
         """Test extracting test cases from generated code."""
@@ -118,7 +140,7 @@ def test_subtract():
         """Test prompt includes framework."""
         code = "def func():\n    pass"
         prompt = adapter._build_prompt(code, "pytest", 80)
-        
+
         assert "pytest" in prompt
         assert "80" in prompt
         assert code in prompt
@@ -131,7 +153,6 @@ def test_2(): pass
 def test_3(): pass
 """
         result = adapter._parse_response(test_code, "pytest")
-        
+
         assert result["coverage_estimate"] <= 100
         assert result["test_count"] == 3
-

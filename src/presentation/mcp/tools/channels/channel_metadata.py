@@ -8,9 +8,10 @@ Following Python Zen:
 import os
 from typing import Any, Dict, Optional
 
+from src.infrastructure.clients.telegram_utils import search_channels_by_name
+from src.infrastructure.logging import get_logger
 from src.presentation.mcp.server import mcp
 from src.presentation.mcp.tools.channels.utils import get_database
-from src.infrastructure.logging import get_logger
 
 logger = get_logger("channel_metadata")
 
@@ -29,19 +30,19 @@ async def _search_channel_in_db(
     db, channel_username: str, user_id: Optional[int] = None
 ) -> Optional[Dict[str, Any]]:
     """Search channel in database by username or title.
-    
+
     Purpose:
         Search for channel in MongoDB using multiple strategies:
         1. Exact username match
         2. Case-insensitive username match
         3. Title match (if input looks like a title)
         4. Partial title match
-    
+
     Args:
         db: MongoDB database instance
         channel_username: Channel username or title to search
         user_id: Optional user ID to filter by subscription
-    
+
     Returns:
         Channel document if found, None otherwise
     """
@@ -249,11 +250,8 @@ async def get_channel_metadata(
             logger.info(
                 f"Channel not found in database by username or title, searching Telegram: {channel_username}"
             )
-            try:
-                from src.infrastructure.clients.telegram_utils import (
-                    search_channels_by_name,
-                )
 
+            try:
                 search_results = await search_channels_by_name(
                     channel_username, limit=1
                 )
@@ -317,11 +315,8 @@ async def get_channel_metadata(
                 f"Channel username in DB looks like a title: '{db_username}', "
                 f"searching Telegram for real username"
             )
-            try:
-                from src.infrastructure.clients.telegram_utils import (
-                    search_channels_by_name,
-                )
 
+            try:
                 # Use title from DB or input as search query
                 search_query = title or db_username or channel_username
                 search_results = await search_channels_by_name(search_query, limit=1)

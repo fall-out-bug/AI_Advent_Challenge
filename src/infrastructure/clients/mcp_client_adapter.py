@@ -7,7 +7,6 @@ with domain layer protocol requirements.
 import logging
 from typing import Any, Dict, List
 
-from src.domain.interfaces.tool_client import ToolClientProtocol
 from src.infrastructure.clients.mcp_client_robust import RobustMCPClient
 
 logger = logging.getLogger(__name__)
@@ -88,4 +87,3 @@ class MCPToolClientAdapter:
                 exc_info=True,
             )
             raise
-

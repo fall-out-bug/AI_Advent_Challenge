@@ -11,14 +11,13 @@ Following Python Zen:
 # Re-export all tools for backward compatibility
 from src.presentation.mcp.tools.channels import (
     add_channel,
-    list_channels,
+    collect_posts,
     delete_channel,
-    get_channel_metadata,
     get_channel_digest,
     get_channel_digest_by_name,
-    request_channel_digest_async,
+    get_channel_metadata,
     get_posts,
-    collect_posts,
+    list_channels,
     save_posts_to_db,
 )
 
@@ -33,4 +32,3 @@ __all__ = [
     "collect_posts",
     "save_posts_to_db",
 ]
-
