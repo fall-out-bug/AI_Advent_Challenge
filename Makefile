@@ -179,25 +179,11 @@ mcp-demo:
 test-mcp:
 	poetry run pytest src/tests/presentation/mcp -v
 
-test-mcp-comprehensive:
-	@echo "Running comprehensive MCP integration tests..."
-	poetry run pytest tests/integration/test_mcp_comprehensive_demo.py -v
+backoffice-cli:
+	poetry run python -m src.presentation.cli.backoffice.main --help
 
-mcp-chat:
-	poetry run python src/presentation/mcp/cli/interactive_mistral_chat.py
-
-mcp-chat-streaming:
-	poetry run python src/presentation/mcp/cli/streaming_chat.py
-
-mcp-chat-docker:
-	@echo "Starting chat with Docker MCP server..."
-	@echo "Make sure MCP server is running: make mcp-server-start"
-	MCP_USE_DOCKER=true poetry run python src/presentation/mcp/cli/streaming_chat.py
-
-demo-mcp-comprehensive:
-	@echo "Running comprehensive MCP demo..."
-	@echo "Make sure MCP server is running: make mcp-server-start"
-	poetry run python scripts/mcp_comprehensive_demo.py
+backoffice-digest-help:
+	poetry run python -m src.presentation.cli.backoffice.main digest --help
 
 mcp-server-start:
 	docker-compose -f docker-compose.mcp-demo.yml up -d
@@ -361,8 +347,8 @@ butler-setup:
 	fi
 
 butler-test:
-	@echo "Running Butler tests..."
-	python scripts/day12_run.py test
+	@echo "Running Butler integration tests..."
+	poetry run pytest tests/integration/butler -q
 
 butler-metrics:
 	@echo "Fetching Prometheus metrics from MCP server..."

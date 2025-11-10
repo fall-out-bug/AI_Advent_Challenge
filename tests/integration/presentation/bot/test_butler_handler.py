@@ -11,9 +11,10 @@ from src.presentation.bot.handlers.butler_handler import (
     setup_butler_handler,
     handle_any_message,
 )
-from src.domain.agents.butler_orchestrator import ButlerOrchestrator
-from src.domain.agents.services.mode_classifier import ModeClassifier, DialogMode
-from src.domain.agents.handlers.chat_handler import ChatHandler
+from src.presentation.bot.orchestrator import ButlerOrchestrator
+from src.application.services.mode_classifier import ModeClassifier
+from src.application.dtos.butler_dialog_dtos import DialogMode
+from src.presentation.bot.handlers.chat import ChatHandler
 
 
 @pytest.fixture

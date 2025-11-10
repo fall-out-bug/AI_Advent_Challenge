@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 from typing import Any, Dict
 
 import click
 
 from src.presentation.cli.backoffice.formatters import OutputFormat, format_output
 from src.presentation.cli.backoffice.metrics import track_command
+from src.presentation.cli.backoffice.services.digest_exporter import (
+    export_digest_to_file,
+)
 
 
 @click.group(help="Channel digest commands.")
@@ -144,6 +148,65 @@ async def _show_last_digest(user_id: int, channel: str, as_json: bool) -> None:
     click.echo(format_output(payload, fmt))
 
 
+@digest.command("export", help="Export digest to a file (PDF or Markdown).")
+@click.option("--user-id", required=True, type=int, help="User identifier.")
+@click.option("--channel", help="Specific channel username (optional).")
+@click.option(
+    "--hours",
+    default=24,
+    type=int,
+    show_default=True,
+    help="Time window in hours.",
+)
+@click.option(
+    "--output",
+    "output_path",
+    type=click.Path(path_type=Path),
+    help="Destination path for the exported file.",
+)
+@click.option(
+    "--format",
+    "export_format",
+    type=click.Choice(["pdf", "markdown"], case_sensitive=False),
+    default="pdf",
+    show_default=True,
+    help="Export format.",
+)
+@click.option(
+    "--overwrite",
+    is_flag=True,
+    help="Overwrite destination file if it already exists.",
+)
+@track_command("digest_export")
+def export_digest_command(
+    user_id: int,
+    channel: str | None,
+    hours: int,
+    output_path: Path | None,
+    export_format: str,
+    overwrite: bool,
+) -> None:
+    """Generate digest and export it to a file."""
+
+    try:
+        destination = asyncio.run(
+            export_digest_to_file(
+                user_id=user_id,
+                hours=hours,
+                channel=channel,
+                output_path=output_path,
+                export_format=export_format,
+                overwrite=overwrite,
+            )
+        )
+    except FileExistsError as exc:
+        raise click.ClickException(str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001 - converted to CLI-friendly error
+        raise click.ClickException(str(exc)) from exc
+
+    click.echo(f"Digest saved to {destination}")
+
+
 def _serialise_digest(digest, content_format: str) -> Dict[str, Any]:
     """Serialise ChannelDigest DTO to CLI-friendly representation."""
     summary = digest.summary
@@ -168,4 +231,3 @@ def _serialise_digest(digest, content_format: str) -> Dict[str, Any]:
         record["summary"] = summary.text
 
     return record
-

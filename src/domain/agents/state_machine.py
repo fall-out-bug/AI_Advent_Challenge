@@ -22,7 +22,6 @@ class DialogState(Enum):
     TASK_CREATE_DESC = "task_create_desc"
     TASK_CONFIRM = "task_confirm"
     DATA_COLLECTING = "data_collecting"
-    REMINDERS_LISTING = "reminders_listing"
 
 
 @dataclass

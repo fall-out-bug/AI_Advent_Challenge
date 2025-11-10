@@ -12,7 +12,6 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from src.domain.agents.handlers.chat_handler import ChatHandler
 from src.domain.agents.handlers.data_handler import DataHandler
 from src.domain.agents.handlers.homework_handler import HomeworkHandler
-from src.domain.agents.handlers.reminders_handler import RemindersHandler
 from src.domain.agents.handlers.task_handler import TaskHandler
 from src.domain.agents.services.mode_classifier import DialogMode, ModeClassifier
 from src.domain.agents.state_machine import DialogContext, DialogState
@@ -30,7 +29,6 @@ class ButlerOrchestrator:
         mode_classifier: Service for classifying message modes
         task_handler: Handler for TASK mode
         data_handler: Handler for DATA mode
-        reminders_handler: Handler for REMINDERS mode
         homework_handler: Handler for HOMEWORK_REVIEW mode
         chat_handler: Handler for IDLE mode
         mongodb: MongoDB database for context storage
@@ -42,7 +40,6 @@ class ButlerOrchestrator:
         mode_classifier: ModeClassifier,
         task_handler: TaskHandler,
         data_handler: DataHandler,
-        reminders_handler: RemindersHandler,
         homework_handler: HomeworkHandler,
         chat_handler: ChatHandler,
         mongodb: AsyncIOMotorDatabase,
@@ -53,7 +50,6 @@ class ButlerOrchestrator:
             mode_classifier: Mode classification service
             task_handler: Task mode handler
             data_handler: Data mode handler
-            reminders_handler: Reminders mode handler
             homework_handler: Homework review mode handler
             chat_handler: Chat/IDLE mode handler
             mongodb: MongoDB database instance
@@ -61,7 +57,6 @@ class ButlerOrchestrator:
         self.mode_classifier = mode_classifier
         self.task_handler = task_handler
         self.data_handler = data_handler
-        self.reminders_handler = reminders_handler
         self.homework_handler = homework_handler
         self.chat_handler = chat_handler
         self.mongodb = mongodb
@@ -159,7 +154,6 @@ class ButlerOrchestrator:
         handlers = {
             DialogMode.TASK: self.task_handler,
             DialogMode.DATA: self.data_handler,
-            DialogMode.REMINDERS: self.reminders_handler,
             DialogMode.HOMEWORK_REVIEW: self.homework_handler,
             DialogMode.IDLE: self.chat_handler,
         }

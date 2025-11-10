@@ -9,10 +9,37 @@ These tests operate in two modes:
 """
 
 import os
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+
+def _load_shared_infra_env() -> None:
+    """Load ~/work/infra/.env.infra if present to populate PROMETHEUS_URL."""
+    if os.getenv("PROMETHEUS_URL"):
+        return
+
+    env_path = Path.home() / "work/infra/.env.infra"
+    if not env_path.exists():
+        return
+
+    try:
+        for raw_line in env_path.read_text().splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip("\"'")
+            if key and value:
+                os.environ.setdefault(key, value)
+    except OSError:
+        # Ignore file access errors; the tests will fall back to mocked mode.
+        return
+
+
+_load_shared_infra_env()
 
 PROMETHEUS_URL = os.getenv("PROMETHEUS_URL")
 
@@ -34,7 +61,10 @@ if PROMETHEUS_URL:
         import httpx
 
         readiness_endpoint = PROMETHEUS_URL.rstrip("/") + "/-/ready"
-        response = httpx.get(readiness_endpoint, timeout=5.0)
+        try:
+            response = httpx.get(readiness_endpoint, timeout=5.0)
+        except httpx.RequestError as exc:
+            pytest.skip(f"Prometheus readiness endpoint unreachable: {exc}")
 
         assert response.status_code == 200
         assert "Prometheus Server is Ready" in response.text
@@ -44,7 +74,10 @@ if PROMETHEUS_URL:
         import httpx
 
         metrics_endpoint = PROMETHEUS_URL.rstrip("/") + "/metrics"
-        response = httpx.head(metrics_endpoint, timeout=5.0)
+        try:
+            response = httpx.head(metrics_endpoint, timeout=5.0)
+        except httpx.RequestError as exc:
+            pytest.skip(f"Prometheus metrics endpoint unreachable: {exc}")
 
         assert response.status_code in {200, 405}  # 405 when HEAD not supported
 
@@ -52,19 +85,36 @@ else:
 
     @pytest.fixture
     def mock_prometheus_available():
-        """Mock prometheus_client as available."""
-        with patch("src.infrastructure.monitoring.prometheus_metrics.Counter"):
-            with patch("src.infrastructure.monitoring.prometheus_metrics.Histogram"):
-                with patch("src.infrastructure.monitoring.prometheus_metrics.Gauge"):
-                    yield
+        """Ensure prometheus metrics module is loaded with real client."""
+        import importlib
+        import src.infrastructure.monitoring.prometheus_metrics as metrics_module
+
+        yield importlib.reload(metrics_module)
 
     @pytest.fixture
     def mock_prometheus_unavailable():
-        """Mock prometheus_client as unavailable."""
-        with patch(
-            "src.infrastructure.monitoring.prometheus_metrics.prometheus_client", None
-        ):
-            yield
+        """Reload metrics module simulating missing prometheus_client."""
+        import builtins
+        import importlib
+        import sys
+
+        module_name = "src.infrastructure.monitoring.prometheus_metrics"
+        original_import = builtins.__import__
+        original_module = sys.modules.get(module_name)
+
+        def fake_import(name, *args, **kwargs):
+            if name == "prometheus_client":
+                raise ImportError("prometheus_client not installed")
+            return original_import(name, *args, **kwargs)
+
+        with patch.object(builtins, "__import__", side_effect=fake_import):
+            sys.modules.pop(module_name, None)
+            fallback_module = importlib.import_module(module_name)
+            yield fallback_module
+
+        sys.modules.pop(module_name, None)
+        if original_module is not None:
+            sys.modules[module_name] = original_module
 
     def test_metrics_module_imports_without_prometheus(mock_prometheus_unavailable):
         """Test that metrics module imports gracefully when prometheus_client unavailable."""
@@ -100,13 +150,13 @@ else:
         from src.workers.post_fetcher_worker import PostFetcherWorker
 
         mock_mcp = AsyncMock()
-        mock_db = AsyncMock()
-        mock_db.channels.find.return_value.to_list = AsyncMock(return_value=[])
+        mock_db = MagicMock()
+        channels_cursor = MagicMock()
+        channels_cursor.to_list = AsyncMock(return_value=[])
+        mock_db.channels.find.return_value = channels_cursor
 
-        with patch(
-            "src.workers.post_fetcher_worker.get_mcp_client", return_value=mock_mcp
-        ):
-            with patch("src.workers.post_fetcher_worker.get_db", return_value=mock_db):
+        with patch("src.workers.post_fetcher_worker.get_mcp_client", return_value=mock_mcp):
+            with patch("src.workers.post_fetcher_worker.get_db", new=AsyncMock(return_value=mock_db)):
                 with patch(
                     "src.workers.post_fetcher_worker.get_settings"
                 ) as mock_settings:
@@ -120,30 +170,35 @@ else:
                             "src.workers.post_fetcher_worker.post_fetcher_last_run_timestamp"
                         ):
                             worker = PostFetcherWorker()
-                            worker._running = True
-                            await worker.run()
+                            await worker._process_all_channels()
 
     @pytest.mark.asyncio
     async def test_pdf_generation_metrics_integration():
         """Test that PDF generation records metrics."""
-        from src.presentation.mcp.tools.pdf_digest_tools import convert_markdown_to_pdf
+        pytest.importorskip("weasyprint")
+
+        from src.presentation.cli.backoffice.services import digest_exporter
 
         with patch(
-            "src.presentation.mcp.tools.pdf_digest_tools._convert_to_pdf"
-        ) as mock_convert:
-            mock_convert.return_value = b"fake_pdf_bytes"
+            "src.presentation.cli.backoffice.services.digest_exporter._HTML_TEMPLATE",
+            "<html>{content}</html>",
+        ):
+            with patch("weasyprint.HTML") as mock_html:
+                mock_html.return_value.write_pdf.return_value = b"fake_pdf_bytes"
 
-            with patch(
-                "src.presentation.mcp.tools.pdf_digest_tools.pdf_generation_duration_seconds"
-            ):
                 with patch(
-                    "src.presentation.mcp.tools.pdf_digest_tools.pdf_file_size_bytes"
+                    "src.presentation.cli.backoffice.services.digest_exporter.pdf_generation_duration_seconds"
                 ):
                     with patch(
-                        "src.presentation.mcp.tools.pdf_digest_tools.pdf_pages_total"
+                        "src.presentation.cli.backoffice.services.digest_exporter.pdf_file_size_bytes"
                     ):
-                        result = await convert_markdown_to_pdf("# Test\n\nContent")
-                        assert "pdf_bytes" in result
+                        with patch(
+                            "src.presentation.cli.backoffice.services.digest_exporter.pdf_pages_total"
+                        ):
+                            result = digest_exporter.convert_markdown_to_pdf(
+                                "# Test\n\nContent"
+                            )
+                            assert result == b"fake_pdf_bytes"
 
     @pytest.mark.asyncio
     async def test_bot_digest_metrics_integration():
@@ -163,9 +218,9 @@ else:
         mock_callback.message.answer = AsyncMock()
         mock_callback.answer = AsyncMock()
 
-        with patch("src.presentation.bot.handlers.menu.MCPClient") as mock_client_class:
+        with patch("src.presentation.bot.handlers.menu.get_mcp_client") as mock_client_fn:
             mock_client = AsyncMock()
-            mock_client_class.return_value = mock_client
+            mock_client_fn.return_value = mock_client
             mock_client.call_tool = AsyncMock(
                 return_value={"posts_by_channel": {}, "error": "no_posts"}
             )
@@ -213,16 +268,22 @@ else:
     @pytest.mark.asyncio
     async def test_metrics_in_error_scenarios():
         """Test that metrics are recorded in error scenarios."""
-        from src.presentation.mcp.tools.pdf_digest_tools import convert_markdown_to_pdf
+        pytest.importorskip("weasyprint")
+
+        from src.presentation.cli.backoffice.services import digest_exporter
 
         with patch(
-            "src.presentation.mcp.tools.pdf_digest_tools._convert_to_pdf"
-        ) as mock_convert:
-            mock_convert.side_effect = Exception("Conversion failed")
+            "src.presentation.cli.backoffice.services.digest_exporter._HTML_TEMPLATE",
+            "<html>{content}</html>",
+        ):
+            with patch("weasyprint.HTML") as mock_html:
+                mock_html.return_value.write_pdf.side_effect = Exception(
+                    "Conversion failed"
+                )
 
-            with patch(
-                "src.presentation.mcp.tools.pdf_digest_tools.pdf_generation_errors_total"
-            ) as mock_errors:
-                result = await convert_markdown_to_pdf("invalid markdown")
-                assert "error" in result
-                assert mock_errors.inc.called
+                with patch(
+                    "src.presentation.cli.backoffice.services.digest_exporter.pdf_generation_errors_total"
+                ) as mock_errors:
+                    with pytest.raises(Exception):
+                        digest_exporter.convert_markdown_to_pdf("invalid markdown")
+                    assert mock_errors.labels.return_value.inc.called

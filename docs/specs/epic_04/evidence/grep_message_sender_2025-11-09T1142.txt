@@ -1,0 +1,15 @@
+CHANGELOG.md:197:  - Extracted `message_sender.py` for message sending with retry logic and error handling
+docs/ARCHITECTURE.md:145:├── message_sender.py     # Message sending with retry
+docs/ARCHITECTURE.md:152:- `message_sender.py`: Send messages with exponential backoff retry
+docs/specs/epic_00/stage_00_01.md:181:| `message_sender.py` | Archive | Dependent on reminder flows; confirm before removal. |
+docs/specs/epic_04/archive_scope.md:37:| `src/workers/message_sender.py` | Archived 2025-11-09 | Summary worker owns notification flow | Resolved | Retry helper inlined; schedulers updated | Workers TL |
+docs/specs/epic_04/archive_scope.md:93:| `src/tests/workers/test_message_sender.py` | Archived 2025-11-09 | Digest workflow covered by summary worker integration | Resolved | Legacy suite retired with helper | QA Lead |
+docs/specs/epic_04/dependency_map.md:25:| `src/workers/message_sender.py` | Previously imported by `src/workers/summary_worker.py` | Archived 2025-11-09; summary worker now sends notifications directly | Completed |
+docs/specs/epic_04/dependency_map.md:49:| `src/tests/workers/test_message_sender.py` | Legacy reminder sender tests | Archived prior to Stage 04_02; no active suite remaining | Completed |
+docs/specs/epic_04/evidence/README.md:9:- `grep_message_sender.txt`
+docs/specs/epic_04/evidence/grep_message_sender.txt:1:CHANGELOG.md:197:  - Extracted `message_sender.py` for message sending with retry logic and error handling
+docs/specs/epic_04/evidence/grep_message_sender.txt:2:docs/ARCHITECTURE.md:145:├── message_sender.py     # Message sending with retry
+docs/specs/epic_04/evidence/grep_message_sender.txt:3:docs/ARCHITECTURE.md:152:- `message_sender.py`: Send messages with exponential backoff retry
+docs/specs/epic_04/evidence/grep_message_sender.txt:4:docs/specs/epic_00/stage_00_01.md:181:| `message_sender.py` | Archive | Dependent on reminder flows; confirm before removal. |
+docs/specs/epic_04/evidence/grep_message_sender.txt:5:src/workers/message_sender.py:15:logger = get_logger("message_sender")
+docs/specs/epic_04/evidence/grep_message_sender.txt:6:src/workers/summary_worker.py:30:from src.workers.message_sender import send_with_retry

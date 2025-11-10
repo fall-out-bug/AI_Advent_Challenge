@@ -6,8 +6,8 @@ Following TDD principles: test use cases integrated with real orchestrator.
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from src.application.usecases.create_task_usecase import CreateTaskUseCase
-from src.application.usecases.collect_data_usecase import CollectDataUseCase
+from src.application.use_cases.create_task_use_case import CreateTaskUseCase
+from src.application.use_cases.collect_data_use_case import CollectDataUseCase
 from src.application.orchestration.intent_orchestrator import IntentOrchestrator
 from tests.fixtures.butler_fixtures import (
     mock_tool_client_protocol,
@@ -51,7 +51,7 @@ async def test_create_task_usecase_with_real_intent_orchestrator(
 
     # Create use case
     use_case = CreateTaskUseCase(
-        intent_orch=intent_orch,
+        intent_orchestrator=intent_orch,
         tool_client=mock_tool_client_protocol,
         mongodb=mock_mongodb,
     )
@@ -98,7 +98,7 @@ async def test_create_task_usecase_clarification_flow(
     intent_orch.parse_task_intent = AsyncMock(side_effect=mock_parse_clarification)
 
     use_case = CreateTaskUseCase(
-        intent_orch=intent_orch,
+        intent_orchestrator=intent_orch,
         tool_client=mock_tool_client_protocol,
         mongodb=mock_mongodb,
     )
@@ -196,7 +196,7 @@ async def test_create_task_usecase_error_propagation(
     )
 
     use_case = CreateTaskUseCase(
-        intent_orch=intent_orch,
+        intent_orchestrator=intent_orch,
         tool_client=mock_tool_client_protocol,
         mongodb=mock_mongodb,
     )

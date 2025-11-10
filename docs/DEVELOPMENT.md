@@ -182,14 +182,14 @@ poetry run uvicorn src.presentation.api:app --host 0.0.0.0 --port 8000
 ### CLI Mode
 
 ```bash
-# Code generation
-poetry run python -m src.presentation.cli.main_cli generate "Create hello function"
+# Backoffice CLI entry point
+poetry run python -m src.presentation.cli.backoffice.main --help
 
-# Code review
-poetry run python -m src.presentation.cli.main_cli review code.py
+# Generate digest output (CLI replaces legacy chat flows)
+poetry run python -m src.presentation.cli.backoffice.main digest run --user-id 42 --hours 24
 
-# Status check
-poetry run python -m src.presentation.cli.main_cli status
+# Export digest to Markdown
+poetry run python -m src.presentation.cli.backoffice.main digest export --user-id 42 --hours 24 --format markdown --output digest.md --overwrite
 ```
 
 ## Development Workflow
@@ -655,4 +655,3 @@ For issues and questions:
 2. Run validation: `python -m scripts.maintenance.validate`
 3. Review documentation in `docs/`
 4. Check GitHub issues
-

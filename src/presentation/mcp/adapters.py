@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import Any, Mapping, Optional
 
 from shared.shared_package.clients.unified_client import UnifiedModelClient
@@ -11,10 +12,12 @@ from src.presentation.mcp.adapters.formalize_adapter import FormalizeAdapter
 from src.presentation.mcp.adapters.format_adapter import FormatAdapter
 from src.presentation.mcp.adapters.generation_adapter import GenerationAdapter
 from src.presentation.mcp.adapters.model_adapter import ModelAdapter
-from src.presentation.mcp.adapters.orchestration_adapter import OrchestrationAdapter
 from src.presentation.mcp.adapters.review_adapter import ReviewAdapter
-from src.presentation.mcp.adapters.test_generation_adapter import TestGenerationAdapter
+from src.presentation.mcp.adapters.test_generation_adapter import (
+    TestGenerationAdapter,
+)
 from src.presentation.mcp.adapters.token_adapter import TokenAdapter
+from src.presentation.mcp.exceptions import MCPValidationError
 
 
 class ModelClientAdapter:
@@ -64,7 +67,6 @@ class MCPApplicationAdapter:
         self._review_adapter = ReviewAdapter(
             self._unified_client, model_name="starcoder"
         )
-        self._orchestration_adapter = OrchestrationAdapter(self._unified_client)
         self._formalize_adapter = FormalizeAdapter(
             self._unified_client, model_name="starcoder"
         )
@@ -140,29 +142,98 @@ class MCPApplicationAdapter:
                 "estimated_complexity": "unknown",
             }
 
+    def _validate_orchestration_inputs(
+        self, description: str, gen_model: str, review_model: str
+    ) -> None:
+        """Ensure orchestration inputs are non-empty."""
+
+        if not description or not description.strip():
+            raise MCPValidationError(
+                "Description cannot be empty", field="description"
+            )
+        if not gen_model or not gen_model.strip():
+            raise MCPValidationError(
+                "Generation model cannot be empty", field="gen_model"
+            )
+        if not review_model or not review_model.strip():
+            raise MCPValidationError(
+                "Review model cannot be empty", field="review_model"
+            )
+
+    @staticmethod
+    def _failure_response(
+        error: str,
+        generation: Optional[dict[str, Any]] = None,
+        review: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
+        """Return a normalised failure payload."""
+
+        generation_payload = generation or {}
+        review_payload = review or {}
+        return {
+            "success": False,
+            "generation": {
+                "code": generation_payload.get("code", ""),
+                "tests": generation_payload.get("tests", ""),
+            },
+            "review": {
+                "score": review_payload.get("quality_score", 0),
+                "issues": review_payload.get("issues", []),
+                "recommendations": review_payload.get("recommendations", []),
+            },
+            "workflow_time": 0.0,
+            "error": error,
+        }
+
     async def orchestrate_generation_and_review(
         self,
         description: str,
         gen_model: str,
         review_model: str,
     ) -> dict[str, Any]:
-        """Run the orchestrator and keep the legacy payload structure."""
+        """Generate code then review it, mirroring the legacy payload."""
 
+        start = time.perf_counter()
         try:
-            orchestrate = self._orchestration_adapter.orchestrate_generation_and_review
-            return await orchestrate(
-                description,
-                gen_model,
+            self._validate_orchestration_inputs(description, gen_model, review_model)
+
+            generation = await self.generate_code_via_agent(description, gen_model)
+            if not generation.get("success"):
+                return self._failure_response(
+                    generation.get("error", "Code generation failed"),
+                    generation,
+                )
+
+            review = await self.review_code_via_agent(
+                generation.get("code", ""),
                 review_model,
             )
-        except Exception as error:  # noqa: BLE001
+            if not review.get("success"):
+                return self._failure_response(
+                    review.get("error", "Code review failed"),
+                    generation,
+                    review,
+                )
+
+            workflow_time = time.perf_counter() - start
             return {
-                "success": False,
-                "generation": {"code": "", "tests": ""},
-                "review": {"score": 0, "issues": [], "recommendations": []},
-                "workflow_time": 0.0,
-                "error": str(error),
+                "success": True,
+                "generation": {
+                    "code": generation.get("code", ""),
+                    "tests": generation.get("tests", ""),
+                },
+                "review": {
+                    "score": review.get("quality_score", 0),
+                    "issues": review.get("issues", []),
+                    "recommendations": review.get("recommendations", []),
+                },
+                "workflow_time": workflow_time,
+                "error": None,
             }
+        except MCPValidationError as error:
+            return self._failure_response(str(error))
+        except Exception as error:  # noqa: BLE001
+            return self._failure_response(str(error))
 
     def count_text_tokens(self, text: str) -> Mapping[str, int | str]:
         """Return token counts or a descriptive error payload."""

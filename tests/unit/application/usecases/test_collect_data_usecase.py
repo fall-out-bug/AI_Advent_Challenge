@@ -3,8 +3,8 @@
 import pytest
 from unittest.mock import AsyncMock
 
-from src.application.usecases.collect_data_usecase import CollectDataUseCase
-from src.application.usecases.result_types import DigestResult, StatsResult
+from src.application.dtos.butler_use_case_dtos import DigestResult, StatsResult
+from src.application.use_cases.collect_data_use_case import CollectDataUseCase
 from src.domain.interfaces.tool_client import ToolClientProtocol
 
 

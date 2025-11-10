@@ -174,31 +174,20 @@ A companion Docker image exposes a REST API; see `packages/multipass-reviewer/RE
 
 ### Available Commands
 
-CLI commands are unchanged and can operate against the shared services.
-
-#### Generate Code
+The legacy interactive CLI has been retired. Use the backoffice CLI group instead.
 
 ```bash
-python -m src.presentation.cli.main_cli generate "Create a fibonacci function"
+# Discover available backoffice commands
+poetry run python -m src.presentation.cli.backoffice.main --help
+
+# Generate digest output for the last 24 hours
+poetry run python -m src.presentation.cli.backoffice.main digest run --user-id 42 --hours 24
+
+# Export digest to PDF
+poetry run python -m src.presentation.cli.backoffice.main digest export --user-id 42 --format pdf --output reports/digest.pdf --overwrite
 ```
 
-Options:
-- `--agent-name NAME`: Specify agent name
-- `--model MODEL`: Specify model to use
-
-#### Review Code
-
-```bash
-python -m src.presentation.cli.main_cli review "<code_file.py>"
-```
-
-#### System Status
-
-```bash
-python -m src.presentation.cli.main_cli status
-```
-
-Outputs API health, model availability, storage status, and configuration info.
+Outputs include structured tables or JSON suitable for post-processing. The backoffice CLI reuses the same shared infrastructure services (MongoDB, Prometheus, etc.).
 
 ## Using the API
 
@@ -252,4 +241,3 @@ Benchmarks are captured in `docs/PERFORMANCE_BENCHMARKS.md`.
 | `HTTP 422` on `/chat` | Server expects OpenAI payload | Configure `LLM_MODEL` alias and prefer `/v1/chat/completions` |
 | Review pipeline hangs >90s | Shared LLM offline or slow | Check `http://llm-api:8000/health` and Prometheus metrics |
 | Prometheus counters absent | Metrics endpoint not scraped | Confirm `PROMETHEUS_URL` in `.env` and that `infra_shared` Prometheus includes the job |
-

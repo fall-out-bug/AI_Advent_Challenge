@@ -9,10 +9,12 @@ from typing import Any, Dict, Optional
 
 import httpx
 
+from src.domain.interfaces.homework_checker import HomeworkCheckerProtocol
+
 logger = logging.getLogger(__name__)
 
 
-class HWCheckerClient:
+class HWCheckerClient(HomeworkCheckerProtocol):
     """Client for HW Checker MCP API.
 
     Handles HTTP requests to HW Checker server for checking homework status,

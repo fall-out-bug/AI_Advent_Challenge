@@ -156,7 +156,6 @@ async def test_mode_classification_accuracy(butler_orchestrator):
     test_cases = [
         ("TASK", "Create a task to buy milk", butler_orchestrator.task_handler),
         ("DATA", "Get channel digests", butler_orchestrator.data_handler),
-        ("REMINDERS", "Show my reminders", butler_orchestrator.reminders_handler),
         ("IDLE", "Hello, how are you?", butler_orchestrator.chat_handler),
     ]
 
@@ -182,11 +181,11 @@ async def test_mode_classification_accuracy(butler_orchestrator):
             expected_handler.tool_client.call_tool = AsyncMock(
                 return_value={"success": True, "digests": []}
             )
-        elif expected_mode == "REMINDERS":
-            expected_handler.tool_client.call_tool = AsyncMock(
-                return_value={"success": True, "reminders": []}
+        elif expected_mode == "IDLE":
+            expected_handler.llm_client.make_request = AsyncMock(
+                return_value="Chat response"
             )
-        else:  # IDLE
+        else:
             expected_handler.llm_client.make_request = AsyncMock(
                 return_value="Chat response"
             )
@@ -198,7 +197,7 @@ async def test_mode_classification_accuracy(butler_orchestrator):
 
         # Verify: Correct handler was used
         assert response is not None
-        if expected_mode in ["TASK", "DATA", "REMINDERS"]:
+        if expected_mode in ["TASK", "DATA"]:
             assert expected_handler.tool_client.call_tool.called
         else:
             assert expected_handler.llm_client.make_request.called

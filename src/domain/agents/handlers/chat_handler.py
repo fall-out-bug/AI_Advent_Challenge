@@ -99,7 +99,7 @@ Just respond naturally to what the user said. Be brief and helpful.
             return cleaned
         except Exception as e:
             logger.error(f"Chat handling failed: {e}", exc_info=True)
-            return "I'm here to help! Try asking me to create a task, show data, or list reminders."
+            return "I'm here to help! Try asking me to create a task or show data insights."
 
     def _clean_response(self, response: str) -> str:
         """Clean LLM response from formatting artifacts.

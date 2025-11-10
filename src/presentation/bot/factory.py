@@ -11,15 +11,13 @@ from typing import List, Optional, Tuple
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from src.application.orchestration.intent_orchestrator import IntentOrchestrator
-from src.application.usecases.collect_data_usecase import CollectDataUseCase
-from src.application.usecases.create_task_usecase import CreateTaskUseCase
-from src.domain.agents.butler_orchestrator import ButlerOrchestrator
-from src.domain.agents.handlers.chat_handler import ChatHandler
-from src.domain.agents.handlers.data_handler import DataHandler
-from src.domain.agents.handlers.homework_handler import HomeworkHandler
-from src.domain.agents.handlers.reminders_handler import RemindersHandler
-from src.domain.agents.handlers.task_handler import TaskHandler
-from src.domain.agents.services.mode_classifier import ModeClassifier
+from src.application.services.mode_classifier import ModeClassifier
+from src.application.use_cases.collect_data_use_case import CollectDataUseCase
+from src.application.use_cases.create_task_use_case import CreateTaskUseCase
+from src.application.use_cases.list_homework_submissions import (
+    ListHomeworkSubmissionsUseCase,
+)
+from src.application.use_cases.review_homework_use_case import ReviewHomeworkUseCase
 from src.domain.intent import HybridIntentClassifier, LLMClassifier, RuleBasedClassifier
 from src.infrastructure.cache.intent_cache import IntentCache
 from src.infrastructure.clients.mcp_client_adapter import MCPToolClientAdapter
@@ -30,6 +28,11 @@ from src.infrastructure.database.mongo import get_db
 from src.infrastructure.hw_checker.client import HWCheckerClient
 from src.infrastructure.llm.mistral_client import MistralClient
 from src.infrastructure.logging import get_logger
+from src.presentation.bot.handlers.chat import ChatHandler
+from src.presentation.bot.handlers.data import DataHandler
+from src.presentation.bot.handlers.homework import HomeworkHandler
+from src.presentation.bot.handlers.task import TaskHandler
+from src.presentation.bot.orchestrator import ButlerOrchestrator
 from src.presentation.mcp.client import MCPClientProtocol, get_mcp_client
 
 logger = get_logger("butler_factory")
@@ -129,7 +132,7 @@ async def create_butler_orchestrator(
         # 6. Initialize Use Cases
         intent_orchestrator = IntentOrchestrator(model_name="mistral")
         create_task_uc = CreateTaskUseCase(
-            intent_orch=intent_orchestrator,
+            intent_orchestrator=intent_orchestrator,
             tool_client=tool_client,
             mongodb=mongodb,
         )
@@ -143,39 +146,41 @@ async def create_butler_orchestrator(
         hw_checker_client = HWCheckerClient(base_url=hw_checker_base_url)
         logger.info(f"HWCheckerClient initialized with URL: {hw_checker_base_url}")
 
-        # 7. Initialize Domain Handlers
+        # 7. Initialize Bot Handlers
         # Note: Handlers get user_id from context, not from initialization
         task_handler = TaskHandler(
-            intent_orchestrator=intent_orchestrator,
-            tool_client=tool_client,
+            create_task_use_case=create_task_uc,
             hybrid_classifier=hybrid_intent_classifier,
         )
         data_handler = DataHandler(
             tool_client=tool_client,
             hybrid_classifier=hybrid_intent_classifier,
             hw_checker_client=hw_checker_client,
+            collect_data_use_case=collect_data_uc,
         )
-        reminders_handler = RemindersHandler(
+        list_homework_uc = ListHomeworkSubmissionsUseCase(
+            homework_checker=hw_checker_client
+        )
+        review_homework_uc = ReviewHomeworkUseCase(
+            homework_checker=hw_checker_client,
             tool_client=tool_client,
-            hybrid_classifier=hybrid_intent_classifier,
         )
         homework_handler = HomeworkHandler(
-            hw_checker_client=hw_checker_client,
-            tool_client=tool_client,
+            list_use_case=list_homework_uc,
+            review_use_case=review_homework_uc,
         )
         chat_handler = ChatHandler(
             llm_client=llm_client,
             default_model="mistral",
             hybrid_classifier=hybrid_intent_classifier,
         )
-        logger.info("Domain handlers initialized")
+        logger.info("Handlers initialized")
 
         # 8. Create ButlerOrchestrator
         orchestrator = ButlerOrchestrator(
             mode_classifier=mode_classifier,
             task_handler=task_handler,
             data_handler=data_handler,
-            reminders_handler=reminders_handler,
             homework_handler=homework_handler,
             chat_handler=chat_handler,
             mongodb=mongodb,

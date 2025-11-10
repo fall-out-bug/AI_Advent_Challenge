@@ -8,6 +8,7 @@ Use this index to navigate current canonical documents.
 | Path | Description |
 |------|-------------|
 | `docs/specs/epic_00/` | Audit artefacts (Epic 0) |
+| `docs/specs/epic_04/` | Legacy archive plan, migration log, closure artifacts |
 | `docs/specs/architecture.md` | Clean Architecture target state |
 | `docs/specs/operations.md` | Infrastructure & runbooks |
 | `docs/specs/specs.md` | System specification summary |
@@ -34,8 +35,10 @@ Upcoming pairs (planned):
 | `docs/USER_GUIDE.md` | Environment setup, benchmarks |
 | `docs/DEVELOPMENT.md` | Dev container & workflow |
 | `docs/TROUBLESHOOTING.md` | Common issues (Mongo, LLM, Prometheus) |
+| `docs/shared_infra_cutover.md` | External infra dependency overview |
 | `docs/PERFORMANCE_BENCHMARKS.md` | Latest reviewer latency |
 | `docs/MODULAR_REVIEWER_INTEGRATION_GUIDE.md` | Embedding package in other projects |
+| `scripts/start_shared_infra.sh` | Wrapper script (run from repo root) for shared infra bootstrap |
 
 ## 4. Legacy / Archive
 
@@ -47,4 +50,3 @@ Upcoming pairs (planned):
 - Specs remain in English; dominant user-facing content (bot messages, CLI output) localised to Russian.
 - API/CLI docs maintained as EN/RU pairs; updates should keep both versions in sync.
 - When adding new guides, create both language versions or mark translation backlog in Stage 00_02.
-

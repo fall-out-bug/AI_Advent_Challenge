@@ -13,9 +13,9 @@
 | EP03 | Stage 03_01 | Observability gap analysis | Completed | Assistant & User | 2025-11-10 | – |
 | EP03 | Stage 03_02 | Instrumentation rollout | Completed | Assistant & User | 2025-11-10 | – |
 | EP03 | Stage 03_03 | Runbooks & CI operations checks | Completed | Assistant & User | 2025-11-11 | – |
-| EP04 | Stage 04_01 | Archive scope confirmation | Planned | Tech Lead TBD | – | Awaiting EP02 replacements |
-| EP04 | Stage 04_02 | Migration execution | Planned | Tech Lead TBD | – | Depends on Stage 04_01 approvals |
-| EP04 | Stage 04_03 | Repository hygiene & sign-off | Planned | Tech Lead TBD | – | Depends on Stage 04_02 migrations |
+| EP04 | Stage 04_01 | Archive scope confirmation | Completed | Assistant & User | 2025-11-09 | – |
+| EP04 | Stage 04_02 | Migration execution | Completed | Assistant & User | 2025-11-10 | Remaining test skips documented in known issues |
+| EP04 | Stage 04_03 | Repository hygiene & sign-off | In Progress | Assistant & User | 2025-11-10 | Awaiting stakeholder sign-offs & DR drill schedule |
 | EP05 | Stage 05_01 | Benchmark & dataset design | Planned | Tech Lead TBD | – | Optional; activate when capacity frees |
 | EP05 | Stage 05_02 | Automation & evaluation tooling | Planned | Tech Lead TBD | – | Depends on Stage 05_01 plan |
 | EP05 | Stage 05_03 | Fine-tuning governance & rollout | Planned | Tech Lead TBD | – | Depends on Stage 05_02 automation |

@@ -206,13 +206,13 @@ expected behaviour.
 #### `scripts/` Breakdown
 | Script/Folder | Status | Notes |
 |---------------|--------|-------|
-| `test_review_system.py`, `check_model_status.sh`, `start_models.sh`, `wait_for_model.sh` | Rework/Archive | Update to use modular reviewer & shared infra; remove local model steps where obsolete. |
+| `test_review_system.py`, `check_model_status.sh`, `start_models.sh`, `wait_for_model.sh` | Completed 2025-11-09 | Shared infra wrapper (`scripts/start_shared_infra.sh`) replaces local scripts; review system script documented in README. |
 | `quality/` suite (`check_coverage.py`, `run_all_checks.sh`, etc.) | Keep/Rework | Keep automation; ensure targets match new lint/test baseline. |
 | `qa/` smoke scripts | Keep/Rework | Align with current infra endpoints and feature flags. |
 | `maintenance/` (backup/cleanup/export) | Keep | Useful for ops; document prerequisites. |
 | `security/docker_scan.sh` | Keep | Retain security scanning hook. |
-| `ci/test_day10.sh`, `diag_*`, `day12_run.py` | Archive | Legacy workflows tied to older days. |
-| `mcp_comprehensive_demo.py`, `healthcheck_mcp.py` | Rework | Update to new tool set; drop reference to deprecated flows. |
+| `ci/test_day10.sh`, `diag_*`, `day12_run.py` | Archived 2025-11-09 | Legacy workflows tied to older days; see `archive/ep04_2025-11/scripts/`. |
+| `mcp_comprehensive_demo.py`, `healthcheck_mcp.py` | Archived 2025-11-09 | Superseded by backoffice CLI demos and review system metrics script. |
 | `clear_channels.py`, `export_channel_posts.py` | Keep/Rework | Needed for digest pipeline; move to backoffice tooling eventually. |
 | `telegram_channel_reader.session` | Archive | Remove committed session file after confirming not needed. |
 

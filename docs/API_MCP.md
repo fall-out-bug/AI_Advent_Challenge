@@ -10,9 +10,9 @@ must respect.
 
 ## 1. Discovery Overview
 
-- Use `MCPToolsRegistry.discover_tools()` to obtain the filtered catalogue.  
+- Use `MCPToolsRegistry.discover_tools()` to obtain the filtered catalogue.
 - Tool metadata contains `status` (`supported`, `transition`, `deprecated`,
-  `archived`) and an optional migration note.  
+  `archived`) and an optional migration note.
 - Deprecated/archived tools are hidden unless the opt-in flag is set.
 
 ```python
@@ -37,6 +37,7 @@ for tool in tools:
 | `request_channel_digest_async` | `channels/channel_digest.py` | Enqueue long-running digest job | Worker integration preserved. |
 | `get_channel_metadata` | `channels/channel_metadata.py` | Resolve channel metadata from Mongo/Telegram | Provides data to CLI and bot flows. |
 | `resolve_channel_name` | `channels/channel_resolution.py` | Fuzzy channel lookup for user input | Falls back to Telegram search when allowed. |
+| `review_homework_archive` | `homework_review_tool.py` | Run modular multi-pass review for homework archives | Returns structured findings, markdown report, and persists session logs. |
 
 ### 2.1 `get_channel_digest`
 
@@ -67,13 +68,13 @@ for tool in tools:
 
 ### 2.2 `get_channel_metadata`
 
-**Args**: `{ "channel_username": "tech_news", "user_id": 12345 }`  
+**Args**: `{ "channel_username": "tech_news", "user_id": 12345 }`
 **Response**: Metadata dictionary with `title`, `description`, `success` flag, and
 lookup notes. Falls back to Telegram search when Mongo data is stale.
 
 ### 2.3 `parse_digest_intent`
 
-**Args**: `{ "text": "нужен дайджест за последние 24 часа", "user_context": {} }`  
+**Args**: `{ "text": "нужен дайджест за последние 24 часа", "user_context": {} }`
 **Response**: Intent payload containing `intent_type`, `confidence`, inferred
 `hours`, optional `questions`, and recommended tool sequence.
 
@@ -102,7 +103,6 @@ emits a structured deprecation warning.
 
 | Tool Name | Status Note |
 |-----------|-------------|
-| `review_homework_archive` | Replaced by modular reviewer tool after EP01. |
 | `get_posts_from_db` | PDF digest flows superseded by CLI export. |
 | `summarize_posts` | CLI summariser handles channel summaries. |
 | `format_digest_markdown` | Markdown formatting moves to CLI renderer. |
@@ -140,15 +140,14 @@ Common errors:
 
 ## 7. Health & Monitoring
 
-- MCP HTTP endpoint: `GET /health` → `{"status": "ok"}`  
-- Prometheus metrics exposed when shared infra is configured.  
+- MCP HTTP endpoint: `GET /health` → `{"status": "ok"}`
+- Prometheus metrics exposed when shared infra is configured.
 - Deprecated tool usage is logged with `WARNING` level and tool name.
 
 ## 8. Related Documents
 
-- `docs/specs/epic_02/mcp_tool_matrix.md` — definitive catalogue.  
-- `docs/specs/epic_02/mcp_migration_bulletin.md` — migration guidance & CLI mapping.  
-- `docs/CHANGELOG_MCP.md` — public changelog of MCP tooling updates.  
-- `docs/API_MCP.ru.md` — Russian localisation of this document.  
-- `docs/API_BOT_BACKOFFICE.md` — CLI command reference (Stage 02_02).  
-
+- `docs/specs/epic_02/mcp_tool_matrix.md` — definitive catalogue.
+- `docs/specs/epic_02/mcp_migration_bulletin.md` — migration guidance & CLI mapping.
+- `docs/CHANGELOG_MCP.md` — public changelog of MCP tooling updates.
+- `docs/API_MCP.ru.md` — Russian localisation of this document.
+- `docs/API_BOT_BACKOFFICE.md` — CLI command reference (Stage 02_02).

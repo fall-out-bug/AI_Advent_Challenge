@@ -75,18 +75,6 @@ class TestRuleBasedClassifier:
                     channel = result.entities["channel_username"]
                     assert channel and len(channel) > 0
 
-    def test_classify_reminder_set(self, classifier):
-        """Test REMINDER_SET intent with text extraction."""
-        result = classifier.classify("Напомни мне про встречу")
-        # May return REMINDER_SET (sub-intent) or REMINDERS (mode-level), both are valid
-        assert result.intent in [IntentType.REMINDER_SET, IntentType.REMINDERS]
-        assert result.confidence >= 0.9
-        assert result.source == "rule"
-        # Check entity extraction (may be empty if rule doesn't extract)
-        if result.entities and "reminder_text" in result.entities:
-            text = result.entities["reminder_text"]
-            assert text and len(text) > 0
-
     def test_classify_general_chat(self, classifier):
         """Test GENERAL_CHAT intent for greetings."""
         result = classifier.classify("Привет")

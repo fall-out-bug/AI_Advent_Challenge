@@ -140,16 +140,14 @@ Coordinates scheduled notifications for task summaries and channel digests.
 **Modular Structure:**
 ```
 src/workers/
-├── summary_worker.py    # Main coordinator (258 lines)
-├── formatters.py         # Message formatting
-├── message_sender.py     # Message sending with retry
+├── summary_worker.py    # Main coordinator (notifications + scheduling)
+├── formatters.py         # Message formatting helpers
 └── data_fetchers.py      # Data fetching from MCP/DB
 ```
 
 **Responsibilities:**
-- `summary_worker.py`: Main loop, scheduling, coordination
+- `summary_worker.py`: Main loop, scheduling, notification delivery with retry
 - `formatters.py`: Format messages (summary, digest, markdown cleanup)
-- `message_sender.py`: Send messages with exponential backoff retry
 - `data_fetchers.py`: Fetch data from MCP tools or database
 
 **Features:**
@@ -271,42 +269,42 @@ graph TD
     Present --> App[Application Layer]
     App --> Domain[Domain Layer]
     Domain --> Infra[Infrastructure Layer]
-    
+
     subgraph Present
         ButlerBot[ButlerBot]
         Factory[Factory]
         HandlerRouter[Butler Handler]
     end
-    
+
     subgraph App
         CreateTaskUC[CreateTaskUseCase]
         CollectDataUC[CollectDataUseCase]
         IntentOrch[IntentOrchestrator]
     end
-    
+
     subgraph Domain
         ButlerOrch[ButlerOrchestrator]
         TaskHandler[TaskHandler]
         DataHandler[DataHandler]
-        RemindersHandler[RemindersHandler]
+        HomeworkHandler[HomeworkHandler]
         ChatHandler[ChatHandler]
         ModeClassifier[ModeClassifier]
         FSM[State Machine]
     end
-    
+
     subgraph Infra
         MistralClient[MistralClient]
         MCPAdapter[MCPToolClientAdapter]
         MongoDB[(MongoDB)]
     end
-    
+
     ButlerBot --> Factory
     Factory --> ButlerOrch
     HandlerRouter --> ButlerOrch
     ButlerOrch --> ModeClassifier
     ButlerOrch --> TaskHandler
     ButlerOrch --> DataHandler
-    ButlerOrch --> RemindersHandler
+    ButlerOrch --> HomeworkHandler
     ButlerOrch --> ChatHandler
     TaskHandler --> CreateTaskUC
     TaskHandler --> IntentOrch
@@ -329,13 +327,13 @@ sequenceDiagram
     participant UseCase
     participant MCP
     participant LLM
-    
+
     User->>ButlerBot: Send message
     ButlerBot->>ButlerOrch: handle_user_message()
     ButlerOrch->>ButlerOrch: Get/create context (MongoDB)
     ButlerOrch->>ModeClass: classify(message)
     ModeClass->>LLM: Request classification
-    LLM-->>ModeClass: Mode (TASK/DATA/REMINDERS/IDLE)
+    LLM-->>ModeClass: Mode (TASK/DATA/HOMEWORK_REVIEW/IDLE)
     ModeClass-->>ButlerOrch: DialogMode
     ButlerOrch->>Handler: handle(context, message)
     Handler->>UseCase: execute(...)
@@ -354,7 +352,7 @@ The domain layer contains the core business logic for Butler Agent, completely i
 
 #### ButlerOrchestrator
 
-**Location:** `src/domain/agents/butler_orchestrator.py`
+**Location:** `src/presentation/bot/orchestrator.py`
 
 **Purpose:** Main entry point for message processing. Routes messages to appropriate handlers based on mode classification.
 
@@ -366,7 +364,7 @@ The domain layer contains the core business logic for Butler Agent, completely i
 
 **Dependencies:**
 - `ModeClassifier`: For intent classification
-- `TaskHandler`, `DataHandler`, `RemindersHandler`, `ChatHandler`: Mode-specific handlers
+- `TaskHandler`, `DataHandler`, `HomeworkHandler`, `ChatHandler`: Mode-specific handlers
 - `AsyncIOMotorDatabase`: For context persistence
 
 **Key Methods:**
@@ -377,7 +375,7 @@ The domain layer contains the core business logic for Butler Agent, completely i
 
 #### Dialog State Machine (FSM)
 
-**Location:** `src/domain/agents/state_machine.py`
+**Location:** `src/application/dtos/butler_dialog_dtos.py`
 
 **Purpose:** Manages conversation state using Finite State Machine pattern.
 
@@ -387,7 +385,7 @@ The domain layer contains the core business logic for Butler Agent, completely i
 - `TASK_CREATE_DESC`: Task creation - collecting description
 - `TASK_CONFIRM`: Task creation - confirmation
 - `DATA_COLLECTING`: Data collection in progress
-- `REMINDERS_LISTING`: Listing reminders
+- `HOMEWORK_REVIEW`: Homework review workflow
 
 **DialogContext:**
 - `state: DialogState`: Current state
@@ -403,22 +401,22 @@ stateDiagram-v2
     [*] --> IDLE
     IDLE --> TASK_CREATE_TITLE: TASK mode detected
     IDLE --> DATA_COLLECTING: DATA mode detected
-    IDLE --> REMINDERS_LISTING: REMINDERS mode detected
+    IDLE --> HOMEWORK_REVIEW: Homework review requested
+    HOMEWORK_REVIEW --> IDLE: Review completed
     IDLE --> IDLE: IDLE mode (chat)
-    
+
     TASK_CREATE_TITLE --> TASK_CREATE_DESC: Title received
     TASK_CREATE_DESC --> TASK_CONFIRM: Description received
     TASK_CONFIRM --> IDLE: Task confirmed/created
     TASK_CREATE_TITLE --> IDLE: Cancellation
     TASK_CREATE_DESC --> IDLE: Cancellation
-    
+
     DATA_COLLECTING --> IDLE: Data retrieved
-    REMINDERS_LISTING --> IDLE: Reminders listed
 ```
 
 #### Handlers
 
-All handlers implement the `Handler` interface from `src/domain/agents/handlers/handler.py`:
+All handlers implement the `Handler` interface from `src/presentation/bot/handlers/base.py`:
 
 ```python
 class Handler(ABC):
@@ -427,36 +425,37 @@ class Handler(ABC):
         """Handle message in given context."""
 ```
 
-**TaskHandler** (`src/domain/agents/handlers/task_handler.py`):
+**TaskHandler** (`src/presentation/bot/handlers/task.py`):
 - Handles TASK mode messages
 - Uses `IntentOrchestrator` for intent parsing
 - Creates tasks via MCP `add_task` tool
 - Supports clarification flow
 
-**DataHandler** (`src/domain/agents/handlers/data_handler.py`):
+**DataHandler** (`src/presentation/bot/handlers/data.py`):
 - Handles DATA mode messages
 - Supports channel digests and student stats
 - Uses MCP tools: `get_channel_digest`, `get_student_stats`
 
-**RemindersHandler** (`src/domain/agents/handlers/reminders_handler.py`):
-- Handles REMINDERS mode messages
-- Lists active reminders via MCP `get_active_reminders` tool
+**HomeworkHandler** (`src/presentation/bot/handlers/homework.py`):
+- Handles HOMEWORK_REVIEW mode messages
+- Coordinates homework listing and review flows via MCP tools
+- Formats review responses
 
-**ChatHandler** (`src/domain/agents/handlers/chat_handler.py`):
+**ChatHandler** (`src/presentation/bot/handlers/chat.py`):
 - Handles IDLE mode (general conversation)
 - Uses LLM for generating responses
 - Fallback responses if LLM unavailable
 
 #### ModeClassifier
 
-**Location:** `src/domain/agents/services/mode_classifier.py`
+**Location:** `src/application/services/mode_classifier.py`
 
 **Purpose:** Classifies user messages into one of 4 modes using LLM.
 
 **Modes:**
 - `TASK`: Task creation/management
 - `DATA`: Data collection requests
-- `REMINDERS`: Reminder management
+- `HOMEWORK_REVIEW`: Homework review workflow
 - `IDLE`: General conversation
 
 **Behavior:**
@@ -482,7 +481,7 @@ The application layer contains use cases that encapsulate business logic operati
 
 #### Use Cases
 
-**CreateTaskUseCase** (`src/application/usecases/create_task_usecase.py`):
+**CreateTaskUseCase** (`src/application/use_cases/create_task_use_case.py`):
 - **Purpose:** Encapsulates task creation business logic
 - **Flow:**
   1. Parse intent via `IntentOrchestrator`
@@ -492,7 +491,7 @@ The application layer contains use cases that encapsulate business logic operati
 - **Dependencies:** `IntentOrchestrator`, `ToolClientProtocol`, MongoDB
 - **Returns:** `TaskCreationResult` with `created`, `task_id`, `clarification`, or `error`
 
-**CollectDataUseCase** (`src/application/usecases/collect_data_usecase.py`):
+**CollectDataUseCase** (`src/application/use_cases/collect_data_use_case.py`):
 - **Purpose:** Encapsulates data collection operations
 - **Methods:**
   - `get_channels_digest(user_id)`: Returns `DigestResult`
@@ -500,7 +499,7 @@ The application layer contains use cases that encapsulate business logic operati
 - **Dependencies:** `ToolClientProtocol`
 - **Returns:** Typed results (`DigestResult`, `StatsResult`)
 
-**Result Types** (`src/application/usecases/result_types.py`):
+**Result Types** (`src/application/dtos/butler_use_case_dtos.py`):
 - `TaskCreationResult`: Pydantic model for task creation
 - `DigestResult`: Pydantic model for digest data
 - `StatsResult`: Pydantic model for statistics
@@ -600,7 +599,7 @@ The presentation layer handles user interaction via Telegram bot.
 4. ModeClassifier with MistralClient
 5. IntentOrchestrator
 6. CreateTaskUseCase and CollectDataUseCase
-7. Domain handlers (TaskHandler, DataHandler, RemindersHandler, ChatHandler)
+7. Domain handlers (TaskHandler, DataHandler, HomeworkHandler, ChatHandler)
 8. ButlerOrchestrator with all dependencies
 
 **Benefits:**
@@ -661,7 +660,6 @@ src/
 │   │   │   ├── handler.py              # Base interface
 │   │   │   ├── task_handler.py         # Task creation
 │   │   │   ├── data_handler.py         # Data collection
-│   │   │   ├── reminders_handler.py    # Reminders
 │   │   │   └── chat_handler.py         # General chat
 │   │   └── services/
 │   │       └── mode_classifier.py      # Intent classification
@@ -670,10 +668,12 @@ src/
 │       └── llm_client.py               # LLM client protocol
 │
 ├── application/
-│   ├── usecases/
-│   │   ├── create_task_usecase.py     # Task creation logic
-│   │   ├── collect_data_usecase.py    # Data collection logic
-│   │   └── result_types.py            # Result models
+│   ├── use_cases/
+│   │   ├── create_task_use_case.py    # Task creation logic
+│   │   ├── collect_data_use_case.py   # Data collection logic
+│   │   └── ...                        # Other modern use cases
+│   ├── dtos/
+│   │   └── butler_use_case_dtos.py    # Result models
 │   └── orchestration/
 │       └── intent_orchestrator.py     # Intent parsing
 │
@@ -698,4 +698,3 @@ src/
 - [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 - [SOLID Principles](https://en.wikipedia.org/wiki/SOLID)
 - [Zen of Python](https://www.python.org/dev/peps/pep-0020/)
-

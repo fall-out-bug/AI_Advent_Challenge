@@ -4,7 +4,7 @@ Following TDD principles and testing best practices.
 """
 
 import pytest
-from src.domain.agents.state_machine import DialogState, DialogContext
+from src.application.dtos.butler_dialog_dtos import DialogContext, DialogState
 
 
 class TestDialogState:
@@ -29,10 +29,6 @@ class TestDialogState:
     def test_data_collecting_state_exists(self):
         """Test DATA_COLLECTING state exists."""
         assert DialogState.DATA_COLLECTING == DialogState("data_collecting")
-
-    def test_reminders_listing_state_exists(self):
-        """Test REMINDERS_LISTING state exists."""
-        assert DialogState.REMINDERS_LISTING == DialogState("reminders_listing")
 
 
 class TestDialogContext:

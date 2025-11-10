@@ -43,7 +43,7 @@ tests/
 │   │       ├── services/          # ModeClassifier tests
 │   │       └── handlers/          # Handler tests
 │   ├── application/               # Application layer tests
-│   │   └── usecases/              # Use case tests
+│   │   └── use_cases/             # Use case tests
 │   ├── infrastructure/            # Infrastructure layer tests
 │   │   ├── llm/                   # MistralClient tests
 │   │   └── mcp/                   # Tools Registry tests
@@ -153,7 +153,7 @@ Test individual components in isolation.
 async def test_orchestrator_initialization():
     """Test orchestrator initialization."""
     orchestrator = MultiAgentOrchestrator()
-    
+
     assert orchestrator.generator is not None
     assert orchestrator.reviewer is not None
 ```
@@ -169,10 +169,10 @@ async def test_generation_to_review_workflow():
     """Test complete workflow."""
     # Setup
     orchestrator = MultiAgentOrchestrator(...)
-    
+
     # Execute
     response = await orchestrator.process_task(request)
-    
+
     # Verify
     assert response.success is True
 ```
@@ -202,10 +202,10 @@ class TestFeature:
         """Test basic functionality."""
         # Arrange
         ...
-        
+
         # Act
         ...
-        
+
         # Assert
         ...
 ```
@@ -241,7 +241,6 @@ mock_mode_classifier        # ModeClassifier with mocked LLM
 mock_intent_orchestrator    # Mock IntentOrchestrator
 mock_task_handler           # TaskHandler with dependencies
 mock_data_handler           # DataHandler with dependencies
-mock_reminders_handler      # RemindersHandler with dependencies
 mock_chat_handler           # ChatHandler with dependencies
 
 # Complete orchestrator
@@ -269,12 +268,12 @@ async def test_task_creation(butler_orchestrator):
     butler_orchestrator.mode_classifier.llm_client.make_request = AsyncMock(
         return_value="TASK"
     )
-    
+
     # Execute
     response = await butler_orchestrator.handle_user_message(
         user_id="123", message="Create task", session_id="456"
     )
-    
+
     # Verify
     assert response is not None
 ```
@@ -365,7 +364,7 @@ def test_performance():
     start = time.time()
     result = expensive_operation()
     elapsed = time.time() - start
-    
+
     assert elapsed < 1.0  # 1 second limit
     assert result is not None
 ```
@@ -391,4 +390,3 @@ def test_performance():
 - [pytest documentation](https://docs.pytest.org/)
 - [TDD Guide](https://en.wikipedia.org/wiki/Test-driven_development)
 - [Python Testing Best Practices](https://docs.python-guide.org/writing/tests/)
-

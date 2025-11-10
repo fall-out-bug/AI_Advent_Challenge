@@ -6,7 +6,7 @@ Following Python Zen: Simple is better than complex.
 
 import base64
 import re
-from typing import Optional
+from typing import Any, Optional
 
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
@@ -16,8 +16,8 @@ from src.application.use_cases.resolve_channel_name import ResolveChannelNameUse
 from src.application.use_cases.search_channel_for_subscription import (
     SearchChannelForSubscriptionUseCase,
 )
-from src.domain.agents.butler_orchestrator import ButlerOrchestrator
-from src.domain.agents.services.mode_classifier import DialogMode
+from src.application.dtos.butler_dialog_dtos import DialogMode
+from src.presentation.bot.orchestrator import ButlerOrchestrator
 from src.infrastructure.logging import get_logger
 from src.presentation.bot.states import ChannelSearchStates
 
@@ -252,9 +252,15 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
             force_mode = DialogMode.HOMEWORK_REVIEW
             await message.answer("⏳ Начал ревью коммита...")
 
-        response = await _orchestrator.handle_user_message(
-            user_id=user_id, message=text, session_id=session_id, force_mode=force_mode
-        )
+        kwargs: dict[str, Any] = {
+            "user_id": user_id,
+            "message": text,
+            "session_id": session_id,
+        }
+        if force_mode is not None:
+            kwargs["force_mode"] = force_mode
+
+        response = await _orchestrator.handle_user_message(**kwargs)
         # Check if response is a file format: "FILE:<filename>:<content>"
         if response.startswith("FILE:"):
             await _handle_file_response(message, response)
@@ -279,7 +285,7 @@ async def _safe_answer(message: Message, text: str) -> None:
         message: Telegram message object
         text: Response text to send
     """
-    MAX_MESSAGE_LENGTH = 4096  # Telegram limit
+    MAX_MESSAGE_LENGTH = 4000  # Telegram limit
 
     try:
         if len(text) > MAX_MESSAGE_LENGTH:

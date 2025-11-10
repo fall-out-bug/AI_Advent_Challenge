@@ -22,9 +22,10 @@ Fast, isolated tests for individual components:
 Tests component interactions across layers:
 
 - **Full Message Flow**: Complete workflows from message to response
-- **Mode Transitions**: Switching between TASK, DATA, REMINDERS, IDLE modes
+- **Mode Transitions**: Switching between TASK, DATA, HOMEWORK_REVIEW, IDLE modes
 - **Error Recovery**: Graceful degradation and error handling
 - **Use Case Integration**: Use cases with real orchestrator components
+- **Backoffice CLI Smoke**: CLI command discovery (digest/channels) without external services
 
 **Coverage Target**: 80%+ for integration paths
 
@@ -32,7 +33,7 @@ Tests component interactions across layers:
 
 End-to-end tests for complete Telegram bot workflows:
 
-- **All 4 Modes**: TASK, DATA, REMINDERS, IDLE
+- **All 4 Modes**: TASK, DATA, HOMEWORK_REVIEW, IDLE
 - **Error Scenarios**: Service unavailable, invalid input, long messages
 - **Complete Flows**: From Telegram message to bot response
 
@@ -97,19 +98,19 @@ async def test_example(butler_orchestrator, sample_task_message):
     """Example test using fixtures."""
     # butler_orchestrator: Fully configured ButlerOrchestrator
     # sample_task_message: Sample task creation message
-    
+
     # Configure mocks
     butler_orchestrator.mode_classifier.llm_client.make_request = AsyncMock(
         return_value="TASK"
     )
-    
+
     # Execute
     response = await butler_orchestrator.handle_user_message(
         user_id="123",
         message=sample_task_message,
         session_id="456"
     )
-    
+
     # Verify
     assert response is not None
 ```
@@ -140,10 +141,10 @@ async def test_my_component_success(mock_dependency):
     # Arrange
     component = MyComponent(dependency=mock_dependency)
     mock_dependency.method = AsyncMock(return_value="success")
-    
+
     # Act
     result = await component.process()
-    
+
     # Assert
     assert result == "success"
     mock_dependency.method.assert_called_once()
@@ -164,14 +165,14 @@ async def test_full_workflow(butler_orchestrator):
     butler_orchestrator.mode_classifier.llm_client.make_request = AsyncMock(
         return_value="TASK"
     )
-    
+
     # Execute
     response = await butler_orchestrator.handle_user_message(
         user_id="123",
         message="Create task: Test",
         session_id="456"
     )
-    
+
     # Verify complete flow
     assert response is not None
 ```
@@ -193,14 +194,14 @@ async def test_task_creation_e2e(e2e_orchestrator, mock_telegram_message):
         return_value="TASK"
     )
     mock_telegram_message.text = "Create a task: Buy milk"
-    
+
     # Execute
     response = await e2e_orchestrator.handle_user_message(
         user_id=str(mock_telegram_message.from_user.id),
         message=mock_telegram_message.text,
         session_id=f"{mock_telegram_message.from_user.id}:{mock_telegram_message.message_id}"
     )
-    
+
     # Verify
     assert response is not None
 ```
@@ -348,4 +349,3 @@ pytest tests/ --cov=src --cov-report=term-missing
 - [pytest-asyncio](https://pytest-asyncio.readthedocs.io/)
 - [Python Testing Best Practices](https://docs.python-guide.org/writing/tests/)
 - [Main Testing Documentation](../docs/TESTING.md)
-

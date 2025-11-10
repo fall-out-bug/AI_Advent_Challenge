@@ -9,12 +9,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from aiogram.types import Message, User, Chat
 
 from src.presentation.bot.handlers.butler_handler import (
-    setup_butler_handler,
-    handle_any_message,
-    _safe_answer,
     _handle_error,
+    _safe_answer,
+    handle_any_message,
+    setup_butler_handler,
 )
-from src.domain.agents.butler_orchestrator import ButlerOrchestrator
+from src.presentation.bot.orchestrator import ButlerOrchestrator
 
 
 @pytest.fixture
@@ -134,7 +134,7 @@ async def test_safe_answer_long_message(mock_message):
     assert call_args is not None
     sent_text = call_args[0][0]
     assert len(sent_text) <= 4000
-    assert "(Message truncated)" in sent_text
+    assert "_(сообщение обрезано)_" in sent_text
 
 
 @pytest.mark.asyncio

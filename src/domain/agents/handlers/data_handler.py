@@ -8,6 +8,7 @@ import logging
 import re
 from typing import Optional
 
+from src.application.use_cases.collect_data_use_case import CollectDataUseCase
 from src.domain.agents.handlers.handler import Handler
 from src.domain.agents.state_machine import DialogContext
 from src.domain.intent import HybridIntentClassifier, IntentType
@@ -53,6 +54,7 @@ class DataHandler(Handler):
         tool_client: ToolClientProtocol,
         hybrid_classifier: Optional[HybridIntentClassifier] = None,
         hw_checker_client: Optional[HWCheckerClient] = None,
+        collect_data_use_case: Optional[CollectDataUseCase] = None,
     ):
         """Initialize data handler.
 
@@ -64,6 +66,9 @@ class DataHandler(Handler):
         self.tool_client = tool_client
         self.hybrid_classifier = hybrid_classifier
         self.hw_checker_client = hw_checker_client
+        self._collect_data_use_case = (
+            collect_data_use_case or CollectDataUseCase(tool_client=tool_client)
+        )
 
     async def handle(self, context: DialogContext, message: str) -> str:
         """Handle data collection request.
@@ -526,41 +531,35 @@ class DataHandler(Handler):
             Formatted channels digest text
         """
         try:
-            tool_name = "get_channel_digest"
-            params = {"user_id": int(context.user_id), "hours": hours}
+            digest_result = await self._collect_data_use_case.get_channels_digest(
+                user_id=int(context.user_id), hours=hours
+            )
+            if digest_result.error:
+                error_msg = digest_result.error
+                if any(
+                    keyword in error_msg.lower()
+                    for keyword in ("connection", "failed", "http")
+                ):
+                    return (
+                        "❌ Не удалось подключиться к серверу данных. "
+                        "Убедитесь, что MCP сервер запущен и доступен."
+                    )
+                return f"❌ {error_msg}"
 
-            # Try to call the tool
-            result = await self.tool_client.call_tool(tool_name, params)
+            digests = digest_result.digests
+            if not digests:
+                return "📊 Нет доступных дайджестов за указанный период."
 
-            # Handle different response formats
-            if "digest" in result:
-                # Single digest response
-                digest = result.get("digest", {})
-                if digest:
-                    return self._format_single_digest(digest)
-            elif "digests" in result:
-                # Multiple digests response
-                digests = result.get("digests", [])
-                if digests:
-                    return self._format_digests(digests)
-            elif result:
-                # Direct result
-                return self._format_single_digest(result)
-
-            return "📊 Нет доступных дайджестов за указанный период."
-
-        except Exception as e:
+            if len(digests) == 1:
+                return self._format_single_digest(digests[0])
+            return self._format_digests(digests)
+        except Exception as e:  # pragma: no cover - defensive
             error_msg = str(e)
-            logger.error(f"Failed to get channels digest: {error_msg}", exc_info=True)
-
-            # Check if it's a connection error
-            if (
-                "connection" in error_msg.lower()
-                or "failed" in error_msg.lower()
-                or "http" in error_msg.lower()
-            ):
-                return "❌ Не удалось подключиться к серверу данных. Убедитесь, что MCP сервер запущен и доступен."
-            return f"❌ Ошибка при получении дайджеста: {error_msg[:100]}"
+            logger.error(
+                f"Failed to get channels digest (unexpected error): {error_msg}",
+                exc_info=True,
+            )
+            return "❌ Ошибка при получении дайджеста. Попробуйте позже."
 
     def _parse_channel_name_from_subscribe(self, message: str) -> str | None:
         """Parse channel name from subscribe message.
@@ -920,14 +919,15 @@ class DataHandler(Handler):
             Formatted student stats text
         """
         try:
-            result = await self.tool_client.call_tool(
-                "get_student_stats", {"teacher_id": context.user_id}
+            stats_result = await self._collect_data_use_case.get_student_stats(
+                teacher_id=context.user_id
             )
-            stats = result.get("stats", {})
-            if not stats:
+            if stats_result.error:
+                return f"❌ {stats_result.error}"
+            if not stats_result.stats:
                 return "📊 No student statistics available."
-            return self._format_stats(stats)
-        except Exception as e:
+            return self._format_stats(stats_result.stats)
+        except Exception as e:  # pragma: no cover - defensive
             logger.error(f"Failed to get student stats: {e}", exc_info=True)
             return "❌ Failed to retrieve student statistics. Please try again."
 

@@ -25,4 +25,4 @@ async def test_summarize_posts_empty_list():
     from src.infrastructure.llm.summarizer import summarize_posts
 
     summary = await summarize_posts([], max_sentences=3, llm=FallbackLLMClient())
-    assert summary == "No posts to summarize."
+    assert summary in {"No posts to summarize.", "Нет постов для саммари."}

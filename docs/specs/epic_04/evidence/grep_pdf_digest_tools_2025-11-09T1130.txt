@@ -1,0 +1,132 @@
+AI_CONTEXT.md:333:- `src/presentation/mcp/tools/pdf_digest_tools.py`
+docs/specs/epic_00/stage_00_01.md:58:| PDF digest | `pdf_digest_tools.py` | PDF reports | Deprecate |
+docs/specs/epic_00/stage_00_01.md:115:| `pdf_digest_tools.py` | Deprecate | Functionality redundant; depends on heavy WeasyPrint stack. |
+docs/specs/epic_00/stage_00_01.md:318:- MCP suites (`src/tests/presentation/mcp/test_adapters.py`, `test_digest_tools.py`, `test_pdf_digest_tools.py`, `test_performance.py`) – blocked by Mongo auth, logging kwargs, heavyweight dependencies.
+docs/specs/epic_00/stage_00_01.md:319:- `src/tests/presentation/mcp/test_pdf_digest_tools.py` – needs Mongo auth and WeasyPrint stubs.
+docs/specs/epic_00/stage_00_02.md:123:| PDF digest tests | `tests/presentation/mcp/test_pdf_digest_tools.py` | Relies on WeasyPrint; mark xfail until CLI backoffice replaces functionality | Excluded (pending replacement) |
+docs/specs/epic_02/mcp_tool_matrix.md:23:| PDF digest | `src/presentation/mcp/tools/pdf_digest_tools.py` | Deprecate (sunset) | EP02 team | Mongo, WeasyPrint stack | Functionality shifts to CLI export in Stage 02_02; remove from default registry. |
+docs/specs/epic_04/archive_scope.md:30:| `src/presentation/mcp/tools/pdf_digest_tools.py` | Deprecate → Archive | Stage 02_02 CLI digest export | See dependency map (`Soft`) | Provide CLI how-to in comms pack | EP02 TL |
+docs/specs/epic_04/archive_scope.md:45:| PDF digest | `src/presentation/mcp/tools/pdf_digest_tools.py` | Deprecate → Archive | CLI digest export (`digest:export`) | See dependency map (`Soft`) | CLI command shipped 2025-11-09; remove MCP module and tests in Wave 1 | EP02 TL |
+docs/specs/epic_04/archive_scope.md:89:| `src/tests/presentation/mcp/test_pdf_digest_tools.py` | Archive | CLI digest export tests (Stage 02_02) | See dependency map (`Soft`) | Mark xfail until CLI tests merge | QA Lead |
+docs/specs/epic_04/coordination_stage_02_01.md:18:| PDF digest toolchain | `src/presentation/mcp/tools/pdf_digest_tools.py` | Deprecated | WeasyPrint, Prom metrics, Mongo posts | Delete once CLI `digest:export` adopted (Stage 02_02). |
+docs/specs/epic_04/coordination_stage_02_01.md:19:| PDF tests | `tests/presentation/mcp/test_pdf_digest_tools.py` | Deprecated | WeasyPrint fixtures | Convert to CLI integration test or remove. |
+docs/specs/epic_04/dependency_map.md:24:| `src/presentation/mcp/tools/pdf_digest_tools.py` | Registered in MCP server, used in monitoring tests, integration suites | CLI digest export shipped; remove MCP module/tests and update monitoring hooks | In progress |
+docs/specs/epic_04/dependency_map.md:49:| `src/tests/presentation/mcp/test_pdf_digest_tools.py` | Direct imports of MCP PDF digest functions | Archived 2025-11-09; CLI tests cover export flow | Completed |
+docs/specs/epic_04/evidence/README.md:8:- `grep_pdf_digest_tools.txt`
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:1:AI_CONTEXT.md:333:- `src/presentation/mcp/tools/pdf_digest_tools.py`
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:2:docs/architecture/mcp_agent_prompt_tuning_report.md:15:  - `src/presentation/mcp/server.py` регистрирует тулы (`digest_tools`, `pdf_digest_tools`, и др.)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:3:docs/specs/epic_00/stage_00_01.md:58:| PDF digest | `pdf_digest_tools.py` | PDF reports | Deprecate |
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:4:docs/specs/epic_00/stage_00_01.md:115:| `pdf_digest_tools.py` | Deprecate | Functionality redundant; depends on heavy WeasyPrint stack. |
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:5:docs/specs/epic_00/stage_00_01.md:318:- MCP suites (`src/tests/presentation/mcp/test_adapters.py`, `test_digest_tools.py`, `test_pdf_digest_tools.py`, `test_performance.py`) – blocked by Mongo auth, logging kwargs, heavyweight dependencies.
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:6:docs/specs/epic_00/stage_00_01.md:319:- `src/tests/presentation/mcp/test_pdf_digest_tools.py` – needs Mongo auth and WeasyPrint stubs.
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:7:docs/specs/epic_00/stage_00_02.md:121:| PDF digest tests | `tests/presentation/mcp/test_pdf_digest_tools.py` | Relies on WeasyPrint; mark xfail until CLI backoffice replaces functionality | Excluded (pending replacement) |
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:8:scripts/day12_run.py:42:            "src/tests/presentation/mcp/test_pdf_digest_tools.py",
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:9:scripts/day12_run.py:48:            "src/tests/presentation/mcp/test_pdf_digest_tools.py",
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:10:src/presentation/mcp/server.py:47:            "pdf_digest_tools",
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:11:src/presentation/mcp/server.py:48:            "src.presentation.mcp.tools.pdf_digest_tools",
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:12:src/presentation/mcp/tools/pdf_digest_tools.py:26:logger = get_logger("pdf_digest_tools")
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:13:src/tests/infrastructure/monitoring/test_prometheus_metrics.py:129:        from src.presentation.mcp.tools.pdf_digest_tools import convert_markdown_to_pdf
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:14:src/tests/infrastructure/monitoring/test_prometheus_metrics.py:132:            "src.presentation.mcp.tools.pdf_digest_tools._convert_to_pdf"
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:15:src/tests/infrastructure/monitoring/test_prometheus_metrics.py:137:                "src.presentation.mcp.tools.pdf_digest_tools.pdf_generation_duration_seconds"
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:16:src/tests/infrastructure/monitoring/test_prometheus_metrics.py:140:                    "src.presentation.mcp.tools.pdf_digest_tools.pdf_file_size_bytes"
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:17:src/tests/infrastructure/monitoring/test_prometheus_metrics.py:143:                        "src.presentation.mcp.tools.pdf_digest_tools.pdf_pages_total"
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:18:src/tests/infrastructure/monitoring/test_prometheus_metrics.py:216:        from src.presentation.mcp.tools.pdf_digest_tools import convert_markdown_to_pdf
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:19:src/tests/infrastructure/monitoring/test_prometheus_metrics.py:219:            "src.presentation.mcp.tools.pdf_digest_tools._convert_to_pdf"
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:20:src/tests/infrastructure/monitoring/test_prometheus_metrics.py:224:                "src.presentation.mcp.tools.pdf_digest_tools.pdf_generation_errors_total"
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:21:src/tests/presentation/mcp/test_pdf_digest_tools.py:55:    from src.presentation.mcp.tools.pdf_digest_tools import get_posts_from_db
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:22:src/tests/presentation/mcp/test_pdf_digest_tools.py:100:    from src.presentation.mcp.tools.pdf_digest_tools import get_posts_from_db
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:23:src/tests/presentation/mcp/test_pdf_digest_tools.py:125:    from src.presentation.mcp.tools.pdf_digest_tools import get_posts_from_db
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:24:src/tests/presentation/mcp/test_pdf_digest_tools.py:143:    from src.presentation.mcp.tools.pdf_digest_tools import get_posts_from_db
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:25:src/tests/presentation/mcp/test_pdf_digest_tools.py:174:    from src.presentation.mcp.tools.pdf_digest_tools import summarize_posts
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:26:src/tests/presentation/mcp/test_pdf_digest_tools.py:205:    from src.presentation.mcp.tools.pdf_digest_tools import summarize_posts
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:27:src/tests/presentation/mcp/test_pdf_digest_tools.py:229:    from src.presentation.mcp.tools.pdf_digest_tools import summarize_posts
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:28:src/tests/presentation/mcp/test_pdf_digest_tools.py:245:    from src.presentation.mcp.tools.pdf_digest_tools import summarize_posts
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:29:src/tests/presentation/mcp/test_pdf_digest_tools.py:257:        "src.presentation.mcp.tools.pdf_digest_tools.llm_summarize_posts"
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:30:src/tests/presentation/mcp/test_pdf_digest_tools.py:271:    from src.presentation.mcp.tools.pdf_digest_tools import format_digest_markdown
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:31:src/tests/presentation/mcp/test_pdf_digest_tools.py:306:    from src.presentation.mcp.tools.pdf_digest_tools import format_digest_markdown
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:32:src/tests/presentation/mcp/test_pdf_digest_tools.py:326:    from src.presentation.mcp.tools.pdf_digest_tools import combine_markdown_sections
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:33:src/tests/presentation/mcp/test_pdf_digest_tools.py:348:    from src.presentation.mcp.tools.pdf_digest_tools import combine_markdown_sections
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:34:src/tests/presentation/mcp/test_pdf_digest_tools.py:362:    from src.presentation.mcp.tools.pdf_digest_tools import convert_markdown_to_pdf
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:35:src/tests/presentation/mcp/test_pdf_digest_tools.py:381:    from src.presentation.mcp.tools.pdf_digest_tools import convert_markdown_to_pdf
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:36:src/tests/presentation/mcp/test_pdf_digest_tools.py:398:    from src.presentation.mcp.tools.pdf_digest_tools import convert_markdown_to_pdf
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:37:tasks/day_12/day_12-code-review.md:32:- **File**: `src/presentation/mcp/tools/pdf_digest_tools.py` (426 lines)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:38:tasks/day_12/day_12-code-review.md:45:**Found in `pdf_digest_tools.py`:**
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:39:tasks/day_12/day_12-code-review.md:202:- Run: `pytest src/tests/presentation/mcp/test_pdf_digest_tools.py -v`
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:40:tasks/day_12/day_12-code-review.md:279:2. `src/presentation/mcp/tools/pdf_digest_tools.py` → Extract PDF logic
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:41:tasks/day_12/day_12-improvements.cursor.md:185:**File**: `tests/presentation/mcp/test_pdf_digest_tools.py` (new)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:42:tasks/day_12/day_12-improvements.cursor.md:194:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py` (new)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:43:tasks/day_12/day_12-improvements.cursor.md:222:**File**: `tests/presentation/mcp/test_pdf_digest_tools.py` (add tests)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:44:tasks/day_12/day_12-improvements.cursor.md:232:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py` (add implementation)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:45:tasks/day_12/day_12-improvements.cursor.md:254:**File**: `tests/presentation/mcp/test_pdf_digest_tools.py` (add tests)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:46:tasks/day_12/day_12-improvements.cursor.md:263:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py` (add implementation)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:47:tasks/day_12/day_12-improvements.cursor.md:291:**File**: `tests/presentation/mcp/test_pdf_digest_tools.py` (add tests)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:48:tasks/day_12/day_12-improvements.cursor.md:300:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py` (add implementation)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:49:tasks/day_12/day_12-improvements.cursor.md:319:**File**: `tests/presentation/mcp/test_pdf_digest_tools.py` (add tests)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:50:tasks/day_12/day_12-improvements.cursor.md:328:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py` (add implementation)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:51:tasks/day_12/day_12-improvements.cursor.md:359:**Change**: Add `pdf_digest_tools` to `tool_modules` list in `_register_all_tools()`.
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:52:tasks/day_12/day_12-improvements.cursor.md:446:- `tests/presentation/mcp/test_pdf_digest_tools.py` (new)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:53:tasks/day_12/day_12-improvements.cursor.md:721:- [ ] Register pdf_digest_tools in MCP server
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:54:tasks/day_12/day_12-phase-03-summary.md:15:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py`
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:55:tasks/day_12/day_12-phase-03-summary.md:17:**Test Coverage** (`tests/presentation/mcp/test_pdf_digest_tools.py`):
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:56:tasks/day_12/day_12-phase-03-summary.md:35:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py`
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:57:tasks/day_12/day_12-phase-03-summary.md:56:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py`
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:58:tasks/day_12/day_12-phase-03-summary.md:75:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py`
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:59:tasks/day_12/day_12-phase-03-summary.md:94:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py`
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:60:tasks/day_12/day_12-phase-03-summary.md:144:- Added `pdf_digest_tools` to `tool_modules` list in `_register_all_tools()`
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:61:tasks/day_12/day_12-phase-03-summary.md:161:- `src/presentation/mcp/tools/pdf_digest_tools.py` (411 lines, 5 tools)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:62:tasks/day_12/day_12-phase-03-summary.md:162:- `src/tests/presentation/mcp/test_pdf_digest_tools.py` (394 lines, 13 tests)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:63:tasks/day_12/day_12-phase-03-summary.md:167:- `src/presentation/mcp/server.py` (registered pdf_digest_tools)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:64:tasks/day_12/day_12-phase-03-summary.md:299:from src.presentation.mcp.tools.pdf_digest_tools import (
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:65:tasks/day_12/day_12-phase-05-summary.md:81:- `src/presentation/mcp/tools/pdf_digest_tools.py` (already uses settings correctly)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:66:tasks/day_12/day_12-phase-05-summary.md:144:2. **PDF Digest Tools** (`pdf_digest_tools.py`):
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:67:tasks/day_12/day_12-phase-06-summary.md:17:- ✅ `src/tests/presentation/mcp/test_pdf_digest_tools.py` (13 tests from Phase 3)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:68:tasks/day_12/day_12-phase-06-summary.md:136:12. ✅ `test_mcp_pdf_digest_tools_backward_compatibility` - Backward compatibility
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:69:tasks/day_12/day_12-phase-07-summary.md:18:- ✅ `src/presentation/mcp/tools/pdf_digest_tools.py` - All tools have Google-style docstrings
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:70:tasks/day_12/day_12-phase-08-summary.md:57:- ✅ Metrics integrated into `pdf_digest_tools.py`
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:71:tasks/day_12/day_12-phase-08-summary.md:160:- `src/presentation/mcp/tools/pdf_digest_tools.py` (added metrics integration)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:72:tasks/day_13/phase0/01_code_quality_report.md:17:   - `src/presentation/mcp/tools/pdf_digest_tools.py`: **406 lines** - Needs decomposition
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:73:tasks/day_13/phase0/03_test_coverage_baseline.md:104:- ❌ `test_pdf_digest_tools.py`: 12 errors (event loop)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:74:tasks/day_13/phase0/03_test_coverage_baseline.md:278:| pdf_digest_tools.py | 406 | 40% | 80% | 40% |
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:75:tasks/day_13/phase0/04_refactoring_priorities.md:82:### 3. 🟠 pdf_digest_tools.py (406 lines)
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:76:tests/contract/test_mcp_tools_schema.py:215:def test_mcp_pdf_digest_tools_backward_compatibility() -> None:
+docs/specs/epic_04/evidence/grep_pdf_digest_tools.txt:77:tests/integration/test_pdf_digest_flow.py:18:from src.presentation.mcp.tools.pdf_digest_tools import (
+tasks/day_12/day_12-code-review.md:32:- **File**: `src/presentation/mcp/tools/pdf_digest_tools.py` (426 lines)
+tasks/day_12/day_12-code-review.md:45:**Found in `pdf_digest_tools.py`:**
+tasks/day_12/day_12-code-review.md:202:- Run: `pytest src/tests/presentation/mcp/test_pdf_digest_tools.py -v`
+tasks/day_12/day_12-code-review.md:279:2. `src/presentation/mcp/tools/pdf_digest_tools.py` → Extract PDF logic
+tasks/day_12/day_12-improvements.cursor.md:185:**File**: `tests/presentation/mcp/test_pdf_digest_tools.py` (new)
+tasks/day_12/day_12-improvements.cursor.md:194:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py` (new)
+tasks/day_12/day_12-improvements.cursor.md:222:**File**: `tests/presentation/mcp/test_pdf_digest_tools.py` (add tests)
+tasks/day_12/day_12-improvements.cursor.md:232:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py` (add implementation)
+tasks/day_12/day_12-improvements.cursor.md:254:**File**: `tests/presentation/mcp/test_pdf_digest_tools.py` (add tests)
+tasks/day_12/day_12-improvements.cursor.md:263:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py` (add implementation)
+tasks/day_12/day_12-improvements.cursor.md:291:**File**: `tests/presentation/mcp/test_pdf_digest_tools.py` (add tests)
+tasks/day_12/day_12-improvements.cursor.md:300:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py` (add implementation)
+tasks/day_12/day_12-improvements.cursor.md:319:**File**: `tests/presentation/mcp/test_pdf_digest_tools.py` (add tests)
+tasks/day_12/day_12-improvements.cursor.md:328:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py` (add implementation)
+tasks/day_12/day_12-improvements.cursor.md:359:**Change**: Add `pdf_digest_tools` to `tool_modules` list in `_register_all_tools()`.
+tasks/day_12/day_12-improvements.cursor.md:446:- `tests/presentation/mcp/test_pdf_digest_tools.py` (new)
+tasks/day_12/day_12-improvements.cursor.md:721:- [ ] Register pdf_digest_tools in MCP server
+tasks/day_12/day_12-phase-03-summary.md:15:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py`
+tasks/day_12/day_12-phase-03-summary.md:17:**Test Coverage** (`tests/presentation/mcp/test_pdf_digest_tools.py`):
+tasks/day_12/day_12-phase-03-summary.md:35:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py`
+tasks/day_12/day_12-phase-03-summary.md:56:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py`
+tasks/day_12/day_12-phase-03-summary.md:75:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py`
+tasks/day_12/day_12-phase-03-summary.md:94:**File**: `src/presentation/mcp/tools/pdf_digest_tools.py`
+tasks/day_12/day_12-phase-03-summary.md:144:- Added `pdf_digest_tools` to `tool_modules` list in `_register_all_tools()`
+tasks/day_12/day_12-phase-03-summary.md:161:- `src/presentation/mcp/tools/pdf_digest_tools.py` (411 lines, 5 tools)
+tasks/day_12/day_12-phase-03-summary.md:162:- `src/tests/presentation/mcp/test_pdf_digest_tools.py` (394 lines, 13 tests)
+tasks/day_12/day_12-phase-03-summary.md:167:- `src/presentation/mcp/server.py` (registered pdf_digest_tools)
+tasks/day_12/day_12-phase-03-summary.md:299:from src.presentation.mcp.tools.pdf_digest_tools import (
+tasks/day_12/day_12-phase-05-summary.md:81:- `src/presentation/mcp/tools/pdf_digest_tools.py` (already uses settings correctly)
+tasks/day_12/day_12-phase-05-summary.md:144:2. **PDF Digest Tools** (`pdf_digest_tools.py`):
+tasks/day_12/day_12-phase-06-summary.md:17:- ✅ `src/tests/presentation/mcp/test_pdf_digest_tools.py` (13 tests from Phase 3)
+tasks/day_12/day_12-phase-06-summary.md:136:12. ✅ `test_mcp_pdf_digest_tools_backward_compatibility` - Backward compatibility
+tasks/day_12/day_12-phase-07-summary.md:18:- ✅ `src/presentation/mcp/tools/pdf_digest_tools.py` - All tools have Google-style docstrings
+tasks/day_12/day_12-phase-08-summary.md:57:- ✅ Metrics integrated into `pdf_digest_tools.py`
+tasks/day_12/day_12-phase-08-summary.md:160:- `src/presentation/mcp/tools/pdf_digest_tools.py` (added metrics integration)
+tasks/day_13/phase0/01_code_quality_report.md:17:   - `src/presentation/mcp/tools/pdf_digest_tools.py`: **406 lines** - Needs decomposition
+tasks/day_13/phase0/03_test_coverage_baseline.md:104:- ❌ `test_pdf_digest_tools.py`: 12 errors (event loop)
+tasks/day_13/phase0/03_test_coverage_baseline.md:278:| pdf_digest_tools.py | 406 | 40% | 80% | 40% |
+tasks/day_13/phase0/04_refactoring_priorities.md:82:### 3. 🟠 pdf_digest_tools.py (406 lines)
+tests/integration/test_pdf_digest_flow.py:18:from src.presentation.mcp.tools.pdf_digest_tools import (

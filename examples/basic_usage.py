@@ -55,20 +55,22 @@ async def demo_cli_usage():
     print("=" * 60)
     print()
 
-    print("1. Status Check")
-    print("   Run: python -m src.presentation.cli.main_cli status")
+    print("1. Backoffice CLI Help")
+    print("   Run: poetry run python -m src.presentation.cli.backoffice.main --help")
     print()
 
-    print("2. Health Check")
-    print("   Run: python -m src.presentation.cli.main_cli health")
+    print("2. Generate Digest")
+    print(
+        "   Run: poetry run python -m src.presentation.cli.backoffice.main "
+        "digest run --user-id 42 --hours 24"
+    )
     print()
 
-    print("3. View Metrics")
-    print("   Run: python -m src.presentation.cli.main_cli metrics")
-    print()
-
-    print("4. View Configuration")
-    print("   Run: python -m src.presentation.cli.main_cli config")
+    print("3. Export Digest to Markdown")
+    print(
+        "   Run: poetry run python -m src.presentation.cli.backoffice.main "
+        "digest export --user-id 42 --format markdown --output digest.md --overwrite"
+    )
     print()
 
 
@@ -76,7 +78,7 @@ def main():
     """Run all basic examples."""
     demo_api_usage()
     asyncio.run(demo_cli_usage())
-    
+
     print("=" * 60)
     print("For more examples, see examples/full_workflow.py")
     print("=" * 60)
@@ -84,4 +86,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

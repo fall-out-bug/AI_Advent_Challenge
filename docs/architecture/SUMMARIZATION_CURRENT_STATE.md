@@ -1,6 +1,6 @@
-# Текущее состояние системы суммаризации
+# Current State Summary
 
-**Дата:** 2025-11-04  
+**Дата:** 2025-11-04
 **Цель:** Документирование текущей архитектуры задачи суммаризации для последующего улучшения
 
 ---
@@ -140,7 +140,7 @@ async def summarize_posts(
 ) -> str:
     """
     Главная функция суммаризации.
-    
+
     Логика:
     1. Очистка постов (_clean_text_for_summary)
     2. Проверка количества токенов
@@ -186,7 +186,7 @@ async def summarize_posts(
 ```python
 class MapReduceSummarizer:
     """Map-Reduce для длинных текстов"""
-    
+
     def __init__(
         self,
         llm: LLMClient,
@@ -198,7 +198,7 @@ class MapReduceSummarizer:
         self.token_counter = token_counter
         self.chunker = chunker
         self.language = language
-    
+
     async def summarize_text(
         self,
         text: str,
@@ -224,7 +224,7 @@ class MapReduceSummarizer:
 ```python
 class SemanticChunker:
     """Разбиение текста на chunks с overlap"""
-    
+
     def __init__(
         self,
         token_counter: TokenCounter,
@@ -301,7 +301,7 @@ async def get_summary_text(
 ) -> Optional[str]:
     """
     Получить summary задач пользователя.
-    
+
     Логика:
     - Если debug=True → прямой запрос в MongoDB
     - Иначе → вызов MCP tool "get_summary"
@@ -315,7 +315,7 @@ async def get_digest_texts(
 ) -> list[str]:
     """
     Получить digest текстов из каналов.
-    
+
     Логика:
     - Вызов MCP tool "get_channel_digest"
     - Форматирование через format_single_digest()
@@ -342,12 +342,12 @@ def format_summary(
 ) -> str:
     """
     Форматирование task summary для Telegram.
-    
+
     Формат:
     🌅 Good morning! (или 🔍 Debug Summary)
     📊 Tasks: N
     🔴 High priority: M
-    
+
     🔴 Task 1
     🟡 Task 2
     ...
@@ -359,20 +359,20 @@ def format_single_digest(
 ) -> str:
     """
     Форматирование одного channel digest.
-    
+
     Формат:
     📰 Дайджест канала
     📌 @channel_name
     📊 Постов: N
     Теги: #tag1, #tag2
-    
+
     Summary text...
     """
 
 def clean_markdown(text: str) -> str:
     """
     Агрессивная очистка Markdown.
-    
+
     Удаляет:
     - * _ ` [ ] ( ) \
     - Escaped символы
@@ -399,7 +399,7 @@ def _build_summary_query(
 ) -> Dict[str, Any]:
     """
     Построение MongoDB query для задач.
-    
+
     Timeframes:
     - "today" → deadline [start_of_day, end_of_day)
     - "tomorrow" → deadline [tomorrow_start, tomorrow_end)
@@ -414,7 +414,7 @@ def _compute_task_stats(
 ) -> Dict[str, int]:
     """
     Вычисление статистики по задачам.
-    
+
     Возвращает:
     - total: len(tasks)
     - completed: count(completed=True)
@@ -443,7 +443,7 @@ async def get_summary(
 ) -> Dict[str, Any]:
     """
     MCP tool для получения summary задач.
-    
+
     Возвращает:
     {
         "tasks": [...],
@@ -467,7 +467,7 @@ async def get_channel_digest(
 ) -> Dict[str, Any]:
     """
     MCP tool для получения digest каналов.
-    
+
     Логика:
     1. Получить активные каналы пользователя
     2. Получить посты за последние N часов
@@ -486,7 +486,7 @@ async def get_channel_digest_by_name(
 ) -> Dict[str, Any]:
     """
     Digest для конкретного канала.
-    
+
     Логика:
     - Поиск канала (case-insensitive, partial match, metadata)
     - Auto-subscribe если не найден
@@ -509,7 +509,7 @@ async def get_channel_digest_by_name(
 ```python
 class SummaryWorker:
     """Background worker для scheduled уведомлений"""
-    
+
     def __init__(
         self,
         bot_token: str,
@@ -518,7 +518,7 @@ class SummaryWorker:
         self.bot = Bot(token=bot_token)
         self.mcp = get_mcp_client(server_url=mcp_url)
         self.settings = get_settings()
-    
+
     async def run(self) -> None:
         """
         Main loop:
@@ -528,11 +528,11 @@ class SummaryWorker:
         4. Отправка evening digest (evening_digest_time)
         5. Debug mode: отправка каждые N минут
         """
-    
+
     async def _send_morning_summary(self) -> None:
         """Утренний summary задач для всех пользователей"""
         # get_summary_text() → send_with_retry()
-    
+
     async def _send_evening_digest(self) -> None:
         """Вечерний digest каналов для всех пользователей"""
         # get_digest_texts() → send_with_retry() for each
@@ -642,8 +642,8 @@ User → Telegram Bot / MCP Client
 📊 Постов: 12
 Теги: #tech, #ai
 
-OpenAI представила новую версию GPT-4 с улучшенными возможностями. 
-Компания анонсировала интеграцию с Microsoft Azure. 
+OpenAI представила новую версию GPT-4 с улучшенными возможностями.
+Компания анонсировала интеграцию с Microsoft Azure.
 Разработчики получили доступ к API с расширенными лимитами.
 ...
 ```
@@ -1111,11 +1111,11 @@ cleaned_summary = '. '.join(unique_sentences[:max_sentences])
 cleaned = re.sub(r'^\d+\.\s*', '', cleaned, flags=re.MULTILINE)
 
 # Удаление "First post", "Second post", ...
-cleaned = re.sub(r'^(In the )?(first|second|third|fourth|fifth)\s+post', '', 
+cleaned = re.sub(r'^(In the )?(first|second|third|fourth|fifth)\s+post', '',
                  cleaned, flags=re.IGNORECASE | re.MULTILINE)
 
 # Удаление "The first post", "The second post", ...
-cleaned = re.sub(r'^The (first|second|third|fourth|fifth)\s+post', '', 
+cleaned = re.sub(r'^The (first|second|third|fourth|fifth)\s+post', '',
                  cleaned, flags=re.IGNORECASE | re.MULTILINE)
 ```
 
@@ -1193,7 +1193,7 @@ class Settings(BaseSettings):
         default=10,
         description="Maximum channels to include in digest"
     )
-    
+
     # Summarizer settings
     summarizer_language: str = Field(
         default="ru",
@@ -1207,7 +1207,7 @@ class Settings(BaseSettings):
         default=2000,
         description="Max tokens for summarization (more = longer summaries)"
     )
-    
+
     # Worker settings
     morning_summary_time: str = "09:00"
     evening_digest_time: str = "20:00"
@@ -1336,7 +1336,7 @@ class GetTaskSummaryUseCase:
     ):
         self.task_repo = task_repository
         self.stats_calc = stats_calculator
-    
+
     async def execute(
         self,
         user_id: int,
@@ -1354,7 +1354,7 @@ class GenerateChannelDigestUseCase:
     ):
         self.post_repo = post_repository
         self.summarizer = summarizer
-    
+
     async def execute(
         self,
         user_id: int,
@@ -1569,7 +1569,7 @@ for attempt in range(2):
 ```
 Перед тобой фрагмент постов из Telegram-канала.
 
-ЗАДАЧА: Выдели 5 ключевых фактов из этого фрагмента. Каждый факт — одно предложение. 
+ЗАДАЧА: Выдели 5 ключевых фактов из этого фрагмента. Каждый факт — одно предложение.
 Факты должны быть РАЗНЫМИ по смыслу. Никаких повторов. Только чистый текст, без нумерации и Markdown.
 
 ВАЖНО: Верни ТОЛЬКО текст, НЕ JSON, НЕ структурированные данные. Только предложения на русском языке через точку.
@@ -1588,7 +1588,7 @@ for attempt in range(2):
 ```
 Перед тобой несколько суммаризаций фрагментов одного Telegram-канала.
 
-ЗАДАЧА: Объедини их в 8 итоговых предложений, описывающих главные темы канала. 
+ЗАДАЧА: Объедини их в 8 итоговых предложений, описывающих главные темы канала.
 Избегай повторов. Каждый пункт — уникальная мысль. Только текст, без нумерации и Markdown.
 
 ВАЖНО: Верни ТОЛЬКО текст, НЕ JSON, НЕ структурированные данные. Только предложения на русском языке через точку.
@@ -1618,6 +1618,5 @@ Microsoft интегрировал GPT-4 в Copilot для Office. Пользо�
 
 ---
 
-**Документ подготовлен:** 2025-11-04  
+**Документ подготовлен:** 2025-11-04
 **Следующий шаг:** Разработка улучшенной архитектуры на основе этого анализа
-

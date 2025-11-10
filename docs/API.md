@@ -2,10 +2,10 @@
 
 ## Overview
 
-Butler Agent is a Telegram bot that processes natural language messages and routes them to appropriate handlers based on intent classification. The bot supports four dialog modes: TASK, DATA, REMINDERS, and IDLE.
+Butler Agent is a Telegram bot that processes natural language messages and routes them to appropriate handlers based on intent classification. The bot now supports four dialog modes: TASK, DATA, HOMEWORK_REVIEW, and IDLE.
 
-**Telegram Interface:** Interactive bot via Telegram messages  
-**Architecture:** Clean Architecture with domain, application, infrastructure, and presentation layers  
+**Telegram Interface:** Interactive bot via Telegram messages
+**Architecture:** Clean Architecture with domain, application, infrastructure, and presentation layers
 **State Management:** Finite State Machine (FSM) for conversation flow
 
 ## Dialog Modes
@@ -14,8 +14,8 @@ Butler Agent classifies user messages into one of four modes using LLM-based int
 
 1. **TASK** - Task creation and management
 2. **DATA** - Data collection (channel digests, student stats)
-3. **REMINDERS** - Active reminders listing
-4. **IDLE** - General conversation
+3. **HOMEWORK_REVIEW** - Homework review workflows
+4. **IDLE** - General conversation, small talk, clarifications
 
 ### Mode Classification
 
@@ -68,7 +68,7 @@ Butler: "Task created successfully! Title: Call John, Deadline: Friday, Task ID:
 
 ### Use Case: CreateTaskUseCase
 
-**Location:** `src/application/usecases/create_task_usecase.py`
+**Location:** `src/application/use_cases/create_task_use_case.py`
 
 **Method:** `execute(user_id, message, context=None) -> TaskCreationResult`
 
@@ -87,7 +87,7 @@ Butler: "Task created successfully! Title: Call John, Deadline: Friday, Task ID:
 
 **Example Usage:**
 ```python
-from src.application.usecases import CreateTaskUseCase
+from src.application.use_cases.create_task_use_case import CreateTaskUseCase
 
 use_case = CreateTaskUseCase(intent_orch, tool_client, mongodb)
 result = await use_case.execute(
@@ -160,7 +160,7 @@ Butler: "📈 Student Statistics
 
 ### Use Case: CollectDataUseCase
 
-**Location:** `src/application/usecases/collect_data_usecase.py`
+**Location:** `src/application/use_cases/collect_data_use_case.py`
 
 **Methods:**
 
@@ -177,7 +177,7 @@ Butler: "📈 Student Statistics
 
 **Example Usage:**
 ```python
-from src.application.usecases import CollectDataUseCase
+from src.application.use_cases.collect_data_use_case import CollectDataUseCase
 
 use_case = CollectDataUseCase(tool_client)
 result = await use_case.get_channels_digest(user_id=123)
@@ -202,7 +202,7 @@ elif result.error:
 
 **Example Usage:**
 ```python
-from src.application.usecases import CollectDataUseCase
+from src.application.use_cases.collect_data_use_case import CollectDataUseCase
 
 use_case = CollectDataUseCase(tool_client)
 result = await use_case.get_student_stats(teacher_id=456)
@@ -213,41 +213,99 @@ elif result.error:
     print(f"Error: {result.error}")
 ```
 
-## REMINDERS Mode
+## HOMEWORK_REVIEW Mode
 
-### Description
-
-REMINDERS mode handles listing and management of active reminders.
+HOMEWORK_REVIEW mode covers listing homework submissions and requesting automated code reviews. (See Stage 04_02 notes for detail on the updated modular reviewer workflow.)
 
 ### Supported Operations
 
-- **list_reminders**: List all active reminders for a user
+- **list_homework_submissions**: List all homework submissions for a user
+- **request_code_review**: Request a code review for a specific homework submission
 
 ### Example Conversations
 
-#### List Active Reminders
+#### List Homework Submissions
 
 ```
-User: "Show my reminders"
-Butler: "🔔 Active Reminders
+User: "Show my homework"
+Butler: "📚 Homework Submissions
         ────────────────────
-        1. Call John - Due: 2025-01-28 10:00
-        2. Team meeting - Due: 2025-01-29 14:00
-        3. Submit report - Due: 2025-01-30 17:00"
+        1. Math Assignment - Due: 2025-01-28 10:00
+        2. Physics Lab Report - Due: 2025-01-29 14:00
+        3. English Essay - Due: 2025-01-30 17:00"
 ```
 
-#### No Active Reminders
+#### Request Code Review
 
 ```
-User: "What are my reminders?"
-Butler: "No active reminders at the moment. You're all caught up! ✅"
+User: "Review my physics lab report"
+Butler: "Code review requested for homework ID: 507f1f77bcf86cd799439011"
 ```
 
 ### MCP Tools Used
 
-- `get_active_reminders`: Lists active reminders
+- `get_homework_submissions`: Retrieves homework submissions
   - Parameters: `user_id` (required)
-  - Returns: List of reminder dictionaries
+  - Returns: List of homework submission dictionaries
+
+- `request_code_review`: Requests a code review for a specific homework submission
+  - Parameters: `homework_id` (required)
+  - Returns: Confirmation message
+
+### Use Case: HomeworkReviewUseCase
+
+**Location:** `src/application/use_cases/homework_review_usecase.py`
+
+**Methods:**
+
+#### list_homework_submissions(user_id)
+
+**Parameters:**
+- `user_id: int` - User identifier
+
+**Returns:** `HomeworkResult`
+
+**HomeworkResult Fields:**
+- `submissions: List[Dict[str, Any]]` - List of homework submission dictionaries
+- `error: Optional[str]` - Error message if operation failed
+
+**Example Usage:**
+```python
+from src.application.use_cases.homework_review_usecase import HomeworkReviewUseCase
+
+use_case = HomeworkReviewUseCase(tool_client)
+result = await use_case.list_homework_submissions(user_id=123)
+
+if result.submissions:
+    for submission in result.submissions:
+        print(f"Homework ID: {submission['homework_id']}, Title: {submission['title']}, Due: {submission['due_date']}")
+elif result.error:
+    print(f"Error: {result.error}")
+```
+
+#### request_code_review(homework_id)
+
+**Parameters:**
+- `homework_id: int` - Homework submission identifier
+
+**Returns:** `ReviewResult`
+
+**ReviewResult Fields:**
+- `message: str` - Confirmation message
+- `error: Optional[str]` - Error message if operation failed
+
+**Example Usage:**
+```python
+from src.application.use_cases.homework_review_usecase import HomeworkReviewUseCase
+
+use_case = HomeworkReviewUseCase(tool_client)
+result = await use_case.request_code_review(homework_id=456)
+
+if result.message:
+    print(f"Code review requested: {result.message}")
+elif result.error:
+    print(f"Error: {result.error}")
+```
 
 ## IDLE Mode
 
@@ -296,7 +354,7 @@ Butler: "I'm currently having trouble connecting to my language model. Please tr
 - `TASK_CREATE_DESC` - Task creation - collecting description
 - `TASK_CONFIRM` - Task creation - confirmation
 - `DATA_COLLECTING` - Data collection in progress
-- `REMINDERS_LISTING` - Listing reminders
+- `HOMEWORK_REVIEW` - Reviewing homework submissions
 
 ### DialogContext
 
@@ -345,13 +403,15 @@ class DialogContext:
 - Trigger: Data retrieved
 - Action: Return to idle state
 
-**IDLE → REMINDERS_LISTING:**
-- Trigger: REMINDERS mode detected
-- Action: List reminders
+**IDLE → HOMEWORK_REVIEW:**
+- Trigger: HOMEWORK_REVIEW mode detected
+  - Action: Transition to homework workflows
+  - Response: Provide homework status or review result
 
-**REMINDERS_LISTING → IDLE:**
-- Trigger: Reminders listed
-- Action: Return to idle state
+**HOMEWORK_REVIEW → IDLE:**
+- Trigger: Review/workflow finished
+  - Action: Reset context to IDLE
+  - Response: Summary or confirmation message
 
 ## Error Handling
 
@@ -515,7 +575,7 @@ Deadline: Tomorrow
 
 ### handle_user_message(user_id, message, session_id)
 
-**Location:** `src/domain/agents/butler_orchestrator.py`
+**Location:** `src/presentation/bot/orchestrator.py`
 
 **Purpose:** Main entry point for message processing
 
@@ -536,7 +596,7 @@ Deadline: Tomorrow
 
 **Example:**
 ```python
-from src.domain.agents.butler_orchestrator import ButlerOrchestrator
+from src.presentation.bot.orchestrator import ButlerOrchestrator
 
 orchestrator = ButlerOrchestrator(...)
 response = await orchestrator.handle_user_message(
@@ -576,7 +636,7 @@ await bot.send_message(chat_id=user_id, text=response)
 ### Data Collection Flow
 
 ```python
-from src.application.usecases import CollectDataUseCase
+from src.application.use_cases.collect_data_use_case import CollectDataUseCase
 from src.infrastructure.clients.mcp_client_adapter import MCPToolClientAdapter
 
 # Initialize use case
@@ -610,7 +670,7 @@ if result.digests:
 
 All components have comprehensive unit tests:
 - Handler tests: `tests/unit/domain/agents/handlers/`
-- Use case tests: `tests/unit/application/usecases/`
+- Use case tests: `tests/unit/application/use_cases/`
 - Infrastructure tests: `tests/unit/infrastructure/`
 
 ### Integration Tests
@@ -644,4 +704,3 @@ pytest tests/e2e/ -m e2e
 - [Architecture Documentation](ARCHITECTURE.md) - Detailed architecture overview
 - [Deployment Guide](DEPLOYMENT.md) - Deployment instructions
 - [Testing Documentation](TESTING.md) - Testing strategy and guidelines
-
