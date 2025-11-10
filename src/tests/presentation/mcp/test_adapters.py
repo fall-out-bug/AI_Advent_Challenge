@@ -5,10 +5,12 @@ import pytest
 
 from src.presentation.mcp.adapters.generation_adapter import GenerationAdapter
 from src.presentation.mcp.adapters.model_adapter import ModelAdapter
-from src.presentation.mcp.adapters.orchestration_adapter import OrchestrationAdapter
 from src.presentation.mcp.adapters.review_adapter import ReviewAdapter
 from src.presentation.mcp.adapters.token_adapter import TokenAdapter
 from src.presentation.mcp.exceptions import MCPModelError, MCPValidationError
+from src.presentation.mcp.server import _get_adapters_module
+
+MCPApplicationAdapter = _get_adapters_module().MCPApplicationAdapter
 
 
 @pytest.fixture
@@ -31,9 +33,9 @@ class TestModelAdapter:
     """Tests for ModelAdapter."""
 
     @pytest.mark.asyncio
-    async def test_list_available_models_success(self):
+    async def test_list_available_models_success(self, mock_unified_client):
         """Test successful model listing."""
-        adapter = ModelAdapter(mock_unified_client())
+        adapter = ModelAdapter(mock_unified_client)
         result = adapter.list_available_models()
 
         assert "local_models" in result
@@ -132,36 +134,88 @@ class TestReviewAdapter:
             adapter._validate_code("")
 
 
-class TestOrchestrationAdapter:
-    """Tests for OrchestrationAdapter."""
+class TestMCPApplicationAdapter:
+    """Tests for composite orchestration workflow."""
 
     @pytest.mark.asyncio
-    async def test_orchestrate_validation_error_empty_description(self):
-        """Test orchestration with empty description."""
-        mock_client = Mock()
-        adapter = OrchestrationAdapter(mock_client)
+    async def test_orchestrate_generation_and_review_success(self, monkeypatch):
+        """Ensure orchestration combines generation and review results."""
+        adapter = MCPApplicationAdapter(unified_client=Mock())
 
-        with pytest.raises(MCPValidationError):
-            await adapter.orchestrate_generation_and_review("", "mistral", "mistral")
+        generation_result = {
+            "success": True,
+            "code": "print('hello')",
+            "tests": "def test_dummy(): pass",
+        }
+        review_result = {
+            "success": True,
+            "quality_score": 9,
+            "issues": [],
+            "recommendations": ["Ship it"],
+        }
+
+        monkeypatch.setattr(
+            adapter,
+            "generate_code_via_agent",
+            AsyncMock(return_value=generation_result),
+        )
+        monkeypatch.setattr(
+            adapter,
+            "review_code_via_agent",
+            AsyncMock(return_value=review_result),
+        )
+
+        result = await adapter.orchestrate_generation_and_review(
+            "Build feature", "model-gen", "model-review"
+        )
+
+        adapter.generate_code_via_agent.assert_awaited_once_with(
+            "Build feature", "model-gen"
+        )
+        adapter.review_code_via_agent.assert_awaited_once_with(
+            "print('hello')", "model-review"
+        )
+        assert result["success"] is True
+        assert result["generation"]["code"] == "print('hello')"
+        assert result["generation"]["tests"] == "def test_dummy(): pass"
+        assert result["review"]["score"] == 9
+        assert result["review"]["recommendations"] == ["Ship it"]
+        assert result["error"] is None
+        assert isinstance(result["workflow_time"], float)
 
     @pytest.mark.asyncio
-    async def test_orchestrate_validation_error_empty_gen_model(self):
-        """Test orchestration with empty generation model."""
-        mock_client = Mock()
-        adapter = OrchestrationAdapter(mock_client)
+    async def test_orchestrate_generation_failure(self, monkeypatch):
+        """Return failure payload when generation fails."""
+        adapter = MCPApplicationAdapter(unified_client=Mock())
+        failure = {
+            "success": False,
+            "code": "",
+            "tests": "",
+            "error": "Generator offline",
+        }
+        monkeypatch.setattr(
+            adapter,
+            "generate_code_via_agent",
+            AsyncMock(return_value=failure),
+        )
 
-        with pytest.raises(MCPValidationError):
-            await adapter.orchestrate_generation_and_review(
-                "Create a todo list", "", "mistral"
-            )
+        result = await adapter.orchestrate_generation_and_review(
+            "Feature", "model-gen", "model-review"
+        )
+
+        assert result["success"] is False
+        assert result["error"] == "Generator offline"
+        assert result["generation"]["code"] == ""
+        assert result["review"]["score"] == 0
 
     @pytest.mark.asyncio
-    async def test_orchestrate_validation_error_empty_review_model(self):
-        """Test orchestration with empty review model."""
-        mock_client = Mock()
-        adapter = OrchestrationAdapter(mock_client)
+    async def test_orchestrate_validation_failure(self):
+        """Return failure payload when inputs are invalid."""
+        adapter = MCPApplicationAdapter(unified_client=Mock())
 
-        with pytest.raises(MCPValidationError):
-            await adapter.orchestrate_generation_and_review(
-                "Create a todo list", "mistral", ""
-            )
+        result = await adapter.orchestrate_generation_and_review(
+            "   ", "model-gen", "model-review"
+        )
+
+        assert result["success"] is False
+        assert "Description cannot be empty" in result["error"]

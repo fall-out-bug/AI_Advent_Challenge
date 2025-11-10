@@ -13,6 +13,7 @@
 
 ### API Reference
 - [API_DOCUMENTATION.md](API_DOCUMENTATION.md) - Complete API reference
+- [API_MCP.md](API_MCP.md) - Model Context Protocol tool matrix and workflows
 - [MCP_GUIDE.md](MCP_GUIDE.md) - Model Context Protocol guide (integration, API, troubleshooting)
 - [AGENT_INTEGRATION.md](AGENT_INTEGRATION.md) - MCP-aware agent integration guide (English)
 - [AGENT_INTEGRATION.ru.md](AGENT_INTEGRATION.ru.md) - MCP-aware agent integration guide (Russian)
@@ -21,6 +22,15 @@
 - [SECURITY.md](SECURITY.md) - Security policies and practices
 - [MONITORING.md](MONITORING.md) - Monitoring setup and Grafana dashboards
 - [ML_MONITORING.md](ML_MONITORING.md) - ML-specific monitoring and metrics
+- [shared_infra_cutover.md](shared_infra_cutover.md) - Shared infrastructure hand-off notes
+- [scripts/start_shared_infra.sh](../scripts/start_shared_infra.sh) - Wrapper script for external infra (executable)
+
+### Epic 04 — Legacy Archive & Cleanup
+- [Stage 04_01](specs/epic_04/stage_04_01.md) - Archive scope confirmation
+- [Stage 04_02](specs/epic_04/stage_04_02.md) - Migration execution log & validation
+- [Stage 04_03](specs/epic_04/stage_04_03.md) - Repository hygiene and sign-off checklist
+- [Known Issues](specs/epic_04/known_issues.md) - Deferred items and follow-ups
+- [Archive Manifest](../archive/ep04_2025-11/ARCHIVE_MANIFEST.md) - Inventory of archived assets
 
 ### Day 15 - Quality Assessment & Fine-tuning (Current)
 - [README](day15/README.md) - Self-improving LLM system overview

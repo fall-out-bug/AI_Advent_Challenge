@@ -194,40 +194,6 @@ async def test_student_stats_e2e(e2e_orchestrator, mock_telegram_message):
 
 @pytest.mark.asyncio
 @pytest.mark.e2e
-async def test_reminders_list_e2e(e2e_orchestrator, mock_telegram_message):
-    """Test reminders list flow.
-
-    Args:
-        e2e_orchestrator: ButlerOrchestrator for E2E testing.
-        mock_telegram_message: Mock Telegram message.
-    """
-    # Setup: REMINDERS mode
-    e2e_orchestrator.mode_classifier.llm_client.make_request = AsyncMock(
-        return_value="REMINDERS"
-    )
-    e2e_orchestrator.reminders_handler.tool_client.call_tool = AsyncMock(
-        return_value={
-            "success": True,
-            "reminders": [{"id": "rem_1", "text": "Test reminder"}],
-        }
-    )
-
-    mock_telegram_message.text = "Show my reminders"
-
-    # Execute
-    response = await e2e_orchestrator.handle_user_message(
-        user_id=str(mock_telegram_message.from_user.id),
-        message=mock_telegram_message.text,
-        session_id=f"{mock_telegram_message.from_user.id}:{mock_telegram_message.message_id}",
-    )
-
-    # Verify: Reminders returned
-    assert response is not None
-    assert e2e_orchestrator.reminders_handler.tool_client.call_tool.called
-
-
-@pytest.mark.asyncio
-@pytest.mark.e2e
 async def test_idle_chat_e2e(e2e_orchestrator, mock_telegram_message):
     """Test IDLE mode general conversation.
 

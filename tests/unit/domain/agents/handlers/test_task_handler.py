@@ -6,95 +6,93 @@ Following TDD principles and testing best practices.
 import pytest
 from unittest.mock import AsyncMock, Mock
 
-from src.application.orchestration.intent_orchestrator import IntentOrchestrator
-from src.domain.agents.handlers.task_handler import TaskHandler
-from src.domain.agents.state_machine import DialogContext, DialogState
-from src.domain.entities.intent import IntentParseResult
-
-
-class MockToolClient:
-    """Mock tool client."""
-
-    def __init__(self):
-        self.call_tool = AsyncMock()
-
-    async def discover_tools(self):
-        """Mock discover_tools."""
-        return []
+from src.application.dtos.butler_dialog_dtos import DialogContext, DialogState
+from src.application.dtos.butler_use_case_dtos import TaskCreationResult
+from src.application.use_cases.create_task_use_case import CreateTaskUseCase
+from src.presentation.bot.handlers.task import TaskHandler
 
 
 class TestTaskHandler:
     """Test TaskHandler."""
 
     @pytest.fixture
-    def mock_intent_orchestrator(self):
-        """Create mock intent orchestrator."""
-        orchestrator = Mock(spec=IntentOrchestrator)
-        result = IntentParseResult(
-            title="Test task",
-            description="Test description",
-            needs_clarification=False,
-        )
-        orchestrator.parse_task_intent = AsyncMock(return_value=result)
-        return orchestrator
+    def mock_create_task_use_case(self) -> CreateTaskUseCase:
+        """Create mocked CreateTaskUseCase."""
+        use_case = Mock(spec=CreateTaskUseCase)
+        use_case.execute = AsyncMock()
+        return use_case
 
     @pytest.fixture
-    def mock_tool_client(self):
-        """Create mock tool client."""
-        return MockToolClient()
-
-    @pytest.fixture
-    def handler(self, mock_intent_orchestrator, mock_tool_client):
+    def handler(self, mock_create_task_use_case: CreateTaskUseCase) -> TaskHandler:
         """Create handler instance."""
-        return TaskHandler(
-            intent_orchestrator=mock_intent_orchestrator,
-            tool_client=mock_tool_client,
-        )
+        return TaskHandler(create_task_use_case=mock_create_task_use_case)
 
     @pytest.mark.asyncio
     async def test_handle_creates_task_successfully(
-        self, handler, mock_intent_orchestrator, mock_tool_client
-    ):
-        """Test successful task creation."""
+        self, handler: TaskHandler, mock_create_task_use_case: CreateTaskUseCase
+    ) -> None:
+        """Task handler returns success message when use case succeeds."""
         context = DialogContext(
-            state=DialogState.IDLE,
-            user_id="123",
-            session_id="456",
+            state=DialogState.IDLE, user_id="123", session_id="456"
         )
-        mock_tool_client.call_tool.return_value = {"id": "task123"}
+        mock_create_task_use_case.execute.return_value = TaskCreationResult(
+            created=True,
+            task_id="task123",
+        )
+
         response = await handler.handle(context, "Create a task")
+
         assert "created successfully" in response.lower()
-        mock_tool_client.call_tool.assert_called_once()
+        mock_create_task_use_case.execute.assert_awaited_once()
+        assert context.state == DialogState.IDLE
 
     @pytest.mark.asyncio
-    async def test_handle_asks_for_clarification(
-        self, handler, mock_intent_orchestrator, mock_tool_client
-    ):
-        """Test clarification request."""
+    async def test_handle_requests_clarification(
+        self, handler: TaskHandler, mock_create_task_use_case: CreateTaskUseCase
+    ) -> None:
+        """Clarification responses are passed through and conversation state stored."""
         context = DialogContext(
-            state=DialogState.IDLE,
-            user_id="123",
-            session_id="456",
+            state=DialogState.IDLE, user_id="123", session_id="456"
         )
-        result = IntentParseResult(
-            title="Test",
-            needs_clarification=True,
-            questions=["What is the deadline?"],
+        mock_create_task_use_case.execute.return_value = TaskCreationResult(
+            created=False,
+            clarification="What is the deadline?",
+            intent_payload={"title": "Test"},
         )
-        mock_intent_orchestrator.parse_task_intent = AsyncMock(return_value=result)
+
         response = await handler.handle(context, "Create task")
-        assert "?" in response or "clarif" in response.lower()
+
+        assert "deadline" in response.lower()
+        assert context.data.get("pending_intent") == {"title": "Test"}
 
     @pytest.mark.asyncio
-    async def test_handle_handles_error(self, handler, mock_intent_orchestrator):
-        """Test error handling."""
+    async def test_handle_reports_error(
+        self, handler: TaskHandler, mock_create_task_use_case: CreateTaskUseCase
+    ) -> None:
+        """User sees error message when use case fails."""
         context = DialogContext(
-            state=DialogState.IDLE,
-            user_id="123",
-            session_id="456",
+            state=DialogState.IDLE, user_id="123", session_id="456"
         )
-        mock_intent_orchestrator.parse_task_intent = AsyncMock(
-            side_effect=Exception("Error")
+        mock_create_task_use_case.execute.return_value = TaskCreationResult(
+            created=False,
+            error="Task creation failed: Validation error",
         )
+
         response = await handler.handle(context, "Create task")
-        assert "sorry" in response.lower() or "error" in response.lower()
+
+        assert "failed" in response.lower()
+        mock_create_task_use_case.execute.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_handle_unexpected_exception(
+        self, handler: TaskHandler, mock_create_task_use_case: CreateTaskUseCase
+    ) -> None:
+        """Handler falls back to generic error message on unexpected exceptions."""
+        context = DialogContext(
+            state=DialogState.IDLE, user_id="123", session_id="456"
+        )
+        mock_create_task_use_case.execute.side_effect = Exception("boom")
+
+        response = await handler.handle(context, "Create task")
+
+        assert "sorry" in response.lower()

@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from src.presentation.bot.factory import create_butler_orchestrator
-from src.domain.agents.butler_orchestrator import ButlerOrchestrator
+from src.presentation.bot.orchestrator import ButlerOrchestrator
 
 
 @pytest.mark.asyncio
@@ -265,8 +265,6 @@ async def test_create_butler_orchestrator_initializes_all_components(mock_mongod
     ) as mock_task_handler, patch(
         "src.presentation.bot.factory.DataHandler"
     ) as mock_data_handler, patch(
-        "src.presentation.bot.factory.RemindersHandler"
-    ) as mock_reminders_handler, patch(
         "src.presentation.bot.factory.ChatHandler"
     ) as mock_chat_handler, patch(
         "src.presentation.bot.factory.ButlerOrchestrator"
@@ -296,6 +294,5 @@ async def test_create_butler_orchestrator_initializes_all_components(mock_mongod
         assert mock_collect_uc.called
         assert mock_task_handler.called
         assert mock_data_handler.called
-        assert mock_reminders_handler.called
         assert mock_chat_handler.called
         assert mock_butler.called

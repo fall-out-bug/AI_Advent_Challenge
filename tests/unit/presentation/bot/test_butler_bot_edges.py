@@ -9,7 +9,7 @@ from aiogram.types import Message, User
 from aiogram.exceptions import TelegramBadRequest, TelegramAPIError
 
 from src.presentation.bot.butler_bot import ButlerBot
-from src.domain.agents.butler_orchestrator import ButlerOrchestrator
+from src.presentation.bot.orchestrator import ButlerOrchestrator
 
 
 @pytest.fixture
@@ -70,7 +70,9 @@ async def test_cmd_help_handles_send_error(
         mock_message: Mock Telegram Message.
     """
     # Setup: Message.answer raises exception
-    mock_message.answer.side_effect = TelegramAPIError(message="Invalid request")
+    mock_message.answer.side_effect = TelegramAPIError(
+        message="Invalid request", method="sendMessage"
+    )
     mock_bot_instance = MagicMock()
     mock_bot_class.return_value = mock_bot_instance
 

@@ -13,18 +13,21 @@ from datetime import datetime
 import pytest
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from src.domain.agents.butler_orchestrator import ButlerOrchestrator
-from src.domain.agents.services.mode_classifier import ModeClassifier, DialogMode
-from src.domain.agents.handlers.task_handler import TaskHandler
-from src.domain.agents.handlers.data_handler import DataHandler
-from src.domain.agents.handlers.reminders_handler import RemindersHandler
-from src.domain.agents.handlers.chat_handler import ChatHandler
-from src.domain.agents.state_machine import DialogContext, DialogState
+from src.presentation.bot.orchestrator import ButlerOrchestrator
+from src.application.services.mode_classifier import ModeClassifier
+from src.presentation.bot.handlers.task import TaskHandler
+from src.presentation.bot.handlers.data import DataHandler
+from src.presentation.bot.handlers.chat import ChatHandler
+from src.application.dtos.butler_dialog_dtos import (
+    DialogContext,
+    DialogMode,
+    DialogState,
+)
 from src.domain.interfaces.llm_client import LLMClientProtocol
 from src.domain.interfaces.tool_client import ToolClientProtocol
 from src.application.orchestration.intent_orchestrator import IntentOrchestrator
-from src.application.usecases.create_task_usecase import CreateTaskUseCase
-from src.application.usecases.collect_data_usecase import CollectDataUseCase
+from src.application.use_cases.create_task_use_case import CreateTaskUseCase
+from src.application.use_cases.collect_data_use_case import CollectDataUseCase
 
 
 @pytest.fixture
@@ -81,15 +84,6 @@ async def mock_tool_client_protocol() -> ToolClientProtocol:
                     "type": "object",
                     "properties": {"teacher_id": {"type": "string"}},
                     "required": ["teacher_id"],
-                },
-            },
-            {
-                "name": "list_reminders",
-                "description": "List active reminders",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {"user_id": {"type": "string"}},
-                    "required": ["user_id"],
                 },
             },
         ]
@@ -183,19 +177,25 @@ def mock_intent_orchestrator() -> IntentOrchestrator:
 def mock_task_handler(
     mock_intent_orchestrator: IntentOrchestrator,
     mock_tool_client_protocol: ToolClientProtocol,
+    mock_mongodb: AsyncIOMotorDatabase,
 ) -> TaskHandler:
     """Create TaskHandler with mocked dependencies.
 
     Args:
         mock_intent_orchestrator: Mocked IntentOrchestrator.
         mock_tool_client_protocol: Mocked ToolClientProtocol.
+        mock_mongodb: Mocked MongoDB database.
 
     Returns:
         TaskHandler instance.
     """
-    return TaskHandler(
+    create_task_uc = CreateTaskUseCase(
         intent_orchestrator=mock_intent_orchestrator,
         tool_client=mock_tool_client_protocol,
+        mongodb=mock_mongodb,
+    )
+    return TaskHandler(
+        create_task_use_case=create_task_uc,
     )
 
 
@@ -210,21 +210,6 @@ def mock_data_handler(mock_tool_client_protocol: ToolClientProtocol) -> DataHand
         DataHandler instance.
     """
     return DataHandler(tool_client=mock_tool_client_protocol)
-
-
-@pytest.fixture
-def mock_reminders_handler(
-    mock_tool_client_protocol: ToolClientProtocol,
-) -> RemindersHandler:
-    """Create RemindersHandler with mocked dependencies.
-
-    Args:
-        mock_tool_client_protocol: Mocked ToolClientProtocol.
-
-    Returns:
-        RemindersHandler instance.
-    """
-    return RemindersHandler(tool_client=mock_tool_client_protocol)
 
 
 @pytest.fixture
@@ -245,7 +230,6 @@ async def butler_orchestrator(
     mock_mode_classifier: ModeClassifier,
     mock_task_handler: TaskHandler,
     mock_data_handler: DataHandler,
-    mock_reminders_handler: RemindersHandler,
     mock_chat_handler: ChatHandler,
     mock_mongodb: AsyncIOMotorDatabase,
 ) -> ButlerOrchestrator:
@@ -258,7 +242,6 @@ async def butler_orchestrator(
         mock_mode_classifier: Mocked ModeClassifier.
         mock_task_handler: Mocked TaskHandler.
         mock_data_handler: Mocked DataHandler.
-        mock_reminders_handler: Mocked RemindersHandler.
         mock_chat_handler: Mocked ChatHandler.
         mock_mongodb: Mocked MongoDB database.
 
@@ -269,7 +252,7 @@ async def butler_orchestrator(
         mode_classifier=mock_mode_classifier,
         task_handler=mock_task_handler,
         data_handler=mock_data_handler,
-        reminders_handler=mock_reminders_handler,
+        homework_handler=MagicMock(),
         chat_handler=mock_chat_handler,
         mongodb=mock_mongodb,
     )
@@ -309,16 +292,6 @@ def sample_data_message() -> str:
         Data collection message string.
     """
     return "Get channel digests"
-
-
-@pytest.fixture
-def sample_reminders_message() -> str:
-    """Sample reminders message.
-
-    Returns:
-        Reminders message string.
-    """
-    return "Show my reminders"
 
 
 @pytest.fixture

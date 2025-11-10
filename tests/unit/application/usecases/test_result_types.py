@@ -3,10 +3,10 @@
 import pytest
 from pydantic import ValidationError
 
-from src.application.usecases.result_types import (
-    TaskCreationResult,
+from src.application.dtos.butler_use_case_dtos import (
     DigestResult,
     StatsResult,
+    TaskCreationResult,
 )
 
 

@@ -83,6 +83,7 @@ redesign in future epics.
 | `channels:refresh` | Trigger immediate fetch for a channel | `--channel-id` or `--username`, optional `--hours` | Job enqueued/log entry | Worker queue (`post_fetcher`) |
 | `digest:run` | Generate digest for channel(s) over period | `--channel`, `--hours` or `--range` | Markdown/JSON digest output | Modular reviewer summariser + Mongo |
 | `digest:last` | Show last generated digest metadata | `--channel` | Timestamp, post count, summary snippet | Mongo (digests collection) |
+| `digest:export` | Export digest to PDF/Markdown | `--user-id`, `--channel`, `--hours`, `--output`, `--format` | Generates file via backoffice CLI; uses shared infra + WeasyPrint | CLI backoffice |
 | `nlp:test` | (Optional) Run intent detection on sample text | `--text` | Parsed intent structure | Shared NLP utilities |
 
 ### CLI Wiring Plan
@@ -95,6 +96,7 @@ redesign in future epics.
 | `channels refresh` | Worker enqueue (`post_fetcher_queue.enqueue_refresh`) | CLI issues task directly through application service (no MCP). |
 | `digest run` | `digest_generate` MCP tool | Support `--format` option by switching rendering template. |
 | `digest last` | `digest_get_last` MCP tool | Provide fallback message when digest missing. |
+| `digest export` | `digest_exporter.export_digest_to_file` | Uses CLI service with shared infra + WeasyPrint; outputs PDF/Markdown. |
 | `nlp test` | `nlp_parse_intent` MCP tool | Optional; wraps intent orchestrator via MCP. |
 
 Implementation skeleton to live in `src/presentation/cli/backoffice/commands.py`, sharing auth/config with existing CLI utilities.

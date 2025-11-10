@@ -78,34 +78,6 @@ async def test_data_collection_full_flow(butler_orchestrator):
 
 
 @pytest.mark.asyncio
-async def test_reminders_listing_full_flow(butler_orchestrator):
-    """Test complete reminders listing flow.
-
-    Args:
-        butler_orchestrator: ButlerOrchestrator with mocked dependencies.
-    """
-    # Setup: Configure for REMINDERS mode
-    butler_orchestrator.mode_classifier.llm_client.make_request = AsyncMock(
-        return_value="REMINDERS"
-    )
-    butler_orchestrator.reminders_handler.tool_client.call_tool = AsyncMock(
-        return_value={
-            "success": True,
-            "reminders": [{"id": "rem_1", "text": "Test reminder"}],
-        }
-    )
-
-    # Execute
-    response = await butler_orchestrator.handle_user_message(
-        user_id="12345", message="Show my reminders", session_id="session_123"
-    )
-
-    # Verify
-    assert response is not None
-    butler_orchestrator.reminders_handler.tool_client.call_tool.assert_called()
-
-
-@pytest.mark.asyncio
 async def test_idle_chat_full_flow(butler_orchestrator):
     """Test complete IDLE/chat flow.
 

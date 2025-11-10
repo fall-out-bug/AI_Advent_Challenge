@@ -4,7 +4,6 @@ from unittest.mock import Mock
 import pytest
 
 from src.presentation.mcp.adapters.generation_adapter import GenerationAdapter
-from src.presentation.mcp.adapters.orchestration_adapter import OrchestrationAdapter
 from src.presentation.mcp.adapters.review_adapter import ReviewAdapter
 from src.presentation.mcp.exceptions import MCPValidationError
 
@@ -67,57 +66,3 @@ class TestReviewAdapterValidation:
 """
         # Should not raise an exception
         adapter._validate_code(code)
-
-
-class TestOrchestrationAdapterValidation:
-    """Tests for orchestration adapter validation."""
-
-    def test_validate_inputs_empty_description(self):
-        """Test validation with empty description."""
-        adapter = OrchestrationAdapter(Mock())
-
-        with pytest.raises(MCPValidationError) as exc_info:
-            adapter._validate_inputs("", "mistral", "mistral")
-
-        assert exc_info.value.context["field"] == "description"
-
-    def test_validate_inputs_empty_gen_model(self):
-        """Test validation with empty generation model."""
-        adapter = OrchestrationAdapter(Mock())
-
-        with pytest.raises(MCPValidationError) as exc_info:
-            adapter._validate_inputs("Create a function", "", "mistral")
-
-        assert exc_info.value.context["field"] == "gen_model"
-
-    def test_validate_inputs_empty_review_model(self):
-        """Test validation with empty review model."""
-        adapter = OrchestrationAdapter(Mock())
-
-        with pytest.raises(MCPValidationError) as exc_info:
-            adapter._validate_inputs("Create a function", "mistral", "")
-
-        assert exc_info.value.context["field"] == "review_model"
-
-    def test_validate_inputs_valid(self):
-        """Test validation with all valid inputs."""
-        adapter = OrchestrationAdapter(Mock())
-
-        # Should not raise an exception
-        adapter._validate_inputs("Create a todo list class", "mistral", "mistral")
-
-    def test_validate_inputs_whitespace_only(self):
-        """Test validation with whitespace-only inputs."""
-        adapter = OrchestrationAdapter(Mock())
-
-        # Description with only whitespace
-        with pytest.raises(MCPValidationError):
-            adapter._validate_inputs("   ", "mistral", "mistral")
-
-        # Gen model with only whitespace
-        with pytest.raises(MCPValidationError):
-            adapter._validate_inputs("Create function", "   ", "mistral")
-
-        # Review model with only whitespace
-        with pytest.raises(MCPValidationError):
-            adapter._validate_inputs("Create function", "mistral", "   ")

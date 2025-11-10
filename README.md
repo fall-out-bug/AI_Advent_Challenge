@@ -10,7 +10,7 @@ This repository contains daily challenges building AI-powered systems with langu
 
 **Updates:** Project news and daily recaps are published in the Telegram channel [Высоконагруженный кабанчик](https://t.me/data_intensive_boar).
 
-**Current Status:** ✅ Day 17 Complete – Multi-Pass Code Review with MCP Publishing & Log Analysis
+**Current Status:** 🚧 Stage 04_03 (Repository Hygiene & Sign-Off) — polishing docs, sign-offs, and final CI baseline after the Epic 04 archive.
 
 **Project Status:**
 - ✅ 17 daily challenges completed
@@ -53,14 +53,23 @@ This repository contains daily challenges building AI-powered systems with langu
 # Install dependencies
 make install
 
-# Run tests
-make test
+# Start shared infrastructure (MongoDB, Prometheus, reviewer API)
+./scripts/start_shared_infra.sh
+
+# Load shared infra credentials for Mongo/Prometheus
+set -a
+source ~/work/infra/.env.infra
+set +a
+export MONGODB_URL="mongodb://admin:${MONGO_PASSWORD}@127.0.0.1:27017/butler_test?authSource=admin"
+
+# Run tests (local baseline 429 pass / 2 xfail due to latency thresholds)
+poetry run pytest -q
 
 # Run the API
 make run-api
 
-# Run the CLI
-make run-cli
+# Backoffice CLI
+poetry run python -m src.presentation.cli.backoffice.main --help
 ```
 
 For detailed setup instructions, see [DEVELOPMENT.md](docs/DEVELOPMENT.md).

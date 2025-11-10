@@ -5,7 +5,6 @@
 ### Breaking Changes
 - Reminder MCP tools (`add_task`, `list_tasks`, `update_task`, `delete_task`, `get_summary`) archived and скрываются из discovery по умолчанию.
 - PDF digest MCP toolchain (`get_posts_from_db`, `summarize_posts`, `format_digest_markdown`, `combine_markdown_sections`, `convert_markdown_to_pdf`) помечены как deprecated; планируется замена CLI `digest:export` в Stage 02_02.
-- Homework review MCP tool (`review_homework_archive`) помечен как deprecated; будет заменён новой интеграцией после завершения EP01.
 
 ### New Features
 - Инструменты discovery теперь возвращают статус жизненного цикла (`supported`, `transition`, `deprecated`, `archived`) и поясняющую `note`.
@@ -31,4 +30,9 @@
 - `digest run --format json` предоставляет расширенные сведения для downstream-клиентов.
 - Команды `channels refresh` и `digest export` остаются в бэклоге (см. handoff Stage 02_01 → 02_02).
 
+## 2025-11-09 · Stage 04_02 — Legacy Archive Wave 1
 
+### Updates
+- Homework review MCP tool (`review_homework_archive`) модернизирован и переведён на модульный ревьюер; предупреждения о деприкации сняты, тесты обновлены.
+- Документация (`docs/API_MCP*.md`) отражает новую доступность инструмента без флага `MCP_INCLUDE_DEPRECATED_TOOLS`.
+- Multi-agent orchestration adapter удалён; `MCPApplicationAdapter` выполняет последовательное generate+review с общей обработкой ошибок.

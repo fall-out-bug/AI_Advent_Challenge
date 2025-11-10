@@ -6,8 +6,8 @@ Following TDD principles and testing best practices.
 import pytest
 from unittest.mock import AsyncMock
 
-from src.domain.agents.handlers.chat_handler import ChatHandler
-from src.domain.agents.state_machine import DialogContext, DialogState
+from src.application.dtos.butler_dialog_dtos import DialogContext, DialogState
+from src.presentation.bot.handlers.chat import ChatHandler
 
 
 class MockLLMClient:
@@ -68,4 +68,9 @@ class TestChatHandler:
         )
         mock_llm_client.make_request = AsyncMock(side_effect=Exception("LLM error"))
         response = await handler.handle(context, "Hello")
-        assert "help" in response.lower() or "task" in response.lower()
+        response_lower = response.lower()
+        assert (
+            "помочь" in response_lower
+            or "создать задачу" in response_lower
+            or "help" in response_lower
+        )

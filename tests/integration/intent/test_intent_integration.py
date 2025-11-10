@@ -8,11 +8,12 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
 
+from src.application.dtos.butler_dialog_dtos import DialogContext, DialogMode, DialogState
+from src.application.services.mode_classifier import ModeClassifier
 from src.domain.intent import HybridIntentClassifier, IntentType
-from src.domain.agents.services.mode_classifier import ModeClassifier, DialogMode
-from src.domain.agents.handlers.data_handler import DataHandler
-from src.domain.interfaces.tool_client import ToolClientProtocol
 from src.domain.interfaces.llm_client import LLMClientProtocol
+from src.domain.interfaces.tool_client import ToolClientProtocol
+from src.presentation.bot.handlers.data import DataHandler
 
 
 @pytest.mark.asyncio
@@ -85,8 +86,6 @@ class TestIntentIntegration:
         self, data_handler, mock_tool_client, hybrid_classifier
     ):
         """Test DataHandler uses HybridIntentClassifier for routing."""
-        from src.domain.agents.state_machine import DialogContext
-
         # Mock list_channels tool response
         mock_tool_client.call_tool.return_value = {
             "channels": [
@@ -102,7 +101,7 @@ class TestIntentIntegration:
         context = DialogContext(
             user_id="12345",
             session_id="test_session",
-            state="IDLE",
+            state=DialogState.IDLE,
             data={},
         )
 

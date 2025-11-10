@@ -19,7 +19,6 @@ class IntentType(Enum):
     # Mode-level intents
     TASK = "task"
     DATA = "data"
-    REMINDERS = "reminders"
     IDLE = "idle"
 
     # Sub-intents for better entity extraction
@@ -35,9 +34,6 @@ class IntentType(Enum):
     DATA_HW_STATUS = "data.hw.status"
     DATA_HW_QUEUE = "data.hw.queue"
     DATA_HW_RETRY = "data.hw.retry"
-    REMINDER_SET = "reminder.set"
-    REMINDER_LIST = "reminder.list"
-    REMINDER_DELETE = "reminder.delete"
     GENERAL_CHAT = "general.chat"
     GENERAL_QUESTION = "general.question"
 

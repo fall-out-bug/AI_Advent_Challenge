@@ -1,6 +1,7 @@
 """Tests for error handling scenarios."""
 
 from src.presentation.mcp.exceptions import (
+    MCPBaseException,
     MCPAgentError,
     MCPModelError,
     MCPOrchestrationError,

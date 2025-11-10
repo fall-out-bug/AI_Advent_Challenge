@@ -5,13 +5,13 @@ Following Python Zen: Simple is better than complex.
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
-from src.application.orchestration.intent_orchestrator import IntentOrchestrator
+from src.application.dtos.butler_use_case_dtos import TaskCreationResult
+from src.application.use_cases.create_task_use_case import CreateTaskUseCase
 from src.domain.agents.handlers.handler import Handler
 from src.domain.agents.state_machine import DialogContext
 from src.domain.intent import HybridIntentClassifier, IntentType
-from src.domain.interfaces.tool_client import ToolClientProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -25,19 +25,11 @@ class TaskHandler(Handler):
 
     def __init__(
         self,
-        intent_orchestrator: IntentOrchestrator,
-        tool_client: ToolClientProtocol,
+        create_task_use_case: CreateTaskUseCase,
         hybrid_classifier: Optional[HybridIntentClassifier] = None,
     ):
-        """Initialize task handler.
-
-        Args:
-            intent_orchestrator: Intent parsing orchestrator
-            tool_client: MCP tool client for task creation
-            hybrid_classifier: Optional hybrid intent classifier for intent detection and logging
-        """
-        self.intent_orchestrator = intent_orchestrator
-        self.tool_client = tool_client
+        """Initialize task handler."""
+        self._create_task_use_case = create_task_use_case
         self.hybrid_classifier = hybrid_classifier
 
     async def handle(self, context: DialogContext, message: str) -> str:
@@ -75,53 +67,37 @@ class TaskHandler(Handler):
                 logger.debug(f"Hybrid classifier failed in TaskHandler: {e}")
 
         try:
-            intent_result = await self.intent_orchestrator.parse_task_intent(
-                message, context.data
+            execution_context: Optional[Dict[str, Any]] = (
+                context.data if context.data else None
             )
-            return await self._process_intent(context, intent_result)
-        except Exception as e:
+            result = await self._create_task_use_case.execute(
+                user_id=int(context.user_id),
+                message=message,
+                context=execution_context,
+            )
+            return self._build_response(context, result)
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Task handling failed: {e}", exc_info=True)
             return "❌ Sorry, I couldn't process your task request. Please try again."
 
-    async def _process_intent(self, context: DialogContext, intent_result: Any) -> str:
-        """Process parsed intent result.
+    def _build_response(
+        self, context: DialogContext, result: TaskCreationResult
+    ) -> str:
+        """Convert TaskCreationResult into a user-facing message."""
 
-        Args:
-            context: Dialog context
-            intent_result: Parsed intent result
-
-        Returns:
-            Response text
-        """
-        if intent_result.needs_clarification:
-            question = intent_result.questions[0] if intent_result.questions else ""
+        if result.clarification:
             context.transition_to(context.state)
-            context.update_data("pending_intent", intent_result)
-            return f"❓ {question}"
-        return await self._create_task(context, intent_result)
+            if result.intent_payload:
+                context.update_data("pending_intent", result.intent_payload)
+            return f"❓ {result.clarification}"
 
-    async def _create_task(self, context: DialogContext, intent_result: Any) -> str:
-        """Create task via MCP tool.
+        if result.created:
+            context.reset()
+            task_id = result.task_id or "unknown"
+            return f"✅ Task created successfully! (ID: {task_id})"
 
-        Args:
-            context: Dialog context
-            intent_result: Parsed intent result
+        if result.error:
+            return f"❌ {result.error}"
 
-        Returns:
-            Response text
-        """
-        task_params = {
-            "user_id": context.user_id,
-            "title": intent_result.title,
-        }
-        if intent_result.description:
-            task_params["description"] = intent_result.description
-        if intent_result.deadline_iso:
-            task_params["deadline"] = intent_result.deadline_iso
-        if intent_result.priority:
-            task_params["priority"] = intent_result.priority
-
-        result = await self.tool_client.call_tool("create_task", task_params)
-        context.reset()
-        task_id = result.get("id", "unknown")
-        return f"✅ Task created successfully! (ID: {task_id})"
+        logger.warning("TaskCreationResult returned without status or error.")
+        return "⚠️ Unable to process the task request. Please try again."

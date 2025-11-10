@@ -15,6 +15,7 @@ learned to close the epic.
 - [ ] Obtain stakeholder sign-off (architecture, product, operations).
 - [ ] Publish disaster recovery drill schedule and ownership notes derived from
   EP03 follow-ups.
+- [ ] Record known issues and deferred items in `docs/specs/epic_04/known_issues.md`.
 
 ## Deliverables
 - Updated repository documentation and indices.
@@ -42,3 +43,10 @@ learned to close the epic.
 - Should we schedule periodic audits to ensure archive remains tidy?
 - Are there automation opportunities for archive inventory generation?
 
+## Validation Summary
+- ✅ Documentation refreshed (`README.md`, `docs/INDEX.md`, `docs/DOCS_OVERVIEW*.md`)
+- ✅ Archive manifest and subfolder READMEs verified (`archive/ep04_2025-11/`)
+- ✅ Full test suite with shared infra credentials:
+  `MONGODB_URL="mongodb://admin:<pwd>@127.0.0.1:27017/butler_test?authSource=admin" poetry run pytest -q`
+  → `429 passed / 2 xfailed` (latency benchmarks tracked as known issues)
+  Evidence: `docs/specs/epic_04/evidence/test_summary_stage_04_03_final_2025-11-10T2358Z.txt`

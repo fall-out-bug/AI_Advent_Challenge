@@ -9,11 +9,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import tempfile
 from pathlib import Path
 
-from src.domain.agents.butler_orchestrator import ButlerOrchestrator
-from src.domain.agents.handlers.homework_handler import HomeworkHandler
-from src.domain.agents.services.mode_classifier import ModeClassifier, DialogMode
-from src.domain.agents.state_machine import DialogContext, DialogState
+from src.presentation.bot.orchestrator import ButlerOrchestrator
+from src.application.dtos.butler_dialog_dtos import DialogContext, DialogMode, DialogState
+from src.application.services.mode_classifier import ModeClassifier
 from src.infrastructure.hw_checker.client import HWCheckerClient
+from src.application.use_cases.list_homework_submissions import (
+    ListHomeworkSubmissionsUseCase,
+)
+from src.application.use_cases.review_homework_use_case import ReviewHomeworkUseCase
+from src.presentation.bot.handlers.homework import HomeworkHandler
 
 
 @pytest.fixture
@@ -40,10 +44,12 @@ def mock_llm_client():
 @pytest.fixture
 def homework_handler(mock_hw_checker_client, mock_tool_client):
     """Create HomeworkHandler instance."""
-    return HomeworkHandler(
-        hw_checker_client=mock_hw_checker_client,
+    list_uc = ListHomeworkSubmissionsUseCase(homework_checker=mock_hw_checker_client)
+    review_uc = ReviewHomeworkUseCase(
+        homework_checker=mock_hw_checker_client,
         tool_client=mock_tool_client,
     )
+    return HomeworkHandler(list_use_case=list_uc, review_use_case=review_uc)
 
 
 @pytest.fixture
@@ -55,10 +61,9 @@ def mode_classifier(mock_llm_client):
 @pytest.fixture
 def orchestrator(mode_classifier, homework_handler):
     """Create ButlerOrchestrator with mocked dependencies."""
-    from src.domain.agents.handlers.chat_handler import ChatHandler
-    from src.domain.agents.handlers.data_handler import DataHandler
-    from src.domain.agents.handlers.reminders_handler import RemindersHandler
-    from src.domain.agents.handlers.task_handler import TaskHandler
+    from src.presentation.bot.handlers.chat import ChatHandler
+    from src.presentation.bot.handlers.data import DataHandler
+    from src.presentation.bot.handlers.task import TaskHandler
     from motor.motor_asyncio import AsyncIOMotorDatabase
 
     # Create minimal mocks for other handlers
@@ -67,9 +72,6 @@ def orchestrator(mode_classifier, homework_handler):
 
     mock_data = MagicMock(spec=DataHandler)
     mock_data.handle = AsyncMock(return_value="Data response")
-
-    mock_reminders = MagicMock(spec=RemindersHandler)
-    mock_reminders.handle = AsyncMock(return_value="Reminders response")
 
     mock_task = MagicMock(spec=TaskHandler)
     mock_task.handle = AsyncMock(return_value="Task response")
@@ -83,7 +85,6 @@ def orchestrator(mode_classifier, homework_handler):
         mode_classifier=mode_classifier,
         task_handler=mock_task,
         data_handler=mock_data,
-        reminders_handler=mock_reminders,
         homework_handler=homework_handler,
         chat_handler=mock_chat,
         mongodb=mock_db,
@@ -123,7 +124,7 @@ class TestHomeworkReviewFlow:
 
         # Assert
         assert "📚 Домашки" in response
-        assert "Иванов_Иван_hw2.zip" in response
+        assert "Иванов\\_Иван\\_hw2.zip" in response
         mock_hw_checker_client.get_recent_commits.assert_called_once()
 
     async def test_review_homework_flow(
@@ -140,9 +141,13 @@ class TestHomeworkReviewFlow:
         )
         mock_tool_client.call_tool = AsyncMock(
             return_value={
+                "success": True,
                 "markdown_report": markdown_report,
                 "session_id": "test_session",
                 "total_findings": 5,
+                "detected_components": [],
+                "pass_2_components": [],
+                "execution_time_seconds": 2.1,
             }
         )
         mode_classifier.classify = AsyncMock(return_value=DialogMode.HOMEWORK_REVIEW)
@@ -168,9 +173,7 @@ class TestHomeworkReviewFlow:
         assert decoded_content == markdown_report
         assert filename.endswith(".md")
 
-        mock_hw_checker_client.download_archive.assert_called_once_with(
-            commit_hash, assignment=None
-        )
+        mock_hw_checker_client.download_archive.assert_called_once_with(commit_hash)
         mock_tool_client.call_tool.assert_called_once()
 
     async def test_review_homework_mode_classification(
@@ -195,7 +198,7 @@ class TestHomeworkReviewFlow:
     ):
         """Test error handling in review flow."""
         # Arrange
-        commit_hash = "abc123"
+        commit_hash = "abc1234"
         from httpx import HTTPStatusError, Response
 
         mock_response = MagicMock(spec=Response)
@@ -212,7 +215,7 @@ class TestHomeworkReviewFlow:
 
         # Assert
         assert "❌" in response
-        assert "не найден" in response.lower() or "404" in response
+        assert "ошибка при ревью" in response.lower()
 
     async def test_list_homeworks_with_assignment_filter(
         self, orchestrator, mode_classifier, mock_hw_checker_client
@@ -250,11 +253,16 @@ class TestHomeworkReviewFlow:
         assert call_args[1]["days"] == 3
 
     async def test_review_homework_temp_file_cleanup(
-        self, orchestrator, mode_classifier, mock_hw_checker_client, mock_tool_client
+        self,
+        orchestrator,
+        mode_classifier,
+        mock_hw_checker_client,
+        mock_tool_client,
+        homework_handler,
     ):
         """Test that temp file is properly cleaned up."""
         # Arrange
-        commit_hash = "abc123"
+        commit_hash = "abc1234"
         archive_content = b"PK\x03\x04fake zip"
         markdown_report = "# Review Report\n\nTest"
 
@@ -262,18 +270,22 @@ class TestHomeworkReviewFlow:
             return_value=archive_content
         )
         mock_tool_client.call_tool = AsyncMock(
-            return_value={"markdown_report": markdown_report}
+            return_value={
+                "success": True,
+                "markdown_report": markdown_report,
+                "detected_components": [],
+                "pass_2_components": [],
+                "execution_time_seconds": 1.0,
+                "total_findings": 0,
+            }
         )
         mode_classifier.classify = AsyncMock(return_value=DialogMode.HOMEWORK_REVIEW)
 
         # Act
-        with patch("tempfile.NamedTemporaryFile") as mock_temp:
-            mock_file = MagicMock()
-            mock_file.name = "/tmp/test.zip"
-            mock_file.__enter__ = MagicMock(return_value=mock_file)
-            mock_file.__exit__ = MagicMock(return_value=None)
-            mock_temp.return_value = mock_file
-
+        cleanup_spy = AsyncMock()
+        with patch.object(
+            homework_handler._review_use_case, "_cleanup_file", cleanup_spy
+        ):
             response = await orchestrator.handle_user_message(
                 user_id="123",
                 message=f"Сделай ревью {commit_hash}",
@@ -282,6 +294,4 @@ class TestHomeworkReviewFlow:
 
         # Assert
         assert response.startswith("FILE:")
-        # Verify file was written and closed
-        mock_file.write.assert_called_once()
-        mock_file.__exit__.assert_called_once()
+        cleanup_spy.assert_awaited_once()

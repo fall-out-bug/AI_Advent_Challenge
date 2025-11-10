@@ -37,6 +37,7 @@ for tool in tools:
 | `request_channel_digest_async` | `channels/channel_digest.py` | Постановка длительной задачи на дайджест | Возвращает идентификатор задания для воркера. |
 | `get_channel_metadata` | `channels/channel_metadata.py` | Получение метаданных из Mongo/Telegram | Используется CLI и ботом. |
 | `resolve_channel_name` | `channels/channel_resolution.py` | Распознавание канала по вводу пользователя | При необходимости обращается к Telegram-поиску. |
+| `review_homework_archive` | `homework_review_tool.py` | Модульное ревью архивов домашек | Возвращает markdown-отчёт и сохраняет логи/метаданные. |
 
 ### 2.1 `get_channel_digest`
 
@@ -100,7 +101,6 @@ Telegram-поиск для уточнения данных.
 
 | Имя | Комментарий |
 |-----|-------------|
-| `review_homework_archive` | Будет заменён модульным ревьюером после EP01. |
 | `get_posts_from_db` | PDF-дайджест переносится в CLI `digest:export`. |
 | `summarize_posts` | Суммаризации выполняются в CLI-пайплайне. |
 | `format_digest_markdown` | Форматирование переезжает в CLI-шаблоны. |
@@ -139,9 +139,8 @@ Telegram-поиск для уточнения данных.
 
 ## 8. Связанные документы
 
-- `docs/specs/epic_02/mcp_tool_matrix.md` — итоговая матрица инструментов.  
-- `docs/specs/epic_02/mcp_migration_bulletin.md` — миграционный бюллетень.  
-- `docs/CHANGELOG_MCP.md` — публичный changelog обновлений MCP.  
-- `docs/API_MCP.md` — англоязычная версия.  
+- `docs/specs/epic_02/mcp_tool_matrix.md` — итоговая матрица инструментов.
+- `docs/specs/epic_02/mcp_migration_bulletin.md` — миграционный бюллетень.
+- `docs/CHANGELOG_MCP.md` — публичный changelog обновлений MCP.
+- `docs/API_MCP.md` — англоязычная версия.
 - `docs/API_BOT_BACKOFFICE.ru.md` — справочник по CLI (Stage 02_02).
-

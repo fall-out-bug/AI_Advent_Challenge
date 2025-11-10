@@ -9,7 +9,7 @@ from aiogram.filters import Command
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import Message
 
-from src.domain.agents.butler_orchestrator import ButlerOrchestrator
+from src.presentation.bot.orchestrator import ButlerOrchestrator
 from src.infrastructure.logging import get_logger
 from src.infrastructure.metrics import get_butler_metrics
 from src.infrastructure.shutdown.graceful_shutdown import GracefulShutdown
@@ -66,7 +66,12 @@ class ButlerBot:
         # Include existing handler routers
         from src.presentation.bot.handlers import channels, menu
 
+        if getattr(menu.router, "_parent_router", None) is not None:
+            menu.router._parent_router = None
         self.dp.include_router(menu.router)
+
+        if getattr(channels.router, "_parent_router", None) is not None:
+            channels.router._parent_router = None
         self.dp.include_router(channels.router)
 
         # Include butler handler for natural language processing
@@ -130,17 +135,24 @@ class ButlerBot:
         Stops polling, closes bot session, and stops metrics server.
         """
         logger.info("Stopping bot...")
+        close_error: Exception | None = None
         try:
             self._metrics.set_health_status(False)
-
-            # Stop metrics server
             await self.metrics_server.stop()
-
             await self.dp.stop_polling()
-            await self.bot.session.close()
+        except Exception as exc:  # noqa: BLE001
+            logger.error(f"Error during bot shutdown: {exc}", exc_info=True)
+        finally:
+            try:
+                await self.bot.session.close()
+            except Exception as exc:  # noqa: BLE001
+                close_error = exc
+                logger.error(
+                    f"Failed to close bot session: {exc}", exc_info=True
+                )
+
+        if close_error is None:
             logger.info("Bot stopped successfully")
-        except Exception as e:
-            logger.error(f"Error during bot shutdown: {e}", exc_info=True)
 
 
 def create_dispatcher() -> Dispatcher:

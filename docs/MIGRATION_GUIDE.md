@@ -104,12 +104,10 @@ result = await client.call_tool("generate_code", {...})
 ```
 
 #### After (Day 10)
-```python
-from src.application.orchestrators.mistral_orchestrator import MistralChatOrchestrator
+Legacy Mistral chat orchestration has been archived. Use the deterministic backoffice CLI instead:
 
-orchestrator = MistralChatOrchestrator(...)
-await orchestrator.initialize()
-response = await orchestrator.handle_message("generate code", "conv_123")
+```bash
+poetry run python -m src.presentation.cli.backoffice.main digest run --user-id 42 --hours 24
 ```
 
 ### 7. Test Migration
@@ -160,13 +158,7 @@ pip install -e .
 
 **Problem:** Token limit exceeded errors.
 
-**Solution:** Enable context management:
-```python
-orchestrator = MistralChatOrchestrator(
-    ...,
-    enable_context_management=True
-)
-```
+**Solution:** Backoffice CLI commands handle batching and pagination automatically. See `docs/DEVELOPMENT.md` for updated examples.
 
 ### Issue: Docker Build Fails
 
@@ -205,4 +197,3 @@ For additional help:
 - [ ] Production validation passing
 - [ ] Monitoring enabled
 - [ ] Documentation reviewed
-

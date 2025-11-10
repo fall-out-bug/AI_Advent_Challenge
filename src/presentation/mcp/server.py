@@ -42,16 +42,10 @@ def _register_all_tools() -> None:
             "Channel bulk management migrates to CLI backoffice in Stage 02_02.",
         ),
         (
-            "pdf_digest_tools",
-            "src.presentation.mcp.tools.pdf_digest_tools",
-            "deprecated",
-            "CLI `digest:export` replaces this tool during Stage 02_02.",
-        ),
-        (
             "homework_review_tool",
             "src.presentation.mcp.tools.homework_review_tool",
-            "deprecated",
-            "Modular reviewer replacement ships after EP01 refactor.",
+            "supported",
+            "Modular reviewer MCP tool backed by shared reviewer service.",
         ),
     ]
 

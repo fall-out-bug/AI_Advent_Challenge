@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timedelta
 
 import pytest
+from pymongo.errors import OperationFailure
 
 pytestmark = pytest.mark.asyncio
 
@@ -29,13 +30,19 @@ async def repo():
     from src.infrastructure.repositories.task_repository import TaskRepository
 
     db = await get_db()
+    try:
+        await db.tasks.delete_many({})
+    except OperationFailure as error:
+        await close_client()
+        details = getattr(error, "details", {}) or {}
+        message = details.get("errmsg") or str(error)
+        pytest.skip(f"MongoDB authentication required for task repository tests: {message}")
     repository = TaskRepository(db)
-    # Cleanup before each test
-    await db.tasks.delete_many({})
-    yield repository
-    # Cleanup after
-    await db.tasks.delete_many({})
-    await close_client()
+    try:
+        yield repository
+    finally:
+        await db.tasks.delete_many({})
+        await close_client()
 
 
 async def test_create_and_get_task(repo):

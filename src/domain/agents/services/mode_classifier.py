@@ -1,6 +1,6 @@
 """Mode classification service for Butler Agent.
 
-Classifies user messages into one of 4 modes: TASK, DATA, REMINDERS, IDLE.
+Classifies user messages into supported modes: TASK, DATA, HOMEWORK_REVIEW, IDLE.
 Following Python Zen: Simple is better than complex.
 """
 
@@ -15,14 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 class DialogMode(Enum):
-    """Dialog mode enumeration.
-
-    Represents the 5 possible modes for Butler Agent.
-    """
+    """Dialog mode enumeration."""
 
     TASK = "task"
     DATA = "data"
-    REMINDERS = "reminders"
     HOMEWORK_REVIEW = "homework_review"
     IDLE = "idle"
 
@@ -41,8 +37,7 @@ class ModeClassifier:
     MODE_CLASSIFICATION_PROMPT = """Classify the user message into one of these modes:
 - TASK: User wants to create, update, or manage a task
 - DATA: User wants to get channel digests, student stats, subscriptions list, channel lists, or data summaries
-- REMINDERS: User wants to see or manage reminders
-- HOMEWORK_REVIEW: User wants to review homework (e.g., "сделай ревью {hash}", "покажи домашки")
+- HOMEWORK_REVIEW: User wants to review homework (e.g., "сделай ревью {{hash}}", "покажи домашки")
 - IDLE: General conversation, questions, or unclear intent
 
 Examples:
@@ -55,7 +50,7 @@ Examples:
 - "Привет" → IDLE
 - "Создай задачу" → TASK
 
-Respond with ONLY the mode name: TASK, DATA, REMINDERS, HOMEWORK_REVIEW, or IDLE.
+Respond with ONLY the mode name: TASK, DATA, HOMEWORK_REVIEW, or IDLE.
 
 Message: {message}"""
 
@@ -194,24 +189,19 @@ Message: {message}"""
         task_keywords = [
             "создай задачу",
             "create task",
+            "create a task",
             "добавь задачу",
             "add task",
+            "add a task",
             "удалить задачу",
             "delete task",
+            "delete a task",
             "задачи",
             "tasks",
         ]
         if any(keyword in message_lower for keyword in task_keywords):
             logger.debug(f"Fast path: classified '{message}' as TASK based on keywords")
             return DialogMode.TASK
-
-        # Check for REMINDERS mode keywords
-        reminder_keywords = ["напоминани", "reminder", "напомни", "remind"]
-        if any(keyword in message_lower for keyword in reminder_keywords):
-            logger.debug(
-                f"Fast path: classified '{message}' as REMINDERS based on keywords"
-            )
-            return DialogMode.REMINDERS
 
         # Use LLM for ambiguous cases (fallback)
         try:
@@ -241,8 +231,6 @@ Message: {message}"""
             return DialogMode.TASK
         elif intent == IntentType.DATA or intent.name.startswith("DATA_"):
             return DialogMode.DATA
-        elif intent == IntentType.REMINDERS or intent.name.startswith("REMINDER_"):
-            return DialogMode.REMINDERS
         elif intent.name.startswith("HOMEWORK_") or intent.name.startswith("REVIEW_"):
             return DialogMode.HOMEWORK_REVIEW
         else:

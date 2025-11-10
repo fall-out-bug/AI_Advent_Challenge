@@ -288,11 +288,6 @@ class TestMCPToolsRegistryV2:
                 "description": "Get channel data digest",
                 "input_schema": {"type": "object", "properties": {}},
             },
-            {
-                "name": "set_reminder",
-                "description": "Set a reminder",
-                "input_schema": {"type": "object", "properties": {}},
-            },
         ]
         mock_tool_client.discover_tools = AsyncMock(return_value=tools)
         registry = MCPToolsRegistryV2(tool_client=mock_tool_client)
@@ -300,9 +295,7 @@ class TestMCPToolsRegistryV2:
         # Act
         task_schema = await registry.get_tool_schema("create_task")
         data_schema = await registry.get_tool_schema("get_digest")
-        reminder_schema = await registry.get_tool_schema("set_reminder")
 
         # Assert
         assert task_schema.category == ToolCategory.TASK
         assert data_schema.category == ToolCategory.DATA
-        assert reminder_schema.category == ToolCategory.REMINDERS

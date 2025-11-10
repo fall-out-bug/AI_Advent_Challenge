@@ -5,6 +5,7 @@ import os
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from pymongo.errors import OperationFailure
 
 from src.infrastructure.database.mongo import close_client, get_db
 
@@ -30,12 +31,21 @@ def _set_test_db_env(monkeypatch):
 async def _cleanup_db():
     """Clean up database before and after each test."""
     db = await get_db()
-    await db.tasks.delete_many({})
-    await db.channels.delete_many({})
-    yield
-    await db.tasks.delete_many({})
-    await db.channels.delete_many({})
-    await close_client()
+    try:
+        await db.tasks.delete_many({})
+        await db.channels.delete_many({})
+    except OperationFailure as error:
+        await close_client()
+        details = getattr(error, "details", {}) or {}
+        message = details.get("errmsg") or str(error)
+        pytest.skip(f"MongoDB authentication required for e2e tests: {message}")
+    else:
+        try:
+            yield
+        finally:
+            await db.tasks.delete_many({})
+            await db.channels.delete_many({})
+            await close_client()
 
 
 @pytest.fixture

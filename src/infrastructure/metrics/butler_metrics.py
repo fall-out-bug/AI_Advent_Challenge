@@ -43,14 +43,14 @@ butler_errors_total = Counter(
 butler_mode_classifications_total = Counter(
     "butler_mode_classifications_total",
     "Total mode classifications performed",
-    ["mode"],  # mode: TASK, DATA, REMINDERS, IDLE
+    ["mode"],  # mode: TASK, DATA, IDLE
     registry=_butler_registry,
 )
 
 butler_handler_invocations_total = Counter(
     "butler_handler_invocations_total",
     "Total handler invocations by handler type",
-    ["handler_type", "status"],  # handler_type: task, data, reminders, chat
+    ["handler_type", "status"],  # handler_type: task, data, chat
     registry=_butler_registry,
 )
 
@@ -121,8 +121,8 @@ class ButlerMetrics:
         """Record message processing duration and success/error.
 
         Args:
-            mode: Dialog mode (TASK, DATA, REMINDERS, IDLE)
-            handler_type: Handler type (task, data, reminders, chat)
+            mode: Dialog mode (TASK, DATA, IDLE)
+            handler_type: Handler type (task, data, chat)
 
         Example:
             >>> with metrics.record_message_processing(mode="TASK", handler_type="task"):
@@ -158,7 +158,7 @@ class ButlerMetrics:
         """Record mode classification.
 
         Args:
-            mode: Classified mode (TASK, DATA, REMINDERS, IDLE)
+            mode: Classified mode (TASK, DATA, IDLE)
         """
         butler_mode_classifications_total.labels(mode=mode).inc()
 
