@@ -197,4 +197,3 @@ def test_use_case_batches_embeddings_respecting_batch_size() -> None:
     assert len(gateway.calls) == 2
     assert gateway.calls[0] == ["doc-1-0", "doc-2-0"]
     assert gateway.calls[1] == ["doc-3-0"]
-

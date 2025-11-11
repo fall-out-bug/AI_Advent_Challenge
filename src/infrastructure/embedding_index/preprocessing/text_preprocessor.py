@@ -70,4 +70,3 @@ class TextPreprocessor:
         lines = [line.rstrip() for line in text.replace("\r\n", "\n").split("\n")]
         cleaned = "\n".join(lines)
         return re.sub(r"\n{3,}", "\n\n", cleaned).strip()
-

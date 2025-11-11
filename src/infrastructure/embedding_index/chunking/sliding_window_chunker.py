@@ -72,4 +72,3 @@ class SlidingWindowChunker(Chunker):
             )
             chunks.append(replace(chunk, metadata=dict(chunk.metadata or {})))
         return chunks
-

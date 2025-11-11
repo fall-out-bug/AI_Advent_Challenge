@@ -70,4 +70,3 @@ class VectorStore(Protocol):
         vectors: Sequence[EmbeddingVector],
     ) -> None:
         """Insert or update embedding vectors for the given chunks."""
-

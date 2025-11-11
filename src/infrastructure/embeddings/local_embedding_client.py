@@ -219,4 +219,3 @@ class LocalEmbeddingClient:
         if not values:
             raise EmbeddingClientError("Embedding vector must not be empty.")
         return EmbeddingVector(values=values, model=model, dimension=len(values))
-

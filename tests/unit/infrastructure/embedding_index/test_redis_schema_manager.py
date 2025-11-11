@@ -77,4 +77,3 @@ def test_ensure_schema_wraps_errors() -> None:
 
     with pytest.raises(RedisSchemaError):
         manager.ensure_schema(connection=FailingRedis())
-

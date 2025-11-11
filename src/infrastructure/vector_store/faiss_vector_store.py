@@ -67,4 +67,3 @@ class FaissVectorStore(VectorStore):
                 path=str(self._index_path),
                 error=str(error),
             )
-

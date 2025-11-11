@@ -104,4 +104,3 @@ def test_chunking_settings_validate_values() -> None:
     """Ensure ChunkingSettings enforces positive configuration."""
     with pytest.raises(ValueError):
         ChunkingSettings(chunk_size_tokens=0, chunk_overlap_tokens=0)
-

@@ -68,4 +68,3 @@ PY
 - Integrate retrieval API or CLI commands (`index search`) leveraging stored vectors.
 - Schedule periodic re-indexing when documentation changes; leverage document hash
   to short-circuit unchanged files.
-

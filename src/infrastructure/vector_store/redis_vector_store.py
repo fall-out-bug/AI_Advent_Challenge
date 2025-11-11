@@ -90,4 +90,3 @@ class RedisVectorStore(VectorStore):
         except RedisSchemaError as error:
             self._logger.warning("redis_schema_unavailable", error=str(error))
             return False
-

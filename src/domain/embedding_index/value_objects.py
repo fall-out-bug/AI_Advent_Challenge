@@ -293,4 +293,3 @@ class EmbeddingVector:
             [0.1, 0.2]
         """
         return list(self.values)
-

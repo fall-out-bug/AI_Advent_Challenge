@@ -39,4 +39,3 @@ reference upstream specs when onboarding new contributors.
 - Tech Lead: __________________________
 - Maintainer / Ops: ___________________
 - Date: _______________________________
-

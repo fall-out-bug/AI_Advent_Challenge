@@ -16,4 +16,3 @@
 - Refer to this table when preparing the EP19 demo or maintainer documentation.
 - Update the inventory if any upstream spec moves or new major artefacts appear.
 - Include the link in the maintainer playbook (`docs/MAINTAINERS_GUIDE.md`) and demo plan.
-

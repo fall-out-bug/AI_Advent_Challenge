@@ -57,4 +57,3 @@ class LocalEmbeddingGateway(EmbeddingGateway):
             dimension=self._fallback_dimension,
             metadata={"fallback": "sha256"},
         )
-

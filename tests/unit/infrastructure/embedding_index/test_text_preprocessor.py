@@ -32,4 +32,3 @@ def test_supports_filters_extensions(tmp_path: Path) -> None:
 
     assert preprocessor.supports(supported) is True
     assert preprocessor.supports(unsupported) is False
-

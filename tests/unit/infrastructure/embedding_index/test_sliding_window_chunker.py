@@ -36,4 +36,3 @@ def test_chunker_generates_overlapping_chunks() -> None:
     assert chunks[0].token_count == 10
     assert chunks[-1].token_count >= settings.min_chunk_tokens
     assert chunks[0].metadata["chunk_strategy"] == "sliding_window"
-

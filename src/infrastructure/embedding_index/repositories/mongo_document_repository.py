@@ -57,4 +57,3 @@ class MongoChunkRepository(ChunkRepository):
             )
         if operations:
             self._collection.bulk_write(operations, ordered=False)
-

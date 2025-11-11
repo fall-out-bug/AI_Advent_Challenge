@@ -104,4 +104,3 @@ class IndexingResult:
     documents_indexed: int
     chunks_indexed: int
     embeddings_indexed: int
-
