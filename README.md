@@ -13,7 +13,7 @@ This repository contains daily challenges building AI-powered systems with langu
 **Current Status:** ✅ Stage 06_04 (Final Verification & Hand-off) — shared infra automation live in CI, maintainer playbook published, sign-off in progress.
 
 **Project Status:**
-- ✅ 17 daily challenges completed
+- ✅ 18 daily challenges completed
 - ✅ Clean Architecture fully implemented
 - ✅ 420+ tests with 80%+ coverage
 - ✅ Production-ready multi-agent system with self-improvement
@@ -134,6 +134,9 @@ AI_Challenge/
 | Day 14 | Multi-Pass Code Review | MCP Homework Review, 3-Pass Analysis | ✅ Complete |
 | Day 15 | Quality Assessment & Fine-tuning | LLM-as-Judge, Self-Improving System, Hugging Face | ✅ Complete |
 | Day 17 | Code Review Platform & MCP Publishing | Async queue, static analysis, log diagnostics, MCP tool calls | ✅ Complete |
+| Day 18 | Performance Benchmarks | Prometheus, Benchmarking | ✅ Complete |
+| Day 19 | Document Embedding Index | Redis/FAISS, Mongo, LLM API | Planned |
+| Day 20 | RAG vs Non‑RAG Answering Agent | Retrieval, LLM-as-Judge | Planned |
 
 ## Core Infrastructure
 
