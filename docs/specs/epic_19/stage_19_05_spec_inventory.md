@@ -1,0 +1,19 @@
+# Stage 19_05 · Spec Inventory (Epics 00–06)
+
+| Epic | Artifact | Scope / Notes | Key Decisions / Callouts | Owner | Relevance to EP19 |
+|------|----------|---------------|---------------------------|-------|-------------------|
+| EP00 | `docs/specs/epic_00/stage_00_01.md`<br>`docs/specs/epic_00/stage_00_02.md` | Repository inventory, keep/archive decisions, alignment with day-based specs. | Canonicalise `docs/` tree, isolate archives for optional ingestion. | Architecture WG | Defines which directories remain authoritative sources for indexing (`docs/`, curated archives). |
+| EP01 | `docs/specs/epic_01/stage_01_01_report.md`<br>`stage_01_01_lint_allowlist_plan.md`<br>`stage_01_01_shared_sdk_governance.md` | Reviewer hardening audit, lint coverage strategy, shared SDK ownership. | Enforce lint allowlist, ensure SDK contracts before ingestion modules merge. | Reviewer Core Team | Provides coding standards and lint rules the indexing pipeline must follow (chunker, embedder, CLI modules). |
+| EP02 | `docs/specs/epic_02/mcp_tool_matrix.md`<br>`stage_02_03_manual_checklist.md` | MCP tool catalogue, Telegram scope alignment, localisation checklist. | RU-first copy retention, tool naming conventions imported into metadata tags. | MCP Squad | Highlights documentation sources and RU copy requirements that must be indexed and tagged. |
+| EP03 | `docs/specs/epic_03/observability_gap_report.md`<br>`metrics_inventory.json`<br>`alerting_runbook.md` | Observability baselines, Prometheus metrics, alerting processes. | Metric naming patterns (`index_duration_seconds`, `embedding_batches_total`) reused in future telemetry. | Observability Guild | Guides metric naming and follow-up Prometheus integration (deferred to Epic 23). |
+| EP04 | `docs/specs/epic_04/archive_scope.md`<br>`epic_04_closure_report.md`<br>`known_issues.md` | Legacy archive plan, closure summary, outstanding risks. | Exclude deprecated archives, tag legacy references for downstream search filters. | Decommission Taskforce | Clarifies which legacy assets should be excluded or tagged during ingestion and guides archive navigation. |
+| EP05 | `docs/specs/epic_05/stage_05_01_benchmark_plan.md`<br>`stage_05_02_runbook.md`<br>`stage_05_03_governance.md` | Summarisation benchmarks, automation, fine-tuning governance. | Benchmark dataset schema fields mirrored in chunk metadata, governance approvals logged. | Benchmarking Crew | Supplies dataset structures/metrics to tag when indexing benchmark artefacts or tying embeddings to evaluation. |
+| EP06 | `docs/specs/epic_06/repo_cleanup_rfc.md`<br>`stage_06_01_backlog.md`<br>`stage_06_04_summary.md` | Repository hygiene plan, backlog, sign-off summary. | Final directory layout + migration log drive ingestion source map. | Repo Cleanup WG | Aligns ingestion paths with post-cleanup repo layout and references future relocations. |
+| Core | `docs/specs/operations.md`<br>`docs/specs/architecture.md` | Shared infra configuration, Clean Architecture boundaries. | Embedding pipeline must honour layer boundaries and consume infra via documented endpoints. | Platform Ops | Governs dependency graph and environment bootstrap instructions used by index CLI/runbook. |
+| EP19 | `docs/specs/epic_19/epic_19.md`<br>`stage_19_04_report.md` | Epic charter and validation report. | Captures indexed corpus scope, fallback strategy, CLI contract. | Epic 19 Team | Serves as canonical reference for demo narrative, maintainer hand-off, and future enhancements. |
+
+## How to Use
+- Refer to this table when preparing the EP19 demo or maintainer documentation.
+- Update the inventory if any upstream spec moves or new major artefacts appear.
+- Include the link in the maintainer playbook (`docs/MAINTAINERS_GUIDE.md`) and demo plan.
+

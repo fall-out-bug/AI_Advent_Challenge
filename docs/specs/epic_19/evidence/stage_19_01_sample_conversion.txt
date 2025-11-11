@@ -1,0 +1,59 @@
+# System Specification
+
+## 1. Functional Scope
+1. **Code Review Automation**
+- Modular reviewer processes student submissions, produces multi-pass reports
+(architecture, component deep-dive, synthesis), records metrics, and sends
+structured logs.
+- Integration points: CLI scripts, MCP homework tool, application use cases.
+2. **MCP Tooling**
+- Tool registry exposes review, digest, channel management, and NLP utilities.
+- Tools must authenticate against shared Mongo and respect feature flags.
+3. **Bot / Workflow Automation**
+- Telegram bot flows limited to digest/channel scenarios; reminders deprecated.
+- CLI backoffice provides deterministic equivalents for channel/digest operations.
+4. **Observability**
+- Prometheus-compatible metrics, structured logging with trace IDs, optional
+Grafana dashboards.
+5. **Summarisation & Model Improvement**
+- Summarisation pipeline supports adaptive/map-reduce strategies with semantic chunking.
+- Quality scored via LLM-as-judge evaluator (coverage, accuracy, coherence, informativeness).
+- Fine-tuning worker orchestrates self-improving loops when high-quality samples accumulate.
+- Metric exports: quality_assessment_scores, finetuning_runs_total,
+finetuning_duration_seconds, dataset_size_samples.
+
+## 2. Non-Functional Requirements
+- **Architecture**: Clean Architecture boundaries enforced; no inward
+dependencies from outer layers.
+- **Reliability**: Critical tests (review pipeline integration, shared infra
+connectivity) must pass before release; legacy suites scheduled for staged revival.
+- **Maintainability**: Each public module documented with docstrings and
+inline comments where necessary; docs/specs kept in sync.
+- **Security**: Secrets sourced from environment, no plaintext credentials in
+repository.
+
+## 3. Compliance with Day-Based Specs
+| Day | Key Expectations | Notes |
+|-----|------------------|-------|
+| Day 11 | Shared infra integration, baseline API | Already migrated; confirm configs match. |
+| Day 12 | Deployment scripts, quick starts | Ensure docs remain valid post-archive. |
+| Day 15 | Modular reviewer rollout | New package supersedes legacy multi-pass agent. |
+| Day 17 | Integration contracts | Align MCP adapters and review flows. |
+| Day 18 | Performance benchmarks | Document results in docs/reference/en/PERFORMANCE_BENCHMARKS.md. |
+
+## 4. Workstreams Emerging from Audit
+- Reviewer hardening (tests, lint, doc updates) → EP01.
+- MCP/bot consolidation (dependencies, fixtures, CLI backoffice) → EP02.
+- Observability & operations (Prometheus, logging, CI pipelines, doc sync) → EP03.
+- Legacy archive & cleanup (Telegram reminders, outdated scripts/docs) → EP04.
+- Summarisation & fine-tuning roadmap (quality benchmarks, dataset export tooling) → EP05 (proposed).
+
+## 5. Open Questions
+- Finalise non-legacy test baseline for CI (Stage 00_02 follow-up).
+- Determine staged lint enforcement rollout (EP01 backlog item).
+- Confirm Day 17 specification integration (MLOps guides) and plan Day 18 follow-up.
+
+## 6. Acceptance Criteria for Epic 00
+- All sections above populated with definitive answers.
+- Cross-references to Stage logs and progress tracker.
+- Review/approval from architecture and ops stakeholders.

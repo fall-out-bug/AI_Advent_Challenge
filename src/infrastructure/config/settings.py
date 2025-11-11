@@ -316,6 +316,83 @@ class Settings(BaseSettings):
     external_api_enabled: bool = Field(
         default=False, description="Enable external API publishing (default: mock only)"
     )
+    # Embedding index settings
+    embedding_api_url: str = Field(
+        default="http://127.0.0.1:8000",
+        description="Embedding service base URL",
+    )
+    embedding_model: str = Field(
+        default="text-embedding-3-small",
+        description="Embedding model identifier",
+    )
+    embedding_vector_dimension: int = Field(
+        default=1536,
+        description="Expected embedding vector dimension",
+    )
+    embedding_sources: tuple[str, ...] = Field(
+        default=(),
+        description="Default filesystem sources for the embedding pipeline",
+    )
+    embedding_default_language: str = Field(
+        default="ru",
+        description="Language tag stored with indexed documents",
+    )
+    embedding_stage_tag: str = Field(
+        default="19",
+        description="Stage tag stored in metadata for embedding pipeline",
+    )
+    embedding_max_file_size_mb: int = Field(
+        default=20,
+        description="Maximum file size (MB) accepted for indexing",
+    )
+    embedding_batch_size: int = Field(
+        default=32,
+        description="Number of chunks processed per embedding request",
+    )
+    embedding_chunk_size_tokens: int = Field(
+        default=1200,
+        description="Target number of tokens per chunk",
+    )
+    embedding_chunk_overlap_tokens: int = Field(
+        default=200,
+        description="Token overlap between adjacent chunks",
+    )
+    embedding_min_chunk_tokens: int = Field(
+        default=200,
+        description="Minimum token count for trailing chunks",
+    )
+    embedding_mongo_database: str = Field(
+        default="document_index",
+        description="MongoDB database for embedding metadata",
+    )
+    embedding_mongo_documents_collection: str = Field(
+        default="documents",
+        description="MongoDB collection for document metadata",
+    )
+    embedding_mongo_chunks_collection: str = Field(
+        default="chunks",
+        description="MongoDB collection for document chunks",
+    )
+    redis_host: str = Field(
+        default="127.0.0.1",
+        description="Redis host for embedding vector store",
+    )
+    redis_port: int = Field(
+        default=6379,
+        description="Redis port for embedding vector store",
+    )
+    redis_password: str | None = Field(
+        default=None,
+        description="Redis password for embedding vector store",
+    )
+    embedding_redis_index_name: str = Field(
+        default="embedding:index:v1",
+        description="RediSearch index name for embeddings",
+    )
+    embedding_redis_key_prefix: str = Field(
+        default="embedding:chunk:",
+        description="Redis key prefix for stored embeddings",
+    )
     # HW Checker MCP integration
     hw_checker_mcp_url: str = Field(
         default="http://mcp-server:8005",
@@ -468,6 +545,28 @@ class Settings(BaseSettings):
         if v <= 0:
             raise ValueError("review_max_retries must be positive")
         return v
+
+    @field_validator(
+        "embedding_max_file_size_mb",
+        "embedding_batch_size",
+        "embedding_chunk_size_tokens",
+        "embedding_min_chunk_tokens",
+        "embedding_vector_dimension",
+    )
+    @classmethod
+    def validate_embedding_positive(cls, value: int) -> int:
+        """Validate embedding-related integer configuration is positive."""
+        if value <= 0:
+            raise ValueError("embedding configuration values must be positive")
+        return value
+
+    @field_validator("embedding_chunk_overlap_tokens")
+    @classmethod
+    def validate_embedding_overlap(cls, value: int) -> int:
+        """Validate chunk overlap is non-negative."""
+        if value < 0:
+            raise ValueError("embedding_chunk_overlap_tokens must be non-negative")
+        return value
 
     @field_validator("review_rate_limit_window_seconds")
     @classmethod

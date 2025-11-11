@@ -1,0 +1,26 @@
+[1m============================= test session starts ==============================[0m
+platform linux -- Python 3.10.12, pytest-7.4.4, pluggy-1.6.0
+rootdir: /home/fall_out_bug/studies/AI_Challenge
+configfile: pytest.ini
+plugins: cov-4.1.0, asyncio-0.21.2, anyio-4.11.0
+asyncio: mode=auto
+collected 25 items
+
+tests/unit/domain/embedding_index/test_value_objects.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m         [ 32%][0m
+tests/unit/infrastructure/embedding_index/test_filesystem_collector.py [32m.[0m[32m [ 36%]
+[0m[32m.[0m[32m                                                                        [ 40%][0m
+tests/unit/infrastructure/embedding_index/test_local_embedding_client.py [32m.[0m[32m [ 44%]
+[0m[32m.[0m[32m.[0m[32m.[0m[32m                                                                      [ 56%][0m
+tests/unit/infrastructure/embedding_index/test_local_embedding_gateway.py [32m.[0m[32m [ 60%]
+[0m[32m                                                                         [ 60%][0m
+tests/unit/infrastructure/embedding_index/test_mongo_repositories.py [32m.[0m[32m.[0m[32m  [ 68%][0m
+tests/unit/infrastructure/embedding_index/test_redis_schema_manager.py [32m.[0m[32m [ 72%]
+[0m[32m.[0m[32m                                                                        [ 76%][0m
+tests/unit/infrastructure/embedding_index/test_redis_vector_store.py [32m.[0m[32m   [ 80%][0m
+tests/unit/infrastructure/embedding_index/test_sliding_window_chunker.py [32m.[0m[32m [ 84%]
+[0m[32m                                                                         [ 84%][0m
+tests/unit/infrastructure/embedding_index/test_text_preprocessor.py [32m.[0m[32m.[0m[32m   [ 92%][0m
+tests/unit/application/embedding_index/test_build_embedding_index_use_case.py [32m.[0m[32m [ 96%]
+[0m[32m.[0m[32m                                                                        [100%][0m
+
+[32m============================== [32m[1m25 passed[0m[32m in 0.10s[0m[32m ==============================[0m

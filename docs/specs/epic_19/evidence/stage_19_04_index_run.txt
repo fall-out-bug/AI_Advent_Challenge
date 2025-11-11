@@ -1,0 +1,3 @@
+documents_indexed=284
+chunks_indexed=373
+embeddings_indexed=373

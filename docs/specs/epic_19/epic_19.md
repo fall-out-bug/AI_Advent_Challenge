@@ -21,6 +21,7 @@ Build a pipeline that ingests project documentation and lecture notes, chunks te
 | Stage 19_02 | Pipeline design & prototyping | Architecture diagram, ingestion/chunking prototypes, storage adapters | Prototype processes sample docs, design validated |
 | Stage 19_03 | Implementation & integration | Production-ready pipeline, CLI commands, tests, shared infra config | Index built for target corpora, tests passing |
 | Stage 19_04 | Validation & documentation | Benchmark report, maintainer guide, index artefact, future roadmap | Demo index delivered, docs updated, sign-off recorded |
+| Stage 19_05 | Reference linkage & knowledge hand-off | Consolidated index of legacy specs (EP00–EP06) integrated into documentation | Spec inventory available alongside index demo, stakeholders sign off |
 
 ## Success Criteria
 - Pipeline modular and testable; domain/application layers independent of infrastructure details.

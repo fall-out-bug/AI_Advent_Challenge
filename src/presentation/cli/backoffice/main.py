@@ -8,6 +8,7 @@ import click
 
 from .commands.channels import channels
 from .commands.digest import digest
+from src.presentation.cli.embedding_index import embedding_index
 
 
 @click.group()
@@ -19,6 +20,7 @@ def cli() -> None:
 # Register nested command groups
 cli.add_command(channels)
 cli.add_command(digest)
+cli.add_command(embedding_index)
 
 
 def main(argv: list[str] | None = None) -> None:
