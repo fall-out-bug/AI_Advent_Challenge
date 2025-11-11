@@ -225,4 +225,3 @@ class BuildEmbeddingIndexUseCase:
                 metadata[key] = str(value)
             annotated.append(replace(chunk, metadata=dict(metadata)))
         return annotated
-

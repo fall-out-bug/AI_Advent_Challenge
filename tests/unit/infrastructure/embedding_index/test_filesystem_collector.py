@@ -52,4 +52,3 @@ def test_collect_skips_large_files(tmp_path: Path) -> None:
     )
 
     assert payloads == []
-

@@ -30,4 +30,3 @@ for the Document Embedding Index demo and future maintainers.
 - `docs/specs/epic_19/stage_19_05_spec_inventory.md`
 - `docs/specs/epic_19/demo_plan.md`
 - `docs/specs/epic_19/stage_19_04_report.md` (updated with inventory pointer and fallback notes)
-

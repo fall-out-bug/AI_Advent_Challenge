@@ -5,4 +5,3 @@ from .redis_schema_manager import RedisSchemaError, RedisSchemaManager
 from .redis_vector_store import RedisVectorStore
 
 __all__ = ["FaissVectorStore", "RedisSchemaError", "RedisSchemaManager", "RedisVectorStore"]
-

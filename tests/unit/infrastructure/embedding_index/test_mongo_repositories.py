@@ -55,4 +55,3 @@ def test_chunk_repository_bulk_write_called() -> None:
     collection.bulk_write.assert_called_once()
     operations = collection.bulk_write.call_args[0][0]
     assert all(isinstance(op, UpdateOne) for op in operations)
-

@@ -11,15 +11,15 @@ notes, generates embeddings, and exposes operational tooling for maintainers.
 - Updated spec inventory (`stage_19_05_spec_inventory.md`) available as reference.
 
 ## 3. Agenda (≈20 minutes)
-1. **Context (3 min)**  
+1. **Context (3 min)**
    - Walk through spec inventory: highlight EP00–EP06 inputs, architecture boundaries, and EP19 objectives.
-2. **Pipeline Architecture (4 min)**  
+2. **Pipeline Architecture (4 min)**
    - Review Clean Architecture diagram (Stage 19_02) and mention gateway fallback logic.
-3. **Live Indexing Run (6 min)**  
+3. **Live Indexing Run (6 min)**
    - Execute `index run` command, narrate fallback behaviour if `/v1/embeddings` is unavailable.
-4. **Inspect Results (4 min)**  
+4. **Inspect Results (4 min)**
    - Show `index inspect --show-fallback`, Mongo queries, and Redis/FAISS artefacts.
-5. **Q&A / Next Steps (3 min)**  
+5. **Q&A / Next Steps (3 min)**
    - Discuss Epic 23 Prometheus work, retrieval API roadmap, and demo hand-off.
 
 ## 4. Demo Script
@@ -75,4 +75,3 @@ Point out `metadata.fallback` flag and `embedding_model` entries.
 - `stage_19_04_runbook.md` — operational guide with fallback details.
 - `stage_19_04_report.md` — validation metrics and open items.
 - `stage_19_05_spec_inventory.md` — canonical reference list for maintainers.
-

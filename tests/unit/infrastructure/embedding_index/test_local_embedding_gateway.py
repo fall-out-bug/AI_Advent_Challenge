@@ -27,4 +27,3 @@ def test_gateway_delegates_to_client() -> None:
     gateway.embed([chunk])
 
     client.generate_embeddings.assert_called_once_with(["hello"])
-

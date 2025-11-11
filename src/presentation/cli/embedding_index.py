@@ -370,4 +370,3 @@ def _parse_env_file(path: Path, env_key: str) -> str:
         if key.strip() == env_key and value.strip():
             return value.strip()
     return ""
-

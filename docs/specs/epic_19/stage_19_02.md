@@ -105,4 +105,3 @@ Dependency boundaries:
   and integrate with Stage 19_03 application services.
 - Decide on retry/backoff policy for Redis writes (Stage 19_03).
 - Prepare CLI UX (flags for dry-run, chunk preview, index inspection).
-

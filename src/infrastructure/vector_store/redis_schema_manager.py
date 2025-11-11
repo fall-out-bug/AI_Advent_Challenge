@@ -142,4 +142,3 @@ class RedisSchemaManager:
             "M",
             str(self.m),
         )
-

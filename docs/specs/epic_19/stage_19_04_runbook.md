@@ -105,4 +105,3 @@ PY
 - Clean Redis hashes if storage needs reset: `redis-cli -a $REDIS_PASSWORD --scan --pattern 'embedding:chunk:*' | xargs redis-cli -a $REDIS_PASSWORD del`.
 - Track fallback usage via Mongo chunk metadata (`metadata.fallback == "sha256"`) or `index inspect --show-fallback`.
 - Plan RediSearch enablement or FAISS upgrade for retrieval features (EP19 follow-up).
-

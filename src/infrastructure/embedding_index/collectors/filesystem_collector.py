@@ -126,4 +126,3 @@ class FilesystemDocumentCollector(DocumentCollector):
         if "bigdata" in lower_parts:
             return "bigdata_lections"
         return root.name or "unknown"
-

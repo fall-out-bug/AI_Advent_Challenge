@@ -104,4 +104,3 @@ def test_vector_store_uses_fallback_when_schema_unavailable(tmp_path: Path) -> N
     assert redis_client.commands == []
     fallback_path = tmp_path / "embedding_index.pkl"
     assert fallback_path.exists()
-

@@ -82,4 +82,3 @@ def test_generate_embeddings_validates_response_shape(client: LocalEmbeddingClie
 
         with pytest.raises(EmbeddingClientError):
             client.generate_embeddings(["text"])
-

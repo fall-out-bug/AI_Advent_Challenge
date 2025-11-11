@@ -53,4 +53,3 @@ fallbacks.
 
 ## Sign-off
 - Tech Lead review: _pending_ (record signature in `epic_19_summary.md`).
-

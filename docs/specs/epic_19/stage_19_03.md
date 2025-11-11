@@ -50,4 +50,3 @@ poetry run ai-backoffice index inspect
 - Add Prometheus metrics for ingestion throughput and embedding latency.
 - Provide FAISS offline fallback for environments without Redis.
 - Extend preprocessing to support PDFs and code blocks with configurable strategies.
-

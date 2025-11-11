@@ -48,4 +48,3 @@ poetry run pytest tests/unit/domain/embedding_index \
 - Replace fallback embeddings once the local `/v1/embeddings` endpoint is live.
 - Epic 23 will add Prometheus metrics (`embedding_batches_total`, `embedding_latency_seconds`).
 - Future work: retrieval/search API atop the stored embeddings.
-
