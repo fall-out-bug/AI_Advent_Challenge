@@ -19,7 +19,7 @@ def fixture_client() -> LocalEmbeddingClient:
     """Create LocalEmbeddingClient instance for tests."""
     return LocalEmbeddingClient(
         base_url="http://127.0.0.1:8000",
-        model="text-embedding-3-small",
+        model="all-MiniLM-L6-v2",
         timeout=5.0,
     )
 
@@ -38,16 +38,18 @@ def test_generate_embeddings_returns_vectors(client: LocalEmbeddingClient) -> No
             {"embedding": [0.1, 0.2, 0.3], "index": 0},
             {"embedding": [0.4, 0.5, 0.6], "index": 1},
         ],
-        "model": "text-embedding-3-small",
+        "model": "all-MiniLM-L6-v2",
     }
 
-    with patch("src.infrastructure.embeddings.local_embedding_client.httpx.post") as mock_post:
+    with patch(
+        "src.infrastructure.embeddings.local_embedding_client.httpx.post"
+    ) as mock_post:
         mock_post.return_value = _mock_response(payload)
         vectors = client.generate_embeddings(["one", "two"])
 
     assert len(vectors) == 2
     assert vectors[0].dimension == 3
-    assert vectors[0].model == "text-embedding-3-small"
+    assert vectors[0].model == "all-MiniLM-L6-v2"
 
 
 def test_generate_embeddings_requires_input(client: LocalEmbeddingClient) -> None:
@@ -64,7 +66,9 @@ def test_generate_embeddings_raises_on_http_error(client: LocalEmbeddingClient) 
         response=MagicMock(status_code=500),
     )
 
-    with patch("src.infrastructure.embeddings.local_embedding_client.httpx.post") as mock_post:
+    with patch(
+        "src.infrastructure.embeddings.local_embedding_client.httpx.post"
+    ) as mock_post:
         response = MagicMock()
         response.raise_for_status.side_effect = http_error
         mock_post.return_value = response
@@ -73,11 +77,15 @@ def test_generate_embeddings_raises_on_http_error(client: LocalEmbeddingClient) 
             client.generate_embeddings(["text"])
 
 
-def test_generate_embeddings_validates_response_shape(client: LocalEmbeddingClient) -> None:
+def test_generate_embeddings_validates_response_shape(
+    client: LocalEmbeddingClient,
+) -> None:
     """Ensure missing embedding data triggers EmbeddingClientError."""
-    payload = {"model": "text-embedding-3-small", "data": []}
+    payload = {"model": "all-MiniLM-L6-v2", "data": []}
 
-    with patch("src.infrastructure.embeddings.local_embedding_client.httpx.post") as mock_post:
+    with patch(
+        "src.infrastructure.embeddings.local_embedding_client.httpx.post"
+    ) as mock_post:
         mock_post.return_value = _mock_response(payload)
 
         with pytest.raises(EmbeddingClientError):

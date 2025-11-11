@@ -1,58 +1,48 @@
 # Stage 19_04 · Embedding Index Runbook
 
 ## 1. Prerequisites
-- Python environment with project dependencies installed (`poetry install`).
+- Docker + Docker Compose available on host.
 - Shared infrastructure running locally (MongoDB, Redis, LLM API). For default
   environment use `make day-12-up` or equivalent infra bootstrap.
-- Access to secrets:
-  - `~/work/infra/secrets/mongo_password.txt`
-  - `~/work/infra/secrets/redis_password.txt`
+- Host directories:
+  - `~/work/infra/.env.infra` (readable) plus `secrets/mongo_password.txt`, `secrets/redis_password.txt`.
+  - Optional: lecture repos mounted at `~/rework-branch/mlsd/lections` and `~/rework-branch/bigdata/lections`.
 
-## 2. Environment Setup
+## 2. Container Workflow (recommended)
+- Build container image:
+  ```bash
+  make index-container-build
+  ```
+- Run indexer (replaces fallback embeddings by default):
+  ```bash
+  make index-container-run INDEX_RUN_ARGS="--replace-fallback"
+  ```
+- Open interactive shell for troubleshooting:
+  ```bash
+  make index-container-shell
+  ```
+  Inside the shell, infra credentials from `/root/work/infra/.env.infra` are sourced automatically.
+
+### Default Sources (inside container)
+1. `/workspace/docs`
+2. `/root/rework-branch/mlsd/lections` (bind-mounted from host)
+3. `/root/rework-branch/bigdata/lections`
+
+Override or extend sources by setting `INDEX_RUN_ARGS`:
 ```bash
-# MongoDB credentials (admin user)
-export MONGO_USER=admin
-export MONGO_PASSWORD=$(cat ~/work/infra/secrets/mongo_password.txt)
-export MONGODB_URL="mongodb://${MONGO_USER}:${MONGO_PASSWORD}@127.0.0.1:27017/butler?authSource=admin"
-export TEST_MONGODB_URL="$MONGODB_URL"
-
-# Redis credentials
-export REDIS_HOST=127.0.0.1
-export REDIS_PORT=6379
-export REDIS_PASSWORD=$(cat ~/work/infra/secrets/redis_password.txt)
-
-# Embedding API (falls back to SHA-256 if /v1/embeddings unavailable)
-export LLM_URL=http://127.0.0.1:8000
-export LLM_MODEL=text-embedding-3-small
+make index-container-run INDEX_RUN_ARGS="--replace-fallback --source /extra/docs --source /mnt/data"
 ```
 
-## 3. Running the Indexer
+## 3. Inspecting Results
 ```bash
-# From repository root
-poetry run python -m src.presentation.cli.backoffice.main index run
-```
-
-### Default Sources
-1. `<repo>/docs`
-2. `~/rework-branch/mlsd/lections`
-3. `~/rework-branch/bigdata/lections`
-
-Override or extend sources:
-```bash
-poetry run python -m src.presentation.cli.backoffice.main \
-    index run --source /path/to/extra/docs --source /another/path
-```
-
-## 4. Inspecting Results
-```bash
-poetry run python -m src.presentation.cli.backoffice.main index inspect
+make index-container-run INDEX_RUN_ARGS="index inspect"
 # Add --show-fallback to include the number of chunks stored with SHA-256 embeddings
-poetry run python -m src.presentation.cli.backoffice.main index inspect --show-fallback
+make index-container-run INDEX_RUN_ARGS="index inspect --show-fallback"
 # Example output:
-# documents=284
-# chunks=373
-# fallback_chunks=373
-# redis_index=missing  # RediSearch not loaded -> warnings logged
+# documents=293
+# chunks=382
+# fallback_chunks=0
+# redis_index=missing  # RediSearch not loaded -> warnings logged (FAISS fallback active)
 ```
 
 ### MongoDB Manual Checks
@@ -80,23 +70,37 @@ if sample_key:
 PY
 ```
 
+## 4. Local (Poetry) Workflow (optional fallback)
+Only use if Docker is unavailable. Export credentials manually (mirrors container setup):
+```bash
+export MONGO_USER=admin
+export MONGO_PASSWORD=$(cat ~/work/infra/secrets/mongo_password.txt)
+export MONGODB_URL="mongodb://${MONGO_USER}:${MONGO_PASSWORD}@127.0.0.1:27017/butler?authSource=admin"
+export REDIS_HOST=127.0.0.1
+export REDIS_PORT=6379
+export REDIS_PASSWORD=$(cat ~/work/infra/secrets/redis_password.txt)
+export LLM_URL=http://127.0.0.1:8000
+export LLM_MODEL=all-MiniLM-L6-v2
+
+poetry run python -m src.presentation.cli.backoffice.main index run --replace-fallback
+```
+
 ## 5. Fallback Strategy (Redis → FAISS file store)
-- When RediSearch is unavailable, embeddings are persisted to `var/indices/embedding_index_v1.pkl`.
-- Each chunk tagged with fallback embeddings carries `metadata.fallback = "sha256"` and `metadata.embedding_model = "fallback-sha256"`.
-- Replacing fallback vectors with real embeddings:
+- When RediSearch is unavailable, embeddings are persisted to `var/indices/embedding_index_v1.pkl` inside the container volume.
+- MiniLM embeddings are returned by default; SHA-256 fallback now triggers only on HTTP errors/timeouts.
+- To force-refresh historical fallback data:
   ```bash
-  poetry run python -m src.presentation.cli.backoffice.main \
-      index run --replace-fallback
+  make index-container-run INDEX_RUN_ARGS="--replace-fallback"
   ```
-  The command deletes existing fallback chunks from Mongo/Redis and removes the local index file before re-running the pipeline.
-- Inspect fallback counts with `index inspect --show-fallback`.
-- Enable RediSearch in shared infrastructure (see `docs/specs/operations.md`) to automatically resume Redis persistence. The FAISS-compatible file (pickle format) remains as an audit trail.
+  The command clears fallback chunks from Mongo/Redis/FAISS before re-running the pipeline.
+- Inspect fallback counts with `make index-container-run INDEX_RUN_ARGS="index inspect --show-fallback"`.
+- Enable RediSearch in shared infrastructure (see `docs/specs/operations.md`) to resume Redis persistence. The FAISS-compatible file (pickle format) remains as an audit trail.
 
 ## 6. Troubleshooting
 | Symptom | Mitigation |
 |---------|------------|
 | `redis_schema_unavailable` warning | RediSearch module absent. Embeddings fall back to local file store (`var/indices/embedding_index_v1.pkl`). Enable RediSearch or migrate to FAISS for similarity queries. |
-| `embedding_api_unavailable` warning | `/v1/embeddings` missing. Gateway falls back to deterministic SHA-256 embeddings; rerun with `--replace-fallback` once the endpoint becomes available. |
+| `embedding_api_unavailable` warning | `/v1/embeddings` unreachable or returning ≥500. Gateway falls back to deterministic SHA-256 embeddings; rerun with `--replace-fallback` after fixing the endpoint. |
 | `source_missing` warning | Configured source path not found. Verify path and adjust `--source` argument or `embedding_sources` setting. |
 | Mongo auth errors | Ensure `MONGODB_URL` includes credentials + `authSource=admin`. |
 

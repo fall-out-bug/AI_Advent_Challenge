@@ -1,4 +1,4 @@
-.PHONY: help install test lint format clean docker-build docker-up docker-down coverage integration e2e maintenance-cleanup maintenance-backup maintenance-export maintenance-validate day-07 day-08 day-11 day-11-up day-11-down day-11-build day-11-logs day-11-logs-bot day-11-logs-worker day-11-logs-mcp day-11-ps day-11-restart day-11-clean day-11-setup day-12 day-12-up day-12-down day-12-build day-12-logs day-12-logs-bot day-12-logs-worker day-12-logs-post-fetcher day-12-logs-mcp day-12-ps day-12-restart day-12-clean day-12-setup day-12-test day-12-metrics butler butler-up butler-down butler-build butler-logs butler-logs-bot butler-logs-worker butler-logs-mcp butler-logs-post-fetcher butler-ps butler-restart butler-clean butler-setup butler-test butler-metrics mcp-discover mcp-demo test-mcp test-mcp-comprehensive mcp-chat mcp-chat-streaming mcp-server-start mcp-server-stop mcp-chat-docker mcp-demo-start mcp-demo-stop mcp-demo-logs demo-mcp-comprehensive index-run
+.PHONY: help install test lint format clean docker-build docker-up docker-down coverage integration e2e maintenance-cleanup maintenance-backup maintenance-export maintenance-validate day-07 day-08 day-11 day-11-up day-11-down day-11-build day-11-logs day-11-logs-bot day-11-logs-worker day-11-logs-mcp day-11-ps day-11-restart day-11-clean day-11-setup day-12 day-12-up day-12-down day-12-build day-12-logs day-12-logs-bot day-12-logs-worker day-12-logs-post-fetcher day-12-logs-mcp day-12-ps day-12-restart day-12-clean day-12-setup day-12-test day-12-metrics butler butler-up butler-down butler-build butler-logs butler-logs-bot butler-logs-worker butler-logs-mcp butler-logs-post-fetcher butler-ps butler-restart butler-clean butler-setup butler-test butler-metrics mcp-discover mcp-demo test-mcp test-mcp-comprehensive mcp-chat mcp-chat-streaming mcp-server-start mcp-server-stop mcp-chat-docker mcp-demo-start mcp-demo-stop mcp-demo-logs demo-mcp-comprehensive index-run index-container-build index-container-run index-container-shell
 
 help:
 	@echo "Available commands:"
@@ -25,6 +25,7 @@ help:
 	@echo "  make hook             - Install pre-commit hooks"
 	@echo "  make hook-update      - Update pre-commit hooks"
 	@echo "  make hook-run         - Run pre-commit hooks on all files"
+	@echo "  make hook-run-full    - Run manual-stage hooks on all files"
 	@echo ""
 	@echo "Docker:"
 	@echo "  make docker-clean     - Clean unused Docker images and containers"
@@ -87,6 +88,9 @@ help:
 	@echo "  make maintenance-export - Export data"
 	@echo "  make maintenance-validate - Validate system"
 	@echo "  make index-run         - Execute Stage 19 document embedding index pipeline"
+	@echo "  make index-container-build - Build embedding index container image"
+	@echo "  make index-container-run   - Run embedding index pipeline inside container"
+	@echo "  make index-container-shell - Open shell inside embedding index container"
 
 install:
 	poetry install
@@ -201,6 +205,17 @@ mcp-demo-start:
 
 index-run:
 	poetry run python -m src.presentation.cli.backoffice.main index run
+
+INDEX_COMPOSE_FILE := docker-compose.indexer.yml
+
+index-container-build:
+	docker compose -f $(INDEX_COMPOSE_FILE) build embedding-indexer
+
+index-container-run:
+	docker compose -f $(INDEX_COMPOSE_FILE) run --rm embedding-indexer
+
+index-container-shell:
+	docker compose -f $(INDEX_COMPOSE_FILE) run --rm embedding-indexer bash
 
 mcp-demo-stop:
 	docker-compose -f docker-compose.mcp-demo.yml down
@@ -401,6 +416,10 @@ hook-update:
 hook-run:
 	@echo "Running pre-commit hooks on all files..."
 	poetry run pre-commit run --all-files
+
+hook-run-full:
+	@echo "Running manual-stage pre-commit hooks on all files..."
+	poetry run pre-commit run --hook-stage manual --all-files
 
 # Day 17: Code Review Queue & API
 review-worker:

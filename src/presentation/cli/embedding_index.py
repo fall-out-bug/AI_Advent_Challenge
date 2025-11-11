@@ -25,7 +25,6 @@ from src.infrastructure.embedding_index import (
 from src.infrastructure.embeddings import LocalEmbeddingClient
 from src.infrastructure.vector_store import RedisSchemaManager, RedisVectorStore
 
-
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _DEFAULT_SOURCES: Tuple[str, ...] = (
     str((_REPO_ROOT / "docs").resolve()),
@@ -86,7 +85,9 @@ def inspect_command(show_fallback: bool) -> None:
     settings = _load_settings()
     _, mongo_client, redis_client = _build_pipeline(settings)
     try:
-        stats = _gather_stats(settings, mongo_client, redis_client, show_fallback=show_fallback)
+        stats = _gather_stats(
+            settings, mongo_client, redis_client, show_fallback=show_fallback
+        )
     finally:
         mongo_client.close()
         redis_client.close()
@@ -141,7 +142,9 @@ def _create_redis_client(
 ) -> Redis:
     """Create Redis client."""
     sanitized_password = _sanitize_password(password)
-    return Redis(host=host, port=port, password=sanitized_password, decode_responses=False)
+    return Redis(
+        host=host, port=port, password=sanitized_password, decode_responses=False
+    )
 
 
 def _create_vector_store(settings, redis_client: Redis) -> RedisVectorStore:
@@ -160,11 +163,16 @@ def _create_vector_store(settings, redis_client: Redis) -> RedisVectorStore:
     )
 
 
-def _create_use_case(settings, document_repo, chunk_repo, vector_store) -> BuildEmbeddingIndexUseCase:
+def _create_use_case(
+    settings, document_repo, chunk_repo, vector_store
+) -> BuildEmbeddingIndexUseCase:
     """Assemble embedding index use case."""
     client = LocalEmbeddingClient(
-        base_url=settings.embedding_api_url or settings.llm_url or "http://127.0.0.1:8000",
+        base_url=settings.embedding_api_url
+        or settings.llm_url
+        or "http://127.0.0.1:8000",
         model=settings.embedding_model,
+        timeout=settings.embedding_api_timeout_seconds,
     )
     return BuildEmbeddingIndexUseCase(
         collector=FilesystemDocumentCollector(preprocessor=TextPreprocessor()),
@@ -197,16 +205,18 @@ def _build_request(settings, sources: Sequence[str]) -> IndexingRequest:
     )
 
 
-def _gather_stats(settings, mongo_client: MongoClient, redis_client: Redis, *, show_fallback: bool) -> dict[str, str]:
+def _gather_stats(
+    settings, mongo_client: MongoClient, redis_client: Redis, *, show_fallback: bool
+) -> dict[str, str]:
     """Collect index statistics from MongoDB and Redis."""
     database = mongo_client[settings.embedding_mongo_database]
     docs = database[settings.embedding_mongo_documents_collection].count_documents({})
     chunks = database[settings.embedding_mongo_chunks_collection].count_documents({})
     fallback_count = 0
     if show_fallback:
-        fallback_count = database[settings.embedding_mongo_chunks_collection].count_documents(
-            {"metadata.fallback": {"$exists": True}}
-        )
+        fallback_count = database[
+            settings.embedding_mongo_chunks_collection
+        ].count_documents({"metadata.fallback": {"$exists": True}})
     redis_stats = _fetch_redis_stats(redis_client, settings.embedding_redis_index_name)
     result = {"documents": docs, "chunks": chunks}
     if show_fallback:
@@ -251,10 +261,13 @@ def _cleanup_fallback_entries(
         )
     )
     if fallback_chunks:
-        chunk_ids = [chunk["chunk_id"] for chunk in fallback_chunks if "chunk_id" in chunk]
+        chunk_ids = [
+            chunk["chunk_id"] for chunk in fallback_chunks if "chunk_id" in chunk
+        ]
         if chunk_ids:
             redis_keys = [
-                f"{settings.embedding_redis_key_prefix}{chunk_id}" for chunk_id in chunk_ids
+                f"{settings.embedding_redis_key_prefix}{chunk_id}"
+                for chunk_id in chunk_ids
             ]
             try:
                 redis_client.delete(*redis_keys)
@@ -274,36 +287,43 @@ def _fallback_index_path() -> Path:
 
 
 def _resolve_mongo_url(url: str) -> str:
-    """Normalise Mongo connection string, falling back to env credentials when needed."""
+    """Normalise Mongo connection string.
+
+    Purpose:
+        Fall back to environment credentials when explicit values are missing.
+    """
     sanitized = url.replace("\n", "").strip()
     if "@" in sanitized:
         return sanitized
-    user = os.getenv("MONGO_USER") or "admin"
-    password = _get_secret_value(
-        env_key="MONGO_PASSWORD",
-        fallback_paths=[
-            Path.home() / "work/infra/secrets/mongo_password.txt",
-            Path.home() / "work/infra/.env.infra",
-        ],
-    )
+    password_paths = [
+        Path.home() / "work/infra/secrets/mongo_password.txt",
+        Path.home() / "work/infra/.env.infra",
+    ]
+    env_paths = [Path.home() / "work/infra/.env.infra"]
+    user = _get_secret_value("MONGO_USER", env_paths) or "admin"
+    password = _get_secret_value("MONGO_PASSWORD", password_paths)
+    host = _get_secret_value("MONGO_HOST", env_paths) or "127.0.0.1"
+    port = _get_secret_value("MONGO_PORT", env_paths) or "27017"
+    database = _get_secret_value("MONGO_DATABASE", env_paths)
+    auth_source = _get_secret_value("MONGO_AUTHSRC", env_paths) or "admin"
+    mechanism = _get_secret_value("MONGO_AUTH_MECHANISM", env_paths) or "SCRAM-SHA-256"
     if user and password:
-        host = os.getenv("MONGO_HOST", "127.0.0.1")
-        port = os.getenv("MONGO_PORT", "27017")
-        database = os.getenv("MONGO_DATABASE")
-        auth_source = os.getenv("MONGO_AUTHSRC", "admin")
         from urllib.parse import quote_plus
 
         safe_user = quote_plus(user.strip())
         safe_password = quote_plus(password.strip())
-        click.echo(f"[index] Mongo credentials loaded (user={safe_user}, password_len={len(password.strip())})")
-        params = {
-            "authSource": auth_source,
-            "authMechanism": os.getenv("MONGO_AUTH_MECHANISM", "SCRAM-SHA-256"),
-        }
+        click.echo(
+            "[index] Mongo credentials loaded "
+            f"(user={safe_user}, password_len={len(password.strip())})"
+        )
+        params = {"authSource": auth_source, "authMechanism": mechanism}
         query = "&".join(f"{key}={value}" for key, value in params.items())
         if database:
-            return f"mongodb://{safe_user}:{safe_password}@{host}:{port}/{database}?{query}"
-        return f"mongodb://{safe_user}:{safe_password}@{host}:{port}/?{query}"
+            return (
+                f"mongodb://{safe_user}:{safe_password}@{host}:{port}/{database}"
+                f"?{query}"
+            )
+        return f"mongodb://{safe_user}:{safe_password}@{host}:{port}/" f"?{query}"
     click.echo("[index] Mongo credentials missing; using default unauthenticated URL.")
     return sanitized
 

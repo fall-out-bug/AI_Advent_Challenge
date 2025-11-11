@@ -38,7 +38,7 @@ class RedisSchemaError(RuntimeError):
         message: Human-readable error message.
 
     Example:
-        >>> raise RedisSchemaError(\"schema failure\")  # doctest: +IGNORE_EXCEPTION_DETAIL
+        >>> raise RedisSchemaError("schema failure")
         Traceback (most recent call last):
         ...
         RedisSchemaError: schema failure
@@ -83,7 +83,7 @@ class RedisSchemaManager:
             >>> manager = RedisSchemaManager(
             ...     index_name=\"embedding:index:v1\",
             ...     key_prefix=\"embedding:chunk:\",
-            ...     dimension=1536,
+            ...     dimension=384,
             ... )
             >>> manager.ensure_schema(connection=FakeRedis())  # doctest: +SKIP
         """
@@ -91,7 +91,15 @@ class RedisSchemaManager:
         try:
             connection.execute_command(*command)
         except Exception as error:  # noqa: BLE001 - surface as domain-specific error.
-            raise RedisSchemaError(f"Failed to ensure schema: {error}") from error
+            fallback_command = self._handle_legacy_schema(error)
+            if fallback_command is None:
+                raise RedisSchemaError(f"Failed to ensure schema: {error}") from error
+            try:
+                connection.execute_command(*fallback_command)
+            except Exception as fallback_error:  # noqa: BLE001
+                raise RedisSchemaError(
+                    f"Failed to ensure schema (legacy attempt): {fallback_error}"
+                ) from fallback_error
 
     def _build_command(self) -> Tuple[Any, ...]:
         """Build the FT.CREATE command arguments.
@@ -112,7 +120,7 @@ class RedisSchemaManager:
             >>> manager = RedisSchemaManager(
             ...     index_name=\"embedding:index:v1\",
             ...     key_prefix=\"embedding:chunk:\",
-            ...     dimension=1536,
+            ...     dimension=384,
             ... )
             >>> command = manager._build_command()
             >>> command[0]
@@ -142,3 +150,38 @@ class RedisSchemaManager:
             "M",
             str(self.m),
         )
+
+    def _build_legacy_command(self) -> Tuple[Any, ...]:
+        """Build FT.CREATE command compatible with older RediSearch versions."""
+        return (
+            "FT.CREATE",
+            self.index_name,
+            "ON",
+            "HASH",
+            "PREFIX",
+            "1",
+            self.key_prefix,
+            "SCHEMA",
+            "embedding",
+            "VECTOR",
+            "HNSW",
+            "6",
+            "TYPE",
+            "FLOAT32",
+            "DIM",
+            str(self.dimension),
+            "DISTANCE_METRIC",
+            self.distance_metric,
+        )
+
+    def _handle_legacy_schema(self, error: Exception) -> Tuple[Any, ...] | None:
+        """Return legacy FT.CREATE command when compatible."""
+        message = str(error)
+        legacy_triggers = (
+            "Expected 12 parameters",
+            "wrong number of arguments",
+            "ERR unknown parameter",
+        )
+        if any(trigger in message for trigger in legacy_triggers):
+            return self._build_legacy_command()
+        return None

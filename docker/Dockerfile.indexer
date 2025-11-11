@@ -1,0 +1,27 @@
+FROM python:3.10-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    POETRY_VERSION=1.7.1
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential git curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir "poetry==${POETRY_VERSION}"
+
+WORKDIR /workspace
+
+COPY pyproject.toml poetry.lock /workspace/
+# Path dependencies required during poetry install
+COPY shared /workspace/shared
+COPY packages /workspace/packages
+
+RUN poetry config virtualenvs.create false \
+    && poetry install --no-interaction --no-ansi
+
+COPY . /workspace
+
+RUN chmod +x scripts/indexer_entrypoint.sh
+
+ENTRYPOINT ["scripts/indexer_entrypoint.sh"]
