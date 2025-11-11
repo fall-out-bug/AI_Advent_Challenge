@@ -135,8 +135,8 @@ AI_Challenge/
 | Day 15 | Quality Assessment & Fine-tuning | LLM-as-Judge, Self-Improving System, Hugging Face | ✅ Complete |
 | Day 17 | Code Review Platform & MCP Publishing | Async queue, static analysis, log diagnostics, MCP tool calls | ✅ Complete |
 | Day 18 | Performance Benchmarks | Prometheus, Benchmarking | ✅ Complete |
-| Day 19 | Document Embedding Index | Redis/FAISS, Mongo, LLM API | Planned |
-| Day 20 | RAG vs Non‑RAG Answering Agent | Retrieval, LLM-as-Judge | Planned |
+| Day 19 | Document Embedding Index | Redis/FAISS, Mongo, LLM API | ✅ Complete |
+| Day 20 | RAG vs Non‑RAG Answering Agent | Retrieval, LLM-as-Judge | ✅ Complete |
 
 ## Core Infrastructure
 
