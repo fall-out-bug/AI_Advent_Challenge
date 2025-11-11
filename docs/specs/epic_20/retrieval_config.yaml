@@ -1,0 +1,86 @@
+# RAG Retrieval Configuration for Epic 20
+# Based on EP19 embedding index settings
+
+# Retrieval parameters
+retrieval:
+  # Number of most relevant chunks to retrieve
+  top_k: 5
+
+  # Minimum similarity score threshold (0.0-1.0)
+  # Lower values = more permissive retrieval
+  score_threshold: 0.3
+
+  # Maximum total tokens from retrieved chunks to include in prompt
+  # Adjust based on LLM context window (default: ~3000 tokens for context)
+  max_context_tokens: 3000
+
+# Index configuration (from EP19)
+index:
+  # MongoDB settings
+  mongo_database: "document_index"
+  mongo_documents_collection: "documents"
+  mongo_chunks_collection: "chunks"
+
+  # Redis settings
+  redis_index_name: "embedding:index:v1"
+  redis_key_prefix: "embedding:chunk:"
+
+  # Embedding model configuration
+  embedding_model: "all-MiniLM-L6-v2"
+  embedding_dimension: 384
+
+  # Namespace/tags for filtering (optional)
+  # Leave empty to search across all indexed documents
+  namespace_filter: {}
+
+  # Specific source filters (optional)
+  # Examples:
+  #   - source: "docs"
+  #   - source: "mlsd"
+  #   - language: "ru"
+  source_filters: []
+
+# Chunking settings (informational, from EP19)
+chunking:
+  chunk_size_tokens: 1200
+  chunk_overlap_tokens: 200
+  min_chunk_tokens: 200
+
+# LLM settings for answering
+llm:
+  # Base URL for LLM API (OpenAI-compatible)
+  api_url: "http://127.0.0.1:8000"
+
+  # Model to use for answering
+  model: "qwen"
+
+  # Generation parameters
+  temperature: 0.7
+  max_tokens: 1000
+
+  # Timeout for LLM requests (seconds)
+  timeout_seconds: 60.0
+
+# Fallback behavior
+fallback:
+  # Use FAISS file store if Redis unavailable
+  faiss_index_path: "var/indices/embedding_index_v1.pkl"
+
+  # Whether to skip retrieval if index is unavailable
+  # (falls back to non-RAG mode automatically)
+  skip_on_unavailable: true
+
+# Logging and metrics
+observability:
+  # Log retrieved chunks for debugging
+  log_retrieved_chunks: true
+
+  # Emit Prometheus metrics
+  enable_metrics: true
+
+  # Metric names
+  metrics:
+    retrieval_duration: "rag_retrieval_duration_seconds"
+    llm_duration: "rag_llm_duration_seconds"
+    chunks_retrieved: "rag_chunks_retrieved_total"
+    compare_duration: "rag_compare_duration_seconds"

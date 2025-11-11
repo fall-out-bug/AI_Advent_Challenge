@@ -3,6 +3,8 @@
 # Fast hooks run on commit; full suite moved to the manual stage and can be
 # triggered with `poetry run pre-commit run --hook-stage manual --all-files`.
 
+exclude: ^archive/
+
 repos:
   # Secret detection
   - repo: local

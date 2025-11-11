@@ -24,6 +24,10 @@
 | EP19 | Stage 19_02 | Pipeline design & prototyping | Planned | fall_out_bug | – | Depends on Stage 19_01 requirements |
 | EP19 | Stage 19_03 | Implementation & integration | Planned | fall_out_bug | – | Depends on Stage 19_02 design |
 | EP19 | Stage 19_04 | Validation & documentation | Planned | fall_out_bug | – | Depends on Stage 19_03 implementation |
+| EP20 | Stage 20_01 | Requirements & question set | Planned | fall_out_bug | – | Awaiting query set and retrieval config |
+| EP20 | Stage 20_02 | Design & prototype | Planned | fall_out_bug | – | Depends on Stage 20_01 decisions |
+| EP20 | Stage 20_03 | Implementation & tests | Planned | fall_out_bug | – | Depends on Stage 20_02 design |
+| EP20 | Stage 20_04 | Validation & report | Planned | fall_out_bug | – | Depends on Stage 20_03 implementation |
 | EP05 | Stage 05_01 | Benchmark & dataset design | Completed | fall_out_bug | 2025-11-10 | – |
 | EP05 | Stage 05_02 | Automation & evaluation tooling | Completed | fall_out_bug | 2025-11-11 | Live data seeding deferred to EP23 |
 | EP05 | Stage 05_03 | Fine-tuning governance & rollout | Completed | fall_out_bug | 2025-11-12 | Pilot execution awaits EP23 tasks |

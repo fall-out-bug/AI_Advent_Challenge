@@ -1,0 +1,15 @@
+{"id":"arch_001","category":"Architecture/Repository","lang":"ru","question":"Какие слои предусмотрены Clean Architecture и что в них запрещено?"}
+{"id":"arch_002","category":"Architecture/Repository","lang":"ru","question":"Где хранится список эпиков и их статусы?"}
+{"id":"arch_003","category":"Architecture/Repository","lang":"ru","question":"Какова структура CLI backoffice и минимальный набор команд?"}
+{"id":"mcp_001","category":"MCP/CLI/Bot","lang":"ru","question":"Какие MCP‑инструменты поддержаны?"}
+{"id":"mcp_002","category":"MCP/CLI/Bot","lang":"ru","question":"Как выполнить команду для получения последнего дайджеста канала?"}
+{"id":"bench_001","category":"Benchmarking/Fine-tuning","lang":"ru","question":"Какие метрики качества суммаризаций используем и где описана схема датасета?"}
+{"id":"bench_002","category":"Benchmarking/Fine-tuning","lang":"ru","question":"Как запускается LLM‑as‑judge автоматизация и куда пишутся результаты?"}
+{"id":"index_001","category":"Indexing","lang":"ru","question":"Какие директории нужно индексировать для демо и какой fallback при недоступности инфраструктурных сервисов?"}
+{"id":"lect_001","category":"Lectures","lang":"ru","question":"Что такое MapReduce и как устроены map/shuffle/reduce?"}
+{"id":"lect_002","category":"Lectures","lang":"ru","question":"Чем отличается HDFS от объектного хранилища (например, S3)?"}
+{"id":"lect_003","category":"Lectures","lang":"ru","question":"Что такое CAP‑теорема и как она влияет на выбор хранилища?"}
+{"id":"lect_004","category":"Lectures","lang":"ru","question":"Объясни принцип работы Spark RDD/DataFrame и когда нужен cache/persist."}
+{"id":"lect_005","category":"Lectures","lang":"ru","question":"Как устроен Kafka (topics/partitions/offsets) и для чего нужен consumer group?"}
+{"id":"lect_006","category":"Lectures","lang":"ru","question":"Что такое векторные эмбеддинги и зачем нужны для поиска по документам?"}
+{"id":"lect_007","category":"Lectures","lang":"ru","question":"Когда RAG не улучшит ответ и почему (примеры failure modes)?"}

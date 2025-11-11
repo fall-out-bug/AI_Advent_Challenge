@@ -6,9 +6,11 @@ import sys
 
 import click
 
+from src.presentation.cli.embedding_index import embedding_index
+from src.presentation.cli.rag_commands import rag_commands
+
 from .commands.channels import channels
 from .commands.digest import digest
-from src.presentation.cli.embedding_index import embedding_index
 
 
 @click.group()
@@ -21,6 +23,7 @@ def cli() -> None:
 cli.add_command(channels)
 cli.add_command(digest)
 cli.add_command(embedding_index)
+cli.add_command(rag_commands)
 
 
 def main(argv: list[str] | None = None) -> None:
