@@ -49,6 +49,18 @@ contain the expected artefacts, so automation halts at export stage.
 11. **Expand backoffice CLI integration coverage**
     - Add tests covering digest export, channels refresh, and error handling to
       replace archived MCP E2E flows.
+12. **Нормализовать линтеры для `shared/tests`**
+    - Убрать предупреждения `E501/W293/F401` в модуле `shared/tests`.
+    - Актуализировать фикстуры/утилиты, чтобы pre-commit проходил без
+      массового автоформатирования.
+13. **Привести YAML/JSON к валидному виду**
+    - Исправить `config/mcp_config.yaml`, `archive/docker-compose/docker-compose.yml`
+      и `tests/e2e/telegram/fixtures/test_messages.json`, чтобы pre-commit
+      `check-yaml`/`check-json` проходил без ошибок.
+14. **Оптимизировать большие JSONL артефакты**
+    - Сжать или перенести `results_stage20.jsonl` и `results_with_labels.jsonl`
+      под лимит 500 KB (использовать сжатие, разбивку на части или синтетические
+      выборки) и документировать процесс.
 
 ## Dependencies
 - Shared infra credentials (`.env.infra`)

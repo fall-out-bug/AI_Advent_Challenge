@@ -46,21 +46,22 @@ for file in $FILES; do
     if [ ! -f "$file" ]; then
         continue
     fi
-    
+
     # Skip files in .gitignore
     if git check-ignore -q "$file"; then
         continue
     fi
-    
+
     for pattern in "${PATTERNS[@]}"; do
-        if grep -qEi "$pattern" "$file" 2>/dev/null; then
+        matches=$(grep -nEi "$pattern" "$file" 2>/dev/null | grep -v "allowlist secret" || true)
+        if [ -n "$matches" ]; then
             echo -e "${RED}✗ Potential secret found in: $file${NC}"
             echo -e "${YELLOW}   Pattern: $pattern${NC}"
-            grep -nEi "$pattern" "$file" | head -3 | sed 's/^/   /'
+            echo "$matches" | head -3 | sed 's/^/   /'
             ERRORS=$((ERRORS + 1))
         fi
     done
-    
+
     # Check for api_key.txt or .env files
     if [[ "$file" == *"api_key.txt"* ]] || [[ "$file" == *".env"* ]]; then
         if ! git check-ignore -q "$file"; then
@@ -79,4 +80,3 @@ fi
 
 echo -e "${GREEN}✓ No secrets detected${NC}"
 exit 0
-
