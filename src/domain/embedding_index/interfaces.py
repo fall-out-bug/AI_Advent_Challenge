@@ -53,12 +53,18 @@ class DocumentRepository(Protocol):
     def upsert_document(self, record: DocumentRecord) -> None:
         """Insert or update document metadata."""
 
+    def get_document_by_id(self, document_id: str) -> DocumentRecord | None:
+        """Fetch document metadata by identifier."""
+
 
 class ChunkRepository(Protocol):
     """Protocol for chunk persistence."""
 
     def upsert_chunks(self, chunks: Sequence[DocumentChunk]) -> None:
         """Insert or update document chunks."""
+
+    def get_chunks_by_ids(self, chunk_ids: Sequence[str]) -> Sequence[DocumentChunk]:
+        """Fetch document chunks by their identifiers."""
 
 
 class VectorStore(Protocol):
