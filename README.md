@@ -73,6 +73,28 @@ make run-api
 poetry run python -m src.presentation.cli.backoffice.main --help
 ```
 
+### Document Embedding Index
+
+```bash
+# Load credentials (example)
+export MONGO_USER=admin
+export MONGO_PASSWORD=$(cat ~/work/infra/secrets/mongo_password.txt)
+export MONGODB_URL="mongodb://${MONGO_USER}:${MONGO_PASSWORD}@127.0.0.1:27017/butler?authSource=admin"
+export TEST_MONGODB_URL="$MONGODB_URL"
+export REDIS_HOST=127.0.0.1
+export REDIS_PORT=6379
+export REDIS_PASSWORD=$(cat ~/work/infra/secrets/redis_password.txt)
+
+# Build index across docs + lecture corpora
+poetry run python -m src.presentation.cli.backoffice.main index run
+
+# Inspect summary counts
+poetry run python -m src.presentation.cli.backoffice.main index inspect
+```
+
+See `docs/specs/epic_19/stage_19_04_runbook.md` for detailed instructions,
+troubleshooting, and maintenance guidance.
+
 For detailed setup instructions, see [DEVELOPMENT.md](docs/guides/en/DEVELOPMENT.md) and the [Maintainer Playbook](docs/MAINTAINERS_GUIDE.md).
 
 ## Project Structure

@@ -1,4 +1,4 @@
-.PHONY: help install test lint format clean docker-build docker-up docker-down coverage integration e2e maintenance-cleanup maintenance-backup maintenance-export maintenance-validate day-07 day-08 day-11 day-11-up day-11-down day-11-build day-11-logs day-11-logs-bot day-11-logs-worker day-11-logs-mcp day-11-ps day-11-restart day-11-clean day-11-setup day-12 day-12-up day-12-down day-12-build day-12-logs day-12-logs-bot day-12-logs-worker day-12-logs-post-fetcher day-12-logs-mcp day-12-ps day-12-restart day-12-clean day-12-setup day-12-test day-12-metrics butler butler-up butler-down butler-build butler-logs butler-logs-bot butler-logs-worker butler-logs-mcp butler-logs-post-fetcher butler-ps butler-restart butler-clean butler-setup butler-test butler-metrics mcp-discover mcp-demo test-mcp test-mcp-comprehensive mcp-chat mcp-chat-streaming mcp-server-start mcp-server-stop mcp-chat-docker mcp-demo-start mcp-demo-stop mcp-demo-logs demo-mcp-comprehensive
+.PHONY: help install test lint format clean docker-build docker-up docker-down coverage integration e2e maintenance-cleanup maintenance-backup maintenance-export maintenance-validate day-07 day-08 day-11 day-11-up day-11-down day-11-build day-11-logs day-11-logs-bot day-11-logs-worker day-11-logs-mcp day-11-ps day-11-restart day-11-clean day-11-setup day-12 day-12-up day-12-down day-12-build day-12-logs day-12-logs-bot day-12-logs-worker day-12-logs-post-fetcher day-12-logs-mcp day-12-ps day-12-restart day-12-clean day-12-setup day-12-test day-12-metrics butler butler-up butler-down butler-build butler-logs butler-logs-bot butler-logs-worker butler-logs-mcp butler-logs-post-fetcher butler-ps butler-restart butler-clean butler-setup butler-test butler-metrics mcp-discover mcp-demo test-mcp test-mcp-comprehensive mcp-chat mcp-chat-streaming mcp-server-start mcp-server-stop mcp-chat-docker mcp-demo-start mcp-demo-stop mcp-demo-logs demo-mcp-comprehensive index-run
 
 help:
 	@echo "Available commands:"
@@ -86,6 +86,7 @@ help:
 	@echo "  make maintenance-backup - Create backup"
 	@echo "  make maintenance-export - Export data"
 	@echo "  make maintenance-validate - Validate system"
+	@echo "  make index-run         - Execute Stage 19 document embedding index pipeline"
 
 install:
 	poetry install
@@ -197,6 +198,9 @@ mcp-demo-start:
 	docker-compose -f docker-compose.mcp-demo.yml up -d
 	@echo "MCP demo starting: Mistral + StarCoder + MCP Server"
 	@echo "Check logs: make mcp-demo-logs"
+
+index-run:
+	poetry run python -m src.presentation.cli.backoffice.main index run
 
 mcp-demo-stop:
 	docker-compose -f docker-compose.mcp-demo.yml down
