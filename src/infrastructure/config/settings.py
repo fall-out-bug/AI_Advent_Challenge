@@ -408,6 +408,19 @@ class Settings(BaseSettings):
         default="embedding:chunk:",
         description="Redis key prefix for stored embeddings",
     )
+    # RAG retrieval settings
+    rag_top_k: int = Field(
+        default=5,
+        description="Number of chunks to retrieve for RAG",
+    )
+    rag_score_threshold: float = Field(
+        default=0.3,
+        description="Minimum similarity score for retrieved chunks",
+    )
+    rag_max_context_tokens: int = Field(
+        default=3000,
+        description="Maximum tokens for retrieved context in RAG prompts",
+    )
     # HW Checker MCP integration
     hw_checker_mcp_url: str = Field(
         default="http://mcp-server:8005",

@@ -450,3 +450,7 @@ review-health-check:
 	@echo "This will test all components: MongoDB, archives, diff, use cases, pipeline"
 	@echo "Note: Full pipeline test requires LLM_URL environment variable"
 	poetry run python scripts/quality/test_review_system.py
+
+day_20_demo:
+	@echo "Starting Stage 20 interactive demo..."
+	poetry run python scripts/rag/day_20_demo.py
