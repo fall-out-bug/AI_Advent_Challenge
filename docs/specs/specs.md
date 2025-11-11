@@ -40,6 +40,8 @@
 | Day 15 | Modular reviewer rollout | New package supersedes legacy multi-pass agent. |
 | Day 17 | Integration contracts | Align MCP adapters and review flows. |
 | Day 18 | Performance benchmarks | Document results in `docs/reference/en/PERFORMANCE_BENCHMARKS.md`. |
+| Day 19 | Document embedding index | See `docs/specs/day19.md` and Epic 19 (`docs/specs/epic_19/`). |
+| Day 20 | RAG vs non-RAG answering agent | See `docs/specs/day20.md` and Epic 20 (`docs/specs/epic_20/`). |
 
 ## 4. Workstreams Emerging from Audit
 - Reviewer hardening (tests, lint, doc updates) → EP01.
