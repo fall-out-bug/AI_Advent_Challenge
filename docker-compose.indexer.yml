@@ -1,0 +1,34 @@
+services:
+  embedding-indexer:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.indexer
+    working_dir: /workspace
+    environment:
+      - INDEX_RUN_ARGS=${INDEX_RUN_ARGS:---replace-fallback}
+      - SKIP_POETRY_INSTALL=${SKIP_POETRY_INSTALL:-0}
+      - WORKDIR=/workspace
+      - INFRA_ENV_FILE=${INFRA_ENV_FILE:-/root/work/infra/.env.infra}
+      - EMBEDDING_API_URL=${EMBEDDING_API_URL:-http://host.docker.internal:8000}
+      - LLM_URL=${LLM_URL:-http://host.docker.internal:8000}
+    volumes:
+      - .:/workspace
+      - ${HOST_INFRA_PATH:-/home/fall_out_bug/work/infra}:/root/work/infra:ro
+      - ${HOST_REWORK_PATH:-/home/fall_out_bug/rework-branch}:/home/fall_out_bug/rework-branch:ro
+      - poetry-cache:/root/.cache/pypoetry
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - infra_app
+      - infra_db
+
+networks:
+  infra_app:
+    external: true
+    name: infra_infra_app-network
+  infra_db:
+    external: true
+    name: infra_infra_db-network
+
+volumes:
+  poetry-cache:

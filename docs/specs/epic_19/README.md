@@ -18,16 +18,19 @@ FAISS-compatible fallback). This README acts as the navigation hub for all Stage
 
 ## Key Commands
 ```bash
-# Run indexer (full corpus)
-poetry run python -m src.presentation.cli.backoffice.main index run
+# Build Docker image (first run or after dependency changes)
+make index-container-build
 
-# Replace SHA-256 fallback embeddings after /v1/embeddings is available
-poetry run python -m src.presentation.cli.backoffice.main index run --replace-fallback
+# Run indexer inside container (defaults to --replace-fallback)
+make index-container-run INDEX_RUN_ARGS="--replace-fallback"
 
 # Inspect summary counts and fallback usage
-poetry run python -m src.presentation.cli.backoffice.main index inspect --show-fallback
+make index-container-run INDEX_RUN_ARGS="index inspect --show-fallback"
 
-# Unit tests
+# Drop into container shell for debugging
+make index-container-shell
+
+# Unit tests (host)
 poetry run pytest tests/unit/domain/embedding_index \
     tests/unit/infrastructure/embedding_index \
     tests/unit/application/embedding_index -q
@@ -39,12 +42,11 @@ poetry run pytest tests/unit/domain/embedding_index \
 - `stage_19_05_spec_inventory.md` – consolidated list of upstream specs (EP00–EP06, core docs, EP19).
 
 ## Metrics & Evidence
-- **Corpus coverage:** 284 documents / 373 chunks (`stage_19_04_report.md`).
-- **Fallback tracking:** Mongo `metadata.fallback = "sha256"` and CLI `--show-fallback`.
+- **Corpus coverage:** 293 documents / 382 chunks (`stage_19_04_report.md`).
+- **Fallback tracking:** Mongo `metadata.fallback` (present only during contingencies) and CLI `--show-fallback`.
 - **Local index:** `var/indices/embedding_index_v1.pkl` if RediSearch unavailable.
 
 ## Follow-ups
 - Enable RediSearch or adopt full FAISS search for vector queries.
-- Replace fallback embeddings once the local `/v1/embeddings` endpoint is live.
 - Epic 23 will add Prometheus metrics (`embedding_batches_total`, `embedding_latency_seconds`).
 - Future work: retrieval/search API atop the stored embeddings.

@@ -66,7 +66,7 @@ def test_embedding_vector_dimension_validation() -> None:
     with pytest.raises(ValueError):
         EmbeddingVector(
             values=(0.1, 0.2),
-            model="text-embedding-3-small",
+            model="all-MiniLM-L6-v2",
             dimension=3,
         )
 
@@ -75,7 +75,7 @@ def test_embedding_vector_as_list_returns_copy() -> None:
     """Ensure EmbeddingVector exposes a list copy."""
     vector = EmbeddingVector(
         values=(0.1, 0.2, 0.3),
-        model="text-embedding-3-small",
+        model="all-MiniLM-L6-v2",
         dimension=3,
     )
 

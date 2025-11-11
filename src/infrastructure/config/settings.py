@@ -134,7 +134,10 @@ class Settings(BaseSettings):
     )
     summarizer_timeout_seconds: float = Field(
         default=180.0,
-        description="Timeout in seconds for LLM summarization requests (longer for large texts)",
+        description=(
+            "Timeout in seconds for LLM summarization requests "
+            "(longer for large texts)"
+        ),
     )
     summarizer_timeout_seconds_long: float = Field(
         default=600.0,
@@ -153,7 +156,9 @@ class Settings(BaseSettings):
     # Channel search settings
     bot_api_fallback_enabled: bool = Field(
         default=True,
-        description="Enable Bot API fallback for channel search when dialogs search fails",
+        description=(
+            "Enable Bot API fallback for channel search when dialogs search fails"
+        ),
     )
     llm_fallback_enabled: bool = Field(
         default=False,
@@ -209,11 +214,17 @@ class Settings(BaseSettings):
     # Intent classification settings
     intent_confidence_threshold: float = Field(
         default=0.7,
-        description="Minimum confidence threshold for rule-based intent classification (0.0-1.0)",
+        description=(
+            "Minimum confidence threshold for rule-based intent classification "
+            "(0.0-1.0)"
+        ),
     )
     intent_cache_ttl_seconds: int = Field(
         default=300,
-        description="TTL in seconds for intent classification cache (default: 300 = 5 minutes)",
+        description=(
+            "TTL in seconds for intent classification cache "
+            "(default: 300 = 5 minutes)"
+        ),
     )
     intent_llm_timeout_seconds: float = Field(
         default=5.0,
@@ -322,11 +333,15 @@ class Settings(BaseSettings):
         description="Embedding service base URL",
     )
     embedding_model: str = Field(
-        default="text-embedding-3-small",
+        default="all-MiniLM-L6-v2",
         description="Embedding model identifier",
     )
+    embedding_api_timeout_seconds: float = Field(
+        default=60.0,
+        description="Timeout for embedding API requests",
+    )
     embedding_vector_dimension: int = Field(
-        default=1536,
+        default=384,
         description="Expected embedding vector dimension",
     )
     embedding_sources: tuple[str, ...] = Field(

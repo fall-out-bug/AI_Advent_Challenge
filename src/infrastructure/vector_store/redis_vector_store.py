@@ -36,8 +36,10 @@ class RedisVectorStore(VectorStore):
         self._schema_ready = self._ensure_schema(schema_manager)
         self._fallback_store: FaissVectorStore | None = None
         if not self._schema_ready:
-            index_path = fallback_index_path or Path("var/indices/embedding_index_v1.pkl")
-            dimension = dimension or 1536
+            index_path = fallback_index_path or Path(
+                "var/indices/embedding_index_v1.pkl"
+            )
+            dimension = dimension or 384
             self._fallback_store = FaissVectorStore(
                 index_path=index_path,
                 dimension=dimension,
