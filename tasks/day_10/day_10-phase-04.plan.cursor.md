@@ -12,7 +12,7 @@ Complete Phase 2 implementation and add advanced orchestrator features to create
 **Create**: `src/presentation/mcp/resources/prompts.py`
 
 - `get_python_developer_prompt()` - Python developer system prompt
-- `get_architect_prompt()` - Software architect system prompt  
+- `get_architect_prompt()` - Software architect system prompt
 - `get_technical_writer_prompt()` - Technical writing prompt
 - `get_coding_standards()` - JSON config for coding standards
 

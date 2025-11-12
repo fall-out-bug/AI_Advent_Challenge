@@ -28,16 +28,16 @@ from shared.config.models import MODEL_CONFIGS
 async def main():
     # Initialize client
     client = UnifiedModelClient()
-    
+
     # Make a request to a local model
     response = await client.make_request("qwen", "Hello, how are you?")
     print(f"Response: {response.response}")
     print(f"Tokens: {response.total_tokens}")
-    
+
     # Check model availability
     is_available = await client.check_availability("mistral")
     print(f"Mistral available: {is_available}")
-    
+
     # Close client
     await client.close()
 
@@ -71,7 +71,7 @@ MODEL_CONFIGS = {
         "description": "Быстрые ответы, хорошее качество"
     },
     "mistral": {
-        "type": "local", 
+        "type": "local",
         "port": 8001,
         "url": "http://localhost:8001",
         "display_name": "Mistral-7B",
@@ -79,7 +79,7 @@ MODEL_CONFIGS = {
     },
     "tinyllama": {
         "type": "local",
-        "port": 8002, 
+        "port": 8002,
         "url": "http://localhost:8002",
         "display_name": "TinyLlama-1.1B",
         "description": "Компактная, быстрая"
@@ -93,7 +93,7 @@ MODEL_CONFIGS = {
     "chadgpt": {
         "type": "external",
         "url": "https://ask.chadgpt.ru/api/public/gpt-5-mini",
-        "display_name": "ChadGPT", 
+        "display_name": "ChadGPT",
         "description": "Внешний API"
     }
 }
@@ -195,7 +195,7 @@ ModelClientError (Exception)
 
 ```python
 from shared.exceptions.model_errors import (
-    ModelConnectionError, 
+    ModelConnectionError,
     ModelRequestError,
     ModelConfigurationError
 )
@@ -225,19 +225,19 @@ class CustomModelClient(UnifiedModelClient):
     def __init__(self, timeout: float = DEFAULT_TIMEOUT):
         super().__init__(timeout)
         self.conversation_history = []
-    
+
     async def chat_with_history(self, model_name: str, prompt: str):
         # Add to history
         self.conversation_history.append({"role": "user", "content": prompt})
-        
+
         # Make request
         response = await self.make_request(model_name, prompt)
-        
+
         # Add response to history
         self.conversation_history.append({"role": "assistant", "content": response.response})
-        
+
         return response
-    
+
     def clear_history(self):
         self.conversation_history = []
 ```
@@ -249,10 +249,10 @@ async def test_all_models():
     """Test all available models with the same prompt."""
     async with UnifiedModelClient() as client:
         prompt = "What is artificial intelligence?"
-        
+
         # Check availability first
         availability = await client.check_all_availability()
-        
+
         for model_name, is_available in availability.items():
             if is_available:
                 try:
@@ -275,23 +275,23 @@ class LocalModelClient(UnifiedModelClient):
         super().__init__(timeout=None)
         self.model_name = model_name
         self.conversation_history = []
-    
-    async def chat(self, messages: list, max_tokens: int = DEFAULT_MAX_TOKENS, 
+
+    async def chat(self, messages: list, max_tokens: int = DEFAULT_MAX_TOKENS,
                    temperature: float = DEFAULT_TEMPERATURE, use_history: bool = False) -> dict:
         # Convert messages to prompt
         user_content = "\n".join([msg["content"] for msg in messages if msg["role"] == "user"])
-        
+
         # Make request using SDK
         response = await self.make_request(self.model_name, user_content, max_tokens, temperature)
-        
+
         # Handle history if needed
         if use_history:
             self.conversation_history.extend(messages)
             self.conversation_history.append({
-                "role": "assistant", 
+                "role": "assistant",
                 "content": response.response
             })
-        
+
         return {
             "response": response.response,
             "input_tokens": response.input_tokens,
@@ -307,19 +307,19 @@ class LocalModelClient(UnifiedModelClient):
 class LocalModelClient(UnifiedModelClient):
     def __init__(self, timeout: float = DEFAULT_TIMEOUT):
         super().__init__(timeout)
-    
+
     async def _make_request(self, model_name: str, prompt: str) -> ModelResponse:
         """Backward compatibility method."""
         return await self.make_request(model_name, prompt)
-    
+
     async def test_all_models(self, riddles: List[Dict]) -> Dict[str, List[Dict]]:
         """Test all local models with riddles."""
         results = {}
-        
+
         for model_name in MODEL_CONFIGS.keys():
             if MODEL_CONFIGS[model_name]["type"] == "local":
                 results[model_name] = []
-                
+
                 for riddle in riddles:
                     try:
                         response = await self.make_request(model_name, riddle["text"])
@@ -334,7 +334,7 @@ class LocalModelClient(UnifiedModelClient):
                             "riddle": riddle,
                             "error": str(e)
                         })
-        
+
         return results
 ```
 
@@ -351,7 +351,7 @@ python -m pytest tests/ -v --cov=shared --cov-report=html
 cd ../day_05
 python -m pytest tests/ -v
 
-cd ../day_06  
+cd ../day_06
 python -m pytest tests/ -v
 ```
 
@@ -426,7 +426,7 @@ class CustomAgent(BaseAgent):
     def __init__(self, client):
         super().__init__(client)
         self.agent_name = "custom_agent"
-    
+
     async def process(self, request: AgentRequest) -> AgentResponse:
         # Implement your agent logic here
         response = await self.client.make_request("qwen", request.task)
@@ -451,7 +451,7 @@ from shared_package.agents import CodeGeneratorAgent, AgentRequest
 async def generate_code():
     async with UnifiedModelClient() as client:
         agent = CodeGeneratorAgent(client)
-        
+
         request = AgentRequest(
             task_id="gen_001",
             task_type="code_generation",
@@ -462,7 +462,7 @@ async def generate_code():
                 "include_docstring": True
             }
         )
-        
+
         response = await agent.process(request)
         print(f"Generated code: {response.result}")
         print(f"Quality score: {response.metadata.quality_metrics.score}")
@@ -478,14 +478,14 @@ from shared_package.agents import CodeReviewerAgent, AgentRequest
 async def review_code():
     async with UnifiedModelClient() as client:
         agent = CodeReviewerAgent(client)
-        
+
         code_to_review = """
         def fibonacci(n):
             if n <= 1:
                 return n
             return fibonacci(n-1) + fibonacci(n-2)
         """
-        
+
         request = AgentRequest(
             task_id="review_001",
             task_type="code_review",
@@ -495,7 +495,7 @@ async def review_code():
                 "focus_areas": ["performance", "readability", "best_practices"]
             }
         )
-        
+
         response = await agent.process(request)
         print(f"Review result: {response.result}")
         print(f"Quality metrics: {response.metadata.quality_metrics}")
@@ -516,13 +516,13 @@ async def sequential_workflow():
         # Create agents
         generator = CodeGeneratorAgent(client)
         reviewer = CodeReviewerAgent(client)
-        
+
         # Create orchestrator
         orchestrator = SequentialOrchestrator(
             agents=[generator, reviewer],
             adapter=DirectAdapter()
         )
-        
+
         # Execute workflow
         request = AgentRequest(
             task_id="workflow_001",
@@ -530,9 +530,9 @@ async def sequential_workflow():
             task="Create a REST API endpoint for user authentication",
             context={"framework": "fastapi", "include_tests": True}
         )
-        
+
         results = await orchestrator.execute(request)
-        
+
         print("Generation result:", results[0].result)
         print("Review result:", results[1].result)
 ```
@@ -552,21 +552,21 @@ async def parallel_comparison():
             CodeGeneratorAgent(client, model_preference="mistral"),
             CodeGeneratorAgent(client, model_preference="tinyllama")
         ]
-        
+
         orchestrator = ParallelOrchestrator(
             agents=agents,
             adapter=DirectAdapter()
         )
-        
+
         request = AgentRequest(
             task_id="compare_001",
             task_type="code_generation",
             task="Implement a binary search algorithm",
             context={"language": "python", "include_comments": True}
         )
-        
+
         results = await orchestrator.execute(request)
-        
+
         for i, result in enumerate(results):
             print(f"Model {i+1}: {result.result[:100]}...")
 ```
@@ -625,19 +625,19 @@ from shared_package.orchestration.adapters import DirectAdapter
 
 class DocumentationAgent(BaseAgent):
     """Agent specialized in generating technical documentation."""
-    
+
     def __init__(self, client, config=None):
         super().__init__(client, config)
         self.agent_name = "documentation_agent"
         self.adapter = DirectAdapter()
-    
+
     async def process(self, request: AgentRequest) -> AgentResponse:
         """Generate documentation for the given code."""
         prompt = f"""
         Generate comprehensive documentation for the following code:
-        
+
         {request.task}
-        
+
         Include:
         - Function/class descriptions
         - Parameter documentation
@@ -645,14 +645,14 @@ class DocumentationAgent(BaseAgent):
         - Usage examples
         - Error handling notes
         """
-        
+
         response = await self.client.make_request(
-            "mistral", 
+            "mistral",
             prompt,
             max_tokens=self.config.max_tokens,
             temperature=self.config.temperature
         )
-        
+
         return AgentResponse(
             task_id=request.task_id,
             result=response.response,
@@ -679,13 +679,13 @@ async def robust_workflow():
             # Create agents
             generator = CodeGeneratorAgent(client)
             reviewer = CodeReviewerAgent(client)
-            
+
             # Create orchestrator
             orchestrator = SequentialOrchestrator(
                 agents=[generator, reviewer],
                 adapter=DirectAdapter()
             )
-            
+
             # Execute with error handling
             request = AgentRequest(
                 task_id="robust_001",
@@ -693,9 +693,9 @@ async def robust_workflow():
                 task="Create a data validation function",
                 context={"language": "python", "include_tests": True}
             )
-            
+
             results = await orchestrator.execute(request)
-            
+
             # Process results
             for i, result in enumerate(results):
                 if result.success:
@@ -703,7 +703,7 @@ async def robust_workflow():
                     print(f"Result: {result.result[:200]}...")
                 else:
                     print(f"Step {i+1} failed: {result.error}")
-                    
+
         except Exception as e:
             print(f"Workflow failed: {e}")
 ```
@@ -730,14 +730,14 @@ from shared_package.orchestration.adapters import DirectAdapter
 
 async with UnifiedModelClient() as client:
     agent = CodeGeneratorAgent(client, adapter=DirectAdapter())
-    
+
     request = AgentRequest(
         task_id="migration_001",
         task_type="code_generation",
         task=prompt,
         context={"language": "python"}
     )
-    
+
     result = await agent.process(request)
 ```
 
@@ -768,16 +768,16 @@ from shared_package.agents import CodeGeneratorAgent, AgentRequest
 async def test_code_generator():
     async with UnifiedModelClient() as client:
         agent = CodeGeneratorAgent(client)
-        
+
         request = AgentRequest(
             task_id="test_001",
             task_type="code_generation",
             task="Create a simple hello world function",
             context={"language": "python"}
         )
-        
+
         response = await agent.process(request)
-        
+
         assert response.success
         assert "def hello" in response.result
         assert response.metadata.agent_name == "code_generator"
@@ -788,21 +788,21 @@ async def test_sequential_orchestration():
     async with UnifiedModelClient() as client:
         generator = CodeGeneratorAgent(client)
         reviewer = CodeReviewerAgent(client)
-        
+
         orchestrator = SequentialOrchestrator(
             agents=[generator, reviewer],
             adapter=DirectAdapter()
         )
-        
+
         request = AgentRequest(
             task_id="orchestration_test",
             task_type="code_generation",
             task="Create a sorting algorithm",
             context={"language": "python"}
         )
-        
+
         results = await orchestrator.execute(request)
-        
+
         assert len(results) == 2
         assert results[0].success  # Generation successful
         assert results[1].success  # Review successful

@@ -416,4 +416,3 @@ rate(dialog_compressions_total[5m]) / rate(agent_dialog_tokens > 8000[5m])
 2. В Grafana: Configuration → Data Sources → проверить Prometheus
 3. Dashboards → Import → загрузить JSON файл
 4. Или использовать provisioning: `grafana/provisioning/dashboards/dashboards.yml`
-

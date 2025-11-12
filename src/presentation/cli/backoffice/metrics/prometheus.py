@@ -80,4 +80,3 @@ def _record_error(command: str, exc: Exception, start_time: float) -> None:
     cli_command_duration_seconds.labels(command=command).observe(
         time.perf_counter() - start_time
     )
-

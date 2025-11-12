@@ -4,7 +4,7 @@ agents:
     name: "CodeGenerator"
     description: "Generates code based on prompts"
     enabled: true
-    
+
   code_reviewer:
     name: "CodeReviewer"
     description: "Reviews code for quality and best practices"
@@ -19,4 +19,3 @@ defaults:
   max_tokens: 4096
   temperature: 0.7
   timeout: 30
-

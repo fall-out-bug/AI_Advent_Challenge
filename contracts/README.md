@@ -82,4 +82,3 @@ For questions or issues:
 2. Review OpenAPI specification
 3. Run contract tests
 4. Contact support team
-

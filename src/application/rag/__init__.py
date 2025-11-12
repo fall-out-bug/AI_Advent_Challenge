@@ -5,11 +5,12 @@ Purpose:
 """
 
 from .prompt_assembler import PromptAssembler
-from .retrieval_service import RetrievalService
+from .retrieval_service import RetrievalService, RetrievalServiceCompat
 from .use_case import CompareRagAnswersUseCase
 
 __all__ = [
     "CompareRagAnswersUseCase",
     "PromptAssembler",
     "RetrievalService",
+    "RetrievalServiceCompat",
 ]

@@ -3,13 +3,13 @@
 models:
   # Default model to use when no specific model is requested
   default: starcoder
-  
+
   # Model selection by task type
   by_task:
     code_generation: starcoder
     code_review: mistral
     analysis: qwen
-    
+
   # Available models with their capabilities
   available:
     starcoder:
@@ -22,7 +22,7 @@ models:
         - code_generation
         - code_completion
       temperature_default: 0.2
-      
+
     mistral:
       name: "Mistral"
       description: "General purpose with strong reasoning"
@@ -34,7 +34,7 @@ models:
         - analysis
         - reasoning
       temperature_default: 0.7
-      
+
     qwen:
       name: "Qwen"
       description: "Fast inference with good comprehension"
@@ -45,7 +45,7 @@ models:
         - analysis
         - code_review
       temperature_default: 0.5
-      
+
     tinyllama:
       name: "TinyLlama"
       description: "Lightweight and fast"
@@ -71,4 +71,3 @@ models:
       - mistral
       - qwen
       - tinyllama
-

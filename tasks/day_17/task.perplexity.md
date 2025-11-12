@@ -40,7 +40,7 @@
 ### **3. Новая архитектура MVP v2**
 
 ```
-[Event: Новый сабмит] 
+[Event: Новый сабмит]
     ↓
 [FastAPI endpoint]
     ├→ Получить current submission из архива
@@ -133,30 +133,30 @@ class Settings(BaseSettings):
     # MongoDB
     MONGODB_URL: str = "mongodb://localhost:27017"
     MONGODB_DB: str = "code_review"
-    
+
     # Redis + Celery
     REDIS_URL: str = "redis://localhost:6379/0"
     CELERY_BROKER: str = "redis://localhost:6379/0"
     CELERY_BACKEND: str = "redis://localhost:6379/1"
-    
+
     # LLM
     OPENAI_API_KEY: str
     LLM_MODEL: str = "gpt-4-turbo"
     LLM_TIMEOUT: int = 60
     LLM_MAX_RETRIES: int = 3
-    
+
     # External API
     EXTERNAL_API_URL: str
     EXTERNAL_API_KEY: str
     EXTERNAL_API_TIMEOUT: int = 30
     EXTERNAL_API_MAX_RETRIES: int = 3
-    
+
     # Archive
     ARCHIVE_PATH: str = "/data/submissions"
-    
+
     # Logging
     LOG_LEVEL: str = "INFO"
-    
+
     class Config:
         env_file = ".env"
 
@@ -173,7 +173,7 @@ from pathlib import Path
 
 class DiffAnalyzer:
     """Анализ изменений между двумя версиями кода"""
-    
+
     @staticmethod
     def analyze(previous_code: str, new_code: str) -> Dict[str, Any]:
         """
@@ -186,19 +186,19 @@ class DiffAnalyzer:
             tofile="new",
             lineterm=""
         ))
-        
+
         # Подсчёт метрик
         lines_added = sum(1 for line in diff if line.startswith('+') and not line.startswith('+++'))
         lines_removed = sum(1 for line in diff if line.startswith('-') and not line.startswith('---'))
         lines_changed = max(lines_added, lines_removed)
-        
+
         # Анализ типов изменений
         has_refactor = any(keyword in new_code for keyword in ['def ', 'class '])
         has_new_imports = any(
-            imp in new_code and imp not in previous_code 
+            imp in new_code and imp not in previous_code
             for imp in ['import ', 'from ']
         )
-        
+
         return {
             "diff": ''.join(diff),
             "lines_added": lines_added,
@@ -227,13 +227,13 @@ logger = logging.getLogger(__name__)
 
 class LLMClient:
     """LLM интеграция с retry логикой и обработкой ошибок"""
-    
+
     def __init__(self):
         self.model = settings.LLM_MODEL
         self.api_key = settings.OPENAI_API_KEY
         self.timeout = settings.LLM_TIMEOUT
         self.max_retries = settings.LLM_MAX_RETRIES
-    
+
     @async_retry(
         max_retries=3,
         delay=1,
@@ -260,20 +260,20 @@ class LLMClient:
                 },
                 timeout=self.timeout
             )
-        
+
         if response.status_code != 200:
             logger.error(f"LLM API error: {response.text}")
             raise httpx.HTTPError(f"LLM API failed: {response.status_code}")
-        
+
         result = response.json()
         content = result["choices"][0]["message"]["content"]
-        
+
         # Парсим и валидируем JSON
         parsed = json.loads(content)
         self._validate_json_structure(parsed)
-        
+
         return parsed
-    
+
     @staticmethod
     def _validate_json_structure(data: Dict[str, Any]) -> None:
         """Валидирует обязательные поля"""
@@ -301,12 +301,12 @@ def async_retry(
     exceptions: Tuple[Type[Exception], ...] = (Exception,)
 ):
     """Декоратор для retry асинхронных функций с exponential backoff"""
-    
+
     def decorator(func: Callable):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             current_delay = delay
-            
+
             for attempt in range(max_retries):
                 try:
                     logger.info(f"Attempt {attempt + 1}/{max_retries} for {func.__name__}")
@@ -315,14 +315,14 @@ def async_retry(
                     if attempt == max_retries - 1:
                         logger.error(f"All {max_retries} attempts failed for {func.__name__}")
                         raise
-                    
+
                     logger.warning(
                         f"Attempt {attempt + 1} failed for {func.__name__}: {str(e)}. "
                         f"Retrying in {current_delay}s..."
                     )
                     await asyncio.sleep(current_delay)
                     current_delay *= backoff
-        
+
         return wrapper
     return decorator
 ```
@@ -359,7 +359,7 @@ def process_submission_review(
             f"Starting review: student={student_id}, assignment={assignment_id}, "
             f"new_sub={new_submission_id}"
         )
-        
+
         # 1. Получить оба сабмита из архива
         archive_svc = ArchiveService()
         new_submission = archive_svc.get_submission(new_submission_id)
@@ -367,14 +367,14 @@ def process_submission_review(
             archive_svc.get_submission(previous_submission_id)
             if previous_submission_id else None
         )
-        
+
         # 2. Advanced diff анализ
         diff_analyzer = DiffAnalyzer()
         diff_info = diff_analyzer.analyze(
             previous_submission.get("code", "") if previous_submission else "",
             new_submission.get("code", "")
         )
-        
+
         # 3. Формирование промпта для LLM
         prompt = _build_prompt(
             new_submission,
@@ -382,11 +382,11 @@ def process_submission_review(
             diff_info,
             assignment_id
         )
-        
+
         # 4. LLM генерирует review
         llm_client = LLMClient()
         review_result = asyncio.run(llm_client.generate_review(prompt))
-        
+
         # 5. Обогащение результата метаданными
         final_payload = {
             "student_id": student_id,
@@ -397,23 +397,23 @@ def process_submission_review(
             "review_result": review_result,
             "timestamp": datetime.now().isoformat()
         }
-        
+
         # 6. Сохранение в MongoDB
         mongo_svc = MongoDBService()
         result_id = mongo_svc.save_review(final_payload)
-        
+
         # 7. Публикация во внешнее API
         api_client = ExternalAPIClient()
         api_response = asyncio.run(api_client.publish_review(final_payload))
-        
+
         logger.info(f"Review completed: result_id={result_id}, api_status={api_response['status']}")
-        
+
         return {
             "result_id": result_id,
             "external_api_status": api_response["status"],
             "success": True
         }
-    
+
     except Exception as exc:
         logger.error(f"Task failed: {str(exc)}", exc_info=True)
         # Retry с exponential backoff
@@ -465,13 +465,13 @@ logger = logging.getLogger(__name__)
 
 class ExternalAPIClient:
     """Клиент для публикации результатов во внешнее API"""
-    
+
     def __init__(self):
         self.api_url = settings.EXTERNAL_API_URL
         self.api_key = settings.EXTERNAL_API_KEY
         self.timeout = settings.EXTERNAL_API_TIMEOUT
         self.max_retries = settings.EXTERNAL_API_MAX_RETRIES
-    
+
     @async_retry(
         max_retries=3,
         delay=1,
@@ -492,11 +492,11 @@ class ExternalAPIClient:
                 json=payload,
                 timeout=self.timeout
             )
-        
+
         if response.status_code not in [200, 201]:
             logger.error(f"External API error: {response.status_code} - {response.text}")
             raise httpx.HTTPError(f"API failed: {response.status_code}")
-        
+
         logger.info(f"Review published successfully: {response.status_code}")
         return {
             "status": "published",
@@ -537,9 +537,9 @@ async def create_review(
             new_submission_id=submission_id,
             previous_submission_id=previous_submission_id
         )
-        
+
         logger.info(f"Review task queued: task_id={task.id}")
-        
+
         return {
             "task_id": task.id,
             "status": "queued",
@@ -553,7 +553,7 @@ async def create_review(
 async def get_review_status(task_id: str):
     """Получить статус/результат review"""
     task = process_submission_review.AsyncResult(task_id)
-    
+
     if task.state == "PENDING":
         return {"status": "pending", "task_id": task_id}
     elif task.state == "SUCCESS":
@@ -561,7 +561,7 @@ async def get_review_status(task_id: str):
         return {"status": "completed", "result": result}
     elif task.state == "FAILURE":
         return {"status": "failed", "error": str(task.info), "task_id": task_id}
-    
+
     return {"status": task.state, "task_id": task_id}
 
 @router.get("/health")
@@ -704,4 +704,3 @@ docker-compose logs -f worker
 ***
 
 **Готов расписать другие модули или полный код? MVP v2 с очередью, БД, retry и diff анализом — это уже серьёзное решение.**
-

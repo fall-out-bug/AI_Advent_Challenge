@@ -154,4 +154,3 @@ async def _remove_channel(user_id: int, channel_id: str, as_json: bool) -> None:
         raise click.ClickException("Channel not found or already removed")
 
     click.echo(output or "Channel removed.")
-

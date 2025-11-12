@@ -334,4 +334,3 @@ pytest tests/e2e/test_butler_agent_e2e.py -v
 - [ ] Advanced digest customization (format, length, style)
 - [ ] Scheduled digest delivery
 - [ ] User preferences for intent classification thresholds
-

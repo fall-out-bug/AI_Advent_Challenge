@@ -17,4 +17,3 @@ All code must land through PRs that update `pyproject.toml` and append a `CHANGE
 ## Release history
 - **0.2.0 (2025-11-08)** — LLM retry with Tenacity, graceful degradation for partial reports, expanded metrics.
 - **0.1.0 (2025-11-07)** — Initial Clean Architecture scaffolding and core passes/checkers.
-

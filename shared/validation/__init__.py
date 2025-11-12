@@ -20,7 +20,7 @@ from .models import (
 
 __all__ = [
     "ModelRequest",
-    "ModelResponse", 
+    "ModelResponse",
     "ChatMessage",
     "ChatRequest",
     "ModelAvailabilityRequest",

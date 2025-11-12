@@ -1,12 +1,12 @@
 # Riddle Testing Experiment Template
-# 
+#
 # Batch evaluation of models on riddles
 # Following the Zen of Python: Readability counts
 
 experiment:
   name: "riddle_testing"
   description: "Test models on logical riddles"
-  
+
   task:
     type: "riddle_evaluation"
     riddles:
@@ -14,11 +14,11 @@ experiment:
         answer: "an echo"
       - question: "The more you take, the more you leave behind. What am I?"
         answer: "footsteps"
-  
+
   mode:
     - "direct"  # instant answer
     - "step_by_step"  # reasoning mode
-  
+
   models:
     - name: "mistral"
       config:
@@ -26,13 +26,12 @@ experiment:
     - name: "qwen"
       config:
         temperature: 0.5
-  
+
   evaluation:
     criteria:
       - "correctness"
       - "reasoning_quality"
       - "response_time"
-  
+
   aggregation:
     strategy: "per_riddle"
-

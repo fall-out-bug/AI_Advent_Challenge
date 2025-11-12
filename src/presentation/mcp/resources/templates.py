@@ -80,7 +80,7 @@ class {class_name}:
 
     def __init__(self, param: str) -> None:
         \"\"\"Initialize {class_name}.
-        
+
         Args:
             param: Parameter description
         \"\"\"
@@ -88,17 +88,17 @@ class {class_name}:
 
     def method(self, arg: Any) -> Dict[str, Any]:
         \"\"\"Method description.
-        
+
         Args:
             arg: Argument description
-            
+
         Returns:
             Dictionary with results
-            
+
         Raises:
             ValueError: If arg is invalid
         \"\"\"
         if not arg:
             raise ValueError("arg cannot be empty")
-        
+
         return {{"result": "success"}}"""

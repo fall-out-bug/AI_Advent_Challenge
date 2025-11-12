@@ -6,7 +6,7 @@ from typing import Protocol, Sequence
 
 from src.domain.embedding_index import EmbeddingVector
 
-from .value_objects import Answer, RetrievedChunk
+from .value_objects import Answer, RetrievedChunk, RerankResult
 
 
 class VectorSearchService(Protocol):
@@ -83,3 +83,31 @@ class LLMService(Protocol):
             ...     temperature=0.7,
             ... )
         """
+
+
+class RelevanceFilterService(Protocol):
+    """Filter chunks by relevance threshold.
+
+    Purpose:
+        Provide a domain-level contract for threshold-based filtering without
+        imposing implementation details.
+    """
+
+    def filter_chunks(
+        self,
+        chunks: Sequence[RetrievedChunk],
+        threshold: float,
+        top_k: int,
+    ) -> Sequence[RetrievedChunk]:
+        """Return chunks above threshold, limited to top_k."""
+
+
+class RerankerService(Protocol):
+    """Rerank chunks using advanced scoring."""
+
+    async def rerank(
+        self,
+        query: str,
+        chunks: Sequence[RetrievedChunk],
+    ) -> RerankResult:
+        """Rescore and reorder chunks by relevance."""

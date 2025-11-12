@@ -224,4 +224,3 @@ docker-compose -f docker-compose.full.yml down -v
 # Clean up unused images
 docker system prune -a
 ```
-

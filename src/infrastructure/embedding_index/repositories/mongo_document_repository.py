@@ -31,10 +31,11 @@ def _deserialize_chunk(payload: dict) -> DocumentChunk:
 class MongoDocumentRepository(DocumentRepository):
     """Persist document metadata into MongoDB."""
 
-    def __init__(self, collection: Collection) -> None:
+    def __init__(self, collection: Collection, *, ensure_indexes: bool = True) -> None:
         """Initialise repository."""
         self._collection = collection
-        self._collection.create_index("document_id", unique=True)
+        if ensure_indexes:
+            self._collection.create_index("document_id", unique=True)
 
     def upsert_document(self, record: DocumentRecord) -> None:
         """Insert or update document metadata."""

@@ -72,4 +72,3 @@ def test_parameter_setters_update_state(caplog: pytest.LogCaptureFixture) -> Non
     assert agent.max_tokens == 500
     assert agent.temperature == 0.1
     assert any("parameters updated" in message for message in caplog.text.splitlines())
-

@@ -1,12 +1,12 @@
 # Model Comparison Experiment Template
-# 
+#
 # Compares multiple models on the same task
 # Following the Zen of Python: Simple is better than complex
 
 experiment:
   name: "model_comparison"
   description: "Compare multiple models on the same code generation task"
-  
+
   task:
     description: "Generate a Python function to calculate fibonacci numbers"
     language: "python"
@@ -14,7 +14,7 @@ experiment:
       - "Include type hints"
       - "Include docstrings"
       - "Include unit tests"
-  
+
   models:
     - name: "starcoder"
       config:
@@ -28,13 +28,12 @@ experiment:
       config:
         temperature: 0.2
         max_tokens: 512
-  
+
   metrics:
     - "execution_time"
     - "token_usage"
     - "code_quality_score"
     - "test_coverage"
-  
+
   aggregation:
     strategy: "average"  # average, median, best
-

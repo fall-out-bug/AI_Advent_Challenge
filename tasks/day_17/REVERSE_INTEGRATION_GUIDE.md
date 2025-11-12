@@ -113,4 +113,3 @@ After integrating, verify:
 
 ## Support
 Questions or issues? Contact the HW Checker maintainers or open a task in the project tracker with details (payload, timestamp, logs).
-

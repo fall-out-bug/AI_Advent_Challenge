@@ -34,11 +34,11 @@ class ModelClientAdapter:
     Адаптер для унификации доступа к UnifiedModelClient в контексте multi-pass review.
     Инкапсулирует детали работы с моделью от Pass логики.
     """
-    
+
     def __init__(self, unified_client: UnifiedModelClient):
         self.client = unified_client
         self.logger = logging.getLogger(__name__)
-    
+
     async def send_prompt(
         self,
         prompt: str,
@@ -51,7 +51,7 @@ class ModelClientAdapter:
         Handles logging, error handling, token counting.
         """
         self.logger.info(f"[{pass_name}] Calling model with {len(prompt)} chars, max_tokens={max_tokens}")
-        
+
         try:
             # Use UnifiedModelClient directly
             response = await self.client.send_prompt(
@@ -59,14 +59,14 @@ class ModelClientAdapter:
                 temperature=temperature,
                 max_tokens=max_tokens
             )
-            
+
             self.logger.info(f"[{pass_name}] Model response: {len(response)} chars")
             return response
-        
+
         except Exception as e:
             self.logger.error(f"[{pass_name}] Model error: {e}")
             raise
-    
+
     def estimate_tokens(self, text: str) -> int:
         """Delegate to TokenAnalyzer if available, else rough estimate"""
         # Implementation using existing TokenAnalyzer
@@ -91,7 +91,7 @@ class BaseReviewPass(ABC):
         self.session = session_manager
         self.token_budget = token_budget
         self.logger = logging.getLogger(self.__class__.__name__)
-    
+
     async def _call_mistral(
         self,
         prompt: str,
@@ -120,7 +120,7 @@ class BaseReviewPass(ABC):
 
 ### Выбор: **Вариант A + B гибридный подход**
 
-**Решение**: 
+**Решение**:
 - Создать `prompts/v1/` в **корне проекта** (как в ТЗ)
 - Это не конфликтует с `shared/shared_package/config/agents.py`
 - Существующие промпты остаются в shared, новые multi-pass промпты в корне
@@ -171,21 +171,21 @@ prompts:
     description: "High-level architecture analysis"
     created: "2025-11-03"
     checksum: "sha256:abc123..."
-    
+
   pass_2_docker:
     filename: "pass_2_docker_review.md"
     description: "Detailed Docker/Compose configuration review"
     created: "2025-11-03"
     checksum: "sha256:def456..."
-  
+
   pass_2_airflow:
     filename: "pass_2_airflow_review.md"
     description: "Apache Airflow DAG analysis"
     created: "2025-11-03"
     checksum: "sha256:ghi789..."
-  
+
   # ... etc for spark, mlflow
-  
+
   pass_3_synthesis:
     filename: "pass_3_synthesis.md"
     description: "Final synthesis and integration validation"
@@ -203,10 +203,10 @@ import yaml
 
 class PromptLoader:
     """Load prompts from prompts/v1/ directory"""
-    
+
     PROMPTS_DIR = Path(__file__).parent.parent.parent / "prompts" / "v1"
     REGISTRY_FILE = PROMPTS_DIR / "prompt_registry.yaml"
-    
+
     @classmethod
     def load_prompt(cls, prompt_name: str) -> str:
         """
@@ -214,25 +214,25 @@ class PromptLoader:
         Example: load_prompt("pass_1_architecture") → loads pass_1_architecture_overview.md
         """
         registry = cls._load_registry()
-        
+
         if prompt_name not in registry["prompts"]:
             raise ValueError(f"Prompt '{prompt_name}' not found in registry")
-        
+
         prompt_info = registry["prompts"][prompt_name]
         prompt_file = cls.PROMPTS_DIR / prompt_info["filename"]
-        
+
         if not prompt_file.exists():
             raise FileNotFoundError(f"Prompt file not found: {prompt_file}")
-        
+
         with open(prompt_file, 'r') as f:
             return f.read()
-    
+
     @classmethod
     def _load_registry(cls) -> dict:
         """Load prompt registry"""
         with open(cls.REGISTRY_FILE, 'r') as f:
             return yaml.safe_load(f)
-    
+
     @classmethod
     def list_prompts(cls) -> List[str]:
         """List all available prompts"""
@@ -251,13 +251,13 @@ class ArchitectureReviewPass(BaseReviewPass):
     async def run(self, code: str) -> PassFindings:
         # Load prompt from prompts/v1/
         prompt_template = PromptLoader.load_prompt("pass_1_architecture")
-        
+
         # Format with variables
         prompt = prompt_template.format(
             code_snippet=code[:3000],
             component_summary=self._build_component_summary(code)
         )
-        
+
         # Call model
         response = await self._call_mistral(prompt)
         ...
@@ -329,7 +329,7 @@ class PassFindings:
     recommendations: List[str] = field(default_factory=list)
     summary: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization"""
         return {
@@ -340,7 +340,7 @@ class PassFindings:
             "summary": self.summary,
             "metadata": self.metadata
         }
-    
+
     @staticmethod
     def _finding_to_dict(finding: Finding) -> Dict[str, Any]:
         return {
@@ -351,7 +351,7 @@ class PassFindings:
             "recommendation": finding.recommendation,
             "effort_estimate": finding.effort_estimate
         }
-    
+
     def to_json(self) -> str:
         """Serialize to JSON"""
         return json.dumps(self.to_dict(), indent=2, default=str)
@@ -362,17 +362,17 @@ class MultiPassReport:
     session_id: str
     repo_name: str
     created_at: datetime = field(default_factory=datetime.now)
-    
+
     # Pass results
     pass_1: Optional[PassFindings] = None
     pass_2_results: Dict[str, PassFindings] = field(default_factory=dict)  # component → findings
     pass_3: Optional[PassFindings] = None
-    
+
     # Metadata
     detected_components: List[str] = field(default_factory=list)
     execution_time_seconds: float = 0.0
     total_findings: int = 0
-    
+
     @property
     def critical_count(self) -> int:
         """Count critical issues across all passes"""
@@ -380,7 +380,7 @@ class MultiPassReport:
         for pass_findings in self._all_findings():
             count += sum(1 for f in pass_findings.findings if f.severity == SeverityLevel.CRITICAL)
         return count
-    
+
     @property
     def major_count(self) -> int:
         """Count major issues"""
@@ -388,7 +388,7 @@ class MultiPassReport:
         for pass_findings in self._all_findings():
             count += sum(1 for f in pass_findings.findings if f.severity == SeverityLevel.MAJOR)
         return count
-    
+
     def _all_findings(self) -> List[PassFindings]:
         """Get all PassFindings from all passes"""
         results = []
@@ -398,7 +398,7 @@ class MultiPassReport:
         if self.pass_3:
             results.append(self.pass_3)
         return results
-    
+
     def to_markdown(self) -> str:
         """Export report as Markdown"""
         md = f"""# Code Review Report: {self.repo_name}
@@ -426,42 +426,42 @@ class MultiPassReport:
 *Generated by Multi-Pass Code Review System v1.0*
 """
         return md
-    
+
     def _pass_to_markdown(self, pass_findings: Optional[PassFindings]) -> str:
         if not pass_findings:
             return "*(No findings)*"
-        
+
         md = f"\n### {pass_findings.pass_name}\n\n"
         if pass_findings.summary:
             md += f"**Summary**: {pass_findings.summary}\n\n"
-        
+
         if pass_findings.findings:
             md += "**Findings**:\n"
             for finding in pass_findings.findings:
                 md += f"- [{finding.severity.value.upper()}] {finding.title}: {finding.description}\n"
-        
+
         if pass_findings.recommendations:
             md += "\n**Recommendations**:\n"
             for rec in pass_findings.recommendations:
                 md += f"- {rec}\n"
-        
+
         return md
-    
+
     def _pass_2_to_markdown(self) -> str:
         if not self.pass_2_results:
             return "*(No component analysis)*"
-        
+
         md = ""
         for component_type, findings in self.pass_2_results.items():
             md += f"\n### {component_type.upper()}\n"
             md += self._pass_to_markdown(findings)
-        
+
         return md
-    
+
     def to_json(self) -> str:
         """Export as JSON"""
         return json.dumps(self.to_dict(), indent=2, default=str)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {

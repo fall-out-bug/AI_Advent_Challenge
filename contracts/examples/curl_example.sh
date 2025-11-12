@@ -56,4 +56,3 @@ curl -X GET "${API_URL}/api/v1/reviews/${TASK_ID}"
 #     "overall_score": 75
 #   }
 # }
-

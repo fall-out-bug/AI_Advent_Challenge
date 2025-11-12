@@ -130,4 +130,3 @@ def track_tool_request(tool: str) -> Generator[None, None, None]:
     finally:
         duration = time.perf_counter() - start
         record_mcp_request(tool, status, duration)
-

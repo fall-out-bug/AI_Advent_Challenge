@@ -81,12 +81,12 @@ async def formalize_task(
 ) -> dict[str, Any]:
     """
     Convert informal user request into structured development plan.
-    
+
     Args:
         informal_request: Natural language description of task
         context: Additional context or constraints
         ctx: MCP context for logging
-    
+
     Returns:
         {
             "formalized_description": str,
@@ -108,13 +108,13 @@ async def generate_code(
 ) -> dict[str, Any]:
     """
     Generate code based on description using StarCoder2-7B.
-    
+
     Args:
         description: Clear description of code requirements
         language: Target programming language (default: python)
         style: Code style guide (default: pep8)
         ctx: MCP context
-    
+
     Returns:
         {
             "code": str,
@@ -135,13 +135,13 @@ async def generate_tests(
 ) -> dict[str, Any]:
     """
     Generate comprehensive tests for provided code.
-    
+
     Args:
         code: Source code to generate tests for
         test_framework: Testing framework (pytest, unittest, etc.)
         coverage_target: Target coverage percentage
         ctx: MCP context
-    
+
     Returns:
         {
             "test_code": str,
@@ -162,13 +162,13 @@ async def review_code(
 ) -> dict[str, Any]:
     """
     Perform comprehensive code review.
-    
+
     Args:
         code: Code to review
         style_guide: Style guidelines to check against
         focus_areas: Specific areas to focus on (security, performance, etc.)
         ctx: MCP context
-    
+
     Returns:
         {
             "overall_score": int,  # 0-100
@@ -190,13 +190,13 @@ def format_code(
 ) -> dict[str, Any]:
     """
     Format code according to style guidelines.
-    
+
     Args:
         code: Code to format
         formatter: Formatter to use (black, autopep8, etc.)
         line_length: Maximum line length
         ctx: MCP context
-    
+
     Returns:
         {
             "formatted_code": str,
@@ -215,12 +215,12 @@ def analyze_complexity(
 ) -> dict[str, Any]:
     """
     Analyze code complexity metrics.
-    
+
     Args:
         code: Code to analyze
         detailed: Include detailed analysis
         ctx: MCP context
-    
+
     Returns:
         {
             "cyclomatic_complexity": int,
@@ -320,12 +320,12 @@ def code_review_prompt(code: str, language: str, style: str) -> str:
     """Dynamic context-aware code review prompt."""
     return f"""
     Review this {language} code following {style} guidelines:
-    
+
     Code:
     ```
     {code}
     ```
-    
+
     Provide:
     1. Overall quality score (0-100)
     2. Issues found (categorized by severity)
@@ -339,9 +339,9 @@ def test_generation_prompt(code: str, framework: str) -> str:
     """Dynamic test generation prompt."""
     return f"""
     Generate comprehensive {framework} tests for:
-    
+
     {code}
-    
+
     Include:
     - Unit tests for all functions
     - Edge case testing
@@ -371,7 +371,7 @@ class ChatOrchestrator:
     Main orchestrator for Mistral agent interacting with MCP server.
     Handles intent parsing, tool discovery, execution planning, and conversation.
     """
-    
+
     def __init__(self, mcp_server_command: str, mcp_server_args: list[str]):
         self.server_params = StdioServerParameters(
             command=mcp_server_command,
@@ -384,31 +384,31 @@ class ChatOrchestrator:
         self.last_code = None
         self.last_tests = None
         self.last_review = None
-        
+
     async def initialize(self):
         """Initialize connection and discover capabilities."""
         async with stdio_client(self.server_params) as (read, write):
             async with ClientSession(read, write) as session:
                 await session.initialize()
-                
+
                 # Discover tools
                 tools_response = await session.list_tools()
                 self.available_tools = {
                     tool.name: tool for tool in tools_response.tools
                 }
-                
+
                 # Discover resources
                 resources_response = await session.list_resources()
                 self.available_resources = {
                     res.uri: res for res in resources_response.resources
                 }
-                
+
                 # Discover prompts
                 prompts_response = await session.list_prompts()
                 self.available_prompts = {
                     prompt.name: prompt for prompt in prompts_response.prompts
                 }
-    
+
     async def handle_user_message(self, message: str) -> str:
         """
         Process user message through complete workflow:
@@ -420,32 +420,32 @@ class ChatOrchestrator:
         """
         # Add to conversation memory
         self.conversation_memory.append({"role": "user", "content": message})
-        
+
         # Parse intent using Mistral
         intent = await self._parse_intent(message)
-        
+
         # Check if clarification needed
         if intent.get("needs_clarification"):
             questions = await self._generate_clarifying_questions(intent)
             return questions
-        
+
         # Generate execution plan
         plan = await self._generate_execution_plan(intent)
-        
+
         # Execute tool chain
         results = await self._execute_plan(plan)
-        
+
         # Format response
         response = await self._format_response(results)
-        
+
         self.conversation_memory.append({"role": "assistant", "content": response})
-        
+
         return response
-    
+
     async def _parse_intent(self, message: str) -> dict[str, Any]:
         """
         Use Mistral to parse user intent and map to available tools.
-        
+
         Returns:
             {
                 "primary_goal": str,
@@ -460,16 +460,16 @@ class ChatOrchestrator:
             f"- {name}: {tool.description}"
             for name, tool in self.available_tools.items()
         ])
-        
+
         prompt = f"""
         Available MCP tools:
         {tools_info}
-        
+
         Conversation history:
         {self._format_history()}
-        
+
         User request: "{message}"
-        
+
         Analyze the request and respond with JSON:
         {{
             "primary_goal": "what user wants to achieve",
@@ -478,33 +478,33 @@ class ChatOrchestrator:
             "needs_clarification": false,
             "unclear_aspects": []
         }}
-        
+
         Only return valid JSON, no explanations.
         """
-        
+
         # Call local Mistral model
         intent_json = await self._call_mistral(prompt)
         return json.loads(intent_json)
-    
+
     async def _generate_clarifying_questions(self, intent: dict) -> str:
         """Generate questions for unclear aspects."""
         unclear = intent.get("unclear_aspects", [])
         prompt = f"""
         User request has unclear aspects: {unclear}
-        
+
         Generate 1-3 specific clarifying questions to help understand:
         - Exact requirements
         - Constraints or preferences
         - Expected behavior
-        
+
         Be concise and specific.
         """
         return await self._call_mistral(prompt)
-    
+
     async def _generate_execution_plan(self, intent: dict) -> list[dict]:
         """
         Generate step-by-step execution plan.
-        
+
         Returns:
             [
                 {"tool": "formalize_task", "args": {...}},
@@ -513,54 +513,54 @@ class ChatOrchestrator:
             ]
         """
         tools_needed = intent.get("tools_needed", [])
-        
+
         prompt = f"""
         User wants: {intent['primary_goal']}
         Available tools: {tools_needed}
-        
+
         Create execution plan as JSON array:
         [
             {{"tool": "tool_name", "args": {{...}}}},
             ...
         ]
-        
+
         Rules:
         - Use results from previous steps in subsequent steps
         - Reference previous results as: "{{prev_result}}"
         - Only return JSON array
-        
+
         Conversation context:
         {self._format_history()}
         """
-        
+
         plan_json = await self._call_mistral(prompt)
         return json.loads(plan_json)
-    
+
     async def _execute_plan(self, plan: list[dict]) -> list[dict]:
         """Execute tool chain sequentially with state passing."""
         results = []
-        
+
         async with stdio_client(self.server_params) as (read, write):
             async with ClientSession(read, write) as session:
                 await session.initialize()
-                
+
                 for step in plan:
                     tool_name = step["tool"]
                     args = step["args"]
-                    
+
                     # Substitute previous results
                     args = self._substitute_previous_results(args, results)
-                    
+
                     # Call tool
                     result = await session.call_tool(tool_name, args)
-                    
+
                     # Extract and store result
                     result_data = self._extract_result_data(result)
                     results.append({
                         "tool": tool_name,
                         "result": result_data
                     })
-                    
+
                     # Store in state for future reference
                     if tool_name == "generate_code":
                         self.last_code = result_data.get("code")
@@ -568,21 +568,21 @@ class ChatOrchestrator:
                         self.last_tests = result_data.get("test_code")
                     elif tool_name == "review_code":
                         self.last_review = result_data
-        
+
         return results
-    
+
     async def _call_mistral(self, prompt: str) -> str:
         """Call local Mistral-7B model."""
         # Implementation with transformers or API
         pass
-    
+
     def _format_history(self) -> str:
         """Format conversation history for context."""
         return "\n".join([
             f"{msg['role']}: {msg['content']}"
             for msg in self.conversation_memory[-5:]  # Last 5 messages
         ])
-    
+
     def _substitute_previous_results(
         self, args: dict, results: list[dict]
     ) -> dict:
@@ -596,7 +596,7 @@ class ChatOrchestrator:
                 elif "test_code" in prev_result:
                     args[key] = prev_result["test_code"]
         return args
-    
+
     def _extract_result_data(self, mcp_result) -> dict:
         """Extract data from MCP result."""
         from mcp.types import TextContent
@@ -608,18 +608,18 @@ class ChatOrchestrator:
                 except:
                     result_data = {"text": content.text}
         return result_data
-    
+
     async def _format_response(self, results: list[dict]) -> str:
         """Format execution results for user."""
         prompt = f"""
         Execution results:
         {json.dumps(results, indent=2)}
-        
+
         Format a clear, helpful response for the user summarizing:
         - What was done
         - Key results
         - Any recommendations or next steps
-        
+
         Be concise but informative.
         """
         return await self._call_mistral(prompt)
@@ -789,12 +789,12 @@ tools:
     - review_code
     - format_code
     - analyze_complexity
-  
+
   # Tool-specific settings
   code_generation:
     max_new_tokens: 2048
     stop_sequences: ", "\n\n\n"]
-  
+
   code_review:
     severity_levels: ["critical", "major", "minor", "info"]
     max_issues: 50
@@ -886,15 +886,15 @@ from mistral_agent.src.orchestrator.chat_orchestrator import ChatOrchestrator
 
 async def main():
     """Demonstrate complete workflow."""
-    
+
     # Initialize orchestrator
     orchestrator = ChatOrchestrator(
         mcp_server_command="python",
         mcp_server_args=["mcp_server/src/server/starcoder_server.py"]
     )
-    
+
     await orchestrator.initialize()
-    
+
     # Example 1: Simple code generation
     print("=" * 70)
     print("Example 1: Generate fibonacci function")
@@ -903,7 +903,7 @@ async def main():
         "Create a function to calculate fibonacci numbers"
     )
     print(response)
-    
+
     # Example 2: Code with tests
     print("\n" + "=" * 70)
     print("Example 2: Generate and test code")
@@ -912,7 +912,7 @@ async def main():
         "Write tests for the fibonacci function"
     )
     print(response)
-    
+
     # Example 3: Complex workflow
     print("\n" + "=" * 70)
     print("Example 3: Complete development cycle")
@@ -938,14 +938,14 @@ from mistral_agent.src.orchestrator.chat_orchestrator import ChatOrchestrator
 
 async def interactive_chat():
     """Interactive chat loop."""
-    
+
     orchestrator = ChatOrchestrator(
         mcp_server_command="python",
         mcp_server_args=["mcp_server/src/server/starcoder_server.py"]
     )
-    
+
     await orchestrator.initialize()
-    
+
     print("=" * 70)
     print("Development Assistant - Interactive Mode")
     print("=" * 70)
@@ -956,14 +956,14 @@ async def interactive_chat():
     print("  /clear   - Clear conversation")
     print("  /exit    - Exit chat")
     print("=" * 70)
-    
+
     while True:
         try:
             user_input = input("\nYou: ").strip()
-            
+
             if not user_input:
                 continue
-            
+
             if user_input == "/exit":
                 print("Goodbye!")
                 break
@@ -980,11 +980,11 @@ async def interactive_chat():
                 orchestrator.conversation_memory.clear()
                 print("Conversation cleared.")
                 continue
-            
+
             # Process message
             response = await orchestrator.handle_user_message(user_input)
             print(f"\nAssistant: {response}")
-            
+
         except KeyboardInterrupt:
             print("\n\nGoodbye!")
             break
