@@ -11,7 +11,7 @@ class ConfigProviderProtocol(Protocol):
     """Protocol for configuration providers.
 
     Following Clean Architecture, this protocol is defined in domain layer
-    while implementations reside in infrastructure layer.
+    while implementations reside in infrastructure layer.  # noqa: E501
 
     Methods:
         get: Get configuration value by key
@@ -25,7 +25,8 @@ class ConfigProviderProtocol(Protocol):
         """Get configuration value by key.
 
         Args:
-            key: Configuration key (supports dot notation, e.g., "llm.temperature")
+            key: Configuration key (supports dot notation,
+                 e.g., "llm.temperature")
             default: Default value if key not found
 
         Returns:

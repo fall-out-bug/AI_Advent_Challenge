@@ -106,8 +106,8 @@ class LLMAnalysisResult(BaseModel):
         md = f"""
 ### [{self.classification.upper()}] {self.log_group.component}
 
-**Количество ошибок:** {self.log_group.count}  
-**Первое появление:** {self.log_group.first_occurrence}  
+**Количество ошибок:** {self.log_group.count}
+**Первое появление:** {self.log_group.first_occurrence}
 **Последнее появление:** {self.log_group.last_occurrence}
 
 **Описание проблемы:**
@@ -120,7 +120,7 @@ class LLMAnalysisResult(BaseModel):
 """
         for i, rec in enumerate(self.recommendations, 1):
             md += f"\n{i}. {rec}"
-        
+
         md += f"\n\n*Уверенность анализа: {self.confidence:.0%}*\n"
         return md
 ```
@@ -175,7 +175,7 @@ class LogParser:
                 continue
 
             match = LogParser.AIRFLOW_LOG_PATTERN.match(line)
-            
+
             if match:
                 # Сохранить предыдущую запись с трейсбэком
                 if last_entry and current_traceback:
@@ -184,7 +184,7 @@ class LogParser:
 
                 component, timestamp, message = match.groups()
                 level = LogParser._detect_level(message)
-                
+
                 entry = LogEntry(
                     timestamp=timestamp,
                     level=level,
@@ -213,7 +213,7 @@ class LogParser:
         25/11/03 20:36:37 WARN NativeCodeLoader: Unable to load native-hadoop library
         """
         entries = []
-        
+
         # Более гибкий парсер для Spark
         spark_pattern = re.compile(
             r"(\d{2}/\d{2}/\d{2}\s+\d{2}:\d{2}:\d{2})\s+(WARN|ERROR|INFO|DEBUG)\s+(\w+):\s+(.+)"
@@ -226,10 +226,10 @@ class LogParser:
             match = spark_pattern.search(line)
             if match:
                 timestamp_str, level, component, message = match.groups()
-                
+
                 # Нормализовать timestamp
                 timestamp = f"2025-{timestamp_str}"  # Assume 2025
-                
+
                 entry = LogEntry(
                     timestamp=timestamp,
                     level=level,
@@ -248,7 +248,7 @@ class LogParser:
     def parse_redis_logs(content: str) -> List[LogEntry]:
         """Парсить логи Redis."""
         entries = []
-        
+
         redis_pattern = re.compile(
             r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)?\s+\d+:\w\s+(\d{2}\s+\w+\s+\d{4})\s+(\d{2}:\d{2}:\d{2}\.\d+)\s+([\w*#]+)\s+(.+)"
         )
@@ -279,13 +279,13 @@ class LogParser:
     def parse_generic_logs(content: str, service_name: str) -> List[LogEntry]:
         """Универсальный парсер для других логов."""
         entries = []
-        
+
         for line in content.split("\n"):
             if not line.strip():
                 continue
 
             level = LogParser._detect_level(line)
-            
+
             entry = LogEntry(
                 timestamp=datetime.now().isoformat(),
                 level=level,
@@ -301,7 +301,7 @@ class LogParser:
     def _detect_level(text: str) -> str:
         """Определить уровень логирования по содержимому."""
         text_lower = text.lower()
-        
+
         if any(kw in text_lower for kw in LogParser.ERROR_LEVEL_KEYWORDS["ERROR"]):
             return "ERROR"
         elif any(kw in text_lower for kw in LogParser.ERROR_LEVEL_KEYWORDS["WARNING"]):
@@ -368,20 +368,20 @@ class OllamaClient:
     async def analyze_log_group(self, log_group: LogGroup) -> Optional[LLMAnalysisResult]:
         """
         Анализировать группу логов через LLM.
-        
+
         Args:
             log_group: Группа логов для анализа
-            
+
         Returns:
             LLMAnalysisResult или None если анализ не удался
         """
         prompt = self._build_prompt(log_group)
-        
+
         for attempt in range(self.retries):
             try:
                 response = await self._call_ollama(prompt)
                 result = self._parse_response(response, log_group)
-                
+
                 if result:
                     logger.info(
                         f"Successfully analyzed {log_group.component} "
@@ -394,14 +394,14 @@ class OllamaClient:
                 )
                 if attempt < self.retries - 1:
                     await asyncio.sleep(2 ** attempt)  # Exponential backoff
-        
+
         logger.error(f"Failed to analyze log group after {self.retries} retries")
         return None
 
     def _build_prompt(self, log_group: LogGroup) -> str:
         """Построить prompt для LLM."""
         sample_logs = log_group.sample_content(max_lines=15)
-        
+
         prompt = f"""Ты — эксперт по MLOps, Docker и отладке распределенных систем.
 
 Проанализируй следующие логи ошибок из компонента '{log_group.component}':
@@ -437,7 +437,7 @@ class OllamaClient:
     async def _call_ollama(self, prompt: str) -> str:
         """Отправить запрос в Ollama."""
         url = f"{self.base_url}/api/generate"
-        
+
         payload = {
             "model": self.model,
             "prompt": prompt,
@@ -453,7 +453,7 @@ class OllamaClient:
             ) as resp:
                 if resp.status != 200:
                     raise Exception(f"Ollama returned status {resp.status}")
-                
+
                 data = await resp.json()
                 return data.get("response", "")
 
@@ -469,10 +469,10 @@ class OllamaClient:
             if not json_match:
                 logger.warning("No JSON found in LLM response")
                 return None
-            
+
             json_str = json_match.group(0)
             data = json.loads(json_str)
-            
+
             # Валидировать через Pydantic
             result = LLMAnalysisResult(
                 log_group=log_group,
@@ -483,7 +483,7 @@ class OllamaClient:
                 confidence=float(data.get("confidence", 0.5))
             )
             return result
-        
+
         except (json.JSONDecodeError, ValueError) as e:
             logger.warning(f"Failed to parse LLM response: {e}")
             logger.debug(f"Raw response: {response[:200]}")
@@ -518,11 +518,11 @@ class LogNormalizer:
     ) -> Dict[str, List[LogEntry]]:
         """Группировать логи по компоненту и серьезности."""
         grouped = defaultdict(list)
-        
+
         for entry in entries:
             key = f"{entry.component}_{entry.level}"
             grouped[key].append(entry)
-        
+
         return dict(grouped)
 
     @staticmethod
@@ -533,23 +533,23 @@ class LogNormalizer:
         Создать группы логов, объединяя похожие ошибки.
         """
         log_groups = []
-        
+
         for key, entries in grouped_entries.items():
             component, severity = key.rsplit("_", 1)
-            
+
             # Группировать по сигнатуре ошибки
             by_signature = defaultdict(list)
             for entry in entries:
                 sig = LogParser.extract_error_signature(entry)
                 by_signature[sig].append(entry)
-            
+
             # Создать группу для каждой уникальной ошибки
             for signature, sig_entries in by_signature.items():
                 # Skip очень часто встречающиеся INFO логи
                 if severity == "INFO" and len(sig_entries) > 100:
                     logger.debug(f"Skipping {len(sig_entries)} INFO logs")
                     continue
-                
+
                 group = LogGroup(
                     component=component,
                     severity=LogNormalizer._classify_severity(severity),
@@ -560,7 +560,7 @@ class LogNormalizer:
                     error_pattern=signature,
                 )
                 log_groups.append(group)
-        
+
         # Sort by severity
         severity_order = {"critical": 0, "error": 1, "warning": 2, "info": 3}
         log_groups.sort(
@@ -569,7 +569,7 @@ class LogNormalizer:
                 -g.count  # More frequent first
             )
         )
-        
+
         return log_groups
 
     @staticmethod
@@ -595,9 +595,9 @@ class LogNormalizer:
             "INFO": 1,
             "DEBUG": 0,
         }
-        
+
         min_level = severity_levels.get(min_severity, 2)
-        
+
         return [
             entry for entry in entries
             if severity_levels.get(entry.level, 0) >= min_level
@@ -632,7 +632,7 @@ class ReportBuilder:
         """Построить Markdown отчет."""
         report = f"""# Отчет анализа логов (Log Analysis Report)
 
-**Время анализа:** {self.timestamp}  
+**Время анализа:** {self.timestamp}
 **Всего найдено проблем:** {len(self.results)}
 
 ## Краткое резюме (Summary)
@@ -710,12 +710,12 @@ class ReportBuilder:
     def get_action_items(self) -> List[str]:
         """Получить список задач для исправления."""
         items = []
-        
+
         for result in self.results:
             if result.classification in ["critical", "major"]:
                 for rec in result.recommendations:
                     items.append(f"[{result.log_group.component}] {rec}")
-        
+
         return items
 ```
 
@@ -750,31 +750,31 @@ load_dotenv()
 
 async def main():
     """Главная функция."""
-    
+
     # Конфигурация
     ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     ollama_model = os.getenv("OLLAMA_MODEL", "mistral")
     logs_dir = Path(os.getenv("LOGS_DIR", "./logs"))
-    
+
     logger.info(f"Starting log analysis with model: {ollama_model}")
-    
+
     # 1. Инициализировать Ollama клиент
     ollama_client = OllamaClient(
         base_url=ollama_url,
         model=ollama_model
     )
-    
+
     # Проверить здоровье Ollama
     is_healthy = await ollama_client.is_healthy()
     if not is_healthy:
         logger.error("Ollama is not available!")
         return
-    
+
     logger.info("✓ Ollama is healthy")
-    
+
     # 2. Парсить логи
     all_entries = []
-    
+
     log_files = {
         "airflow.log": LogParser.parse_airflow_logs,
         "spark-master.log": LogParser.parse_spark_logs,
@@ -782,7 +782,7 @@ async def main():
         "redis.log": LogParser.parse_redis_logs,
         "minio.log": (lambda content: LogParser.parse_generic_logs(content, "minio")),
     }
-    
+
     for filename, parser_func in log_files.items():
         filepath = logs_dir / filename
         if filepath.exists():
@@ -791,58 +791,58 @@ async def main():
                 entries = parser_func(f.read())
                 all_entries.extend(entries)
                 logger.info(f"  → Found {len(entries)} entries")
-    
+
     logger.info(f"Total entries parsed: {len(all_entries)}")
-    
+
     # 3. Нормализовать и сгруппировать
     grouped = LogNormalizer.group_by_component_and_severity(all_entries)
     log_groups = LogNormalizer.create_log_groups(grouped)
-    
+
     # Фильтровать только релевантные логи
     log_groups = [
         g for g in log_groups
         if g.severity in ["critical", "error", "warning"]
     ]
-    
+
     logger.info(f"Created {len(log_groups)} log groups for analysis")
-    
+
     # 4. Анализировать через LLM
     analysis_results = []
-    
+
     for i, log_group in enumerate(log_groups, 1):
         logger.info(
             f"Analyzing group {i}/{len(log_groups)}: "
             f"{log_group.component} ({log_group.count} errors)"
         )
-        
+
         result = await ollama_client.analyze_log_group(log_group)
         if result:
             analysis_results.append(result)
-        
+
         # Небольшая задержка между запросами
         await asyncio.sleep(0.5)
-    
+
     logger.info(f"Successfully analyzed {len(analysis_results)} groups")
-    
+
     # 5. Построить отчет
     report_builder = ReportBuilder(analysis_results)
-    
+
     markdown_report = report_builder.build_markdown_report()
     json_report = report_builder.build_json_report()
-    
+
     # Сохранить отчеты
     output_dir = Path("./reports")
     output_dir.mkdir(exist_ok=True)
-    
+
     with open(output_dir / "log_analysis_report.md", "w") as f:
         f.write(markdown_report)
-    
+
     with open(output_dir / "log_analysis_report.json", "w") as f:
         f.write(json_report)
-    
+
     logger.info("Reports saved to ./reports/")
     logger.info(f"\nMarkdown Report Preview:\n{markdown_report[:500]}...")
-    
+
     # Вывести action items
     action_items = report_builder.get_action_items()
     if action_items:

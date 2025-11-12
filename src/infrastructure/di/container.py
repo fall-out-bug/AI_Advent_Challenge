@@ -10,16 +10,22 @@ from src.application.use_cases.generate_channel_digest import (
 from src.application.use_cases.generate_channel_digest_by_name import (
     GenerateChannelDigestByNameUseCase,
 )
-from src.application.use_cases.generate_task_summary import GenerateTaskSummaryUseCase
+from src.application.use_cases.generate_task_summary import (
+    GenerateTaskSummaryUseCase,
+)
 from src.domain.services.summary_quality_checker import SummaryQualityChecker
 from src.domain.services.text_cleaner import TextCleanerService
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.database.mongo import get_db
 from src.infrastructure.llm.chunking.semantic_chunker import SemanticChunker
 from src.infrastructure.llm.clients.resilient_client import ResilientLLMClient
-from src.infrastructure.llm.summarizers.adaptive_summarizer import AdaptiveSummarizer
+from src.infrastructure.llm.summarizers.adaptive_summarizer import (
+    AdaptiveSummarizer,
+)
 from src.infrastructure.llm.summarizers.llm_summarizer import LLMSummarizer
-from src.infrastructure.llm.summarizers.map_reduce_summarizer import MapReduceSummarizer
+from src.infrastructure.llm.summarizers.map_reduce_summarizer import (
+    MapReduceSummarizer,
+)
 from src.infrastructure.llm.token_counter import TokenCounter
 from src.infrastructure.repositories.post_repository import PostRepository
 from src.infrastructure.repositories.task_repository import TaskRepository

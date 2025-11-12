@@ -1,0 +1,20 @@
+retrieval:
+  top_k: 10
+  score_threshold: 0.30
+  vector_search_headroom_multiplier: 2
+
+reranker:
+  enabled: false
+  strategy: "off"
+  llm:
+    model: "mistral:7b-instruct"
+    temperature: 0.5
+    max_tokens: 256
+    timeout_seconds: 3
+    temperature_override_env: "RAG_RERANK_TEMPERATURE"
+  cross_encoder:
+    model_name: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    batch_size: 8
+
+feature_flags:
+  enable_rag_plus_plus: false

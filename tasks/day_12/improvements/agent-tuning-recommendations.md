@@ -78,19 +78,19 @@ DECISION_ONLY_SYSTEM_PROMPT = """
 1. get_channel_digest_by_name(channel_name: str, days: int = 3)
    - Получить дайджест конкретного канала
    - Примеры: "Набока", "канал про ML", "мой любимый канал"
-   
+
 2. get_channel_digest(days: int = 3)
    - Получить дайджест всех подписанных каналов
    - Используй когда канал не указан явно
-   
+
 3. list_channels()
    - Список всех подписанных каналов
    - Используй для "какие каналы у тебя" или подобные
-   
+
 4. add_channel(channel_name: str)
    - Подписаться на новый канал
    - Используй для "добавь канал" или "подпишись на"
-   
+
 5. get_channel_metadata(channel_name: str)
    - Получить метаданные канала
    - Используй для "информация о канале"
@@ -202,10 +202,10 @@ class PipelineStage(Enum):
 
 class MCPAwareAgent:
     """Агент с поддержкой MCP инструментов."""
-    
+
     def __init__(self, mcp_client, model_client, config=None):
         """Инициализация агента.
-        
+
         Args:
             mcp_client: Клиент для MCP инструментов
             model_client: Клиент для LLM (OpenAI-совместимый)
@@ -214,20 +214,20 @@ class MCPAwareAgent:
         self.mcp_client = mcp_client
         self.model_client = model_client
         self.config = config or {}
-        
+
         # Настройки по умолчанию
         self.decision_temp = self.config.get("decision_temperature", 0.2)
         self.decision_max_tokens = self.config.get("decision_max_tokens", 256)
         self.formatting_temp = self.config.get("formatting_temperature", 0.7)
         self.formatting_max_tokens = self.config.get("formatting_max_tokens", 1024)
-    
+
     async def process(self, user_input: str, session_id: str = None) -> Dict[str, Any]:
         """Обработать пользовательский ввод через 3-этапный pipeline.
-        
+
         Args:
             user_input: Текст от пользователя
             session_id: ID сессии для логирования
-            
+
         Returns:
             Dict с результатом и reasoning
         """
@@ -236,57 +236,57 @@ class MCPAwareAgent:
             "input": user_input,
             "stages": {}
         }
-        
+
         try:
             # ===== ЭТАП 1: DECISION =====
             logger.info(f"Stage 1: Decision-only for input: {user_input[:50]}...")
             decision_result = await self._stage_decision(user_input, reasoning)
-            
+
             if not decision_result:
                 return {
                     "success": False,
                     "error": "Failed to parse tool decision",
                     "reasoning": reasoning
                 }
-            
+
             tool_name = decision_result.get("tool")
             tool_params = decision_result.get("params", {})
-            
+
             logger.info(f"Decision: tool={tool_name}, params={tool_params}")
             reasoning["stages"]["decision"] = decision_result
-            
+
             # ===== ЭТАП 2: EXECUTION =====
             logger.info(f"Stage 2: Execute tool {tool_name}...")
             exec_result = await self._stage_execution(tool_name, tool_params, reasoning)
-            
+
             if not exec_result:
                 return {
                     "success": False,
                     "error": f"Tool {tool_name} execution failed",
                     "reasoning": reasoning
                 }
-            
+
             reasoning["stages"]["execution"] = {
                 "tool": tool_name,
                 "status": "success",
                 "result_keys": list(exec_result.keys()) if isinstance(exec_result, dict) else "string"
             }
-            
+
             # ===== ЭТАП 3: FORMATTING =====
             logger.info(f"Stage 3: Format result...")
             formatted = await self._stage_formatting(exec_result, tool_name, reasoning)
-            
+
             reasoning["stages"]["formatting"] = {
                 "status": "success",
                 "output_length": len(formatted)
             }
-            
+
             return {
                 "success": True,
                 "content": formatted,
                 "reasoning": reasoning
             }
-            
+
         except Exception as e:
             logger.error(f"Agent error: {e}", exc_info=True)
             return {
@@ -294,14 +294,14 @@ class MCPAwareAgent:
                 "error": str(e),
                 "reasoning": reasoning
             }
-    
+
     async def _stage_decision(self, user_input: str, reasoning: Dict) -> Optional[Dict[str, Any]]:
         """ЭТАП 1: Выбрать инструмент через минималистичный промпт.
-        
+
         Args:
             user_input: Текст пользователя
             reasoning: Словарь для логирования
-            
+
         Returns:
             Dict {"tool": "...", "params": {...}} или None
         """
@@ -315,7 +315,7 @@ class MCPAwareAgent:
                 "content": user_input
             }
         ]
-        
+
         try:
             response = await self.model_client.create_completion(
                 model="local-model",
@@ -324,23 +324,23 @@ class MCPAwareAgent:
                 max_tokens=self.decision_max_tokens,
                 timeout=10
             )
-            
+
             response_text = response.get("choices", [{}])[0].get("message", {}).get("content", "")
             reasoning["stages"]["decision_raw"] = response_text[:200]
-            
+
             # Парсим JSON из ответа
             decision = self._extract_json(response_text)
-            
+
             if decision and "tool" in decision and "params" in decision:
                 return decision
-            
+
             logger.warning(f"Failed to parse decision: {response_text}")
             return None
-            
+
         except Exception as e:
             logger.error(f"Decision stage error: {e}")
             return None
-    
+
     async def _stage_execution(
         self,
         tool_name: str,
@@ -348,12 +348,12 @@ class MCPAwareAgent:
         reasoning: Dict
     ) -> Optional[Dict[str, Any]]:
         """ЭТАП 2: Выполнить инструмент MCP.
-        
+
         Args:
             tool_name: Имя инструмента
             tool_params: Параметры инструмента
             reasoning: Словарь для логирования
-            
+
         Returns:
             Результат выполнения инструмента или None
         """
@@ -362,14 +362,14 @@ class MCPAwareAgent:
             if tool_name == "get_channel_digest_by_name":
                 channel_name = tool_params.get("channel_name")
                 days = tool_params.get("days", 3)
-                
+
                 logger.info(f"Fetching digest for {channel_name} ({days} days)")
                 result = await self.mcp_client.execute_tool(
                     "get_channel_digest_by_name",
                     channel_name=channel_name,
                     days=days
                 )
-                
+
                 # Если постов не хватает, запусти collect_posts
                 if result and len(result.get("posts", [])) < 5:
                     logger.info(f"Not enough posts ({len(result['posts'])}), triggering collection...")
@@ -379,25 +379,25 @@ class MCPAwareAgent:
                         wait=True,
                         timeout=30
                     )
-                    
+
                     # Повторно получи посты
                     result = await self.mcp_client.execute_tool(
                         "get_channel_digest_by_name",
                         channel_name=channel_name,
                         days=days
                     )
-                
+
                 return result
-            
+
             # Остальные инструменты
             else:
                 result = await self.mcp_client.execute_tool(tool_name, **tool_params)
                 return result
-            
+
         except Exception as e:
             logger.error(f"Execution stage error: {e}")
             return None
-    
+
     async def _stage_formatting(
         self,
         exec_result: Dict[str, Any],
@@ -405,12 +405,12 @@ class MCPAwareAgent:
         reasoning: Dict
     ) -> str:
         """ЭТАП 3: Форматировать результат.
-        
+
         Args:
             exec_result: Результат выполнения инструмента
             tool_name: Имя использованного инструмента
             reasoning: Словарь для логирования
-            
+
         Returns:
             Отформатированный текст для пользователя
         """
@@ -418,7 +418,7 @@ class MCPAwareAgent:
             # Для дайджестов → саммаризация
             if "posts" in exec_result and len(exec_result["posts"]) > 0:
                 posts_text = self._combine_posts(exec_result["posts"])
-                
+
                 summary_response = await self.model_client.create_completion(
                     model="local-model",
                     messages=[
@@ -435,9 +435,9 @@ class MCPAwareAgent:
                     max_tokens=self.formatting_max_tokens,
                     timeout=30
                 )
-                
+
                 summary = summary_response.get("choices", [{}])[0].get("message", {}).get("content", "")
-                
+
                 # Форматируем вывод
                 formatted = f"""📌 Дайджест: {exec_result.get('channel_name', 'Неизвестный канал')}
 ⏱️ Период: последние {exec_result.get('days', 3)} дней
@@ -446,9 +446,9 @@ class MCPAwareAgent:
 {summary}
 
 ✅ Готово!"""
-                
+
                 return formatted
-            
+
             # Для списка каналов
             elif "channels" in exec_result:
                 channels_text = "\n".join([
@@ -456,7 +456,7 @@ class MCPAwareAgent:
                     for ch in exec_result["channels"]
                 ])
                 return f"Ваши каналы:\n{channels_text}"
-            
+
             # Для метаданных
             elif "metadata" in exec_result:
                 meta = exec_result["metadata"]
@@ -464,21 +464,21 @@ class MCPAwareAgent:
 📝 {meta.get('description', 'Нет описания')}
 👥 Подписчиков: {meta.get('subscriber_count', 'N/A')}
 📊 Постов: {meta.get('post_count', 'N/A')}"""
-            
+
             # Fallback
             else:
                 return "✅ Операция выполнена успешно!"
-            
+
         except Exception as e:
             logger.error(f"Formatting stage error: {e}")
             return "⚠️ Ошибка при форматировании результата"
-    
+
     def _extract_json(self, text: str) -> Optional[Dict]:
         """Извлечь JSON из текста.
-        
+
         Args:
             text: Текст с потенциальным JSON
-            
+
         Returns:
             Распарсенный JSON или None
         """
@@ -488,7 +488,7 @@ class MCPAwareAgent:
             r'```json\n(.*?)\n```',      # JSON в тройных кавычках
             r'```\n(.*?)\n```'           # Просто код
         ]
-        
+
         for pattern in patterns:
             match = re.search(pattern, text, re.DOTALL)
             if match:
@@ -497,15 +497,15 @@ class MCPAwareAgent:
                     return json.loads(json_str)
                 except json.JSONDecodeError:
                     continue
-        
+
         return None
-    
+
     def _combine_posts(self, posts: List[Dict]) -> str:
         """Объединить посты в читаемый текст.
-        
+
         Args:
             posts: Список постов
-            
+
         Returns:
             Объединённый текст
         """
@@ -514,7 +514,7 @@ class MCPAwareAgent:
             text = post.get("text", "")
             date = post.get("date", "")
             combined.append(f"[{date}] {text}")
-        
+
         return "\n\n---\n\n".join(combined)
 ```
 
@@ -558,25 +558,25 @@ from mcp_aware_agent import MCPAwareAgent
 
 async def test_digest_workflow():
     """Тест полного workflow дайджеста."""
-    
+
     agent = MCPAwareAgent(mcp_client, model_client)
-    
+
     # Тест 1: Простой дайджест
     result = await agent.process(
         "Создай дайджест по Набока за 3 дня",
         session_id="test_123"
     )
-    
+
     print(f"✓ Success: {result['success']}")
     print(f"✓ Output: {result['content'][:100]}...")
     print(f"✓ Reasoning: {result['reasoning']['stages']['decision']}")
-    
+
     # Проверки
     assert result["success"] == True
     assert "Дайджест" in result["content"]
     assert result["reasoning"]["stages"]["decision"]["tool"] == "get_channel_digest_by_name"
     assert result["reasoning"]["stages"]["decision"]["params"]["channel_name"] == "Набока"
-    
+
     print("✅ All tests passed!")
 
 # Запуск

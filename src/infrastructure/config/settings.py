@@ -329,11 +329,11 @@ class Settings(BaseSettings):
     )
     # Embedding index settings
     embedding_api_url: str = Field(
-        default="http://127.0.0.1:8000",
-        description="Embedding service base URL",
+        default="http://127.0.0.1:11434",
+        description="Embedding service base URL (Ollama)",
     )
     embedding_model: str = Field(
-        default="all-MiniLM-L6-v2",
+        default="nomic-embed-text",
         description="Embedding model identifier",
     )
     embedding_api_timeout_seconds: float = Field(
@@ -341,7 +341,7 @@ class Settings(BaseSettings):
         description="Timeout for embedding API requests",
     )
     embedding_vector_dimension: int = Field(
-        default=384,
+        default=768,
         description="Expected embedding vector dimension",
     )
     embedding_sources: tuple[str, ...] = Field(

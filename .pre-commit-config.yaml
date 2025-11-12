@@ -15,7 +15,7 @@ repos:
         language: system
         pass_filenames: true
         always_run: false
-        stages: [commit]
+        stages: [pre-commit]
 
   # Code formatting
   - repo: https://github.com/psf/black

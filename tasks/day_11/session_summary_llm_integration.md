@@ -30,7 +30,7 @@
 **Архитектура:**
 ```
 IntentOrchestrator.parse_task_intent()
-    ├─> LLM Available? 
+    ├─> LLM Available?
     │   ├─> YES: _parse_with_llm() → UnifiedModelClient → Mistral/Qwen
     │   │       └─> _parse_llm_response() → JSON extraction
     │   └─> NO: _parse_with_fallback() → Deterministic parser
@@ -118,4 +118,3 @@ IntentOrchestrator.parse_task_intent()
 Система успешно переведена с детерминистического парсера на LLM-основанный парсинг. LLM парсер показывает лучшие результаты по пониманию естественного языка, извлечению контекста и генерации описаний. Fallback парсер обеспечивает надежность системы при недоступности LLM.
 
 **Ключевое достижение:** Интент "напомни завтра в 9 купить хлеба" теперь успешно распознается LLM парсером с извлечением всех необходимых полей.
-

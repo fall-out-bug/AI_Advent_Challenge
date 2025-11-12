@@ -168,4 +168,3 @@ The archive is validated on upload:
 - If not provided, Pass 4 (log analysis) is skipped
 - If provided but empty, Pass 4 returns "skipped" status
 - Log analysis can be disabled via `ENABLE_LOG_ANALYSIS=false`
-

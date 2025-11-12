@@ -18,5 +18,3 @@ poetry run isort src tests scripts
 
 echo ""
 echo "✅ Code formatting complete"
-
-

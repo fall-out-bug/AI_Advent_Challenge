@@ -48,7 +48,22 @@ class StubRetrievalService:
     chunks: Sequence[RetrievedChunk]
     should_raise: bool = False
 
-    def retrieve(self, *args, **kwargs):
+    def __post_init__(self) -> None:
+        self.calls: list[dict] = []
+
+    async def retrieve(
+        self,
+        query_text: str,
+        query_vector: EmbeddingVector,
+        filter_config,
+    ) -> Sequence[RetrievedChunk]:
+        self.calls.append(
+            {
+                "query_text": query_text,
+                "query_vector": query_vector,
+                "filter_config": filter_config,
+            }
+        )
         if self.should_raise:
             raise RuntimeError("retrieval failed")
         return self.chunks
@@ -86,7 +101,8 @@ def _build_answer(text: str) -> Answer:
     )
 
 
-def test_use_case_generates_rag_and_non_rag_answers() -> None:
+@pytest.mark.asyncio
+async def test_use_case_generates_rag_and_non_rag_answers() -> None:
     """Use case should call both paths when retrieval succeeds."""
     query = Query(id="arch_001", question="Что такое Clean Architecture?")
     embedding_vector = EmbeddingVector(
@@ -117,15 +133,21 @@ def test_use_case_generates_rag_and_non_rag_answers() -> None:
         temperature=0.7,
     )
 
-    result = use_case.execute(query)
+    result = await use_case.execute(query)
 
     assert result.query == query
     assert result.without_rag.text == "baseline answer"
     assert result.with_rag.text == "rag answer"
     assert result.chunks_used == [chunk]
+    assert retrieval_service.calls
+    call = retrieval_service.calls[0]
+    assert call["query_text"] == query.question
+    assert call["filter_config"].top_k == 3
+    assert call["filter_config"].score_threshold == pytest.approx(0.3)
 
 
-def test_use_case_falls_back_when_retrieval_empty() -> None:
+@pytest.mark.asyncio
+async def test_use_case_falls_back_when_retrieval_empty() -> None:
     """Empty retrieval should fall back to non-RAG answer."""
     query = Query(id="arch_002", question="Что такое CAP?")
     embedding_vector = EmbeddingVector(
@@ -146,14 +168,15 @@ def test_use_case_falls_back_when_retrieval_empty() -> None:
         llm_service=llm_service,
     )
 
-    result = use_case.execute(query)
+    result = await use_case.execute(query)
 
     assert result.without_rag.text == "single answer"
     assert result.with_rag.text == "single answer"
     assert result.chunks_used == []
 
 
-def test_use_case_handles_retrieval_failure() -> None:
+@pytest.mark.asyncio
+async def test_use_case_handles_retrieval_failure() -> None:
     """Exceptions during retrieval should be logged and fallback used."""
     query = Query(id="arch_003", question="Что такое RAG?")
     embedding_vector = EmbeddingVector(
@@ -174,7 +197,7 @@ def test_use_case_handles_retrieval_failure() -> None:
         llm_service=llm_service,
     )
 
-    result = use_case.execute(query)
+    result = await use_case.execute(query)
 
     assert result.without_rag.text == "fallback answer"
     assert result.with_rag.text == "fallback answer"

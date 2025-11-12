@@ -577,11 +577,11 @@ class LLMClient:
             ValueError: On empty or invalid response
         """
         client = await self._get_client()
-        
+
         # ИСПРАВЛЕНИЕ: правильный endpoint и формат
         # Для vLLM/TGI используем OpenAI-совместимый endpoint
         url = f"{self.url}/v1/chat/completions"
-        
+
         payload = {
             "model": settings_llm.model,
             "messages": [
@@ -600,21 +600,21 @@ class LLMClient:
             logger.debug(f"Sending request: {len(prompt)} chars, max_tokens={max_tokens}")
             response = await client.post(url, json=payload)
             response.raise_for_status()
-            
+
             data = response.json()
-            
+
             # ИСПРАВЛЕНИЕ: правильное извлечение текста
             # Проверяем структуру ответа
             if "choices" not in data or not data["choices"]:
                 logger.error(f"Invalid response structure: {data}")
                 raise ValueError("Response missing 'choices' field")
-            
+
             message_content = data["choices"][^0].get("message", {}).get("content", "")
-            
+
             if not message_content or not message_content.strip():
                 logger.warning(f"Empty response from LLM. Full data: {data}")
                 raise ValueError("LLM returned empty response")
-            
+
             logger.debug(f"Received response: {len(message_content)} chars")
             return message_content.strip()
 
@@ -1276,4 +1276,3 @@ chunks_processed = Counter(
 [^77]: https://discuss.streamlit.io/t/streaming-response-mistral-ai-chatbot-rag/65140
 
 [^78]: https://docs.vast.ai/documentation/serverless/text-generation-inference-tgi
-

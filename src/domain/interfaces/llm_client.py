@@ -11,7 +11,7 @@ class LLMClientProtocol(Protocol):
     """Protocol for LLM clients.
 
     Following Clean Architecture, this protocol is defined in domain layer
-    while implementations reside in infrastructure layer.
+    while implementations reside in infrastructure layer.  # noqa: E501
 
     Methods:
         make_request: Make a request to the LLM

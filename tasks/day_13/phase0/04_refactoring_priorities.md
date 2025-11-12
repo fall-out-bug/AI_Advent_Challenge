@@ -1,6 +1,6 @@
 # Phase 0: Refactoring Priorities Matrix
 
-**Generated:** 2025-01-27  
+**Generated:** 2025-01-27
 **Scope:** Butler Agent refactoring roadmap based on Phase 0 analysis
 
 ## Executive Summary
@@ -20,9 +20,9 @@ This report consolidates insights from code quality, architecture, and test cove
 
 ### 1. 🔴 mcp_aware_agent.py (696 lines)
 
-**Priority:** **CRITICAL**  
-**Effort:** 16-24 hours  
-**Risk:** HIGH  
+**Priority:** **CRITICAL**
+**Effort:** 16-24 hours
+**Risk:** HIGH
 **Dependencies:** Phase 1 foundation
 
 **Issues:**
@@ -51,9 +51,9 @@ Split into:
 
 ### 2. 🔴 butler_bot.py (554 lines)
 
-**Priority:** **CRITICAL**  
-**Effort:** 12-16 hours  
-**Risk:** HIGH  
+**Priority:** **CRITICAL**
+**Effort:** 12-16 hours
+**Risk:** HIGH
 **Dependencies:** Domain layer cleanup
 
 **Issues:**
@@ -81,9 +81,9 @@ Split into:
 
 ### 3. 🟠 pdf_digest_tools.py (406 lines)
 
-**Priority:** **HIGH**  
-**Effort:** 8-12 hours  
-**Risk:** MEDIUM  
+**Priority:** **HIGH**
+**Effort:** 8-12 hours
+**Risk:** MEDIUM
 **Dependencies:** Independent
 
 **Issues:**
@@ -109,9 +109,9 @@ Organize into:
 
 ### 4. 🟠 Architecture Layer Violations
 
-**Priority:** **HIGH**  
-**Effort:** 6-8 hours  
-**Risk:** LOW (foundational)  
+**Priority:** **HIGH**
+**Effort:** 6-8 hours
+**Risk:** LOW (foundational)
 **Dependencies:** None
 
 **Issues:**
@@ -137,9 +137,9 @@ Create interfaces:
 
 ### 5. 🟡 intent_orchestrator.py (155 lines)
 
-**Priority:** **MEDIUM**  
-**Effort:** 4-6 hours  
-**Risk:** MEDIUM  
+**Priority:** **MEDIUM**
+**Effort:** 4-6 hours
+**Risk:** MEDIUM
 **Dependencies:** Test fixes
 
 **Issues:**
@@ -165,9 +165,9 @@ Improvements:
 
 ### 6. 🟡 mcp_client_robust.py (254 lines)
 
-**Priority:** **MEDIUM**  
-**Effort:** 4-6 hours  
-**Risk:** LOW  
+**Priority:** **MEDIUM**
+**Effort:** 4-6 hours
+**Risk:** LOW
 **Dependencies:** None
 
 **Issues:**
@@ -192,9 +192,9 @@ Enhancements:
 
 ### 7. 🟡 Test Infrastructure Fixes
 
-**Priority:** **MEDIUM**  
-**Effort:** 8-12 hours  
-**Risk:** LOW  
+**Priority:** **MEDIUM**
+**Effort:** 8-12 hours
+**Risk:** LOW
 **Dependencies:** None
 
 **Issues:**
@@ -220,9 +220,9 @@ Fix issues:
 
 ### 8. 🟢 pyproject.toml Type Stubs
 
-**Priority:** **LOW**  
-**Effort:** 2 hours  
-**Risk:** NONE  
+**Priority:** **LOW**
+**Effort:** 2 hours
+**Risk:** NONE
 **Dependencies:** None
 
 **Issues:**
@@ -246,9 +246,9 @@ Quick fixes:
 
 ### 9. 🟢 flake8 Style Fixes
 
-**Priority:** **LOW**  
-**Effort:** 4-6 hours  
-**Risk:** NONE  
+**Priority:** **LOW**
+**Effort:** 4-6 hours
+**Risk:** NONE
 **Dependencies:** None
 
 **Issues:**
@@ -271,9 +271,9 @@ Automated fixes:
 
 ### 10. 🟢 Create Phase 1 New Files
 
-**Priority:** **MEDIUM** (timing-dependent)  
-**Effort:** 20-30 hours  
-**Risk:** MEDIUM  
+**Priority:** **MEDIUM** (timing-dependent)
+**Effort:** 20-30 hours
+**Risk:** MEDIUM
 **Dependencies:** Domain interfaces, mcp_aware_agent split
 
 **Issues:**
@@ -341,7 +341,7 @@ New files (from plan):
 ```
 1. Split mcp_aware_agent.py (16-24h)
    └─→ Create DecisionEngine
-   └─→ Create ToolExecutor  
+   └─→ Create ToolExecutor
    └─→ Create ParameterNormalizer
    └─→ Create ResponseFormatter
    └─→ Update orchestration
@@ -539,4 +539,3 @@ New files (from plan):
 - [SOLID Principles](https://en.wikipedia.org/wiki/SOLID)
 - [Test-Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopment.html)
 - [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
-

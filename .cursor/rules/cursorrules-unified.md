@@ -404,17 +404,17 @@ Generate report:
 ```python
 def train_model(config: dict, data_path: str) -> Model:
     """Train ML model with specified configuration and data.
-    
+
     Args:
         config (dict): Training config with hyperparameters
         data_path (str): Path to training data
-        
+
     Returns:
         Model: Trained model instance
-        
+
     Raises:
         ValueError: If config invalid or data missing
-        
+
     Example:
         model = train_model(my_config, "/data/train.parquet")
     """

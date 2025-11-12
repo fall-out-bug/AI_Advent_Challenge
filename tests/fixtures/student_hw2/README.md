@@ -16,4 +16,3 @@ UI:
 2) `put_dataset`: загрузить CSV в MinIO (bucket `movielens`)
 3) `features_engineering`: Spark читает `s3a://movielens/...`, пишет фичи в `s3a://features/users/` (Parquet)
 4) `load_features`: читает Parquet из MinIO и кладёт JSON по ключу `user_id` в Redis.
-

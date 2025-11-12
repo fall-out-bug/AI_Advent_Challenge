@@ -28,4 +28,3 @@
 - Canon timeline: Day 11 sets infra/MCP API, Day 12 covers deployment, Day 15 introduces the modular reviewer, Day 17 aligns integrations. Anything before Day 11 lives in archive.
 - Reminder/task tooling is deprecated; digest/channel and NLP flows remain active.
 - Reviewer efforts now focus on the modular package as the primary path forward.
-

@@ -95,4 +95,3 @@ chunks = chunker.chunk("Long text to split...")
 - [Summarization Architecture](../../../docs/architecture/SUMMARIZATION_CURRENT_STATE.md)
 - [Quality Assessment Guide](../../../docs/day15/README.md#quality-assessment)
 - [Fine-tuning Documentation](../../finetuning/README.md)
-

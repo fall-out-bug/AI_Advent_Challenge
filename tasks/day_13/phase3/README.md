@@ -348,4 +348,3 @@ collect_data_uc = CollectDataUseCase(tool_client=mcp_client)
 ---
 
 **Статус:** ✅ Phase 3 завершена и готова к интеграции в Phase 4
-

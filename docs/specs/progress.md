@@ -24,6 +24,10 @@
 | EP19 | Stage 19_02 | Pipeline design & prototyping | Planned | fall_out_bug | – | Depends on Stage 19_01 requirements |
 | EP19 | Stage 19_03 | Implementation & integration | Planned | fall_out_bug | – | Depends on Stage 19_02 design |
 | EP19 | Stage 19_04 | Validation & documentation | Planned | fall_out_bug | – | Depends on Stage 19_03 implementation |
+| EP21 | Stage 21_01 | Requirements & question set update | Planned | fall_out_bug | – | Extend queries; set thresholds/metrics |
+| EP21 | Stage 21_02 | Design & prototype | Planned | fall_out_bug | – | Depends on Stage 21_01 |
+| EP21 | Stage 21_03 | Implementation & tests | Planned | fall_out_bug | – | Depends on Stage 21_02 |
+| EP21 | Stage 21_04 | Validation & report | Planned | fall_out_bug | – | Depends on Stage 21_03 |
 | EP20 | Stage 20_01 | Requirements & question set | Planned | fall_out_bug | – | Awaiting query set and retrieval config |
 | EP20 | Stage 20_02 | Design & prototype | Planned | fall_out_bug | – | Depends on Stage 20_01 decisions |
 | EP20 | Stage 20_03 | Implementation & tests | Planned | fall_out_bug | – | Depends on Stage 20_02 design |

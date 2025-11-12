@@ -30,7 +30,7 @@
   # Если видишь это:
   system = "Ты агент. Используй эти инструменты: ..."
   # → ЭТО ПРОБЛЕМА (русский в системном промпте)
-  
+
   # Должно быть:
   system = "You are a helpful assistant."  # EN только
   tools = [...]  # JSON отдельно
@@ -160,49 +160,49 @@ from typing import Optional, Dict, Any
 
 class RussianInputParser:
     """Parse Russian user input using regex + heuristics."""
-    
+
     @staticmethod
     def parse_digest_request(text: str) -> Optional[Dict[str, Any]]:
         """Parse "дайджест по ХХ за N дней" format.
-        
+
         Args:
             text: "Создай дайджест по Набока за 3 дня"
-            
+
         Returns:
             {"channel": "onaboka", "days": 3, "action": "digest"}
         """
         text_lower = text.lower()
-        
+
         # Ищем канал: "по Набока", "по каналу Набока", "Набока"
         channel_match = re.search(
             r'(?:по|канал)\s+(?:каналу\s+)?([а-яa-z0-9_]+)',
             text_lower
         )
         channel = channel_match.group(1) if channel_match else None
-        
+
         # Ищем дни: "3 дня", "за 7 дней"
         days_match = re.search(r'(\d+)\s*(?:дн|день|дня)', text_lower)
         days = int(days_match.group(1)) if days_match else 3
-        
+
         if not channel:
             return None
-        
+
         return {
             "action": "digest",
             "channel": channel,
             "days": days
         }
-    
+
     @staticmethod
     def parse_list_request(text: str) -> bool:
         """Проверить если это запрос на список каналов."""
         keywords = ["список", "какие", "каналы", "подписан", "all channels"]
         return any(kw in text.lower() for kw in keywords)
-    
+
     @staticmethod
     def normalize_channel_name(channel: str) -> str:
         """Нормализовать название канала.
-        
+
         "Набока" → "onaboka"
         "python" → "pythonru"
         """
@@ -212,7 +212,7 @@ class RussianInputParser:
             "python": "pythonru",
             # ... добавить остальные
         }
-        
+
         return channel_map.get(channel.lower(), channel)
 ```
 
@@ -231,7 +231,7 @@ from src.domain.input_processing.russian_parser import RussianInputParser
 
 class MCPAwareAgent:
     """Правильный MCP Agent с OpenAI Function Calling."""
-    
+
     # ===== СИСТЕМА ТОЛЬКО НА АНГЛИЙСКОМ! =====
     SYSTEM_PROMPT = """You are a helpful Telegram digest assistant.
 Your role is to:
@@ -240,25 +240,25 @@ Your role is to:
 3. Format responses clearly
 
 Always use tools when appropriate. Respond in the language of the user input."""
-    
+
     def __init__(self, mcp_client, model_client):
         self.mcp_client = mcp_client
         self.model_client = model_client
-    
+
     async def process(self, user_input: str) -> Dict[str, Any]:
         """Обработать запрос пользователя.
-        
+
         Args:
             user_input: "Создай дайджест по Набока за 3 дня"
-            
+
         Returns:
             {"response": "...", "reasoning": {...}}
         """
-        
+
         # ===== УРОВЕНЬ 1: Парсинг русского БЕЗ модели =====
         # Это может помочь моделе если что-то пойдет не так
         parsed_intent = self._parse_user_intent(user_input)
-        
+
         # ===== УРОВЕНЬ 2: Вызов LLM с инструментами =====
         response = await self.model_client.create_completion(
             model="mistral-7b-instruct",
@@ -275,25 +275,25 @@ Always use tools when appropriate. Respond in the language of the user input."""
             tools=TOOLS_SCHEMA,  # ← ЭТО КЛЮЧЕВОЕ ОТЛИЧИЕ!
             tool_choice="auto"
         )
-        
+
         # ===== УРОВЕНЬ 3: Парсим tool_calls =====
         tool_calls = response.get("tool_calls", [])
-        
+
         if not tool_calls and parsed_intent:
             # Fallback: если модель не вызвала инструмент, используем parsed
             tool_calls = [
                 self._create_tool_call(parsed_intent)
             ]
-        
+
         # ===== УРОВЕНЬ 4: Выполняем инструменты =====
         mcp_results = []
         for tool_call in tool_calls:
             result = await self._execute_tool_call(tool_call)
             mcp_results.append(result)
-        
+
         # ===== УРОВЕНЬ 5: Форматируем на РУССКОМ =====
         formatted_response = self._format_response_russian(mcp_results, user_input)
-        
+
         return {
             "response": formatted_response,
             "reasoning": {
@@ -302,19 +302,19 @@ Always use tools when appropriate. Respond in the language of the user input."""
                 "mcp_results_count": len(mcp_results)
             }
         }
-    
+
     def _parse_user_intent(self, user_input: str) -> Optional[Dict]:
         """Парсить русский ввод БЕЗ модели."""
         if RussianInputParser.parse_list_request(user_input):
             return {"action": "list_channels"}
-        
+
         digest = RussianInputParser.parse_digest_request(user_input)
         if digest:
             digest["channel"] = RussianInputParser.normalize_channel_name(digest["channel"])
             return digest
-        
+
         return None
-    
+
     def _create_tool_call(self, intent: Dict) -> Dict:
         """Создать tool_call из parsed intent."""
         if intent["action"] == "digest":
@@ -330,32 +330,32 @@ Always use tools when appropriate. Respond in the language of the user input."""
                 }
             }
         # ... остальные cases
-    
+
     async def _execute_tool_call(self, tool_call: Dict) -> Dict:
         """Выполнить tool_call через MCP."""
         func_name = tool_call["function"]["name"]
         args = json.loads(tool_call["function"]["arguments"])
-        
+
         result = await self.mcp_client.execute_tool(func_name, **args)
-        
+
         return {
             "tool": func_name,
             "result": result,
             "success": True
         }
-    
+
     def _format_response_russian(self, results: list, user_input: str) -> str:
         """Форматировать результат на РУССКОМ."""
         if not results:
             return "❌ Ошибка при выполнении запроса"
-        
+
         result = results[0]["result"]
-        
+
         if "posts" in result:
             posts = result["posts"]
             channel = result.get("channel_name", "Неизвестный канал")
             summary = result.get("summary", "Нет саммари")
-            
+
             return f"""📌 Дайджест: {channel}
 📊 Постов: {len(posts)}
 ⏱️ Период: {result.get('days', 3)} дней
@@ -363,7 +363,7 @@ Always use tools when appropriate. Respond in the language of the user input."""
 {summary}
 
 ✅ Готово!"""
-        
+
         return "✓ Операция выполнена успешно"
 ```
 
@@ -418,14 +418,14 @@ from src.domain.input_processing.russian_parser import RussianInputParser
 
 class TestRussianParser:
     """Тесты для парсера русского ввода."""
-    
+
     def test_digest_request_basic(self):
         result = RussianInputParser.parse_digest_request(
             "Создай дайджест по Набока за 3 дня"
         )
         assert result["channel"] == "onaboka"
         assert result["days"] == 3
-    
+
     def test_digest_request_variants(self):
         variants = [
             "дайджест по Набока",
@@ -436,12 +436,12 @@ class TestRussianParser:
             result = RussianInputParser.parse_digest_request(variant)
             assert result is not None
             assert "channel" in result
-    
+
     def test_list_channels_detection(self):
         variants = ["какие каналы", "список", "мои каналы"]
         for variant in variants:
             assert RussianInputParser.parse_list_request(variant)
-    
+
     # ... 10+ еще тестов
 ```
 
@@ -459,11 +459,11 @@ from src.domain.agents.mcp_aware_agent import MCPAwareAgent
 @pytest.mark.asyncio
 async def test_agent_digest_workflow():
     """Full workflow: Russian input → Tools → Russian output."""
-    
+
     agent = MCPAwareAgent(mock_mcp_client, mock_model_client)
-    
+
     result = await agent.process("Создай дайджест по Набока за 3 дня")
-    
+
     assert result["response"] is not None
     assert "Дайджест" in result["response"]
     assert "Готово" in result["response"]
@@ -503,9 +503,9 @@ from src.domain.agents.mcp_aware_agent import MCPAwareAgent
 
 async def main():
     agent = MCPAwareAgent(mcp_client, model_client)
-    
+
     result = await agent.process("Создай дайджест по Набока за 3 дня")
-    
+
     print(result["response"])
     print(f"\n📊 Reasoning: {result['reasoning']}")
 

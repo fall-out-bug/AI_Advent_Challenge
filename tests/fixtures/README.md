@@ -18,7 +18,7 @@ This directory contains test fixtures for the multi-pass code review system.
 - **Components**: Docker Compose + Spark + Airflow
 - **Expected**: `docker,spark,airflow`
 - **Description**: Feature engineering pipeline with Docker Compose, Spark jobs, Airflow DAGs
-- **Structure**: 
+- **Structure**:
   - `docker-compose.yml` with minio, redis, airflow, spark-master, spark-worker
   - `airflow/dags/` with DAG tasks
   - `spark-jobs/` with feature engineering scripts
@@ -119,4 +119,3 @@ Based on `hw_checker` validation logic:
 - Look for `mlflow` imports
 - Check for `log_metric`, `log_param` calls
 - Check for `mlflow/` directory
-

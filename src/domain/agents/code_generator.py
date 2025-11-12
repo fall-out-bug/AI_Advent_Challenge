@@ -288,7 +288,7 @@ class GeneratorPrompts:
             Formatted prompt
         """
         return f"""Generate comprehensive pytest tests for this function:
-        
+
 ```python
 {function_code}
 ```

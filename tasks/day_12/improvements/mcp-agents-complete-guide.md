@@ -145,7 +145,7 @@ tools = [
    ```python
    # ❌ ПЛОХО: Модель путается
    system = "Ты помощник. Используй инструменты: get_posts, create_digest"
-   
+
    # ✓ ХОРОШО: Инструменты на английском, подсказки минимальны
    system = "You are a helpful assistant."  # EN + инструменты JSON
    ```
@@ -155,7 +155,7 @@ tools = [
    # ❌ Модель выдает:
    "Хорошо, я помогу получить посты. Вот JSON:
     {"tool": "get_posts", ...}"  # JSON прячется в тексте
-   
+
    # ✓ Модель выдает (если правильно обучено):
    {
      "tool_calls": [{
@@ -177,13 +177,13 @@ tools = [
 
 class BilingualMCPAgent:
     """Агент с поддержкой русского языка."""
-    
+
     # ===== СИСТЕМА НА АНГЛИЙСКОМ =====
     SYSTEM_PROMPT = """You are a helpful assistant for Telegram channel digests.
-    
+
 Use the provided tools to help the user.
 Always respond with tool calls when needed, then format the response in Russian."""
-    
+
     # ===== ИНСТРУМЕНТЫ НА АНГЛИЙСКОМ (JSON) =====
     TOOLS = [
         {
@@ -208,27 +208,27 @@ Always respond with tool calls when needed, then format the response in Russian.
             }
         }
     ]
-    
+
     async def process(self, user_input_ru: str):
         """Обработать русский ввод пользователя.
-        
+
         Args:
             user_input_ru: Русский текст ("Дайджест по Набока за 3 дня")
-            
+
         Returns:
             Русский ответ
         """
-        
+
         # ===== ШАГ 1: Нормализация русского ввода =====
         # Парсим намерение БЕЗ отправки модели
         intent = self._parse_russian_intent(user_input_ru)
-        
+
         # Пример: intent = {
         #     "action": "get_digest",
         #     "channel": "onabока" → "onaboka",
         #     "days": 3
         # }
-        
+
         # ===== ШАГ 2: Вызов LLM (система + инструменты на англ) =====
         response = await self.model_client.create_completion(
             model="mistral-7b-instruct",
@@ -245,10 +245,10 @@ Always respond with tool calls when needed, then format the response in Russian.
             tools=self.TOOLS,  # ← Инструменты ОТДЕЛЬНО
             tool_choice="auto"  # Позволяет моделе выбрать
         )
-        
+
         # ===== ШАГ 3: Парсим tool_calls =====
         tool_calls = response.get("tool_calls", [])
-        
+
         if not tool_calls:
             # Если модель не вызвала инструмент, используем parsed intent
             tool_calls = [{
@@ -260,87 +260,87 @@ Always respond with tool calls when needed, then format the response in Russian.
                     })
                 }
             }]
-        
+
         # ===== ШАГ 4: Выполняем инструменты через MCP =====
         mcp_results = []
         for tool_call in tool_calls:
             func_name = tool_call["function"]["name"]
             func_args = json.loads(tool_call["function"]["arguments"])
-            
+
             result = await self.mcp_client.execute_tool(func_name, **func_args)
             mcp_results.append({
                 "tool": func_name,
                 "result": result
             })
-        
+
         # ===== ШАГ 5: Форматируем ответ на РУССКОМ =====
         formatted = self._format_russian_response(mcp_results)
-        
+
         return formatted
-    
+
     def _parse_russian_intent(self, text: str) -> dict:
         """Парсить русский ввод БЕЗ модели (regex + heuristics).
-        
+
         Args:
             text: Русский текст
-            
+
         Returns:
             Parsed intent
         """
-        
+
         # Регулярные выражения для русского
         patterns = {
             "channel": r"(?:по|канал|на)\s+(?:каналу\s+)?(\w+)",  # "по Набока" → "Набока"
             "days": r"(\d+)\s*(?:дн|день|дня)",  # "3 дня" → 3
             "action": r"(?:создай|собери|получи|дай|что)\s+(?:мне\s+)?(\w+)",  # "создай дайджест"
         }
-        
+
         intent = {
             "action": "get_digest",  # default
             "channel": "onaboka",    # default
             "days": 3                # default
         }
-        
+
         text_lower = text.lower()
-        
+
         # Ищем канал
         match = re.search(patterns["channel"], text_lower)
         if match:
             intent["channel"] = match.group(1)
-        
+
         # Ищем количество дней
         match = re.search(patterns["days"], text_lower)
         if match:
             intent["days"] = int(match.group(1))
-        
+
         # Ищем действие
         if "дайджест" in text_lower or "digest" in text_lower:
             intent["action"] = "get_digest"
         elif "список" in text_lower or "list" in text_lower:
             intent["action"] = "list_channels"
-        
+
         return intent
-    
+
     def _format_russian_response(self, mcp_results: list) -> str:
         """Форматировать результат на русском.
-        
+
         Args:
             mcp_results: Результаты выполнения инструментов
-            
+
         Returns:
             Русский текст ответа
         """
-        
+
         if not mcp_results:
             return "❌ Ошибка при выполнении запроса"
-        
+
         result = mcp_results[0]["result"]
         tool = mcp_results[0]["tool"]
-        
+
         if tool == "get_channel_digest" and "posts" in result:
             posts = result["posts"]
             channel = result.get("channel_name", "Неизвестный канал")
-            
+
             return f"""
 📌 Дайджест: {channel}
 📊 Постов найдено: {len(posts)}
@@ -350,7 +350,7 @@ Always respond with tool calls when needed, then format the response in Russian.
 
 ✅ Готово!
 """
-        
+
         return "✓ Операция выполнена"
 ```
 
@@ -363,14 +363,14 @@ Always respond with tool calls when needed, then format the response in Russian.
 ```python
 class InputProcessor:
     """Нормализация входа на русском."""
-    
+
     @staticmethod
     def normalize(text: str) -> dict:
         """Парсить русский текст.
-        
+
         Args:
             text: "Создай дайджест по Набока за 3 дня"
-            
+
         Returns:
             {
                 "intent": "digest",
@@ -389,7 +389,7 @@ class InputProcessor:
 ```python
 class MCPAgentSystemDesign:
     """Правильная архитектура агента."""
-    
+
     SYSTEM_MESSAGE = """You are a helpful Telegram digest assistant.
 Your role:
 1. Understand user requests
@@ -397,7 +397,7 @@ Your role:
 3. Format responses clearly
 
 Always use tools when needed."""
-    
+
     TOOLS_SCHEMA = [
         {
             "type": "function",
@@ -408,10 +408,10 @@ Always use tools when needed."""
             }
         }
     ]
-    
+
     async def call_with_tools(self, user_message: str):
         """Вызвать модель с инструментами (OpenAI format)."""
-        
+
         response = await self.client.create_completion(
             model="mistral-7b",
             messages=[
@@ -421,7 +421,7 @@ Always use tools when needed."""
             tools=self.TOOLS_SCHEMA,  # ← КЛЮЧЕВОЕ ОТЛИЧИЕ!
             tool_choice="auto"
         )
-        
+
         return response
 ```
 
@@ -430,10 +430,10 @@ Always use tools when needed."""
 ```python
 class MCPExecutor:
     """Выполнение инструментов через MCP."""
-    
+
     async def execute_tool_calls(self, tool_calls: list):
         """Выполнить tool_calls из ответа модели.
-        
+
         Args:
             tool_calls: [
                 {
@@ -444,24 +444,24 @@ class MCPExecutor:
                     }
                 }
             ]
-            
+
         Returns:
             Results
         """
         results = []
-        
+
         for tool_call in tool_calls:
             func_name = tool_call["function"]["name"]
             func_args = json.loads(tool_call["function"]["arguments"])
-            
+
             # Вызываем MCP инструмент
             result = await self.mcp_client.call(func_name, **func_args)
-            
+
             results.append({
                 "tool_call_id": tool_call["id"],
                 "result": result
             })
-        
+
         return results
 ```
 
@@ -470,14 +470,14 @@ class MCPExecutor:
 ```python
 class OutputFormatter:
     """Форматирование на русском."""
-    
+
     @staticmethod
     def format_digest(result: dict) -> str:
         """Форматировать дайджест.
-        
+
         Args:
             result: {'posts': [...], 'channel': 'onaboka', ...}
-            
+
         Returns:
             Красивый русский текст
         """
@@ -564,21 +564,21 @@ formatted = OutputFormatter.format_digest(mcp_result)
 
 async def process_user_request_correctly(user_message_ru: str):
     """Правильный способ обработки русского ввода.
-    
+
     Args:
         user_message_ru: "Создай дайджест по Набока за 3 дня"
-        
+
     Returns:
         Russian formatted response
     """
-    
+
     # ===== УРОВЕНЬ 1: Парсинг русского (БЕЗ модели) =====
     intent = {
         "action": "digest",
         "channel": "onaboka",
         "days": 3
     }
-    
+
     # ===== УРОВЕНЬ 2: Вызов LLM с инструментами =====
     response = await llm_client.create_completion(
         model="mistral-7b",
@@ -611,11 +611,11 @@ async def process_user_request_correctly(user_message_ru: str):
         ],
         tool_choice="auto"
     )
-    
+
     # ===== УРОВЕНЬ 3: Выполнение инструмента =====
     tool_calls = response.get("tool_calls", [])
     mcp_result = None
-    
+
     for tool_call in tool_calls:
         if tool_call["function"]["name"] == "get_channel_digest":
             args = json.loads(tool_call["function"]["arguments"])
@@ -624,7 +624,7 @@ async def process_user_request_correctly(user_message_ru: str):
                 channel_name=args["channel_name"],
                 days=args["days"]
             )
-    
+
     # ===== УРОВЕНЬ 4: Форматирование на РУССКОМ =====
     if mcp_result:
         return f"""
@@ -636,7 +636,7 @@ async def process_user_request_correctly(user_message_ru: str):
 
 ✅ Готово!
 """
-    
+
     return "❌ Ошибка при получении дайджеста"
 
 
