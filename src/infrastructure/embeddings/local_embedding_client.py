@@ -37,7 +37,13 @@ class LocalEmbeddingClient:
         embedding vectors.
     """
 
-    def __init__(self, base_url: str, model: str, timeout: float = 10.0) -> None:
+    def __init__(
+        self,
+        base_url: str,
+        model: str,
+        timeout: float = 10.0,
+        use_ollama_format: bool = False,
+    ) -> None:
         """Initialise the client.
 
         Purpose:
@@ -47,6 +53,7 @@ class LocalEmbeddingClient:
             base_url: Base URL of the embedding service.
             model: Embedding model identifier to request.
             timeout: Request timeout in seconds.
+            use_ollama_format: If True, use Ollama /api/embeddings format.
 
         Example:
             >>> LocalEmbeddingClient(
@@ -57,6 +64,7 @@ class LocalEmbeddingClient:
         self._base_url = base_url.rstrip("/")
         self._model = model
         self._timeout = timeout
+        self._use_ollama = use_ollama_format
 
     def generate_embeddings(self, texts: Sequence[str]) -> list[EmbeddingVector]:
         """Generate embeddings for the provided texts.
@@ -81,9 +89,54 @@ class LocalEmbeddingClient:
             ... )
             >>> # client.generate_embeddings([\"hello\"])  # doctest: +SKIP
         """
+        if self._use_ollama:
+            return self._generate_ollama_batch(texts)
         payload = self._build_payload(texts)
         response = self._request_embeddings(payload)
         return self._parse_response(response)
+
+    def _generate_ollama_batch(self, texts: Sequence[str]) -> list[EmbeddingVector]:
+        """Generate embeddings using Ollama /api/embeddings (one text at a time).
+
+        Purpose:
+            Ollama embedding endpoint accepts single prompt per request.
+
+        Args:
+            texts: Sequence of texts to embed.
+
+        Returns:
+            list[EmbeddingVector]: Embedding vectors.
+
+        Raises:
+            ValueError: If texts is empty or contains blank items.
+            EmbeddingClientError: If HTTP request fails.
+        """
+        if not texts:
+            raise ValueError("texts must contain at least one item.")
+        vectors = []
+        url = f"{self._base_url}/api/embeddings"
+        for text in texts:
+            if not text or not text.strip():
+                raise ValueError("text items cannot be blank.")
+            payload = {"model": self._model, "prompt": text}
+            try:
+                response = httpx.post(url, json=payload, timeout=self._timeout)
+                response.raise_for_status()
+                data = response.json()
+                embedding = data.get("embedding")
+                if not embedding or not isinstance(embedding, list):
+                    raise EmbeddingClientError("Invalid Ollama response: missing embedding.")
+                vectors.append(
+                    EmbeddingVector(
+                        values=tuple(embedding),
+                        model=self._model,
+                        dimension=len(embedding),
+                        metadata={},
+                    )
+                )
+            except httpx.HTTPError as error:
+                raise EmbeddingClientError(f"Ollama request failed: {error}") from error
+        return vectors
 
     def _build_payload(self, texts: Sequence[str]) -> dict[str, Any]:
         """Validate inputs and build the embedding payload.

@@ -191,4 +191,3 @@ components:
           type: string
           description: Error message
           example: "new_zip exceeds size limit: 100MB"
-

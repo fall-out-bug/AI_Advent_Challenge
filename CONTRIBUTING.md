@@ -171,6 +171,22 @@ Open a pull request on GitHub with:
 - Screenshots (if applicable)
 - Test coverage information
 
+## Epic 21 Transition Guidance
+
+Epic 21 introduces updated quality gates. While Stage 21_02 is in progress, please follow these interim instructions:
+
+- **Docstring template**: Option B (pragmatic) is the required standard. See `docs/specs/epic_21/architect/docstring_faq.md` for complete guidance and examples.
+- **Pre-commit hooks**:
+  - Fast hooks (`black`, `isort`, `flake8`, `pydocstyle`) run automatically on commit.
+  - Heavy hooks (`mypy`, `bandit`, `markdownlint`) run manually or in CI. Before pushing, execute:
+    ```bash
+    pre-commit run --hook-stage manual --all-files
+    ```
+  - Full configuration is documented in `docs/specs/epic_21/architect/pre_commit_strategy.md`.
+- **Pytest markers**: New markers for Epic 21 reside in `docs/specs/epic_21/architect/pytest_markers.md`. Use them when adding tests to ensure proper tagging.
+
+This placeholder will be replaced with finalized sections once Stage 21_02 lands.
+
 ## Code Standards
 
 ### Python Style Guide

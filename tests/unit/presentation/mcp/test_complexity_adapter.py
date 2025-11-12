@@ -80,10 +80,10 @@ def func2():
         code = """class TestClass:
     def __init__(self):
         self.value = 0
-    
+
     def get_value(self):
         return self.value
-    
+
     def set_value(self, v):
         self.value = v
 """

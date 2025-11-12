@@ -31,4 +31,3 @@ jobs:
       - name: Test
         run: |
           pytest -q tests/ --cov=src --cov-report=term
-

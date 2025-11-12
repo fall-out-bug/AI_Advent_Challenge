@@ -1,39 +1,17 @@
-# Epic 20 · RAG vs Non‑RAG Answering Agent
+# Epic 20 · Summary
 
-## Purpose
-Implement a question‑answering agent with two modes: (1) plain LLM (no context)
-and (2) RAG (retrieve relevant chunks from the EP19 index and augment the
-prompt). Compare answers and produce a short report: where RAG helps and where
-it does not.
+## Goals
+- Сравнить ответы чистого LLM и RAG-режима, используя индекс из Epic 19.
+- Предоставить CLI/агента с режимами `no-context` и `with-context`, фиксируя контекст и вывод.
+- Сформировать набор вопросов, конфигурацию retrieval, оценочный рубеж и отчёт о влиянии RAG.
 
-## Objectives
-- Reuse EP19 index (Mongo metadata + Redis/FAISS vectors) for retrieval.
-- Provide an agent/CLI with two modes (with RAG / without RAG) and side‑by‑side
-  comparison output.
-- Define a lightweight evaluation rubric (LLM‑as‑judge from EP05) to label
-  improvements or regressions.
-- Deliver a demo flow runnable from IDE/console.
+## Архитектурные решения
+- Домен/приложение/инфраструктура/презентация реализованы по Clean Architecture; RAG сервисы используют протоколы и внедряются через DI.
+- RetrievalService опирается на адаптер FAISS/Redis из EP19, PromptAssembler управляет контекстным бюджетом и шаблонами.
+- CLI команды `rag compare` и `rag batch` используют общий use case, обеспечивая единый путь логирования и метрик.
 
-## Dependencies
-- EP19 index available (or minimal index built from configured folders).
-- Shared infra per `docs/specs/operations.md` (LLM API, Mongo, Redis).
-- EP05 scoring templates optionally reused for quick LLM‑as‑judge.
-
-## Stage Breakdown
-| Stage | Scope | Key Deliverables | Exit Criteria |
-|-------|-------|------------------|---------------|
-| Stage 20_01 | Requirements & dataset of questions | Query set, retrieval config, evaluation rubric | Approved scope; queries saved |
-| Stage 20_02 | Design & prototype | Retrieval + prompting design, side‑by‑side prototype | Prototype returns comparable outputs |
-| Stage 20_03 | Implementation & tests | Agent + CLI, metrics/logging, basic tests | CLI works in both modes; tests pass |
-| Stage 20_04 | Validation & report | Runs on query set; report (where RAG helped/failed) | Report published; demo recorded |
-
-## Success Criteria
-- CLI produces comparable answers in both modes for a small curated query set.
-- Report summarises cases where RAG improves coverage/accuracy/coherence and
-  where it does not (hallucinations, wrong retrieval, prompt overflow).
-- Minimal integration with EP19 index; no ad‑hoc stores.
-
-## References
-- `docs/specs/epic_19/epic_19.md` (indexing)
-- `docs/specs/epic_05/stage_05_02_runbook.md` (LLM‑as‑judge automation)
-- `docs/specs/operations.md` (shared infra)
+## Реализация
+- Подготовлены артефакты: `queries.jsonl`, `retrieval_config.yaml`, `prompt_templates.md`, а также рубрика ручной оценки.
+- Реализованы value objects и сервисы для RAG; покрыты 32 юнит-теста (домен) и 7 application тестов, добавлены интеграционные и CLI smoke tests.
+- Batch-прогон завершён, результаты сохранены (`results_stage20.jsonl`, `results_with_labels.jsonl`), подготовлен промежуточный отчёт.
+- Выявлены зоны улучшения (резервирование запроса, устойчивость LLM); предложены ретраи и ручная перекалибровка меток для Stage 20_04.

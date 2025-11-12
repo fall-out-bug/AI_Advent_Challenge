@@ -182,4 +182,3 @@ tests/
 - ❌ No public functions without docstrings
 - ❌ No code without tests
 - ❌ No `print()` statements (use logging)
-

@@ -32,10 +32,10 @@ class FakeMessage:
         self.chat_actions: list[str] = []
         self.chat = types.SimpleNamespace(id=123)
         self.from_user = types.SimpleNamespace(id=user_id)
-        
+
         async def send_chat_action(chat_id: int, action: str) -> None:
             self.chat_actions.append(action)
-        
+
         self.bot = types.SimpleNamespace(send_chat_action=send_chat_action)
 
     async def answer(self, text: str) -> None:
@@ -82,14 +82,14 @@ async def test_digest_button_click_generates_and_sends_pdf(monkeypatch: pytest.M
     5. User receives PDF file
     """
     tool_calls = []
-    
+
     class FakeClient:
         """Mock MCP client for testing."""
-        
+
         async def call_tool(self, tool_name: str, arguments: dict) -> dict:
             """Mock tool calls."""
             tool_calls.append((tool_name, arguments))
-            
+
             if tool_name == "get_posts_from_db":
                 return {
                     "posts_by_channel": {
@@ -153,7 +153,7 @@ async def test_digest_button_click_generates_and_sends_pdf(monkeypatch: pytest.M
     # Verify workflow
     assert call.answered is True  # Callback answered
     assert "upload_document" in call.message.chat_actions  # Upload action shown
-    
+
     # Verify MCP tools were called in correct order
     assert len(tool_calls) >= 5
     assert tool_calls[0][0] == "get_posts_from_db"
@@ -162,12 +162,12 @@ async def test_digest_button_click_generates_and_sends_pdf(monkeypatch: pytest.M
     assert tool_calls[3][0] == "format_digest_markdown"
     assert tool_calls[4][0] == "combine_markdown_sections"
     assert tool_calls[5][0] == "convert_markdown_to_pdf"
-    
+
     # Verify PDF was sent
     assert len(call.message.documents) == 1
     assert call.message.documents[0]["filename"].endswith(".pdf")
     assert call.message.documents[0]["filename"].startswith("digest_")
-    
+
     # Verify PDF content
     pdf_bytes = call.message.documents[0]["document"]
     assert len(pdf_bytes) > 0
@@ -186,7 +186,7 @@ async def test_digest_button_click_no_posts_message(monkeypatch: pytest.MonkeyPa
     """
     class FakeClient:
         """Mock MCP client for testing."""
-        
+
         async def call_tool(self, tool_name: str, arguments: dict) -> dict:
             """Mock tool calls."""
             if tool_name == "get_posts_from_db":
@@ -205,7 +205,7 @@ async def test_digest_button_click_no_posts_message(monkeypatch: pytest.MonkeyPa
     # Verify informative message sent
     assert len(call.message.sent) > 0
     assert any("No new posts" in msg or "no posts" in msg.lower() for msg in call.message.sent)
-    
+
     # Verify no PDF was sent
     assert len(call.message.documents) == 0
 
@@ -222,10 +222,10 @@ async def test_digest_button_click_cached_pdf_sent_immediately(monkeypatch: pyte
     4. No MCP tool calls made
     """
     tool_calls = []
-    
+
     class FakeClient:
         """Mock MCP client for testing."""
-        
+
         async def call_tool(self, tool_name: str, arguments: dict) -> dict:
             """Mock tool calls (should not be called)."""
             tool_calls.append(tool_name)
@@ -245,7 +245,7 @@ async def test_digest_button_click_cached_pdf_sent_immediately(monkeypatch: pyte
 
     # Verify no MCP tools were called (cache hit)
     assert len(tool_calls) == 0
-    
+
     # Verify PDF was sent from cache
     assert len(call.message.documents) == 1
     assert call.message.documents[0]["document"] == pdf_bytes
@@ -264,7 +264,7 @@ async def test_digest_button_click_pdf_error_fallback_to_text(monkeypatch: pytes
     """
     class FakeClient:
         """Mock MCP client for testing."""
-        
+
         async def call_tool(self, tool_name: str, arguments: dict) -> dict:
             """Mock tool calls."""
             if tool_name == "get_posts_from_db":
@@ -313,7 +313,7 @@ async def test_digest_button_click_pdf_error_fallback_to_text(monkeypatch: pytes
     # Verify fallback to text digest
     assert len(call.message.sent) > 0
     assert any("📰" in msg or "Fallback" in msg or "summary" in msg.lower() for msg in call.message.sent)
-    
+
     # Verify no PDF was sent
     assert len(call.message.documents) == 0
 
@@ -330,14 +330,14 @@ async def test_digest_button_click_multiple_channels_processed(monkeypatch: pyte
     4. PDF contains all channel summaries
     """
     tool_calls = []
-    
+
     class FakeClient:
         """Mock MCP client for testing."""
-        
+
         async def call_tool(self, tool_name: str, arguments: dict) -> dict:
             """Mock tool calls."""
             tool_calls.append(tool_name)
-            
+
             if tool_name == "get_posts_from_db":
                 posts = {
                     f"channel{i}": [
@@ -387,7 +387,6 @@ async def test_digest_button_click_multiple_channels_processed(monkeypatch: pyte
     # Verify all channels were summarized
     summarize_calls = [call for call in tool_calls if call == "summarize_posts"]
     assert len(summarize_calls) == 5  # One per channel
-    
+
     # Verify PDF was sent
     assert len(call.message.documents) == 1
-

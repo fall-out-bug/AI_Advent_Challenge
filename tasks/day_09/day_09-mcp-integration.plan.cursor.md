@@ -141,41 +141,41 @@ class ModelClientAdapter:
 
 class MCPApplicationAdapter:
     """Bridges MCP tools to application layer."""
-    
+
     def __init__(self):
         self.unified_client = UnifiedModelClient()
         self.token_analyzer = TokenAnalyzer()
-    
+
     async def list_available_models(self) -> Dict[str, Any]:
         """List all configured models."""
         # Return MODEL_CONFIGS data
-    
+
     async def check_model_availability(self, model_name: str) -> Dict[str, bool]:
         """Check if model is available."""
         # Use unified_client.check_availability()
-    
+
     async def generate_code_via_agent(
         self, description: str, model: str
     ) -> Dict[str, Any]:
         """Generate code using CodeGeneratorAgent."""
         # Create agent, call process, return structured result
-    
+
     async def review_code_via_agent(
         self, code: str, model: str
     ) -> Dict[str, Any]:
         """Review code using CodeReviewerAgent."""
         # Create agent, call process, return structured result
-    
+
     async def orchestrate_generation_and_review(
         self, description: str, gen_model: str, review_model: str
     ) -> Dict[str, Any]:
         """Full workflow via MultiAgentOrchestrator."""
         # Use existing orchestrator from day_07_workflow.py pattern
-    
+
     def count_text_tokens(self, text: str) -> Dict[str, int]:
         """Count tokens using TokenAnalyzer."""
         # Use token_analyzer.count_tokens()
-    
+
     async def close(self) -> None:
         """Cleanup resources."""
         await self.unified_client.close()
@@ -210,11 +210,11 @@ def get_adapter() -> MCPApplicationAdapter:
 @mcp.tool()
 def add(a: float, b: float) -> dict[str, float]:
     """Add two numbers.
-    
+
     Args:
         a: First number
         b: Second number
-    
+
     Returns:
         Dictionary with result and operation type
     """
@@ -224,11 +224,11 @@ def add(a: float, b: float) -> dict[str, float]:
 @mcp.tool()
 def multiply(a: float, b: float) -> dict[str, float]:
     """Multiply two numbers.
-    
+
     Args:
         a: First number
         b: Second number
-    
+
     Returns:
         Dictionary with result and operation type
     """
@@ -239,7 +239,7 @@ def multiply(a: float, b: float) -> dict[str, float]:
 @mcp.tool()
 async def list_models() -> dict[str, list]:
     """List all available AI models.
-    
+
     Returns:
         Dictionary containing local and external model lists
     """
@@ -250,10 +250,10 @@ async def list_models() -> dict[str, list]:
 @mcp.tool()
 async def check_model(model_name: str) -> dict[str, bool]:
     """Check if a specific model is available.
-    
+
     Args:
         model_name: Name of the model to check
-    
+
     Returns:
         Dictionary with availability status
     """
@@ -265,11 +265,11 @@ async def check_model(model_name: str) -> dict[str, bool]:
 @mcp.tool()
 async def generate_code(description: str, model: str = "starcoder") -> dict:
     """Generate Python code from description using AI agent.
-    
+
     Args:
         description: Description of code to generate
         model: Model to use (default: starcoder)
-    
+
     Returns:
         Dictionary with generated code and metadata
     """
@@ -280,11 +280,11 @@ async def generate_code(description: str, model: str = "starcoder") -> dict:
 @mcp.tool()
 async def review_code(code: str, model: str = "mistral") -> dict:
     """Review Python code for quality and issues.
-    
+
     Args:
         code: Python code to review
         model: Model to use (default: mistral)
-    
+
     Returns:
         Dictionary with review results and quality score
     """
@@ -299,12 +299,12 @@ async def generate_and_review(
     review_model: str = "mistral"
 ) -> dict:
     """Generate code and review it in single workflow.
-    
+
     Args:
         description: Description of code to generate
         gen_model: Model for generation (default: starcoder)
         review_model: Model for review (default: mistral)
-    
+
     Returns:
         Dictionary with generation and review results
     """
@@ -318,10 +318,10 @@ async def generate_and_review(
 @mcp.tool()
 def count_tokens(text: str) -> dict[str, int]:
     """Count tokens in text.
-    
+
     Args:
         text: Text to analyze
-    
+
     Returns:
         Dictionary with token count
     """
@@ -347,17 +347,17 @@ from mcp.client.stdio import stdio_client
 
 class MCPClient:
     """Client for discovering and executing MCP tools."""
-    
+
     def __init__(self, server_script: str = "src/presentation/mcp/server.py"):
         self.server_params = StdioServerParameters(
             command="python",
             args=[server_script]
         )
         self.session: ClientSession | None = None
-    
+
     async def discover_tools(self) -> List[Dict[str, Any]]:
         """Discover all available tools.
-        
+
         Returns:
             List of tool metadata dictionaries
         """
@@ -365,7 +365,7 @@ class MCPClient:
             async with ClientSession(read, write) as session:
                 await session.initialize()
                 tools_response = await session.list_tools()
-                
+
                 tools = []
                 for tool in tools_response.tools:
                     tools.append({
@@ -373,18 +373,18 @@ class MCPClient:
                         "description": tool.description,
                         "input_schema": tool.inputSchema
                     })
-                
+
                 return tools
-    
+
     async def call_tool(
         self, tool_name: str, arguments: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Call a tool with arguments.
-        
+
         Args:
             tool_name: Name of tool to call
             arguments: Tool arguments
-        
+
         Returns:
             Tool execution result
         """
@@ -393,15 +393,15 @@ class MCPClient:
                 await session.initialize()
                 result = await session.call_tool(tool_name, arguments)
                 return result.content[0].text if result.content else {}
-    
+
     async def interactive_mode(self) -> None:
         """Interactive CLI for tool exploration."""
         print("MCP Interactive Mode")
         print("Commands: list, call <tool> <args>, quit")
-        
+
         while True:
             command = input("\nmcp> ").strip()
-            
+
             if command == "quit":
                 break
             elif command == "list":
@@ -433,24 +433,24 @@ async def main():
     print("="*70)
     print("MCP Tool Discovery Demo")
     print("="*70)
-    
+
     client = MCPClient()
-    
+
     # Discover tools
     print("\nDiscovering available tools...")
     tools = await client.discover_tools()
-    
+
     print(f"\nFound {len(tools)} tools:")
     for tool in tools:
         print(f"\n  • {tool['name']}")
         print(f"    {tool['description']}")
-    
+
     # Test calculator tool
     print("\n" + "="*70)
     print("Testing calculator tool...")
     result = await client.call_tool("add", {"a": 5, "b": 3})
     print(f"add(5, 3) = {result}")
-    
+
     print("\n✅ Discovery demo completed!")
 
 
@@ -476,24 +476,24 @@ async def test_mcp_tools():
     print("="*70)
     print("🔥 Day 09: MCP Integration Demo")
     print("="*70)
-    
+
     client = MCPClient()
-    
+
     # 1. List models
     print("\n1. Testing list_models tool...")
     models = await client.call_tool("list_models", {})
     print(f"   Available models: {len(models.get('local_models', []))} local, {len(models.get('api_models', []))} API")
-    
+
     # 2. Check model
     print("\n2. Testing check_model tool...")
     result = await client.call_tool("check_model", {"model_name": "qwen"})
     print(f"   Qwen available: {result.get('available', False)}")
-    
+
     # 3. Count tokens
     print("\n3. Testing count_tokens tool...")
     tokens = await client.call_tool("count_tokens", {"text": "Hello world, this is a test"})
     print(f"   Tokens: {tokens.get('count', 0)}")
-    
+
     # 4. Generate code (if models available)
     print("\n4. Testing generate_code tool...")
     try:
@@ -507,7 +507,7 @@ async def test_mcp_tools():
             print("   ⚠️  Code generation returned no success flag")
     except Exception as e:
         print(f"   ⚠️  Code generation failed (model may not be available): {e}")
-    
+
     print("\n✅ MCP demo completed!")
 
 
@@ -516,20 +516,20 @@ async def verify_backward_compatibility():
     print("\n" + "="*70)
     print("🔍 Verifying Backward Compatibility")
     print("="*70)
-    
+
     # Import and check day 07-08 modules can still be imported
     try:
         from scripts.day_07_workflow import main as day07_main
         print("   ✅ Day 07 workflow imports successfully")
     except Exception as e:
         print(f"   ❌ Day 07 import failed: {e}")
-    
+
     try:
         from scripts.day_08_compression import Day08EnhancedDemo
         print("   ✅ Day 08 compression imports successfully")
     except Exception as e:
         print(f"   ❌ Day 08 import failed: {e}")
-    
+
     print("\n✅ Backward compatibility verified!")
 
 
@@ -579,7 +579,7 @@ def test_count_tokens_tool():
 async def test_list_models_tool():
     """Test model listing tool."""
     from src.presentation.mcp.server import list_models
-    
+
     result = await list_models()
     assert "local_models" in result
     assert isinstance(result["local_models"], list)
@@ -597,11 +597,11 @@ from src.presentation.mcp.client import MCPClient
 async def test_full_discovery_workflow():
     """Test full tool discovery workflow."""
     client = MCPClient()
-    
+
     # Discover tools
     tools = await client.discover_tools()
     assert len(tools) >= 8
-    
+
     # Verify calculator tools exist
     tool_names = [t["name"] for t in tools]
     assert "add" in tool_names
@@ -614,7 +614,7 @@ async def test_full_discovery_workflow():
 async def test_calculator_tool_execution():
     """Test calculator tool execution via client."""
     client = MCPClient()
-    
+
     result = await client.call_tool("add", {"a": 10, "b": 20})
     assert "result" in result
     assert result["result"] == 30

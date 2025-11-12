@@ -12,4 +12,3 @@ RUN pip install --no-cache-dir poetry==1.7.1
 WORKDIR /workspace
 
 CMD ["bash"]
-

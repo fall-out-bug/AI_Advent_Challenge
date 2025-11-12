@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import dataclasses
 import json
+import asyncio
 from pathlib import Path
-from typing import Any
+from typing import Any, Tuple
 
 import click
 from pymongo import MongoClient
@@ -15,7 +16,12 @@ from src.application.rag import (
     PromptAssembler,
     RetrievalService,
 )
-from src.domain.rag import Query
+from src.domain.rag import FilterConfig, Query
+from src.infrastructure.clients.llm_client import ResilientLLMClient
+from src.infrastructure.config.rag_rerank import (
+    RagRerankConfig,
+    load_rag_rerank_config,
+)
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.embedding_index import (
     LocalEmbeddingGateway,
@@ -23,21 +29,20 @@ from src.infrastructure.embedding_index import (
     MongoDocumentRepository,
 )
 from src.infrastructure.embeddings import LocalEmbeddingClient
-from src.infrastructure.rag import LLMServiceAdapter, VectorSearchAdapter
+from src.infrastructure.rag import (
+    LLMRerankerAdapter,
+    LLMServiceAdapter,
+    ThresholdFilterAdapter,
+    VectorSearchAdapter,
+)
 
 _DEFAULT_LLM_URL = "http://127.0.0.1:8000"
 
 
-def _build_use_case() -> CompareRagAnswersUseCase:
-    """Build CompareRagAnswersUseCase with dependencies.
-
-    Purpose:
-        Factory function to wire all dependencies for the use case.
-
-    Returns:
-        Fully initialized use case instance.
-    """
+def _build_pipeline() -> Tuple[CompareRagAnswersUseCase, RagRerankConfig]:
+    """Build CompareRagAnswersUseCase and return with rerank configuration."""
     settings = get_settings()
+    rag_config = load_rag_rerank_config()
 
     # MongoDB connection
     mongo_client = MongoClient(settings.mongodb_url)
@@ -55,6 +60,7 @@ def _build_use_case() -> CompareRagAnswersUseCase:
         base_url=embedding_base_url,
         model=settings.embedding_model,
         timeout=settings.embedding_api_timeout_seconds,
+        use_ollama_format=True,  # Use Ollama /api/embeddings endpoint
     )
     embedding_gateway = LocalEmbeddingGateway(
         client=embedding_client,
@@ -69,9 +75,21 @@ def _build_use_case() -> CompareRagAnswersUseCase:
         fallback_index_path=fallback_index_path,
     )
 
+    reranker_llm_config = rag_config.reranker.llm
+    reranker_client = ResilientLLMClient(url=settings.llm_url or _DEFAULT_LLM_URL)
+    reranker_adapter = LLMRerankerAdapter(
+        llm_client=reranker_client,
+        timeout_seconds=reranker_llm_config.timeout_seconds,
+        temperature=reranker_llm_config.temperature,
+        max_tokens=reranker_llm_config.max_tokens,
+    )
+
     # Retrieval service
     retrieval_service = RetrievalService(
         vector_search=vector_search,
+        relevance_filter=ThresholdFilterAdapter(),
+        reranker=reranker_adapter,
+        headroom_multiplier=rag_config.retrieval.vector_search_headroom_multiplier,
     )
 
     # Prompt assembler
@@ -99,7 +117,55 @@ def _build_use_case() -> CompareRagAnswersUseCase:
         temperature=settings.llm_temperature,
     )
 
-    return use_case
+    return use_case, rag_config
+
+
+def _compute_filter_config(
+    config: RagRerankConfig,
+    *,
+    filter_override: bool | None,
+    threshold_override: float | None,
+    reranker_override: str | None,
+) -> FilterConfig:
+    """Build FilterConfig applying CLI overrides with precedence."""
+    threshold = (
+        threshold_override
+        if threshold_override is not None
+        else config.retrieval.score_threshold
+    )
+    top_k = config.retrieval.top_k
+
+    filter_enabled = (
+        filter_override
+        if filter_override is not None
+        else config.feature_flags.enable_rag_plus_plus
+    )
+    if not filter_enabled:
+        threshold = 0.0
+
+    reranker_strategy = (
+        reranker_override if reranker_override is not None else config.reranker.strategy
+    )
+    reranker_enabled = (
+        reranker_override != "off"
+        if reranker_override is not None
+        else config.reranker.enabled
+    )
+    strategy_value = reranker_strategy if reranker_enabled else "off"
+    if strategy_value == "cross_encoder":
+        click.echo(
+            "cross_encoder reranker is not available yet; falling back to 'off'.",
+            err=True,
+        )
+        strategy_value = "off"
+        reranker_enabled = False
+
+    return FilterConfig(
+        score_threshold=threshold,
+        top_k=top_k,
+        reranker_enabled=reranker_enabled,
+        reranker_strategy=strategy_value,
+    )
 
 
 def _serialize_result(result: Any) -> dict:
@@ -123,8 +189,42 @@ def rag_commands() -> None:
 
 
 @rag_commands.command(name="compare")
-@click.option("--question", required=True, help="Question to answer (Russian)")
-def compare_command(question: str) -> None:
+@click.option(
+    "--question",
+    required=True,
+    help="Question to answer (supports RU/EN). See docs/specs/epic_21/OPERATIONS_RUNBOOK.md for tuning tips.",
+)
+@click.option(
+    "--filter",
+    "filter_enabled",
+    flag_value=True,
+    default=None,
+    help="Enable threshold filtering (overrides config). Without this flag, all retrieved chunks are kept.",
+)
+@click.option(
+    "--no-filter",
+    "filter_enabled",
+    flag_value=False,
+    help="Disable threshold filtering (overrides config).",
+)
+@click.option(
+    "--threshold",
+    type=float,
+    default=None,
+    help="Override similarity score threshold (0.0-1.0). Example: --threshold 0.30",
+)
+@click.option(
+    "--reranker",
+    type=click.Choice(["off", "llm", "cross_encoder"]),
+    default=None,
+    help="Override reranker strategy (default inherits config). Example: --reranker llm",
+)
+def compare_command(
+    question: str,
+    filter_enabled: bool | None,
+    threshold: float | None,
+    reranker: str | None,
+) -> None:
     """Compare RAG vs non-RAG for a single question.
 
     Purpose:
@@ -135,11 +235,22 @@ def compare_command(question: str) -> None:
 
     Example:
         >>> # poetry run cli rag:compare --question "Что такое MapReduce?"
+        >>> # poetry run cli rag:compare --question "..." --filter --threshold 0.30
+        >>> # poetry run cli rag:compare --question "..." --filter --threshold 0.30 --reranker llm
     """
-    use_case = _build_use_case()
+    if threshold is not None and not 0.0 <= threshold <= 1.0:
+        raise click.BadParameter("threshold must be between 0.0 and 1.0.")
+
+    use_case, rag_config = _build_pipeline()
+    filter_config = _compute_filter_config(
+        rag_config,
+        filter_override=filter_enabled,
+        threshold_override=threshold,
+        reranker_override=reranker,
+    )
 
     query = Query(id="cli-query-1", question=question)
-    result = use_case.execute(query)
+    result = asyncio.run(use_case.execute(query, filter_config=filter_config))
 
     result_dict = _serialize_result(result)
     click.echo(json.dumps(result_dict, ensure_ascii=False, indent=2))
@@ -158,7 +269,38 @@ def compare_command(question: str) -> None:
     type=click.Path(path_type=Path),
     help="Path to output JSONL file",
 )
-def batch_command(queries: Path, out: Path) -> None:
+@click.option(
+    "--filter",
+    "filter_enabled",
+    flag_value=True,
+    default=None,
+    help="Enable threshold filtering for all queries.",
+)
+@click.option(
+    "--no-filter",
+    "filter_enabled",
+    flag_value=False,
+    help="Disable threshold filtering for all queries.",
+)
+@click.option(
+    "--threshold",
+    type=float,
+    default=None,
+    help="Override similarity score threshold (0.0-1.0).",
+)
+@click.option(
+    "--reranker",
+    type=click.Choice(["off", "llm", "cross_encoder"]),
+    default=None,
+    help="Override reranker strategy.",
+)
+def batch_command(
+    queries: Path,
+    out: Path,
+    filter_enabled: bool | None,
+    threshold: float | None,
+    reranker: str | None,
+) -> None:
     """Run batch comparison on queries.jsonl.
 
     Purpose:
@@ -173,9 +315,38 @@ def batch_command(queries: Path, out: Path) -> None:
         ... #     --queries docs/specs/epic_20/queries.jsonl \
         ... #     --out results.jsonl
     """
-    use_case = _build_use_case()
 
-    with queries.open("r") as infile, out.open("w") as outfile:
+    if threshold is not None and not 0.0 <= threshold <= 1.0:
+        raise click.BadParameter("threshold must be between 0.0 and 1.0.")
+
+    use_case, rag_config = _build_pipeline()
+    filter_config = _compute_filter_config(
+        rag_config,
+        filter_override=filter_enabled,
+        threshold_override=threshold,
+        reranker_override=reranker,
+    )
+
+    asyncio.run(
+        _run_batch(
+            use_case=use_case,
+            queries_path=queries,
+            out_path=out,
+            filter_config=filter_config,
+        )
+    )
+
+
+async def _run_batch(
+    *,
+    use_case: CompareRagAnswersUseCase,
+    queries_path: Path,
+    out_path: Path,
+    filter_config: FilterConfig,
+) -> None:
+    with queries_path.open("r", encoding="utf-8") as infile, out_path.open(
+        "w", encoding="utf-8"
+    ) as outfile:
         for line_num, line in enumerate(infile, start=1):
             if not line.strip():
                 continue  # Skip empty lines
@@ -196,13 +367,14 @@ def batch_command(queries: Path, out: Path) -> None:
             click.echo(f"Processing query {query.id}: {query.question[:50]}...")
 
             try:
-                result = use_case.execute(query)
-                result_dict = _serialize_result(result)
-                outfile.write(json.dumps(result_dict, ensure_ascii=False))
-                outfile.write("\n")
-                click.echo(f"  ✓ Completed ({len(result.chunks_used)} chunks used)")
-            except Exception as error:
+                result = await use_case.execute(query, filter_config=filter_config)
+            except Exception as error:  # noqa: BLE001
                 click.echo(f"  ✗ Failed: {error}", err=True)
                 continue
 
-    click.echo(f"\nResults written to {out}")
+            result_dict = _serialize_result(result)
+            outfile.write(json.dumps(result_dict, ensure_ascii=False))
+            outfile.write("\n")
+            click.echo(f"  ✓ Completed ({len(result.chunks_used)} chunks used)")
+
+    click.echo(f"\nResults written to {out_path}")

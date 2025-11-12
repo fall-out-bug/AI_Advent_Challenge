@@ -20,7 +20,7 @@ Requirements:
      - rule_based_classifier.py (static rules, regex patterns)
      - llm_classifier.py (calls Mistral-7B API)
      - hybrid_classifier.py (orchestrates both layers)
-   
+
    - src/domain/intent/rules/
      - task_rules.py (patterns for task creation/management)
      - data_rules.py (patterns for digest, statistics requests)
@@ -43,7 +43,7 @@ Requirements:
       - System prompt: "You are intent classifier. Return one intent type."
       - Timeout: 5 seconds
       - On LLM failure: return DEFAULT intent + log error
-      
+
    c) Hybrid orchestrator:
       - Try rule-based first
       - If confidence < 0.7 OR no match → fallback to LLM
@@ -96,7 +96,7 @@ Optimize for:
 ## 🎯 For Your Cursor IDE
 
 **Step 1:** Open Cursor
-**Step 2:** Create new file `src/domain/intent/hybrid_classifier.py` 
+**Step 2:** Create new file `src/domain/intent/hybrid_classifier.py`
 **Step 3:** Paste the prompt above into Cursor chat
 **Step 4:** Say "Implement this architecture"
 
@@ -177,7 +177,7 @@ class IntentResult:
 
 class HybridIntentClassifier:
     """Two-layer intent classifier: rules first, LLM fallback."""
-    
+
     def __init__(
         self,
         rule_classifier,
@@ -187,29 +187,29 @@ class HybridIntentClassifier:
         self.rule_classifier = rule_classifier
         self.llm_classifier = llm_classifier
         self.confidence_threshold = confidence_threshold
-    
+
     async def classify(self, user_input: str) -> IntentResult:
         """Classify user intent (hybrid approach)."""
-        
+
         # Layer 1: Try rules
         rule_result = self.rule_classifier.classify(user_input)
-        
+
         if rule_result and rule_result.confidence >= self.confidence_threshold:
             logger.info(
                 f"Intent recognized by rules: {rule_result.intent} "
                 f"(confidence: {rule_result.confidence:.2f})"
             )
             return rule_result
-        
+
         # Layer 2: Fallback to LLM
         logger.info(
             f"Rule confidence too low ({rule_result.confidence:.2f} < {self.confidence_threshold}). "
             f"Falling back to LLM..."
         )
-        
+
         llm_result = await self.llm_classifier.classify(user_input)
         logger.info(f"Intent recognized by LLM: {llm_result.intent}")
-        
+
         return llm_result
 ```
 
@@ -259,27 +259,27 @@ from src.domain.intent.llm_classifier import LLMClassifier
 class ButtlerOrchestrator:
     def __init__(self, mistral_client, mcp_client, mongodb):
         # Existing init...
-        
+
         # NEW: Add hybrid intent classifier
         rule_classifier = RuleBasedClassifier()
         llm_classifier = LLMClassifier(mistral_client)
-        
+
         self.intent_classifier = HybridIntentClassifier(
             rule_classifier=rule_classifier,
             llm_classifier=llm_classifier,
             confidence_threshold=0.7,
         )
-    
+
     async def handle_user_message(self, user_id, message, session_id):
         # Classify intent (hybrid)
         intent_result = await self.intent_classifier.classify(message)
-        
+
         # Log for debugging
         logger.info(
             f"User {user_id} intent: {intent_result.intent} "
             f"(source: {intent_result.source}, confidence: {intent_result.confidence:.2f})"
         )
-        
+
         # Delegate to handler based on intent
         if intent_result.intent == IntentType.TASK_CREATE:
             return await self._handle_task_flow(user_id, message, session_id)
@@ -308,16 +308,16 @@ def mock_classifiers(mocker):
 async def test_rule_based_high_confidence(mock_classifiers):
     """Rule-based classifier returns high confidence → use rules."""
     rule_classifier, llm_classifier = mock_classifiers
-    
+
     # Mock rule result
     rule_result = mocker.MagicMock()
     rule_result.intent = IntentType.TASK_CREATE
     rule_result.confidence = 0.95
     rule_classifier.classify.return_value = rule_result
-    
+
     classifier = HybridIntentClassifier(rule_classifier, llm_classifier)
     result = await classifier.classify("Создай задачу")
-    
+
     assert result.intent == IntentType.TASK_CREATE
     assert result.source == "rule"
     llm_classifier.classify.assert_not_called()  # LLM not called
@@ -326,20 +326,20 @@ async def test_rule_based_high_confidence(mock_classifiers):
 async def test_llm_fallback_low_confidence(mock_classifiers):
     """Rule-based low confidence → fallback to LLM."""
     rule_classifier, llm_classifier = mock_classifiers
-    
+
     # Mock low-confidence rule
     rule_result = mocker.MagicMock()
     rule_result.confidence = 0.5
     rule_classifier.classify.return_value = rule_result
-    
+
     # Mock LLM result
     llm_result = mocker.MagicMock()
     llm_result.intent = IntentType.GENERAL_CHAT
     llm_classifier.classify.return_value = llm_result
-    
+
     classifier = HybridIntentClassifier(rule_classifier, llm_classifier)
     result = await classifier.classify("Как дела?")
-    
+
     assert result.intent == IntentType.GENERAL_CHAT
     assert result.source == "llm"
     llm_classifier.classify.assert_called_once()

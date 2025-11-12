@@ -132,7 +132,9 @@ def _create_mongo_repositories(settings, mongo_client: MongoClient):
     database = mongo_client[settings.embedding_mongo_database]
     documents = database[settings.embedding_mongo_documents_collection]
     chunks = database[settings.embedding_mongo_chunks_collection]
-    return MongoDocumentRepository(documents), MongoChunkRepository(chunks)
+    return MongoDocumentRepository(documents, ensure_indexes=False), MongoChunkRepository(
+        chunks, ensure_indexes=False
+    )
 
 
 def _create_redis_client(
@@ -173,6 +175,7 @@ def _create_use_case(
         or "http://127.0.0.1:8000",
         model=settings.embedding_model,
         timeout=settings.embedding_api_timeout_seconds,
+        use_ollama_format=True,  # Use Ollama /api/embeddings endpoint
     )
     return BuildEmbeddingIndexUseCase(
         collector=FilesystemDocumentCollector(preprocessor=TextPreprocessor()),

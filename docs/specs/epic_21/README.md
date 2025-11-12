@@ -1,0 +1,1 @@
+# Epic 21 · RAG++ (Reranking & Filtering)\n\nThis folder contains the living summary for Epic 21 and links to the archived working documents.\n\n## Live Docs\n- Summary: `epic_21.md`\n\n## Archive\n- Index: `ARCHIVE_INDEX.md`\n- All detailed specs, reviews, and stage notes have been moved to `archive/`\n*** End Patch ***!

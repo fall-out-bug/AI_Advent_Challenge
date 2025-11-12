@@ -18,7 +18,7 @@ services:
       - ./pyproject.toml:/app/pyproject.toml:ro
       # Keep session directory
       - ./sessions:/app/sessions:rw
-    command: 
+    command:
       - sh
       - -c
       - |
@@ -54,13 +54,13 @@ services:
         import sys
         from watchdog.observers import Observer
         from watchdog.events import FileSystemEventHandler
-        
+
         class RestartHandler(FileSystemEventHandler):
             def __init__(self):
                 self.process = None
                 self.restart_delay = 2
                 self.last_restart = 0
-            
+
             def on_modified(self, event):
                 if event.src_path.endswith('.py') and '__pycache__' not in event.src_path:
                     now = time.time()
@@ -71,22 +71,22 @@ services:
                             self.process.terminate()
                             self.process.wait(timeout=5)
                         self.start_process()
-            
+
             def start_process(self):
                 print("🚀 Starting butler bot...")
                 self.process = subprocess.Popen(
                     [sys.executable, "-m", "src.presentation.bot.butler_bot"],
                     cwd="/app"
                 )
-        
+
         handler = RestartHandler()
         handler.start_process()
-        
+
         observer = Observer()
         observer.schedule(handler, "/app/src", recursive=True)
         observer.schedule(handler, "/app/shared", recursive=True)
         observer.start()
-        
+
         try:
             while True:
                 if handler.process and handler.process.poll() is not None:
@@ -100,4 +100,3 @@ services:
     environment:
       - HOTRELOAD=true
       - PYTHONUNBUFFERED=1
-

@@ -112,10 +112,10 @@ Reuse existing test generation logic from `CodeGeneratorAgent`:
 ```python
 class TestGenerationAdapter:
     """Adapter for generating tests using shared SDK."""
-    
+
     async def generate_tests(
-        self, 
-        code: str, 
+        self,
+        code: str,
         test_framework: str = "pytest",
         coverage_target: int = 80
     ) -> dict:
@@ -141,7 +141,7 @@ import black
 
 class FormatAdapter:
     """Adapter for code formatting using black."""
-    
+
     def format_code(
         self,
         code: str,
@@ -169,7 +169,7 @@ from radon.metrics import mi_visit
 
 class ComplexityAdapter:
     """Adapter for code complexity analysis."""
-    
+
     def analyze_complexity(
         self,
         code: str,
@@ -179,7 +179,7 @@ class ComplexityAdapter:
         cc_results = cc_visit(code)
         # Maintainability index
         mi_score = mi_visit(code, multi=True)
-        
+
         return {
             "cyclomatic_complexity": max(r.complexity for r in cc_results),
             "cognitive_complexity": ...,  # Custom metric
@@ -222,11 +222,11 @@ Context-aware prompts using `@mcp.prompt()`:
 @mcp.prompt("code-review")
 def code_review_prompt(code: str, language: str, focus: list) -> str:
     return f"""Review this {language} code:
-    
+
     {code}
-    
+
     Focus areas: {', '.join(focus)}
-    
+
     Provide:
  - Quality score (0-100)
  - Issues by severity
@@ -282,7 +282,7 @@ ENTRYPOINT ["python", "src/presentation/mcp/server.py"]
 ## Timeline Estimate
 
 - Test generation adapter: 2-3 hours
-- Format adapter: 1-2 hours  
+- Format adapter: 1-2 hours
 - Complexity adapter: 1-2 hours
 - MCP resources: 2 hours
 - Dynamic prompts: 1-2 hours

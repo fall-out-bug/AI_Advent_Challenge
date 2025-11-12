@@ -168,7 +168,7 @@ async def summarize_posts(
         channel_context = f" канала @{channel_username}"
 
     if language == "ru":
-        prompt = f"""Суммаризируй эти посты из Telegram-канала{channel_context}{time_context}. 
+        prompt = f"""Суммаризируй эти посты из Telegram-канала{channel_context}{time_context}.
 
 КРИТИЧЕСКИ ВАЖНО:
 - Эти посты ВСЕ из ОДНОГО канала{channel_context}

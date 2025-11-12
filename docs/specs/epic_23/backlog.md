@@ -61,6 +61,16 @@ contain the expected artefacts, so automation halts at export stage.
     - Сжать или перенести `results_stage20.jsonl` и `results_with_labels.jsonl`
       под лимит 500 KB (использовать сжатие, разбивку на части или синтетические
       выборки) и документировать процесс.
+15. **Перенести устаревшие асинхронные тесты в Stage 21 refactor backlog**
+    - Зафиксировать пакеты, использующие `LegacyDialogContextAdapter`, старый DI-контейнер
+      и инфраструктурные фикстуры (Airflow, MCP, post-fetcher).
+    - Подготовить план восстановления/архивации в рамках Epic 23.
+16. **RAG++ расширения из Epic 21**
+    - Документировать и внедрить стратегию регулярного тюнинга промптов для LLM-reranker (скрипты + гайд).
+    - Добавить поддержку `seed` и контроль воспроизводимости для LLM-клиентов/конфигурации.
+    - Расширить метрики: измерение межзапусковой вариации (cross-run variance) и аналитика.
+    - Исследовать/реализовать адаптивные пороги (learned thresholds) после аблаций Stage 21_04.
+    - Проработать постепенный rollout (canary percentage) для feature flag `rag_plus_plus`.
 
 ## Dependencies
 - Shared infra credentials (`.env.infra`)

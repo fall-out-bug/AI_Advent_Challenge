@@ -15,4 +15,3 @@ logging:
 storage:
   conversations_dir: "data/conversations"
   storage_file: "conversations.json"
-
