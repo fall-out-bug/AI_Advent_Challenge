@@ -378,4 +378,3 @@ For questions or issues:
 1. Check this guide and examples
 2. Review OpenAPI specification
 3. Contact support team
-

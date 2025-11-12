@@ -47,7 +47,7 @@
   - Как SessionManager десериализует JSON?
   - Как передаётся контекст между проходами?
   - Что если Pass 2 для компонента X не запустился — как это обрабатывается?
-  
+
 **Рекомендация**: Добавить подраздел "Session State Management" с примерами JSON структур
 
 ### 4. **Error Handling слишком generic** ⚠️
@@ -91,14 +91,14 @@
 - В комментариях упомянут "docker-compose" случайно?
 - Есть несколько файлов: некоторые Docker, некоторые Python?
 
-**Нужно уточнить**: 
+**Нужно уточнить**:
 - Как парсить структуру архива и выделить типы файлов?
 - Как обработать mixed projects (Docker + Airflow + Spark)?
 
 ### Вопрос 2: Pass 2 Parallel vs Sequential
 **Текущее состояние**: Документация не указывает — запускаются ли Pass 2 для каждого компонента параллельно или последовательно?
 
-**Проблема**: 
+**Проблема**:
 - Если параллельно — нужны asyncio.gather() примеры
 - Если последовательно — может быть медленно (3-4 минуты вместо 1-2)
 
@@ -117,7 +117,7 @@
 ### Вопрос 4: Report Output Format
 **Текущее состояние**: Только to_markdown() упомянута
 
-**Проблема**: 
+**Проблема**:
 - Есть ли JSON export?
 - Есть ли HTML export?
 - Какова максимальная длина отчёта?
@@ -127,7 +127,7 @@
 ### Вопрос 5: Context Window Management
 **Текущее состояние**: Не упомянуто
 
-**Проблема**: 
+**Проблема**:
 - Pass 3 получает ALL findings из Pass 1 и Pass 2
 - Что если суммарный контекст > 32K tokens?
 - Как truncate или summarize findings?
@@ -230,7 +230,7 @@ from src.infrastructure.adapters.multi_pass_model_adapter import ModelClientAdap
 class BaseReviewPass(ABC):
     def __init__(self, unified_client: UnifiedModelClient, ...):
         self.adapter = ModelClientAdapter(unified_client)
-        
+
     async def _call_mistral(self, prompt: str, temp: float, max_tokens: int):
         return await self.adapter.send_prompt(
             prompt=prompt,
@@ -399,7 +399,7 @@ All logs in JSON format for parsing:
 async def test_component_detection():
     code = load_fixture("mixed_project.py")  # Docker + Airflow
     pass_obj = ArchitectureReviewPass(mock_client, mock_session)
-    
+
     components = pass_obj._detect_components(code)
     assert set(components) == {"docker", "airflow"}
 
@@ -407,7 +407,7 @@ async def test_component_detection():
 async def test_context_passing():
     pass_1_findings = {"docker_services": ["postgres", "redis"]}
     session.save_findings("pass_1", pass_1_findings)
-    
+
     context = session.get_context_summary_for_next_pass()
     assert "postgres" in context
     assert "redis" in context
@@ -421,9 +421,9 @@ async def test_context_passing():
 async def test_full_review_docker_only():
     code = load_fixture("docker_compose.yml")
     agent = MultiPassReviewerAgent(mock_client)
-    
+
     report = await agent.process_multi_pass(code, "docker_project")
-    
+
     assert report.pass_1 is not None
     assert "docker" in report.detected_components
     assert report.pass_3 is not None
@@ -432,9 +432,9 @@ async def test_full_review_docker_only():
 async def test_error_recovery():
     code = load_fixture("mixed_project")
     agent = MultiPassReviewerAgent(failing_client)  # Fails on Pass 2
-    
+
     report = await agent.process_multi_pass(code)
-    
+
     assert report.pass_1 is not None
     assert len(report.pass_2_results) == 0  # Empty due to failure
     assert report.pass_3 is not None  # Still generated
@@ -449,14 +449,14 @@ async def test_e2e_all_components():
     # Real Mistral client, real prompts
     code = load_fixture("complete_ml_project")  # All 4 types
     agent = MultiPassReviewerAgent(real_mistral_client)
-    
+
     report = await agent.process_multi_pass(code)
-    
+
     # Assertions
     assert len(report.detected_components) == 4
     assert report.execution_time_seconds < 180  # < 3 minutes
     assert report.critical_count >= 0
-    
+
     # Verify report exportable
     markdown = report.to_markdown()
     assert len(markdown) > 100

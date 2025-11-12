@@ -34,13 +34,21 @@ class HTTPLLMClient:
         timeout: Request timeout in seconds
     """
 
-    def __init__(self, url: str | None = None, timeout: float = 30.0) -> None:
+    def __init__(
+        self,
+        url: str | None = None,
+        timeout: float = 30.0,
+        model: str | None = None,
+    ) -> None:
         self.url = url or os.getenv("LLM_URL", "http://localhost:8001")
         if not self.url.startswith("http"):
             self.url = f"http://{self.url}"
         # Remove trailing slash
         self.url = self.url.rstrip("/")
         self.timeout = timeout
+        self.model = model or os.getenv(
+            "LLM_MODEL", "mistralai/Mistral-7B-Instruct-v0.2"
+        )
         self._client: httpx.AsyncClient | None = None
         self._host_url: str | None = None  # Cached host URL for fallback
 
@@ -106,6 +114,8 @@ class HTTPLLMClient:
             "max_tokens": max_tokens,
             "temperature": temperature,
         }
+        if self.model:
+            chat_payload["model"] = self.model
 
         try:
             response = await client.post(
@@ -144,6 +154,8 @@ class HTTPLLMClient:
                             "max_tokens": max_tokens,
                             "temperature": temperature,
                         }
+                        if self.model:
+                            host_payload["model"] = self.model
                         response = await client.post(
                             host_url, json=host_payload, timeout=self.timeout
                         )
@@ -203,7 +215,7 @@ class HTTPLLMClient:
         # Fallback: try OpenAI-compatible /v1/chat/completions endpoint
         openai_url = f"{self.url}/v1/chat/completions"
         openai_payload = {
-            "model": os.getenv("LLM_MODEL", "mistralai/Mistral-7B-Instruct-v0.2"),
+            "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": max_tokens,
             "temperature": temperature,
@@ -243,6 +255,8 @@ class HTTPLLMClient:
                         "max_tokens": max_tokens,
                         "temperature": temperature,
                     }
+                    if self.model:
+                        host_payload["model"] = self.model
                     response = await client.post(
                         host_url, json=host_payload, timeout=self.timeout
                     )
@@ -258,9 +272,7 @@ class HTTPLLMClient:
                     # If /chat doesn't work, try /v1/chat/completions
                     host_url = f"{self._host_url}/v1/chat/completions"
                     host_openai_payload = {
-                        "model": os.getenv(
-                            "LLM_MODEL", "mistralai/Mistral-7B-Instruct-v0.2"
-                        ),
+                        "model": self.model,
                         "messages": [{"role": "user", "content": prompt}],
                         "max_tokens": max_tokens,
                         "temperature": temperature,

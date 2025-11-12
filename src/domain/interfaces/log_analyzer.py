@@ -1,6 +1,6 @@
 """Domain interface for log analysis via LLM.
 
-Following Clean Architecture: protocol definition in domain layer.
+Following Clean Architecture: protocol definition in domain layer.  # noqa: E501
 """
 
 from __future__ import annotations

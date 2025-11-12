@@ -454,3 +454,8 @@ review-health-check:
 day_20_demo:
 	@echo "Starting Stage 20 interactive demo..."
 	poetry run python scripts/rag/day_20_demo.py
+
+day_21_demo:
+	@echo "Starting Stage 21 RAG++ demo..."
+	@echo "Note: Set LLM_URL, LLM_MODEL, EMBEDDING_API_URL, MONGODB_URL if needed"
+	poetry run python scripts/rag/day_21_demo.py $(args)

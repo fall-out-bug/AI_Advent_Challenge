@@ -111,7 +111,7 @@ def sample_request():
 
 class MockAgent:
     """Mock agent for testing orchestration patterns."""
-    
+
     def __init__(self, agent_id: str, success: bool = True, delay: float = 0.0):
         self.agent_id = agent_id
         self.success = success
@@ -121,14 +121,14 @@ class MockAgent:
             "successful_requests": 0,
             "failed_requests": 0
         }
-    
+
     async def process(self, request: AgentRequest) -> AgentResponse:
         """Mock agent processing."""
         if self.delay > 0:
             await asyncio.sleep(self.delay)
-        
+
         self.stats["total_requests"] += 1
-        
+
         if self.success:
             self.stats["successful_requests"] += 1
             return AgentResponse(
@@ -158,7 +158,7 @@ class MockAgent:
                     timestamp=datetime.now()
                 )
             )
-    
+
     def get_stats(self):
         """Get agent statistics."""
         return {
@@ -169,40 +169,40 @@ class MockAgent:
 
 class TestDirectAdapter:
     """Test DirectAdapter functionality."""
-    
+
     def test_direct_adapter_initialization(self):
         """Test DirectAdapter initialization."""
         adapter = DirectAdapter()
         assert adapter.adapter_type == "direct"
         assert adapter.get_adapter_type() == AdapterType.DIRECT
-    
+
     @pytest.mark.asyncio
     async def test_direct_adapter_send_request(self, generator_agent, sample_request):
         """Test DirectAdapter send_request."""
         adapter = DirectAdapter()
         adapter.register_agent("generator", generator_agent)
-        
+
         result = await adapter.send_request("generator", sample_request)
-        
+
         assert result.success is True
         assert "fibonacci" in result.result
-    
+
     @pytest.mark.asyncio
     async def test_direct_adapter_error_handling(self, mock_client):
         """Test DirectAdapter error handling."""
         # Create agent that will fail
         mock_client.make_request = AsyncMock(side_effect=ModelConnectionError("Connection failed"))
         failing_agent = CodeGeneratorAgent(mock_client, model_name="qwen")
-        
+
         adapter = DirectAdapter()
         adapter.register_agent("failing_agent", failing_agent)
-        
+
         request = AgentRequest(
             task_id="error_001",
             task_type="code_generation",
             task="This will fail"
         )
-        
+
         result = await adapter.send_request("failing_agent", request)
         assert result.success is False
         assert "Connection failed" in result.error
@@ -210,23 +210,23 @@ class TestDirectAdapter:
 
 class TestRestAdapter:
     """Test RestAdapter functionality."""
-    
+
     def test_rest_adapter_initialization(self):
         """Test RestAdapter initialization."""
         adapter = RestAdapter(base_url="http://localhost:8000")
         assert adapter.adapter_type == "rest"
         assert adapter.base_url == "http://localhost:8000"
-    
+
     def test_rest_adapter_get_adapter_type(self):
         """Test RestAdapter adapter type."""
         adapter = RestAdapter(base_url="http://localhost:8000")
         assert adapter.get_adapter_type() == AdapterType.REST
-    
+
     @pytest.mark.asyncio
     async def test_rest_adapter_send_request_mock(self, sample_request):
         """Test RestAdapter send_request with mocked HTTP."""
         adapter = RestAdapter(base_url="http://localhost:8000")
-        
+
         # Mock HTTP response
         with patch('shared_package.orchestration.adapters.RestAdapter._get_session') as mock_get_session:
             mock_session = MagicMock()
@@ -239,111 +239,111 @@ class TestRestAdapter:
                 "metadata": None,
                 "quality": None
             })
-            
+
             # Create proper async context manager mock
             class AsyncContextManager:
                 def __init__(self, return_value):
                     self.return_value = return_value
-                
+
                 async def __aenter__(self):
                     return self.return_value
-                
+
                 async def __aexit__(self, exc_type, exc_val, exc_tb):
                     return None
-            
+
             mock_session.post.return_value = AsyncContextManager(mock_response)
             mock_get_session.return_value = mock_session
-            
+
             result = await adapter.send_request("test_agent", sample_request)
-            
+
             assert result.success is True
             assert result.result == "Generated code"
 
 
 class TestSequentialOrchestrator:
     """Test SequentialOrchestrator functionality."""
-    
+
     @pytest.mark.asyncio
     async def test_sequential_execution_success(self, direct_adapter, generator_agent, reviewer_agent, sample_request):
         """Test successful sequential execution."""
         orchestrator = SequentialOrchestrator(direct_adapter)
-        
+
         agents = [generator_agent, reviewer_agent]
         result = await orchestrator.execute(sample_request, agents)
-        
+
         assert len(result) == 2
         assert result[0].success is True
         assert result[1].success is True
         assert "fibonacci" in result[0].result
         assert "well-structured" in result[1].result.lower()
-    
+
     @pytest.mark.asyncio
     async def test_sequential_execution_with_failure(self, direct_adapter, mock_client):
         """Test sequential execution with agent failure."""
         # Create failing agent
         mock_client.make_request = AsyncMock(side_effect=ModelConnectionError("Connection failed"))
         failing_agent = CodeGeneratorAgent(mock_client, model_name="qwen")
-        
+
         orchestrator = SequentialOrchestrator(direct_adapter)
-        
+
         request = AgentRequest(
             task_id="fail_001",
             task_type="code_generation",
             task="This will fail"
         )
-        
+
         result = await orchestrator.execute(request, [failing_agent])
-        
+
         assert len(result) == 1
         assert result[0].success is False
         assert "Connection failed" in result[0].error
-    
+
     @pytest.mark.asyncio
     async def test_sequential_execution_empty_agents(self, direct_adapter, sample_request):
         """Test sequential execution with empty agent list."""
         orchestrator = SequentialOrchestrator(direct_adapter)
-        
+
         result = await orchestrator.execute(sample_request, [])
-        
+
         assert len(result) == 0
-    
+
     @pytest.mark.asyncio
     async def test_sequential_execution_cancellation(self, direct_adapter, generator_agent, sample_request):
         """Test sequential execution cancellation."""
         orchestrator = SequentialOrchestrator(direct_adapter)
-        
+
         # Start execution
         task = asyncio.create_task(
             orchestrator.execute(sample_request, [generator_agent])
         )
-        
+
         # Cancel immediately
         orchestrator.cancel()
-        
+
         result = await task
-        
+
         # Should handle cancellation gracefully
         assert len(result) == 0 or result[0].success is False
 
 
 class TestParallelOrchestrator:
     """Test ParallelOrchestrator functionality."""
-    
+
     @pytest.mark.asyncio
     async def test_parallel_execution_success(self, direct_adapter, generator_agent, reviewer_agent, sample_request):
         """Test successful parallel execution."""
         orchestrator = ParallelOrchestrator(direct_adapter)
-        
+
         agents = [generator_agent, reviewer_agent]
         result = await orchestrator.execute(sample_request, agents)
-        
+
         assert len(result) == 2
         assert result[0].success is True
         assert result[1].success is True
         # Both should complete (parallel execution)
         assert "fibonacci" in result[0].result
         assert "well-structured" in result[1].result.lower()
-    
+
     @pytest.mark.asyncio
     async def test_parallel_execution_with_failure(self, direct_adapter, mock_client, sample_request):
         """Test parallel execution with agent failure."""
@@ -352,21 +352,21 @@ class TestParallelOrchestrator:
             ModelResponse(response="Success", response_tokens=10, input_tokens=5, total_tokens=15, model_name="qwen", response_time=1.0),
             ModelConnectionError("Connection failed")
         ])
-        
+
         success_agent = CodeGeneratorAgent(mock_client, model_name="qwen")
         failing_agent = CodeReviewerAgent(mock_client, model_name="mistral")
-        
+
         orchestrator = ParallelOrchestrator(direct_adapter)
-        
+
         result = await orchestrator.execute(sample_request, [success_agent, failing_agent])
-        
+
         assert len(result) == 2
         # One should succeed, one should fail
         success_count = sum(1 for r in result if r.success)
         failure_count = sum(1 for r in result if not r.success)
         assert success_count == 1
         assert failure_count == 1
-    
+
     @pytest.mark.asyncio
     async def test_parallel_execution_timeout(self, direct_adapter, mock_client, sample_request):
         """Test parallel execution timeout."""
@@ -379,38 +379,38 @@ class TestParallelOrchestrator:
             model_name="qwen",
             response_time=2.0
         )
-        
+
         async def slow_request(*args, **kwargs):
             await asyncio.sleep(2.0)  # Simulate slow response
             return slow_response
-        
+
         mock_client.make_request = AsyncMock(side_effect=slow_request)
         slow_agent = CodeGeneratorAgent(mock_client, model_name="qwen")
-        
+
         from shared_package.orchestration.base_orchestrator import OrchestrationConfig
         config = OrchestrationConfig(timeout=1.0)
         orchestrator = ParallelOrchestrator(direct_adapter, config=config)
-        
+
         result = await orchestrator.execute(sample_request, [slow_agent])
-        
+
         # Should timeout
         assert len(result) == 1
         assert result[0].success is False
         assert "timeout" in result[0].error.lower()
-    
+
     @pytest.mark.asyncio
     async def test_parallel_execution_empty_agents(self, direct_adapter, sample_request):
         """Test parallel execution with empty agent list."""
         orchestrator = ParallelOrchestrator(direct_adapter)
-        
+
         result = await orchestrator.execute(sample_request, [])
-        
+
         assert len(result) == 0
 
 
 class TestOrchestrationIntegration:
     """Integration tests for orchestration patterns."""
-    
+
     @pytest.mark.asyncio
     async def test_generator_to_reviewer_workflow(self, direct_adapter):
         """Test complete workflow from generation to review."""
@@ -426,7 +426,7 @@ class TestOrchestrationIntegration:
         )
         mock_client.make_request = AsyncMock(return_value=factorial_response)
         factorial_agent = CodeGeneratorAgent(mock_client, model_name="qwen")
-        
+
         # Create reviewer agent
         mock_review_client = MagicMock(spec=UnifiedModelClient)
         review_response = ModelResponse(
@@ -439,9 +439,9 @@ class TestOrchestrationIntegration:
         )
         mock_review_client.make_request = AsyncMock(return_value=review_response)
         reviewer_agent = CodeReviewerAgent(mock_review_client, model_name="mistral")
-        
+
         orchestrator = SequentialOrchestrator(direct_adapter)
-        
+
         # First generate code
         gen_request = AgentRequest(
             task_id="workflow_001",
@@ -449,11 +449,11 @@ class TestOrchestrationIntegration:
             task="Create a Python function to calculate factorial",
             context={"language": "python", "style": "recursive"}
         )
-        
+
         gen_result = await orchestrator.execute(gen_request, [factorial_agent])
         assert gen_result[0].success is True
         assert "factorial" in gen_result[0].result.lower()
-        
+
         # Then review the generated code
         review_request = AgentRequest(
             task_id="workflow_002",
@@ -461,11 +461,11 @@ class TestOrchestrationIntegration:
             task=gen_result[0].result,
             context={"language": "python", "focus_areas": ["readability", "performance"]}
         )
-        
+
         review_result = await orchestrator.execute(review_request, [reviewer_agent])
         assert review_result[0].success is True
         assert "well-structured" in review_result[0].result.lower()
-    
+
     @pytest.mark.asyncio
     async def test_model_comparison_workflow(self, direct_adapter, sample_request):
         """Test parallel execution for model comparison."""
@@ -475,7 +475,7 @@ class TestOrchestrationIntegration:
             ModelResponse(response="Mistral result", response_tokens=10, input_tokens=5, total_tokens=15, model_name="mistral", response_time=1.2),
             ModelResponse(response="TinyLlama result", response_tokens=10, input_tokens=5, total_tokens=15, model_name="tinyllama", response_time=0.8)
         ]
-        
+
         agents = []
         for i, response in enumerate(mock_responses):
             mock_client = MagicMock(spec=UnifiedModelClient)
@@ -484,20 +484,20 @@ class TestOrchestrationIntegration:
             # Set unique agent_name to avoid conflicts
             agent.agent_name = f"code_generator_{response.model_name}"
             agents.append(agent)
-        
+
         orchestrator = ParallelOrchestrator(direct_adapter)
-        
+
         result = await orchestrator.execute(sample_request, agents)
-        
+
         assert len(result) == 3
         assert all(r.success for r in result)
-        
+
         # Verify different models were used
         model_names = [r.metadata.model_name for r in result]
         assert "qwen" in model_names
         assert "mistral" in model_names
         assert "tinyllama" in model_names
-    
+
     @pytest.mark.asyncio
     async def test_adapter_switching(self, generator_agent, sample_request):
         """Test switching between different adapters."""
@@ -505,14 +505,14 @@ class TestOrchestrationIntegration:
         direct_adapter = DirectAdapter()
         direct_adapter.register_agent("code_generator", generator_agent)
         direct_orchestrator = SequentialOrchestrator(direct_adapter)
-        
+
         direct_result = await direct_orchestrator.execute(sample_request, [generator_agent])
         assert direct_result[0].success is True
-        
+
         # Test RestAdapter (with mocked HTTP) - this simulates calling a remote agent
         rest_adapter = RestAdapter(base_url="http://localhost:8000")
         rest_orchestrator = SequentialOrchestrator(rest_adapter)
-        
+
         with patch('shared_package.orchestration.adapters.RestAdapter._get_session') as mock_get_session:
             mock_session = MagicMock()
             mock_response = AsyncMock()
@@ -529,58 +529,58 @@ class TestOrchestrationIntegration:
                 },
                 "quality": None
             })
-            
+
             # Create proper async context manager mock
             class AsyncContextManager:
                 def __init__(self, return_value):
                     self.return_value = return_value
-                
+
                 async def __aenter__(self):
                     return self.return_value
-                
+
                 async def __aexit__(self, exc_type, exc_val, exc_tb):
                     return None
-            
+
             mock_session.post.return_value = AsyncContextManager(mock_response)
             mock_session.get.return_value = AsyncContextManager(mock_response)  # For health check
             mock_get_session.return_value = mock_session
-            
+
             # Create a mock agent that will be "called" via REST
             mock_rest_agent = MagicMock()
             mock_rest_agent.agent_name = "code_generator"
             mock_rest_agent.agent_id = "code_generator"
-            
+
             rest_result = await rest_orchestrator.execute(sample_request, [mock_rest_agent])
             assert rest_result[0].success is True
             assert rest_result[0].result == "REST generated code"
-    
+
     @pytest.mark.asyncio
     async def test_error_propagation(self, direct_adapter, mock_client, sample_request):
         """Test error propagation through orchestration."""
         # Create failing agent
         mock_client.make_request = AsyncMock(side_effect=ModelConnectionError("Network error"))
         failing_agent = CodeGeneratorAgent(mock_client, model_name="qwen")
-        
+
         orchestrator = SequentialOrchestrator(direct_adapter)
-        
+
         result = await orchestrator.execute(sample_request, [failing_agent])
-        
+
         assert len(result) == 1
         assert result[0].success is False
         assert "Network error" in result[0].error
-    
+
     @pytest.mark.asyncio
     async def test_statistics_aggregation(self, direct_adapter, generator_agent, reviewer_agent, sample_request):
         """Test statistics aggregation across orchestration."""
         orchestrator = SequentialOrchestrator(direct_adapter)
-        
+
         # Execute workflow
         result = await orchestrator.execute(sample_request, [generator_agent, reviewer_agent])
-        
+
         # Verify statistics are updated
         gen_stats = generator_agent.get_stats()
         rev_stats = reviewer_agent.get_stats()
-        
+
         assert gen_stats["total_requests"] >= 1
         assert rev_stats["total_requests"] >= 1
         assert gen_stats["successful_requests"] >= 1

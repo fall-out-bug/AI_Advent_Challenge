@@ -1,6 +1,6 @@
 """Domain interface for log parsing.
 
-Following Clean Architecture: protocol definition in domain layer.
+Following Clean Architecture: protocol definition in domain layer.  # noqa: E501
 """
 
 from __future__ import annotations

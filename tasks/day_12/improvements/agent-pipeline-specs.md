@@ -721,7 +721,7 @@ logger.info(f"Tool call", extra={
 # Параллельный сбор постов из нескольких каналов
 async def get_multiple_digests(channels: List[str]):
     tasks = [
-        get_posts(channel_id) 
+        get_posts(channel_id)
         for channel_id in channels
     ]
     return await asyncio.gather(*tasks)

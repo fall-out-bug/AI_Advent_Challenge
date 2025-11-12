@@ -35,4 +35,3 @@ source_modules =
     src.infrastructure
 forbidden_modules =
     src.presentation
-

@@ -116,4 +116,3 @@ def _stringify(value: Any) -> str:
     if isinstance(value, Sequence) and not isinstance(value, (bytes, str)):
         return ", ".join(_stringify(item) for item in value)
     return str(value)
-

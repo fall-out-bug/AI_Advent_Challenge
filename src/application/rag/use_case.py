@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from src.domain.embedding_index import EmbeddingGateway
-from src.domain.rag import Answer, ComparisonResult, Query
+from src.domain.rag import Answer, ComparisonResult, FilterConfig, Query
 from src.infrastructure.logging import get_logger
 
 if TYPE_CHECKING:
@@ -69,7 +69,11 @@ class CompareRagAnswersUseCase:
         self._temperature = temperature
         self._logger = get_logger(__name__)
 
-    def execute(self, query: Query) -> ComparisonResult:
+    async def execute(
+        self,
+        query: Query,
+        filter_config: FilterConfig | None = None,
+    ) -> ComparisonResult:
         """Execute RAG vs non-RAG comparison for a query.
 
         Purpose:
@@ -77,6 +81,7 @@ class CompareRagAnswersUseCase:
 
         Args:
             query: User query to answer.
+            filter_config: Optional override for filtering/reranking settings.
 
         Returns:
             ComparisonResult with both answers and retrieved chunks.
@@ -108,10 +113,14 @@ class CompareRagAnswersUseCase:
             query_embedding = self._embed_query(query.question)
 
             # 2.2 Retrieve chunks
-            chunks = self._retrieval_service.retrieve(
-                query_vector=query_embedding,
-                top_k=self._top_k,
+            filter_overrides = filter_config or FilterConfig(
                 score_threshold=self._score_threshold,
+                top_k=self._top_k,
+            )
+            chunks = await self._retrieval_service.retrieve(
+                query_text=query.question,
+                query_vector=query_embedding,
+                filter_config=filter_overrides,
             )
             self._logger.info(
                 "rag_retrieval_completed",

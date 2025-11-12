@@ -98,4 +98,3 @@ docker-compose -f docker-compose.butler.yml -f docker-compose.butler.dev.yml dow
   ```bash
   docker-compose -f docker-compose.butler.yml -f docker-compose.butler.dev.yml restart mcp-server
   ```
-

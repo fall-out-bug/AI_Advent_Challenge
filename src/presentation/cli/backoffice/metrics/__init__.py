@@ -15,4 +15,3 @@ __all__ = [
     "cli_command_errors_total",
     "track_command",
 ]
-

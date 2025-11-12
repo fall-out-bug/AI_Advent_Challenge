@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-Phase 1 (Multi-Pass Code Review Architecture) документация **полностью готова**. Все критические компоненты описаны, архитектура согласована, примеры кода предоставлены. 
+Phase 1 (Multi-Pass Code Review Architecture) документация **полностью готова**. Все критические компоненты описаны, архитектура согласована, примеры кода предоставлены.
 
 Этот документ содержит:
 - ✅ **Final QA Checklist** — что проверить перед Cursor
@@ -92,14 +92,14 @@ def process_multi_pass(
     repo_name: str = "student_project"
 ) -> MultiPassReport:
     """Process code through 3-pass review system.
-    
+
     Args:
         code: Source code to review
         repo_name: Name of repository for reporting
-        
+
     Returns:
         MultiPassReport with findings from all 3 passes
-        
+
     Raises:
         ValueError: If code is empty
         TimeoutError: If review exceeds time limit
@@ -250,7 +250,7 @@ tests/fixtures/
 
 **Code Examples (PROVIDED IN DOCS)**:
 - ModelClientAdapter implementation
-- PromptLoader implementation  
+- PromptLoader implementation
 - SessionManager implementation
 - Pass implementations (1, 2, 3)
 - MultiPassReviewerAgent implementation

@@ -13,4 +13,3 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY src /app/src
 
 CMD ["python", "-c", "print('summarizer app container')"]
-

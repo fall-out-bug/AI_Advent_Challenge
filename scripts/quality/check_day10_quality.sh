@@ -62,4 +62,3 @@ fi
 
 echo ""
 echo "Quality checks complete!"
-

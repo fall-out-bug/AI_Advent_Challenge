@@ -49,4 +49,3 @@ pytest --maxfail=1 --disable-warnings -q --cov=src --cov-report=term-missing
 - Implement channel digest MCP tools and complete channels UI
 - Add scheduled workers for summaries and digests
 - Enhance pagination with next/prev navigation
-

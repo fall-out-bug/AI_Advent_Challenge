@@ -178,7 +178,7 @@ def reverse_text(text: str) -> dict[str, str]:
 @mcp.tool()
 def count_occurrences(text: str, substring: str) -> dict[str, Any]:
     """Count substring occurrences"""
-    positions = [i for i in range(len(text)) 
+    positions = [i for i in range(len(text))
                  if text.startswith(substring, i)]
     return {
         "substring": substring,
@@ -203,9 +203,9 @@ def analyze_code_metrics(code: str) -> dict[str, Any]:
     lines = code.split("\n")
     non_empty = [l for l in lines if l.strip()]
     comments = [l for l in lines if l.strip().startswith("#")]
-    keywords = sum(code.count(kw) 
+    keywords = sum(code.count(kw)
                    for kw in ["if", "for", "while", "def", "class"])
-    
+
     return {
         "total_lines": len(lines),
         "code_lines": len(non_empty),
@@ -261,7 +261,7 @@ def get_model_info(model_name: str) -> dict[str, Any]:
         "mistral": {"type": "general", "vram": "8-10GB"},
         # ... more models
     }
-    return models.get(model_name, 
+    return models.get(model_name,
                       {"error": f"Model {model_name} not found"})
 
 @mcp.tool()
@@ -344,7 +344,7 @@ class MCPClientExplorer:
 async def discover_tools(self) -> None:
     """List all available tools with metadata"""
     tools_response = await self.session.list_tools()
-    
+
     for tool in tools_response.tools:
         print(f"Name: {tool.name}")
         print(f"Description: {tool.description}")
@@ -364,7 +364,7 @@ async def discover_tools(self) -> None:
 async def discover_resources(self) -> None:
     """List all available resources"""
     resources_response = await self.session.list_resources()
-    
+
     for resource in resources_response.resources:
         print(f"URI: {resource.uri}")
         print(f"Description: {resource.description}")
@@ -375,7 +375,7 @@ async def discover_resources(self) -> None:
 #### 3.4 Tool Execution
 
 ```python
-async def execute_tool(self, tool_name: str, 
+async def execute_tool(self, tool_name: str,
                       arguments: dict[str, Any]) -> None:
     """Execute tool with validation"""
     # Validate arguments against schema
@@ -392,7 +392,7 @@ async def interactive_mode(self) -> None:
     """Interactive tool exploration"""
     while True:
         command = input("mcp> ").strip()
-        
+
         if command == "list":
             await self.discover_tools()
         elif command.startswith("call "):
@@ -420,12 +420,12 @@ async def main():
         command="python",
         args=["src/server/mcp_server.py"]
     )
-    
+
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
             tools = await session.list_tools()
-            
+
             for tool in tools.tools:
                 print(f"• {tool.name}")
                 result = await session.call_tool(tool.name, {...})
@@ -482,7 +482,7 @@ async def test_full_discovery():
             await session.initialize()
             tools = await session.list_tools()
             assert len(tools.tools) > 10
-            
+
             # Test each tool
             for tool in tools.tools:
                 result = await session.call_tool(...)
@@ -519,7 +519,7 @@ Add MCP tools for local models:
 
 ```python
 @mcp.tool()
-async def generate_code(description: str, 
+async def generate_code(description: str,
                        model: str = "starcoder") -> str:
     from shared.clients.model_client import ModelClient
     client = ModelClient(provider=model)
@@ -589,14 +589,14 @@ test:
   script:
     - poetry install
     - poetry run pytest --cov=src
-    
+
 lint:
   stage: lint
   script:
     - poetry run black --check src tests
     - poetry run flake8 src tests
     - poetry run mypy src
-    
+
 build:
   stage: build
   script:
@@ -707,7 +707,7 @@ build:
    - Text analysis (analyze, reverse, count)
    - Code analysis (metrics, syntax validation)
    - Model info (list, details, tokens)
-   
+
    Include type hints, docstrings, error handling.
    ```
 

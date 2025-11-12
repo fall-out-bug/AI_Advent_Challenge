@@ -46,7 +46,7 @@ class CodeReviewReport:
     pass_2_results: ComponentResults
     pass_3_results: SynthesisResults
     pass_4_results: LogAnalysisResults  # ← NEW
-    
+
     def to_markdown(self) -> str:
         """Экспортировать в Markdown с всеми pass'ами"""
 ```
@@ -62,7 +62,7 @@ class CodeReviewReport:
 
 class MultiPassReportBuilder:
     """Построитель multi-pass отчета с анализом логов."""
-    
+
     def __init__(self, session_id: str):
         self.session_id = session_id
         self.pass_1 = None
@@ -70,70 +70,70 @@ class MultiPassReportBuilder:
         self.pass_3 = None
         self.pass_4 = None  # NEW: Log analysis
         self.created = datetime.now()
-    
+
     async def run_all_passes(self):
         """Запустить все pass'ы по очереди."""
-        
+
         # Pass 1-3: Static analysis (существующий код)
         self.pass_1 = self._run_pass_1()
         self.pass_2 = self._run_pass_2()
         self.pass_3 = self._run_pass_3()
-        
+
         # Pass 4: NEW - Log analysis
         self.pass_4 = await self._run_pass_4_log_analysis()
-        
+
         return self.build_final_report()
-    
+
     async def _run_pass_4_log_analysis(self) -> dict:
         """
         Запустить анализ логов (новый Pass 4).
         """
         logger.info("Starting Pass 4: Runtime Analysis (Logs)")
-        
+
         from log_analysis.parser import LogParser
         from log_analysis.normalizer import LogNormalizer
         from log_analysis.llm_client import OllamaClient
-        
+
         # Собрать логи
         all_entries = self._collect_logs()
         if not all_entries:
             logger.warning("No logs found, skipping Pass 4")
             return {"status": "no_logs"}
-        
+
         # Нормализовать
         grouped = LogNormalizer.group_by_component_and_severity(all_entries)
         log_groups = LogNormalizer.create_log_groups(grouped)
         log_groups = [g for g in log_groups if g.severity != "info"]
-        
+
         logger.info(f"Found {len(log_groups)} log groups to analyze")
-        
+
         # Анализировать через LLM
         ollama_client = OllamaClient()
         analysis_results = []
-        
+
         for log_group in log_groups:
             result = await ollama_client.analyze_log_group(log_group)
             if result:
                 analysis_results.append(result)
-        
+
         return {
             "status": "completed",
             "total_log_entries": len(all_entries),
             "log_groups_analyzed": len(analysis_results),
             "results": analysis_results,
         }
-    
+
     def _collect_logs(self) -> list:
         """Собрать логи из всех доступных источников."""
         from pathlib import Path
         from log_analysis.parser import LogParser
-        
+
         logs_dir = Path(self.repo_path) / "logs"
         if not logs_dir.exists():
             return []
-        
+
         all_entries = []
-        
+
         log_file_handlers = {
             "airflow.log": LogParser.parse_airflow_logs,
             "spark-master.log": LogParser.parse_spark_logs,
@@ -143,7 +143,7 @@ class MultiPassReportBuilder:
             "run_stdout.txt": (lambda x: LogParser.parse_generic_logs(x, "stdout")),
             "run_stderr.txt": (lambda x: LogParser.parse_generic_logs(x, "stderr")),
         }
-        
+
         for filename, handler in log_file_handlers.items():
             filepath = logs_dir / filename
             if filepath.exists():
@@ -153,53 +153,53 @@ class MultiPassReportBuilder:
                         all_entries.extend(entries)
                 except Exception as e:
                     logger.warning(f"Error parsing {filename}: {e}")
-        
+
         return all_entries
-    
+
     def build_final_report(self) -> str:
         """Построить финальный отчет со всеми pass'ами."""
-        
+
         report = f"""# Code Review Report: {self.session_id}
 
-**Session ID**: {self.session_id}  
-**Created**: {self.created.isoformat()}  
+**Session ID**: {self.session_id}
+**Created**: {self.created.isoformat()}
 **Execution Time**: {self.execution_time:.1f}s
 
 ## Summary
 
 """
-        
+
         # Summary section
         report += self._build_summary_section()
-        
+
         # Pass 1
         report += "\n## Pass 1: Architecture Overview & Static Analysis\n"
         report += self._format_pass_1()
-        
+
         # Pass 2
         report += "\n## Pass 2: Component Analysis\n"
         report += self._format_pass_2()
-        
+
         # Pass 3
         report += "\n## Pass 3: Synthesis & Integration\n"
         report += self._format_pass_3()
-        
+
         # Pass 4 (NEW)
         if self.pass_4 and self.pass_4.get("status") == "completed":
             report += "\n## Pass 4: Runtime Analysis (Logs)\n"
             report += self._format_pass_4_logs()
-        
+
         report += "\n---\n"
         report += "*Generated by Multi-Pass Code Review System v2.0 with Log Analysis*\n"
-        
+
         return report
-    
+
     def _format_pass_4_logs(self) -> str:
         """Форматировать результаты Pass 4 в Markdown."""
-        
+
         pass_4 = self.pass_4
         results = pass_4.get("results", [])
-        
+
         markdown = f"""
 ### Summary
 
@@ -209,7 +209,7 @@ class MultiPassReportBuilder:
 - **Components with Issues**: {self._get_components_with_issues(results)}
 
 """
-        
+
         # Distribution by severity
         severity_dist = self._count_by_severity(results)
         markdown += "### Issues Distribution by Severity\n\n"
@@ -217,9 +217,9 @@ class MultiPassReportBuilder:
         markdown += "|----------|-------|\n"
         for sev, count in severity_dist.items():
             markdown += f"| **{sev.upper()}** | {count} |\n"
-        
+
         markdown += "\n### Detailed Findings\n"
-        
+
         # Group by component
         by_component = {}
         for result in results:
@@ -227,34 +227,34 @@ class MultiPassReportBuilder:
             if comp not in by_component:
                 by_component[comp] = []
             by_component[comp].append(result)
-        
+
         for component in sorted(by_component.keys()):
             markdown += f"\n#### {component.upper()}\n"
             for result in by_component[component]:
                 markdown += result.to_markdown()
-        
+
         # Top recommendations
         markdown += "\n### Top Recommendations (Prioritized)\n\n"
         recommendations = self._extract_top_recommendations(results)
-        
+
         for i, (rec, priority) in enumerate(recommendations[:5], 1):
             priority_icon = "🔴" if priority == "critical" else "🟠" if priority == "major" else "🟡"
             markdown += f"{i}. {priority_icon} {rec}\n"
-        
+
         return markdown
-    
+
     def _get_components_with_issues(self, results: list) -> str:
         """Получить список компонентов с проблемами."""
         components = set(r.log_group.component for r in results)
         return ", ".join(sorted(components))
-    
+
     def _count_by_severity(self, results: list) -> dict:
         """Подсчитать проблемы по серьезности."""
         counts = {"critical": 0, "major": 0, "minor": 0, "warning": 0}
         for result in results:
             counts[result.classification] += 1
         return counts
-    
+
     def _extract_top_recommendations(self, results: list) -> list:
         """Извлечь топ рекомендации."""
         rec_dict = {}
@@ -264,9 +264,9 @@ class MultiPassReportBuilder:
                 if rec not in rec_dict or \
                    self._severity_order(priority) > self._severity_order(rec_dict[rec][1]):
                     rec_dict[rec] = (rec_dict.get(rec, [0])[0] + 1, priority)
-        
+
         return sorted(rec_dict.items(), key=lambda x: -x[1][0])
-    
+
     @staticmethod
     def _severity_order(sev: str) -> int:
         """Преобразовать серьезность в порядок сортировки."""
@@ -284,7 +284,7 @@ from report_generator import MultiPassReportBuilder
 
 async def main():
     import argparse
-    
+
     parser = argparse.ArgumentParser()
     parser.add_argument("repo_path", help="Path to repository")
     parser.add_argument("--session-id", required=True)
@@ -292,20 +292,20 @@ async def main():
                         help="Skip log analysis (Pass 4)")
     parser.add_argument("--output", default="report.md",
                         help="Output file path")
-    
+
     args = parser.parse_args()
-    
+
     builder = MultiPassReportBuilder(
         session_id=args.session_id,
         repo_path=args.repo_path,
         skip_log_analysis=args.skip_pass4,
     )
-    
+
     report = await builder.run_all_passes()
-    
+
     with open(args.output, "w") as f:
         f.write(report)
-    
+
     print(f"Report saved to {args.output}")
 
 
@@ -343,8 +343,8 @@ if __name__ == "__main__":
 
 ##### [CRITICAL] Permission Denied
 
-**Количество ошибок:** 8  
-**Первое появление:** 2025-11-03T20:36:40.061565217Z  
+**Количество ошибок:** 8
+**Первое появление:** 2025-11-03T20:36:40.061565217Z
 **Последнее появление:** 2025-11-03T20:36:41.698018916Z
 
 **Описание проблемы:**
@@ -367,8 +367,8 @@ Airflow не может запуститься из-за проблем с ра�
 
 ##### [MAJOR] Native Library Not Available
 
-**Количество ошибок:** 2  
-**Первое появление:** 2025-11-03T20:36:38.557149137Z  
+**Количество ошибок:** 2
+**Первое появление:** 2025-11-03T20:36:38.557149137Z
 **Последнее появление:** 2025-11-03T20:36:38.969623884Z
 
 **Описание проблемы:**
@@ -401,16 +401,16 @@ Spark не может загрузить native Hadoop библиотеку дл
 
 Pass 4 должен быть включен, если:
 
-✅ Логи доступны в директории `{repo}/logs`  
-✅ Находится хотя бы один лог-файл (*.log, *.txt)  
-✅ Ollama доступна на http://localhost:11434  
-✅ Модель успешно загружена  
+✅ Логи доступны в директории `{repo}/logs`
+✅ Находится хотя бы один лог-файл (*.log, *.txt)
+✅ Ollama доступна на http://localhost:11434
+✅ Модель успешно загружена
 
 Pass 4 может быть пропущен, если:
 
-❌ Флаг `--skip-pass4` передан  
-❌ Нет лог-файлов в репозитории  
-❌ Ollama недоступна (graceful degradation)  
+❌ Флаг `--skip-pass4` передан
+❌ Нет лог-файлов в репозитории
+❌ Ollama недоступна (graceful degradation)
 
 ---
 
@@ -447,7 +447,7 @@ on: [pull_request, push]
 jobs:
   code-review:
     runs-on: ubuntu-latest
-    
+
     services:
       ollama:
         image: ollama/ollama:latest
@@ -458,36 +458,36 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-    
+
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-      
+
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
           pip install -r log_analysis/requirements.txt
-      
+
       - name: Pull Ollama model
         run: |
           ollama pull mistral
-      
+
       - name: Run multi-pass code review
         run: |
           python main.py . \
             --session-id=${{ github.run_id }} \
             --output=report_${{ github.run_id }}.md
-      
+
       - name: Upload report
         uses: actions/upload-artifact@v3
         with:
           name: code-review-report
           path: report_*.md
-      
+
       - name: Comment PR with report
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v6
