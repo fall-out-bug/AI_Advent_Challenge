@@ -10,11 +10,19 @@ This repository contains daily challenges building AI-powered systems with langu
 
 **Updates:** Project news and daily recaps are published in the Telegram channel [Высоконагруженный кабанчик](https://t.me/data_intensive_boar).
 
-**Current Status:** 🏆 Epic 21 COMPLETED — Repository refactor finished, Clean Architecture deployed, enterprise security implemented, quality automation active.
+**Current Status:** 🏆 Day 21 COMPLETED — Repository refactor finished, Clean Architecture deployed, enterprise security implemented, quality automation active.
+
+### Day 21 (Completed)
+- Summary: `docs/specs/epic_21/epic_21.md`
+- Archive Index: `docs/specs/epic_21/ARCHIVE_INDEX.md`
+- Demo quick start:
+  - `make day_21_demo` — interactive console demo
+  - `make day_21_batch` — batch run on 10 questions
+  - `make day_21_metrics` — print key rag_* metrics
 
 **Project Status:**
 - ✅ 18 daily challenges completed
-- ✅ Clean Architecture fully implemented (Epic 21)
+- ✅ Clean Architecture fully implemented (Day 21)
 - ✅ Security hardening deployed (path traversal protection, input validation)
 - ✅ Quality automation established (pre-commit hooks, automated linting)
 - ✅ Production-ready multi-agent system with self-improvement
