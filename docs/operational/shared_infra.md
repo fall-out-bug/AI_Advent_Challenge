@@ -117,4 +117,3 @@ export USE_MODULAR_REVIEWER=1
 - Follow escalation matrix in `docs/specs/epic_03/alerting_runbook.md`.
 - Communication channels: `#ops-shared`, on-call phone bridge, program coordination thread.
 - Rollback authority: EP03 Tech Lead or delegated on-call engineer.
-

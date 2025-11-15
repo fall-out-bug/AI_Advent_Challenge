@@ -4,4 +4,3 @@
 - Include requirement snippets, acceptance matrices, and review remark samples.
 - Mirror successful RAG queries with anonymised outputs for reuse.
 - Keep artefacts ≤1 page; cross-link to `../day_capabilities.md` updates.
-

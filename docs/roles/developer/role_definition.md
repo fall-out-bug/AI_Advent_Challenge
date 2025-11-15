@@ -68,4 +68,3 @@ discipline and operational readiness. The Developer executes Cycle Step 4 in
 - RAG Playbook: `docs/roles/developer/rag_queries.md`
 - Examples: `docs/roles/developer/examples/`
 - Operational limits: `docs/operational/context_limits.md`
-

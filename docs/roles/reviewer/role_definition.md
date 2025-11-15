@@ -60,4 +60,3 @@ The Reviewer closes the loop after Developer delivery (Cycle Step 6 in
 - RAG Playbook: `docs/roles/reviewer/rag_queries.md`
 - Examples: `docs/roles/reviewer/examples/`
 - Handoff schema: `docs/operational/handoff_contracts.md`
-

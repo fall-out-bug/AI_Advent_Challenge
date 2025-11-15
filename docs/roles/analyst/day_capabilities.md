@@ -46,4 +46,3 @@
 - [ ] EP19 – Requirements refresh pending
 - [ ] EP20 – Awaiting initial scoping session
 - [ ] EP21 – Sync with architecture decision queue
-

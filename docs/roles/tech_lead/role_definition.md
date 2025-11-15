@@ -63,4 +63,3 @@ handoff.
 - RAG Playbook: `docs/roles/tech_lead/rag_queries.md`
 - Examples: `docs/roles/tech_lead/examples/`
 - Operational limits: `docs/operational/context_limits.md`
-

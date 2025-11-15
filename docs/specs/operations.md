@@ -8,4 +8,3 @@ This document now routes readers to the living operational playbooks.
 
 Refer to `docs/roles/CURSOR_INITIALIZATION.md` for the full onboarding path and
 role entry points.
-

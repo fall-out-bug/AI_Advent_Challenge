@@ -83,4 +83,3 @@ db.plans.aggregate([
 - Capabilities: `docs/roles/tech_lead/day_capabilities.md`
 - Developer handoff expectations: `docs/roles/developer/role_definition.md`
 - Workflow context: `docs/specs/process/agent_workflow.md`
-

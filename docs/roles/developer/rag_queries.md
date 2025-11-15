@@ -65,4 +65,3 @@ db.worklogs.find({
 - Capabilities: `docs/roles/developer/day_capabilities.md`
 - Tech Lead plan: `docs/roles/tech_lead/role_definition.md`
 - Workflow context: `docs/specs/process/agent_workflow.md`
-

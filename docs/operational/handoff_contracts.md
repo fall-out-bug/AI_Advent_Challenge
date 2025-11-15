@@ -256,4 +256,3 @@ sequence context.
 - Embed schemas in CI validation routines before handoffs.
 - Store rendered payloads under respective role `examples/` folders.
 - Revisit schemas after each new epic to capture evolving needs.
-

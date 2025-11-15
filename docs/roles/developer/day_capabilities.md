@@ -46,4 +46,3 @@
 - [ ] EP19 – Awaiting plan handoff
 - [ ] EP20 – Pending architecture review
 - [ ] EP21 – Focus on modular reviewer stabilization
-

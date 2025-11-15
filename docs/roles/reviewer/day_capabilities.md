@@ -46,4 +46,3 @@
 - [ ] EP19 – Await developer sign-off
 - [ ] EP20 – Prep integration regression suite
 - [ ] EP21 – Monitor modular reviewer stabilization reviews
-

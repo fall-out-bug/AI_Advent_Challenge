@@ -68,4 +68,3 @@ evidence, providing the baseline described in
 - RAG Playbook: `docs/roles/analyst/rag_queries.md`
 - Examples: `docs/roles/analyst/examples/`
 - Operational limits: `docs/operational/context_limits.md`
-

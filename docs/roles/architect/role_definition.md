@@ -63,4 +63,3 @@ interfaces, boundaries, and MADR decisions.
 - RAG Playbook: `docs/roles/architect/rag_queries.md`
 - Examples: `docs/roles/architect/examples/`
 - Workflow context: `docs/specs/process/agent_workflow.md`
-

@@ -66,4 +66,3 @@ db.reviews.aggregate([
 - Capabilities: `docs/roles/reviewer/day_capabilities.md`
 - Handoff schema: `docs/operational/handoff_contracts.md`
 - Workflow context: `docs/specs/process/agent_workflow.md`
-
