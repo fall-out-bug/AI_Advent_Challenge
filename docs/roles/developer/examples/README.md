@@ -4,4 +4,3 @@
 - Capture coverage reports and lint summaries linked to tasks.
 - Store review feedback cases and resolution notes.
 - Include worklog snippets illustrating evidence-first updates.
-

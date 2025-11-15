@@ -38,4 +38,3 @@ context, understand current Epic focus, and navigate living documentation.
 - [ ] Role folders contain required templates.
 - [ ] Operational docs reflect latest token & hand-off guidance.
 - [ ] Epics directory aligns with current release cadence.
-
