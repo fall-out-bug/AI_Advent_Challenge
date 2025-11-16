@@ -5,22 +5,43 @@ Live benchmark runs for Stage 05 require fresh datasets populated in shared
 Mongo collections (`digests`, `review_reports`). Current environment does not
 contain the expected artefacts, so automation halts at export stage.
 
+### Architect Confirmations (2025-11-15)
+- Product owner provides **exactly five RU Telegram channels**; scope limited to
+  observability & benchmark enablement (payment examples removed).
+- Collect posts for the **latest 30 calendar days** per channel.
+- **Minimum dataset requirement:** ≥30 daily digests (or equivalent exporter
+  records) per channel; use this floor for validation thresholds.
+- Continue storing data as MongoDB JSON documents; reference exporter outputs
+  (`scripts/quality/analysis/export_digests.py`,
+  `scripts/quality/analysis/export_review_reports.py`) instead of duplicating
+  schemas in specs.
+- Stack runs on a single Ryzen 5800 / 128 GB RAM / RTX 3070 Ti host; DR drill is
+  explicitly out of scope for Epic 23.
+- RAG++ feature flag remains owner-only; document the limitation in Analyst and
+  downstream packages.
+
 ## Tasks
 1. **Seed digest samples for benchmarking**
    - Populate `butler.digests` with RU channel digest documents (24h/7d
      coverage).
    - Ensure each entry contains summary, raw posts, feature flags, latency.
+   - **Validation:** each of the five channels must have ≥30 daily digests
+     covering the last 30 calendar days (fail task if any channel <30 records).
    - Owner: Data services.
 
 2. **Seed reviewer report samples**
    - Populate `butler.review_reports` with modular reviewer outputs (passes,
      synthesis, metadata).
    - Include judge scores / latency for baseline comparisons.
+   - Reuse the exporter structure documented in
+     `scripts/quality/analysis/export_review_reports.py` (schema reference).
 
 3. **Verify exporters**
    - Re-run `scripts/quality/analysis/export_digests.py` and
      `scripts/quality/analysis/export_review_reports.py` against populated DB.
    - Confirm JSONL samples match Stage 05 schema.
+   - Capture validation link to sample outputs instead of duplicating schema
+     snippets in docs.
 
 4. **Trigger live benchmarks**
    - Execute `scripts/benchmark/run_benchmark.py --scenario channel_digest_ru`
@@ -31,6 +52,13 @@ contain the expected artefacts, so automation halts at export stage.
    - Once datasets are seeded, execute fine-tuning pilot per
      `docs/specs/epic_05/stage_05_03_runbook.md`.
    - Record evaluation results and complete governance sign-off.
+   - **Acceptance tests (owner)**:
+     - `scripts/quality/analysis/export_digests.py --output sample.jsonl`
+       produces 30+ entries per channel with RU content.
+     - `scripts/quality/benchmark/run_benchmark.py --scenario channel_digest_ru`
+       completes on target hardware without exceeding latency threshold.
+     - Manual spot-check: digest Markdown contains localized headings, latency
+       field present, and feature flags match exporter reference.
 6. **Complete RU localisation review for MCP/Bot docs**
    - Review RU copy updates introduced in Stage 02_03; ensure Telegram flows,
      CLI backoffice docs, and README.ru reflect final scope.

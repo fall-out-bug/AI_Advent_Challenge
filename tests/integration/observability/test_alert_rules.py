@@ -31,3 +31,43 @@ def test_mcp_alert_uses_new_metric() -> None:
     mcp_rule = next(rule for rule in alerts if rule.get("alert") == "MCPServerHighErrorRate")
     expr = mcp_rule.get("expr")
     assert "mcp_requests_total" in expr
+
+
+def test_epic23_observability_alerts_present() -> None:
+    """Verify Epic 23 observability alerts are present."""
+    alerts = _load_alerts()
+    names = {rule.get("alert") for rule in alerts}
+    assert "SharedInfraBootstrapFailed" in names
+    assert "BenchmarkExportSlow" in names
+    assert "StructuredLogsVolumeSpike" in names
+    assert "RAGVarianceThresholdExceeded" in names
+
+
+def test_loki_alerts_present() -> None:
+    """Verify Loki alert rules are present."""
+    alerts = _load_alerts()
+    names = {rule.get("alert") for rule in alerts}
+    assert "LokiHighErrorRate" in names
+    assert "LokiIngestionBacklog" in names
+
+
+def test_epic23_alerts_use_new_metrics() -> None:
+    """Verify Epic 23 alerts use new metrics from observability_labels.md."""
+    alerts = _load_alerts()
+    bootstrap_rule = next(
+        rule for rule in alerts if rule.get("alert") == "SharedInfraBootstrapFailed"
+    )
+    expr = bootstrap_rule.get("expr")
+    assert "shared_infra_bootstrap_status" in expr
+
+    export_rule = next(rule for rule in alerts if rule.get("alert") == "BenchmarkExportSlow")
+    expr = export_rule.get("expr")
+    assert "benchmark_export_duration_seconds" in expr
+
+    logs_rule = next(rule for rule in alerts if rule.get("alert") == "StructuredLogsVolumeSpike")
+    expr = logs_rule.get("expr")
+    assert "structured_logs_total" in expr
+
+    rag_rule = next(rule for rule in alerts if rule.get("alert") == "RAGVarianceThresholdExceeded")
+    expr = rag_rule.get("expr")
+    assert "rag_variance_ratio" in expr

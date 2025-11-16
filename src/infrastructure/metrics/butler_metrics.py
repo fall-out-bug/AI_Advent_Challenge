@@ -13,14 +13,32 @@ import time
 from contextlib import contextmanager
 from typing import Optional
 
-from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
-
 from src.infrastructure.logging import get_logger
+from src.infrastructure.monitoring.prometheus_metrics import get_metrics_registry
 
 logger = get_logger("butler_metrics")
 
-# Metrics Registry
-_butler_registry = CollectorRegistry()
+try:
+    from prometheus_client import Counter, Gauge, Histogram, REGISTRY
+
+    _butler_registry = REGISTRY
+except ImportError:  # pragma: no cover - metrics are optional
+
+    class _DummyMetric:
+        def labels(self, *args, **kwargs):  # type: ignore[override]
+            return self
+
+        def observe(self, *args, **kwargs):  # type: ignore[override]
+            return None
+
+        def inc(self, *args, **kwargs):  # type: ignore[override]
+            return None
+
+        def set(self, *args, **kwargs):  # type: ignore[override]
+            return None
+
+    Counter = Histogram = Gauge = lambda *args, **kwargs: _DummyMetric()  # type: ignore[assignment]
+    _butler_registry = None
 
 # =============================================
 # Counter Metrics
@@ -112,9 +130,9 @@ class ButlerMetrics:
         ...     pass
     """
 
-    def __init__(self) -> None:
+    def __init__(self, registry: Optional[object] = None) -> None:
         """Initialize Butler metrics collector."""
-        self.registry = _butler_registry
+        self.registry = registry or _butler_registry
 
     @contextmanager
     def record_message_processing(self, mode: str, handler_type: str) -> None:
@@ -215,7 +233,7 @@ class ButlerMetrics:
         """
         butler_bot_healthy.set(1 if healthy else 0)
 
-    def get_registry(self) -> CollectorRegistry:
+    def get_registry(self) -> Optional[object]:
         """Get metrics registry.
 
         Returns:
@@ -236,5 +254,5 @@ def get_butler_metrics() -> ButlerMetrics:
     """
     global _butler_metrics_instance
     if _butler_metrics_instance is None:
-        _butler_metrics_instance = ButlerMetrics()
+        _butler_metrics_instance = ButlerMetrics(get_metrics_registry())
     return _butler_metrics_instance

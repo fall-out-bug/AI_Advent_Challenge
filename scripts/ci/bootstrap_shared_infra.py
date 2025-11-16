@@ -11,8 +11,23 @@ import sys
 import time
 from pathlib import Path
 
+try:
+    from src.infrastructure.metrics.observability_metrics import (
+        shared_infra_bootstrap_status,
+    )
+except Exception:  # pragma: no cover - metrics optional in CI bootstrap
+    shared_infra_bootstrap_status = None
 
 STATE_PATH = Path(__file__).resolve().parent / ".shared_infra_state.json"
+def _set_bootstrap_status(step: str, success: bool) -> None:
+    """Record bootstrap step status."""
+
+    if shared_infra_bootstrap_status is None:
+        return
+    try:
+        shared_infra_bootstrap_status.labels(step=step).set(1 if success else 0)
+    except Exception:
+        pass
 
 
 def _wait_for_port(host: str, port: int, timeout: float) -> None:
@@ -47,39 +62,75 @@ def _docker_rm(container_name: str) -> None:
 def _start_mongo(container_name: str, port: int) -> None:
     """Start a MongoDB container exposed on the given port."""
     _docker_rm(container_name)
-    subprocess.run(
-        [
-            "docker",
-            "run",
-            "-d",
-            "--name",
-            container_name,
-            "-p",
-            f"{port}:27017",
-            "-e",
-            "MONGO_INITDB_ROOT_USERNAME=ci_admin",
-            "-e",
-            "MONGO_INITDB_ROOT_PASSWORD=ci_password",
-            "-e",
-            "MONGO_INITDB_DATABASE=butler",
-            "mongo:6.0",
-        ],
-        check=True,
-        stdout=subprocess.DEVNULL,
-    )
-    _wait_for_port("127.0.0.1", port, timeout=60.0)
+    try:
+        subprocess.run(
+            [
+                "docker",
+                "run",
+                "-d",
+                "--name",
+                container_name,
+                "-p",
+                f"{port}:27017",
+                "-e",
+                "MONGO_INITDB_ROOT_USERNAME=ci_admin",
+                "-e",
+                "MONGO_INITDB_ROOT_PASSWORD=ci_password",
+                "-e",
+                "MONGO_INITDB_DATABASE=butler",
+                "mongo:6.0",
+            ],
+            check=True,
+            stdout=subprocess.DEVNULL,
+        )
+        _wait_for_port("127.0.0.1", port, timeout=60.0)
+        _set_bootstrap_status("mongo", True)
+    except Exception:
+        _set_bootstrap_status("mongo", False)
+        raise
 
 
 def _start_mock_services(port: int) -> subprocess.Popen[bytes]:
     """Start the mock LLM/Prometheus service."""
     script_path = Path(__file__).resolve().parent / "mock_shared_services.py"
-    process = subprocess.Popen(
-        [sys.executable, str(script_path), "--port", str(port)],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    _wait_for_port("127.0.0.1", port, timeout=15.0)
+    try:
+        process = subprocess.Popen(
+            [sys.executable, str(script_path), "--port", str(port)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        _wait_for_port("127.0.0.1", port, timeout=15.0)
+        _set_bootstrap_status("mock_services", True)
+    except Exception:
+        _set_bootstrap_status("mock_services", False)
+        raise
     return process
+
+
+def _check_services(mongo_port: int, mock_port: int) -> bool:
+    """Check if required services are running and accessible.
+
+    Purpose:
+        Verify that MongoDB and mock services are reachable without starting them.
+
+    Args:
+        mongo_port: Expected MongoDB port.
+        mock_port: Expected mock service port.
+
+    Returns:
+        True if all services are accessible, False otherwise.
+    """
+    try:
+        _wait_for_port("127.0.0.1", mongo_port, timeout=2.0)
+    except RuntimeError:
+        return False
+
+    try:
+        _wait_for_port("127.0.0.1", mock_port, timeout=2.0)
+    except RuntimeError:
+        return False
+
+    return True
 
 
 def main() -> None:
@@ -101,7 +152,21 @@ def main() -> None:
         default=STATE_PATH,
         help="Path to persist container/process metadata for cleanup.",
     )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Check if services are running without starting them. Exit 0 if ready, 1 otherwise.",
+    )
     args = parser.parse_args()
+
+    if args.check:
+        if _check_services(args.mongo_port, args.mock_port):
+            _set_bootstrap_status("mongo", True)
+            _set_bootstrap_status("mock_services", True)
+            sys.exit(0)
+        _set_bootstrap_status("mongo", False)
+        _set_bootstrap_status("mock_services", False)
+        sys.exit(1)
 
     mongo_container = "ai-challenge-ci-mongo"
     _start_mongo(mongo_container, args.mongo_port)

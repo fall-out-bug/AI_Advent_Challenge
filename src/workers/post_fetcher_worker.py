@@ -14,7 +14,8 @@ import time
 from datetime import datetime, timedelta
 from typing import Optional
 
-from src.infrastructure.clients.telegram_utils import fetch_channel_posts
+from src.domain.interfaces.telegram_adapter import TelegramAdapter
+from src.infrastructure.clients.telegram_adapter_impl import TelegramAdapterImpl
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.database.mongo import get_db
 from src.infrastructure.logging import get_logger
@@ -43,15 +44,22 @@ class PostFetcherWorker:
         Processes channels independently, continuing on errors.
     """
 
-    def __init__(self, mcp_url: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        mcp_url: Optional[str] = None,
+        telegram_adapter: Optional[TelegramAdapter] = None,
+    ) -> None:
         """Initialize worker.
 
         Args:
             mcp_url: Optional MCP server URL (defaults to stdio)
+            telegram_adapter: Optional Telegram adapter for fetching posts.
+                Defaults to TelegramAdapterImpl if not provided.
         """
         mcp_url = mcp_url or os.getenv("MCP_SERVER_URL")
         self.mcp = get_mcp_client(server_url=mcp_url)
         self.settings = get_settings()
+        self.telegram_adapter = telegram_adapter or TelegramAdapterImpl()
         logger.info(
             f"Post fetcher worker initialized: interval_hours={self.settings.post_fetch_interval_hours}, "
             f"ttl_days={self.settings.post_ttl_days}"
@@ -306,8 +314,8 @@ class PostFetcherWorker:
             f"since={since.isoformat()}"
         )
 
-        # Fetch posts from Telegram
-        posts = await fetch_channel_posts(
+        # Fetch posts from Telegram via adapter
+        posts = await self.telegram_adapter.fetch_channel_posts(
             channel_username=channel_username,
             since=since,
             user_id=user_id,

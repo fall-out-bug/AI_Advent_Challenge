@@ -1,4 +1,7 @@
-.PHONY: help install test lint format clean docker-build docker-up docker-down coverage integration e2e maintenance-cleanup maintenance-backup maintenance-export maintenance-validate day-07 day-08 day-11 day-11-up day-11-down day-11-build day-11-logs day-11-logs-bot day-11-logs-worker day-11-logs-mcp day-11-ps day-11-restart day-11-clean day-11-setup day-12 day-12-up day-12-down day-12-build day-12-logs day-12-logs-bot day-12-logs-worker day-12-logs-post-fetcher day-12-logs-mcp day-12-ps day-12-restart day-12-clean day-12-setup day-12-test day-12-metrics butler butler-up butler-down butler-build butler-logs butler-logs-bot butler-logs-worker butler-logs-mcp butler-logs-post-fetcher butler-ps butler-restart butler-clean butler-setup butler-test butler-metrics mcp-discover mcp-demo test-mcp test-mcp-comprehensive mcp-chat mcp-chat-streaming mcp-server-start mcp-server-stop mcp-chat-docker mcp-demo-start mcp-demo-stop mcp-demo-logs demo-mcp-comprehensive index-run index-container-build index-container-run index-container-shell
+.PHONY: help install test lint format clean docker-build docker-up docker-down coverage integration e2e maintenance-cleanup maintenance-backup maintenance-export maintenance-validate day-07 day-08 day-11 day-11-up day-11-down day-11-build day-11-logs day-11-logs-bot day-11-logs-worker day-11-logs-mcp day-11-ps day-11-restart day-11-clean day-11-setup day-12 day-12-up day-12-down day-12-build day-12-logs day-12-logs-bot day-12-logs-worker day-12-logs-post-fetcher day-12-logs-mcp day-12-ps day-12-restart day-12-clean day-12-setup day-12-test day-12-metrics day-23 day-23-up day-23-down butler butler-up butler-down butler-build butler-logs butler-logs-bot butler-logs-worker butler-logs-mcp butler-logs-post-fetcher butler-ps butler-restart butler-clean butler-setup butler-test butler-metrics mcp-discover mcp-demo test-mcp test-mcp-comprehensive mcp-chat mcp-chat-streaming mcp-server-start mcp-server-stop mcp-chat-docker mcp-demo-start mcp-demo-stop mcp-demo-logs demo-mcp-comprehensive index-run index-container-build index-container-run index-container-shell
+
+DAY23_MONGO_PORT ?= 37017
+DAY23_MOCK_PORT ?= 19080
 
 help:
 	@echo "Available commands:"
@@ -66,6 +69,10 @@ help:
 	@echo "  make review-test       - Run review system unit tests"
 	@echo "  make review-e2e        - Run review E2E tests with real ZIP archives"
 	@echo "  make review-health-check - Run comprehensive health check (all components)"
+	@echo ""
+	@echo "Day 23 – Shared Infrastructure (EP23 Stage 05):"
+	@echo "  make day-23-up         - Start shared infra (Mongo + mock LLM/Prometheus) via bootstrap script"
+	@echo "  make day-23-down       - Stop shared infra stack"
 	@echo ""
 	@echo "  (Legacy: make butler-* still works but deprecated, use butler-* instead)"
 	@echo ""
@@ -326,6 +333,17 @@ day-12-clean: butler-clean
 day-12-setup: butler-setup
 day-12-test: butler-test
 day-12-metrics: butler-metrics
+
+day-23: day-23-up
+	@echo "Day 23 shared infrastructure started (mongo:$(DAY23_MONGO_PORT), mock:$(DAY23_MOCK_PORT))"
+
+day-23-up:
+	@echo "Starting Day 23 shared infrastructure..."
+	python scripts/ci/bootstrap_shared_infra.py --mongo-port $(DAY23_MONGO_PORT) --mock-port $(DAY23_MOCK_PORT)
+
+day-23-down:
+	@echo "Stopping Day 23 shared infrastructure..."
+	python scripts/ci/cleanup_shared_infra.py
 
 butler-logs:
 	docker-compose -f docker-compose.butler.yml logs -f

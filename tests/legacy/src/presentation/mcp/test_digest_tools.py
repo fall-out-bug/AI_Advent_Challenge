@@ -1,18 +1,11 @@
-import asyncio
 import os
 from datetime import datetime
 
 import pytest
 from pymongo.errors import OperationFailure
 
-
-@pytest.fixture(scope="module")
-def event_loop():
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
-
-
+# Legacy event_loop fixture removed - pytest-asyncio handles event loop automatically
+# (asyncio_mode = auto in pytest.ini)
 @pytest.fixture(autouse=True)
 def _set_test_db_env(monkeypatch):
     monkeypatch.setenv("DB_NAME", "butler_test")

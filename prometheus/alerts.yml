@@ -176,3 +176,87 @@ groups:
         annotations:
           summary: "Butler bot has not processed any messages in 10 minutes"
           description: "Butler bot has not processed any messages for more than 10 minutes. This may indicate a quiet period or connectivity issue."
+
+  - name: epic23_observability_alerts
+    interval: 30s
+    rules:
+      # Epic 23 Observability Metrics Alerts
+      - alert: SharedInfraBootstrapFailed
+        expr: |
+          shared_infra_bootstrap_status{step="mongo"} == 0
+          OR
+          shared_infra_bootstrap_status{step="mock_services"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: shared-infra
+          component: bootstrap
+        annotations:
+          summary: "Shared infrastructure bootstrap step failed"
+          description: "Shared infrastructure bootstrap step (mongo or mock_services) failed. Check CI logs and bootstrap script execution."
+
+      - alert: BenchmarkExportSlow
+        expr: |
+          histogram_quantile(0.95, rate(benchmark_export_duration_seconds_bucket[5m])) > 60
+        for: 5m
+        labels:
+          severity: warning
+          service: benchmark
+          component: exporter
+        annotations:
+          summary: "Benchmark export duration exceeds 60 seconds (P95)"
+          description: "95th percentile benchmark export duration exceeds 60 seconds for the last 5 minutes. Check dataset size and export script performance."
+
+      - alert: StructuredLogsVolumeSpike
+        expr: |
+          rate(structured_logs_total[5m]) > 1000
+        for: 10m
+        labels:
+          severity: warning
+          service: observability
+          component: logging
+        annotations:
+          summary: "Structured logs volume spike detected"
+          description: "Structured logs emission rate exceeds 1000 logs/second for the last 10 minutes. Check for logging loops or excessive verbosity."
+
+      - alert: RAGVarianceThresholdExceeded
+        expr: |
+          rag_variance_ratio{window="current"} > 0.50
+        for: 15m
+        labels:
+          severity: warning
+          service: rag
+          component: reranker
+        annotations:
+          summary: "RAG variance ratio exceeds threshold"
+          description: "RAG reranker variance ratio exceeds 0.50 for the last 15 minutes. Check RAG++ configuration and reranking stability (owner-only metric)."
+
+  - name: loki_alerts
+    interval: 30s
+    rules:
+      # Loki log aggregation alerts (via Prometheus)
+      - alert: LokiHighErrorRate
+        expr: |
+          rate(loki_request_duration_seconds_count{status=~"5.."}[5m]) 
+          / 
+          rate(loki_request_duration_seconds_count[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: loki
+          component: log-aggregation
+        annotations:
+          summary: "Loki error rate exceeds 5%"
+          description: "Loki log aggregation error rate exceeds 5% of total requests in the last 5 minutes. Check Loki service health and log ingestion pipeline."
+
+      - alert: LokiIngestionBacklog
+        expr: |
+          loki_ingester_ring_members{state="ACTIVE"} < loki_ingester_ring_members{state="JOINING"}
+        for: 10m
+        labels:
+          severity: warning
+          service: loki
+          component: ingestion
+        annotations:
+          summary: "Loki ingestion backlog detected"
+          description: "Loki ingestion ring shows backlog with members in JOINING state for more than 10 minutes. Check ingester capacity and storage."

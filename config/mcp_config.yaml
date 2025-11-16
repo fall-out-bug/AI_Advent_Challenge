@@ -1,4 +1,3 @@
-"""Configuration for MCP module."""
 mcp:
   # Default models per tool
   defaults:

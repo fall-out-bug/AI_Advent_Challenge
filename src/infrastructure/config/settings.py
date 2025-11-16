@@ -28,6 +28,10 @@ class Settings(BaseSettings):
         default="mongodb://localhost:27017",
         description="MongoDB connection string",
     )
+    test_mongodb_url: str = Field(
+        default="mongodb://ci_admin:ci_password@127.0.0.1:37017/butler?authSource=admin",
+        description="MongoDB connection string for tests (Day 23 infra default, can override via TEST_MONGODB_URL env var)",
+    )
     db_name: str = Field(default="butler", description="Primary database name")
     mongo_timeout_ms: int = Field(default=10000, description="Mongo client timeout")
     storage_path: Path = Field(
