@@ -10,10 +10,11 @@ from src.application.use_cases.generate_channel_digest_by_name import (
 )
 from src.application.use_cases.generate_task_summary import GenerateTaskSummaryUseCase
 from src.infrastructure.di.container import SummarizationContainer
+from src.domain.services.summarizer import SummarizerService
 from src.infrastructure.llm.summarizers.adaptive_summarizer import AdaptiveSummarizer
 
 
-def create_adaptive_summarizer() -> AdaptiveSummarizer:
+def create_adaptive_summarizer() -> SummarizerService:
     """Create AdaptiveSummarizer instance.
 
     Purpose:
@@ -119,7 +120,7 @@ def create_channel_digest_by_name_use_case() -> GenerateChannelDigestByNameUseCa
     return use_case
 
 
-def create_adaptive_summarizer_with_long_timeout() -> AdaptiveSummarizer:
+def create_adaptive_summarizer_with_long_timeout() -> SummarizerService:
     """Create AdaptiveSummarizer instance with extended timeout for long tasks.
 
     Purpose:

@@ -1,28 +1,27 @@
-"""Configuration for MCP module."""
 mcp:
   # Default models per tool
   defaults:
     generation_model: "mistral"
     review_model: "mistral"
-    
+
     # Model fallback chain for generation
     generation_fallback:
       - "mistral"
       - "qwen"
       - "starcoder"
-      
+
     # Model fallback chain for review
     review_fallback:
       - "mistral"
       - "qwen"
-  
+
   # Timeout settings (seconds)
   timeouts:
     tool_discovery: 5.0
     tool_execution: 30.0
     model_check: 10.0
     workflow: 120.0
-  
+
   # Retry configuration
   retry:
     enabled: true
@@ -30,27 +29,27 @@ mcp:
     initial_delay: 1.0
     backoff_factor: 2.0
     max_delay: 10.0
-  
+
   # Logging configuration
   logging:
     level: "INFO"
     format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     log_tool_calls: true
     log_tool_results: false
-  
+
   # Performance settings
   performance:
     cache_enabled: false
     cache_ttl: 3600  # seconds
     max_concurrent_requests: 5
-  
+
   # Validation settings
   validation:
     strict_mode: true
     max_description_length: 5000
     max_code_length: 100000
     max_token_text_length: 1000000
-  
+
   # Feature flags
   features:
     streaming: false

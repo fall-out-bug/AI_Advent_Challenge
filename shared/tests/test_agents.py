@@ -15,11 +15,10 @@ Comprehensive test suite covering:
 
 import pytest
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime
 
 from shared_package.agents import (
-    BaseAgent,
     CodeGeneratorAgent,
     CodeReviewerAgent,
     AgentRequest,
@@ -29,7 +28,7 @@ from shared_package.agents import (
     get_agent_class,
     list_available_agents,
     create_agent,
-    AGENT_REGISTRY
+    AGENT_REGISTRY,
 )
 from shared_package.clients.unified_client import UnifiedModelClient
 from shared_package.clients.base_client import ModelResponse
@@ -52,8 +51,8 @@ def agent_request():
             task_id="test_001",
             task_type="code_generation",
             timestamp=datetime.now().timestamp(),
-            model_name="qwen"
-        )
+            model_name="qwen",
+        ),
     )
 
 
@@ -66,7 +65,7 @@ def mock_model_response():
         input_tokens=15,
         total_tokens=40,
         model_name="qwen",
-        response_time=1.5
+        response_time=1.5,
     )
 
 
@@ -79,7 +78,7 @@ def mock_review_response():
         input_tokens=30,
         total_tokens=50,
         model_name="mistral",
-        response_time=2.0
+        response_time=2.0,
     )
 
 
@@ -112,8 +111,14 @@ class TestBaseAgent:
         agent = CodeGeneratorAgent(mock_client)
         stats = agent.get_stats()
 
-        expected_keys = ["total_requests", "successful_requests", "failed_requests",
-                        "agent_name", "average_response_time", "total_response_time"]
+        expected_keys = [
+            "total_requests",
+            "successful_requests",
+            "failed_requests",
+            "agent_name",
+            "average_response_time",
+            "total_response_time",
+        ]
 
         for key in expected_keys:
             assert key in stats
@@ -142,7 +147,9 @@ class TestCodeGeneratorAgent:
     """Test CodeGeneratorAgent comprehensive functionality."""
 
     @pytest.mark.asyncio
-    async def test_successful_code_generation(self, mock_client, agent_request, mock_model_response):
+    async def test_successful_code_generation(
+        self, mock_client, agent_request, mock_model_response
+    ):
         """Test successful code generation with proper response handling."""
         mock_client.make_request = AsyncMock(return_value=mock_model_response)
 
@@ -151,7 +158,9 @@ class TestCodeGeneratorAgent:
 
         # Verify response structure
         assert response.success is True
-        assert response.metadata.task_id.startswith("code_generator")  # Agent generates its own task_id
+        assert response.metadata.task_id.startswith(
+            "code_generator"
+        )  # Agent generates its own task_id
         assert "fibonacci" in response.result
         assert "```" not in response.result  # Should be cleaned
 
@@ -167,7 +176,9 @@ class TestCodeGeneratorAgent:
     @pytest.mark.asyncio
     async def test_code_generation_with_error(self, mock_client, agent_request):
         """Test code generation with model error."""
-        mock_client.make_request = AsyncMock(side_effect=ModelConnectionError("Connection failed"))
+        mock_client.make_request = AsyncMock(
+            side_effect=ModelConnectionError("Connection failed")
+        )
 
         agent = CodeGeneratorAgent(mock_client, model_name="qwen")
         response = await agent.process(agent_request)
@@ -182,13 +193,14 @@ class TestCodeGeneratorAgent:
         assert agent.stats["failed_requests"] == 1
 
     @pytest.mark.asyncio
-    async def test_retry_mechanism(self, mock_client, agent_request, mock_model_response):
+    async def test_retry_mechanism(
+        self, mock_client, agent_request, mock_model_response
+    ):
         """Test retry mechanism on transient failures."""
         # First call fails, second succeeds
-        mock_client.make_request = AsyncMock(side_effect=[
-            ModelConnectionError("Temporary failure"),
-            mock_model_response
-        ])
+        mock_client.make_request = AsyncMock(
+            side_effect=[ModelConnectionError("Temporary failure"), mock_model_response]
+        )
 
         agent = CodeGeneratorAgent(mock_client, model_name="qwen")
         response = await agent.process(agent_request)
@@ -210,8 +222,8 @@ class TestCodeGeneratorAgent:
                 "language": "python",
                 "style": "clean",
                 "include_tests": True,
-                "complexity": "O(n log n)"
-            }
+                "complexity": "O(n log n)",
+            },
         )
 
         prompt = agent._build_prompt(request)
@@ -231,7 +243,10 @@ class TestCodeGeneratorAgent:
             ("```python\ndef test():\n    pass\n```", "def test():\n    pass"),
             ("```\ndef test():\n    pass\n```", "def test():\n    pass"),
             ("def test():\n    pass", "def test():\n    pass"),  # No cleanup needed
-            ("```python\n# Comment\ndef test():\n    pass\n```", "# Comment\ndef test():\n    pass")
+            (
+                "```python\n# Comment\ndef test():\n    pass\n```",
+                "# Comment\ndef test():\n    pass",
+            ),
         ]
 
         for input_text, expected in test_cases:
@@ -253,10 +268,7 @@ class TestCodeGeneratorAgent:
         agent = CodeGeneratorAgent(mock_client)
 
         # Test with empty task
-        request = AgentRequest(
-            task="",
-            context={"language": "python"}
-        )
+        request = AgentRequest(task="", context={"language": "python"})
 
         response = await agent.process(request)
 
@@ -285,13 +297,16 @@ def fibonacci(n):
 
         request = AgentRequest(
             task=code_to_review,
-            context={"language": "python", "focus_areas": ["readability", "performance"]},
+            context={
+                "language": "python",
+                "focus_areas": ["readability", "performance"],
+            },
             metadata=TaskMetadata(
                 task_id="review_001",
                 task_type="code_review",
                 timestamp=datetime.now().timestamp(),
-                model_name="mistral"
-            )
+                model_name="mistral",
+            ),
         )
 
         response = await agent.process(request)
@@ -311,13 +326,14 @@ def fibonacci(n):
     @pytest.mark.asyncio
     async def test_code_review_with_error(self, mock_client):
         """Test code review with model error."""
-        mock_client.make_request = AsyncMock(side_effect=ModelConnectionError("Review failed"))
+        mock_client.make_request = AsyncMock(
+            side_effect=ModelConnectionError("Review failed")
+        )
 
         agent = CodeReviewerAgent(mock_client, model_name="mistral")
 
         request = AgentRequest(
-            task="def test():\n    pass",
-            context={"language": "python"}
+            task="def test():\n    pass", context={"language": "python"}
         )
 
         response = await agent.process(request)
@@ -382,7 +398,6 @@ def fib(n):
         assert "review" in prompt.lower() or "analyze" in prompt.lower()
 
 
-
 class TestSchemas:
     """Test Pydantic schemas for type safety and validation."""
 
@@ -396,8 +411,8 @@ class TestSchemas:
                 task_id="test_001",
                 task_type="code_generation",
                 timestamp=datetime.now().timestamp(),
-                model_name="qwen"
-            )
+                model_name="qwen",
+            ),
         )
 
         assert request.task == "Generate a function"
@@ -419,13 +434,11 @@ class TestSchemas:
             task_id="test_001",
             task_type="code_generation",
             timestamp=datetime.now().timestamp(),
-            model_name="qwen"
+            model_name="qwen",
         )
 
         response = AgentResponse(
-            result="Generated code",
-            success=True,
-            metadata=metadata
+            result="Generated code", success=True, metadata=metadata
         )
 
         assert response.result == "Generated code"
@@ -438,7 +451,7 @@ class TestSchemas:
         response = AgentResponse(
             result="",  # Empty string, not None
             success=False,
-            error="Connection failed"
+            error="Connection failed",
         )
 
         assert response.success is False
@@ -451,7 +464,7 @@ class TestSchemas:
             task_id="meta_001",
             task_type="code_review",
             timestamp=datetime.now().timestamp(),
-            model_name="mistral"
+            model_name="mistral",
         )
 
         assert metadata.task_id == "meta_001"
@@ -467,7 +480,7 @@ class TestSchemas:
             efficiency=0.8,
             correctness=0.9,
             maintainability=0.8,
-            issues_found=2
+            issues_found=2,
         )
 
         assert metrics.score == 0.85
@@ -563,10 +576,14 @@ class TestAgentIntegration:
     """Test agent integration and workflow scenarios."""
 
     @pytest.mark.asyncio
-    async def test_generator_to_reviewer_workflow(self, mock_client, mock_model_response, mock_review_response):
+    async def test_generator_to_reviewer_workflow(
+        self, mock_client, mock_model_response, mock_review_response
+    ):
         """Test complete workflow from generation to review."""
         # Setup mock responses
-        mock_client.make_request = AsyncMock(side_effect=[mock_model_response, mock_review_response])
+        mock_client.make_request = AsyncMock(
+            side_effect=[mock_model_response, mock_review_response]
+        )
 
         # Create agents
         generator = CodeGeneratorAgent(mock_client, model_name="qwen")
@@ -575,7 +592,7 @@ class TestAgentIntegration:
         # Generate code
         gen_request = AgentRequest(
             task="Create a Python function to calculate factorial",
-            context={"language": "python", "style": "recursive"}
+            context={"language": "python", "style": "recursive"},
         )
 
         gen_response = await generator.process(gen_request)
@@ -586,7 +603,10 @@ class TestAgentIntegration:
         # Review generated code
         review_request = AgentRequest(
             task=gen_response.result,
-            context={"language": "python", "focus_areas": ["readability", "performance"]}
+            context={
+                "language": "python",
+                "focus_areas": ["readability", "performance"],
+            },
         )
 
         review_response = await reviewer.process(review_request)
@@ -602,15 +622,12 @@ class TestAgentIntegration:
         agents = [
             CodeGeneratorAgent(mock_client, model_name="qwen"),
             CodeGeneratorAgent(mock_client, model_name="mistral"),
-            CodeGeneratorAgent(mock_client, model_name="tinyllama")
+            CodeGeneratorAgent(mock_client, model_name="tinyllama"),
         ]
 
         # Create requests
         requests = [
-            AgentRequest(
-                task=f"Generate algorithm {i}",
-                context={"language": "python"}
-            )
+            AgentRequest(task=f"Generate algorithm {i}", context={"language": "python"})
             for i in range(3)
         ]
 

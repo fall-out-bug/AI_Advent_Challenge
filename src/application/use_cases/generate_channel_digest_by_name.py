@@ -236,7 +236,7 @@ class GenerateChannelDigestByNameUseCase:
         # Note: Tag extraction is currently minimal - extracts hashtags from post text
         # Future enhancement: Use NLP to identify topic tags, extract from metadata
         tags = []
-        for post in posts:
+        for post in post_contents:
             if post.text:
                 # Extract hashtags
                 hashtags = re.findall(r"#\w+", post.text)

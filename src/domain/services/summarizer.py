@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from src.domain.value_objects.post_content import PostContent
 from src.domain.value_objects.summarization_context import SummarizationContext
 from src.domain.value_objects.summary_result import SummaryResult
 
 
+@runtime_checkable
 class SummarizerService(Protocol):
     """Protocol for summarization services.
 

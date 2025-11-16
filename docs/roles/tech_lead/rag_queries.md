@@ -83,3 +83,64 @@ db.plans.aggregate([
 - Capabilities: `docs/roles/tech_lead/day_capabilities.md`
 - Developer handoff expectations: `docs/roles/developer/role_definition.md`
 - Workflow context: `docs/specs/process/agent_workflow.md`
+
+---
+
+## Query Examples with Results & Token Costs
+
+### Example 1: Test Coverage by Stage
+```javascript
+db.plans.aggregate([
+  { $match: { epic: "EP23" } },
+  { $unwind: "$stages" },
+  { $project: {
+      stage: "$stages.name",
+      test_coverage: "$stages.ci_gates.coverage",
+      tests_passing: "$stages.ci_gates.tests_status"
+  }}
+]);
+```
+**Results:** `[{stage: "Domain Layer", test_coverage: 100%, tests_passing: "green"}]`
+**Token Cost:** ~350 tokens | **Use:** Track test progress per stage
+
+---
+
+### Example 2: Deployment History
+```javascript
+db.deployments.find({
+  epic: "EP23",
+  environment: "production"
+}).sort({ deployed_at: -1 }).limit(5);
+```
+**Results:** Last 5 production deployments with: version, strategy (canary/blue-green), success_rate
+**Token Cost:** ~400 tokens | **Use:** Reference successful deployment patterns
+
+---
+
+### Example 3: Blocked Stages
+```javascript
+db.plans.aggregate([
+  { $match: { epic: "EP23" } },
+  { $unwind: "$stages" },
+  { $match: { "stages.status": "blocked" } },
+  { $project: {
+      stage: "$stages.name",
+      blocker: "$stages.blocker",
+      owner: "$stages.owner"
+  }}
+]);
+```
+**Results:** Stages with blockers and assigned owners
+**Token Cost:** ~300 tokens | **Use:** Daily standup, unblock stages
+
+---
+
+## Token Cost Summary
+| Query Type | Tokens | Use Case |
+|------------|--------|----------|
+| Test Coverage | 350 | Progress tracking |
+| Deployment History | 400 | Pattern reuse |
+| Blocked Stages | 300 | Unblock work |
+| Risk Register | 450 | Risk monitoring |
+
+**ROI:** 300-450 tokens → Save hours in manual status collection

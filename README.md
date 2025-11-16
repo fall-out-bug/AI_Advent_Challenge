@@ -10,7 +10,7 @@ This repository contains daily challenges building AI-powered systems with langu
 
 **Updates:** Project news and daily recaps are published in the Telegram channel [Высоконагруженный кабанчик](https://t.me/data_intensive_boar).
 
-**Current Status:** 🏆 Day 21 COMPLETED — Repository refactor finished, Clean Architecture deployed, enterprise security implemented, quality automation active.
+**Current Status:** 🏆 Day 23 COMPLETED — Observability & benchmark enablement delivered (EP23); repository refactor and RAG++ (EP21) previously completed.
 
 ### Day 21 (Completed)
 - Summary: `docs/specs/epic_21/epic_21.md`
@@ -103,6 +103,23 @@ poetry run python -m src.presentation.cli.backoffice.main index inspect
 
 See `docs/specs/epic_19/stage_19_04_runbook.md` for detailed instructions,
 troubleshooting, and maintenance guidance.
+
+### Large Data Files
+
+Some large JSONL files (>500KB) are stored in compressed format (.gz) to reduce repository size:
+- `results_stage20.jsonl.gz` (compressed from 555KB to ~148KB, 26.5% of original)
+- `results_with_labels.jsonl.gz` (compressed from 555KB to ~148KB, 26.5% of original)
+
+To decompress:
+```bash
+gunzip results_stage20.jsonl.gz
+gunzip results_with_labels.jsonl.gz
+```
+
+To compress new JSONL files:
+```bash
+python scripts/tools/compress_jsonl.py <file.jsonl>
+```
 
 For detailed setup instructions, see [DEVELOPMENT.md](docs/guides/en/DEVELOPMENT.md) and the [Maintainer Playbook](docs/MAINTAINERS_GUIDE.md).
 

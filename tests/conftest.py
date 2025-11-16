@@ -1,12 +1,17 @@
 """Shared pytest fixtures for testing."""
 
 import asyncio
+import uuid
 from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
 import httpx
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+from pymongo import MongoClient
 
+from src.infrastructure.config.settings import get_settings
+from src.infrastructure.database.mongo_client_factory import MongoClientFactory
 from src.infrastructure.repositories.json_conversation_repository import (
     JsonConversationRepository,
 )
@@ -117,18 +122,6 @@ def mcp_wrapper_mock():
     return mock_wrapper
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Create event loop for async tests.
-
-    Returns:
-        Event loop for the test session
-    """
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest.fixture
 def temp_data_dir(tmp_path):
     """Create temporary data directory.
@@ -154,6 +147,119 @@ def cleanup_test_files(tmp_path):
     yield
     # Cleanup happens automatically via tmp_path fixture
     pass
+
+
+# MongoDB fixtures (Cluster A - TL24-01)
+@pytest.fixture(scope="session")
+def mongodb_client() -> MongoClient:
+    """Session-scoped MongoDB client fixture.
+
+    Purpose:
+        Provides an authenticated MongoDB client instance for all tests
+        in the session. Uses test_mongodb_url from Settings.
+
+    Returns:
+        MongoClient: Configured MongoDB client for tests.
+    """
+    factory = MongoClientFactory()
+    client = factory.create_sync_client(use_test_url=True)
+    yield client
+    client.close()
+
+
+@pytest.fixture
+def mongodb_database(mongodb_client: MongoClient, request: pytest.FixtureRequest) -> Any:
+    """Function-scoped MongoDB database fixture with per-test isolation.
+
+    Purpose:
+        Creates a unique database per test (using test node ID hash) and
+        ensures automatic cleanup after the test completes.
+
+    Args:
+        mongodb_client: Session-scoped MongoDB client fixture.
+        request: Pytest request object to get test node ID.
+
+    Returns:
+        Database: Per-test MongoDB database instance (sync pymongo.Database).
+
+    Note:
+        Database name is derived from test node ID hash to ensure uniqueness
+        while staying within MongoDB's 63 character limit.
+    """
+    # Generate unique database name from test node ID hash
+    # MongoDB limit is 63 characters, so use hash instead of full node ID
+    test_node_id = request.node.nodeid
+    db_hash = str(hash(test_node_id))[-8:]  # Last 8 chars of hash (unique enough)
+    # Get short test name (file + function)
+    test_file = request.node.fspath.basename.replace(".py", "")
+    test_func = request.node.name[:20]  # Limit function name length
+    db_name = f"test_{test_file}_{test_func}_{db_hash}"[:63]  # Max 63 chars
+    database = mongodb_client[db_name]
+
+    yield database
+
+    # Cleanup: Drop the test database after the test
+    try:
+        mongodb_client.drop_database(db_name)
+    except Exception:
+        # Ignore errors during cleanup (database might already be dropped)
+        pass
+
+
+@pytest.fixture
+async def mongodb_database_async(
+    mongodb_client: MongoClient, request: pytest.FixtureRequest
+) -> AsyncIOMotorDatabase:
+    """Function-scoped async MongoDB database fixture with per-test isolation.
+
+    Purpose:
+        Creates a unique async database per test (using test node ID hash) and
+        ensures automatic cleanup after the test completes.
+        Use this fixture for async tests that need AsyncIOMotorDatabase.
+
+    Args:
+        mongodb_client: Session-scoped MongoDB client fixture (sync).
+        request: Pytest request object to get test node ID.
+
+    Returns:
+        AsyncIOMotorDatabase: Per-test async MongoDB database instance.
+
+    Note:
+        Database name is derived from test node ID hash to ensure uniqueness
+        while staying within MongoDB's 63 character limit.
+    """
+    # Generate unique database name from test node ID hash
+    # MongoDB limit is 63 characters, so use hash instead of full node ID
+    test_node_id = request.node.nodeid
+    db_hash = str(hash(test_node_id))[-8:]  # Last 8 chars of hash (unique enough)
+    # Get short test name (file + function)
+    test_file = request.node.fspath.basename.replace(".py", "")
+    test_func = request.node.name[:20]  # Limit function name length
+    db_name = f"test_{test_file}_{test_func}_{db_hash}"[:63]  # Max 63 chars
+
+    # Create async client via factory
+    from src.infrastructure.database.mongo_client_factory import MongoClientFactory
+
+    factory = MongoClientFactory()
+    async_client = factory.create_async_client(use_test_url=True)
+    database = async_client[db_name]
+
+    yield database
+
+    # Cleanup: Drop the test database and close async client
+    # Note: Cleanup happens before event loop closes, so async operations should work
+    try:
+        await database.client.drop_database(db_name)
+    except Exception:
+        # Ignore errors during database drop
+        pass
+
+    # Close async client (Motor clients can be closed even after operations)
+    try:
+        async_client.close()
+    except Exception:
+        # Ignore errors during client close
+        pass
 
 
 # Import MCP fixtures

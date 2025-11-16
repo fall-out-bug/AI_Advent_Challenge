@@ -10,7 +10,6 @@ from __future__ import annotations
 import pytest
 
 from src.presentation.mcp.tools.channels.posts_management import collect_posts
-from src.infrastructure.database.mongo import get_db
 from src.infrastructure.repositories.post_repository import PostRepository
 
 

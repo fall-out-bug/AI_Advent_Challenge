@@ -91,7 +91,7 @@ async def _generate_summary(
             posts,
             max_sentences=max_sentences,
             time_period_hours=hours,
-            channel_username=channel_username or channel_username_from_posts,
+            channel_username=channel_username_from_posts,
         )
         logger.info(
             f"LLM summarizer returned summary: length={len(summary)} characters, "
@@ -794,7 +794,7 @@ async def get_channel_digest_by_name(
     )
 
     # Generate summary - ensure we pass the actual filtered posts
-    summary = await _generate_summary(normalized_posts, max_sentences)
+    summary = await _generate_summary(normalized_posts, max_sentences, hours=hours)
     logger.info(
         f"Generated summary length: {len(summary)} characters, first 200 chars: {summary[:200]}"
     )

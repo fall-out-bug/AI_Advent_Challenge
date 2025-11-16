@@ -88,7 +88,11 @@ class HTTPLLMClient:
         return self._client
 
     async def generate(
-        self, prompt: str, temperature: float = 0.2, max_tokens: int = 256
+        self,
+        prompt: str,
+        temperature: float = 0.2,
+        max_tokens: int = 256,
+        stop_sequences: list[str] | None = None,
     ) -> str:
         """Generate text via OpenAI-compatible chat completions API.
 
@@ -96,6 +100,7 @@ class HTTPLLMClient:
             prompt: Input prompt
             temperature: Sampling temperature
             max_tokens: Maximum tokens to generate
+            stop_sequences: Optional list of stop sequences to end generation
 
         Returns:
             Assistant message content from choices[0].message.content
@@ -116,6 +121,8 @@ class HTTPLLMClient:
         }
         if self.model:
             chat_payload["model"] = self.model
+        if stop_sequences:
+            chat_payload["stop"] = stop_sequences
 
         try:
             response = await client.post(
@@ -214,13 +221,15 @@ class HTTPLLMClient:
 
         # Fallback: try OpenAI-compatible /v1/chat/completions endpoint
         openai_url = f"{self.url}/v1/chat/completions"
+        # Use provided stop_sequences or default OpenAI-compatible stops
+        stop = stop_sequences if stop_sequences else ["</s>", "[/INST]"]
         openai_payload = {
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": max_tokens,
             "temperature": temperature,
             "top_p": 0.95,
-            "stop": ["</s>", "[/INST]"],
+            "stop": stop,
         }
 
         try:
@@ -257,6 +266,8 @@ class HTTPLLMClient:
                     }
                     if self.model:
                         host_payload["model"] = self.model
+                    if stop_sequences:
+                        host_payload["stop"] = stop_sequences
                     response = await client.post(
                         host_url, json=host_payload, timeout=self.timeout
                     )
@@ -271,13 +282,15 @@ class HTTPLLMClient:
 
                     # If /chat doesn't work, try /v1/chat/completions
                     host_url = f"{self._host_url}/v1/chat/completions"
+                    # Use provided stop_sequences or default OpenAI-compatible stops
+                    host_stop = stop_sequences if stop_sequences else ["</s>", "[/INST]"]
                     host_openai_payload = {
                         "model": self.model,
                         "messages": [{"role": "user", "content": prompt}],
                         "max_tokens": max_tokens,
                         "temperature": temperature,
                         "top_p": 0.95,
-                        "stop": ["</s>", "[/INST]"],
+                        "stop": host_stop,
                     }
                     response = await client.post(
                         host_url, json=host_openai_payload, timeout=self.timeout
@@ -305,6 +318,32 @@ class HTTPLLMClient:
             # Re-raise to let ResilientLLMClient fallback if needed
             raise
 
+    async def batch_generate(
+        self,
+        prompts: list[str],
+        temperature: float = 0.2,
+        max_tokens: int = 256,
+        stop_sequences: list[str] | None = None,
+    ) -> list[str]:
+        """Generate completions for multiple prompts in parallel.
+
+        Args:
+            prompts: List of input prompts.
+            temperature: Sampling temperature.
+            max_tokens: Maximum tokens per completion.
+            stop_sequences: Optional stop sequences.
+
+        Returns:
+            List of generated texts (one per prompt).
+        """
+        import asyncio
+
+        # Use asyncio.gather for parallel processing
+        tasks = [
+            self.generate(p, temperature, max_tokens, stop_sequences) for p in prompts
+        ]
+        return await asyncio.gather(*tasks)
+
     async def close(self) -> None:
         """Close HTTP client."""
         if self._client:
@@ -320,7 +359,11 @@ class FallbackLLMClient:
     """
 
     async def generate(
-        self, prompt: str, temperature: float = 0.2, max_tokens: int = 256
+        self,
+        prompt: str,
+        temperature: float = 0.2,
+        max_tokens: int = 256,
+        stop_sequences: list[str] | None = None,
     ) -> str:
         """Generate context-aware fallback response.
 
@@ -328,6 +371,7 @@ class FallbackLLMClient:
             prompt: Input prompt
             temperature: Sampling temperature (ignored)
             max_tokens: Maximum tokens (ignored)
+            stop_sequences: Optional stop sequences (ignored)
 
         Returns:
             Fallback response in appropriate format
@@ -607,6 +651,32 @@ class FallbackLLMClient:
                 '"priority":"medium","tags":[],"needs_clarification":false,"questions":[]}'
             )
 
+    async def batch_generate(
+        self,
+        prompts: list[str],
+        temperature: float = 0.2,
+        max_tokens: int = 256,
+        stop_sequences: list[str] | None = None,
+    ) -> list[str]:
+        """Generate completions for multiple prompts in parallel.
+
+        Args:
+            prompts: List of input prompts.
+            temperature: Sampling temperature (ignored).
+            max_tokens: Maximum tokens (ignored).
+            stop_sequences: Optional stop sequences (ignored).
+
+        Returns:
+            List of fallback responses (one per prompt).
+        """
+        import asyncio
+
+        # Use asyncio.gather for parallel processing
+        tasks = [
+            self.generate(p, temperature, max_tokens, stop_sequences) for p in prompts
+        ]
+        return await asyncio.gather(*tasks)
+
 
 def get_llm_client(url: str | None = None, timeout: float = 120.0) -> LLMClient:
     """Get appropriate LLM client based on configuration.
@@ -653,7 +723,11 @@ class ResilientLLMClient:
         self._use_fallback = isinstance(self._primary, FallbackLLMClient)
 
     async def generate(
-        self, prompt: str, temperature: float = 0.2, max_tokens: int = 256
+        self,
+        prompt: str,
+        temperature: float = 0.2,
+        max_tokens: int = 256,
+        stop_sequences: list[str] | None = None,
     ) -> str:
         """Generate with automatic fallback.
 
@@ -661,18 +735,45 @@ class ResilientLLMClient:
             prompt: Input prompt
             temperature: Sampling temperature
             max_tokens: Maximum tokens
+            stop_sequences: Optional stop sequences
 
         Returns:
             Generated text or fallback response
         """
         if self._use_fallback:
-            return await self._fallback.generate(prompt, temperature, max_tokens)
+            return await self._fallback.generate(prompt, temperature, max_tokens, stop_sequences)
 
         try:
-            return await self._primary.generate(prompt, temperature, max_tokens)
+            return await self._primary.generate(prompt, temperature, max_tokens, stop_sequences)
         except (httpx.ConnectError, httpx.TimeoutException) as e:
             logger.warning(f"LLM service unavailable, using fallback: {e}")
-            return await self._fallback.generate(prompt, temperature, max_tokens)
+            return await self._fallback.generate(prompt, temperature, max_tokens, stop_sequences)
         except Exception as e:
             logger.warning(f"LLM error, using fallback: {e}")
-            return await self._fallback.generate(prompt, temperature, max_tokens)
+            return await self._fallback.generate(prompt, temperature, max_tokens, stop_sequences)
+
+    async def batch_generate(
+        self,
+        prompts: list[str],
+        temperature: float = 0.2,
+        max_tokens: int = 256,
+        stop_sequences: list[str] | None = None,
+    ) -> list[str]:
+        """Generate completions for multiple prompts in parallel.
+
+        Args:
+            prompts: List of input prompts.
+            temperature: Sampling temperature.
+            max_tokens: Maximum tokens per completion.
+            stop_sequences: Optional stop sequences.
+
+        Returns:
+            List of generated texts (one per prompt).
+        """
+        import asyncio
+
+        # Use asyncio.gather for parallel processing
+        tasks = [
+            self.generate(p, temperature, max_tokens, stop_sequences) for p in prompts
+        ]
+        return await asyncio.gather(*tasks)

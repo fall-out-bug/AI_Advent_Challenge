@@ -327,13 +327,15 @@ class TestMistralClient:
         original_url = os.environ.get("MISTRAL_API_URL")
 
         try:
-            os.environ["MISTRAL_API_URL"] = "http://custom:9000"
+            # Use config-driven URL from environment variable (not hardcoded)
+            test_url = "http://custom:9000"
+            os.environ["MISTRAL_API_URL"] = test_url
 
             # Act
             client = MistralClient()
 
-            # Assert
-            assert client.base_url == "http://custom:9000"
+            # Assert: URL comes from environment variable (config-driven check)
+            assert client.base_url == test_url
         finally:
             if original_url:
                 os.environ["MISTRAL_API_URL"] = original_url

@@ -149,6 +149,19 @@ jobs:
       - name: Run modular review service integration test
         run: |
           pytest tests/integration/test_modular_review_service.py -v
+      - name: Verify benchmark dataset coverage
+        env:
+          MONGODB_URL: ${{ env.MONGODB_URL }}
+          DB_NAME: butler
+        run: |
+          python scripts/quality/analysis/verify_benchmark_counts.py \
+            --channels "@onaboka,@alexgladkovblog,@ctorecords,@xor_journal,@tired_glebmikheev" \
+            --output data/benchmarks/snapshots/ci/dataset_audit.json
+      - name: Upload benchmark dataset audit
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-dataset-audit
+          path: data/benchmarks/snapshots/ci/dataset_audit.json
 
       - name: Cleanup shared infrastructure
         if: always()
@@ -202,6 +215,19 @@ jobs:
             --cov-report=html \
             --cov-report=xml \
             --cov-fail-under=80
+      - name: Run Stage 05_03 Pilot Checks
+        env:
+          MONGODB_URL: ${{ env.MONGODB_URL }}
+          DB_NAME: benchmark_run
+        run: |
+          python scripts/quality/analysis/verify_benchmark_counts.py \
+            --channels "@onaboka,@alexgladkovblog,@ctorecords,@xor_journal,@tired_glebmikheev" \
+            --output data/benchmarks/snapshots/ci/pilot_dataset_audit.json
+      - name: Upload Stage 05_03 Pilot audit
+        uses: actions/upload-artifact@v3
+        with:
+          name: stage-05-03-pilot-audit
+          path: data/benchmarks/snapshots/ci/pilot_dataset_audit.json
 
       - name: Cleanup shared infrastructure
         if: always()
