@@ -103,4 +103,3 @@ class MongoBenchmarkRepository(BenchmarkRepository):
             return
         documents = [sample.to_document() for sample in samples]
         await self._db.review_reports.insert_many(documents)
-

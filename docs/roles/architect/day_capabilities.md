@@ -129,7 +129,7 @@ Use MongoDB for payment transaction storage.
 ```python
 def validate_architecture_completeness(vision: ArchitectureVision) -> float:
     """Calculate architecture completeness score."""
-    
+
     scores = {
         "requirement_coverage": 0.0,    # All reqs mapped to components?
         "boundary_clarity": 0.0,         # Clean layer separation?
@@ -137,29 +137,29 @@ def validate_architecture_completeness(vision: ArchitectureVision) -> float:
         "cross_cutting_coverage": 0.0,   # Logging, metrics, config?
         "madr_coverage": 0.0             # Decisions documented?
     }
-    
+
     # Requirement coverage
     mapped_reqs = count_requirements_mapped_to_components(vision)
     total_reqs = count_total_requirements(vision)
     scores["requirement_coverage"] = mapped_reqs / total_reqs
-    
+
     # Boundary clarity
     if has_clear_layer_boundaries(vision):
         scores["boundary_clarity"] = 1.0
-    
+
     # Dependency validity (no domain → infra)
     violations = find_inward_dependencies(vision)
     scores["dependency_validity"] = 1.0 if len(violations) == 0 else 0.5
-    
+
     # Cross-cutting concerns
     concerns = ["logging", "metrics", "configuration", "error_handling"]
     covered = count_addressed_concerns(vision, concerns)
     scores["cross_cutting_coverage"] = covered / len(concerns)
-    
+
     # MADR coverage
     decisions = count_madrs(vision)
     scores["madr_coverage"] = min(decisions / 3, 1.0)  # Expect ≥3 MADRs
-    
+
     return sum(scores.values()) / len(scores)
 
 # Example result:
@@ -340,7 +340,7 @@ Result: Caught architectural issue before implementation
     "components": ["PaymentService", "StripeAdapter", "AuditLog"],
     "madrs": ["MADR-067: MongoDB", "MADR-068: Stripe provider"]
   },
-  
+
   "architect_b_review": {
     "status": "needs_revision",
     "issues": [
@@ -1163,7 +1163,7 @@ Deploy mobile app to App Store with zero-downtime updates
   "architecture_version": "1.0",
   "title": "Payment Service Architecture",
   "summary": "Microservice for payment processing with multi-provider support",
-  
+
   "metadata": {
     "domain": "payments",
     "patterns": ["clean_architecture", "adapter_pattern"],
@@ -1171,11 +1171,11 @@ Deploy mobile app to App Store with zero-downtime updates
     "technologies": ["MongoDB", "Stripe", "FastAPI"],
     "keywords": ["payment", "transaction", "provider"]
   },
-  
+
   "embedding": [0.123, -0.456, ...],  // 1536-dim vector
-  
+
   "content": "# Architecture Vision...",
-  
+
   "madrs": ["MADR-067", "MADR-068"],
   "related_epics": ["EP15", "EP19"]
 }

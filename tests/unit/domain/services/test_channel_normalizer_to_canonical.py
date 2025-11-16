@@ -84,4 +84,3 @@ class TestChannelNormalizerToCanonicalForm:
         for input_text, expected in test_cases:
             result = normalizer.to_canonical_form(input_text)
             assert result == expected, f"Input: {input_text!r}, Expected: {expected!r}, Got: {result!r}"
-

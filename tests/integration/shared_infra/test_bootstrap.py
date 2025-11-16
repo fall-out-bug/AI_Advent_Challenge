@@ -258,4 +258,3 @@ def test_restart_validation(
             capture_output=True,
             check=False,
         )
-

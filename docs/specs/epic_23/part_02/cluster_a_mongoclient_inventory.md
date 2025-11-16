@@ -1,8 +1,8 @@
 # Cluster A · MongoClient Usage Inventory
 
-**Epic:** EP24 – Repository Hygiene & De-Legacy  
-**Cluster:** A – Mongo & Async Infrastructure  
-**Date:** 2025-11-16  
+**Epic:** EP24 – Repository Hygiene & De-Legacy
+**Cluster:** A – Mongo & Async Infrastructure
+**Date:** 2025-11-16
 **Task:** A.1 – Inventory MongoClient usages
 
 ## Direct `MongoClient(...)` Instantiations
@@ -12,8 +12,8 @@
 mongo_client = MongoClient(settings.mongodb_url)
 database = mongo_client[settings.embedding_mongo_database]
 ```
-**Context:** RAG comparison CLI command  
-**Usage:** Sync MongoClient for embedding index access  
+**Context:** RAG comparison CLI command
+**Usage:** Sync MongoClient for embedding index access
 **Migration:** Replace with DI-based client factory
 
 ### 2. `src/presentation/cli/embedding_index.py` (Line 127)
@@ -23,8 +23,8 @@ def _create_mongo_client(url: str, timeout_ms: int) -> MongoClient:
     sanitized_url = _resolve_mongo_url(url)
     return MongoClient(sanitized_url, serverSelectionTimeoutMS=timeout_ms)
 ```
-**Context:** Helper function for embedding index CLI  
-**Usage:** Factory function creating sync MongoClient  
+**Context:** Helper function for embedding index CLI
+**Usage:** Factory function creating sync MongoClient
 **Migration:** Refactor to use DI-based factory with Settings
 
 ## Existing Async Infrastructure
@@ -34,7 +34,7 @@ def _create_mongo_client(url: str, timeout_ms: int) -> MongoClient:
 - **`get_db()`** — Returns singleton `AsyncIOMotorDatabase` using `settings.db_name`
 - **`close_client()`** — Cleanup function
 
-**Status:** ✅ Already uses DI via `get_settings()`  
+**Status:** ✅ Already uses DI via `get_settings()`
 **Note:** This is async infrastructure. Sync clients in CLI still need refactoring.
 
 ## Settings Status
@@ -45,7 +45,7 @@ def _create_mongo_client(url: str, timeout_ms: int) -> MongoClient:
 
 ## Summary
 
-**Direct Instantiations Found:** 2  
+**Direct Instantiations Found:** 2
 - Both in CLI modules (`rag_commands.py`, `embedding_index.py`)
 - Both use sync `MongoClient` (not async)
 
@@ -75,6 +75,5 @@ def _create_mongo_client(url: str, timeout_ms: int) -> MongoClient:
 
 ---
 
-_Inventory completed by cursor_dev_a_v1 · 2025-11-16_  
+_Inventory completed by cursor_dev_a_v1 · 2025-11-16_
 _Migration completed by cursor_dev_a_v1 · 2025-11-16_
-

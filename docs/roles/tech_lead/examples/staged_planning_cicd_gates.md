@@ -24,17 +24,17 @@ gates:
     tools: [flake8, black]
     threshold: 0 errors
     blocking: true
-    
+
   typecheck:
     command: mypy src/ --strict
     threshold: 100% type coverage
     blocking: true
-    
+
   unit-tests:
     command: pytest tests/unit/ -v
     threshold: All pass
     blocking: true
-    
+
   coverage:
     command: pytest --cov=src --cov-report=term-missing
     thresholds:
@@ -42,18 +42,18 @@ gates:
       application: 90%
       infrastructure: 80%
     blocking: true
-    
+
   integration-tests:
     command: pytest tests/integration/ -v
     setup: docker-compose up -d
     threshold: All pass
     blocking: true
-    
+
   security-scan:
     command: bandit -r src/
     threshold: No high/medium issues
     blocking: true
-    
+
   e2e-tests:
     command: pytest tests/e2e/ -v
     environment: staging
@@ -69,6 +69,6 @@ gates:
 | RISK-002 | PCI audit scheduling | Medium | High | Book 2 weeks advance | Security | Mitigating |
 | RISK-003 | Integration test flakiness | Medium | Medium | Retry logic + better fixtures | Dev B | Open |
 
-**Timeline:** 40 days (6 weeks)  
-**Team:** 3 Developers + 1 DevOps + 1 QA + 1 Security  
+**Timeline:** 40 days (6 weeks)
+**Team:** 3 Developers + 1 DevOps + 1 QA + 1 Security
 **Critical Path:** Stage 1 → 2 → 3 → 4 → 6 → 7 → 8

@@ -81,5 +81,3 @@ async def test_fallback_metrics_updated_on_timeout(monkeypatch) -> None:
     )
     assert value is not None
     assert value >= 1.0
-
-

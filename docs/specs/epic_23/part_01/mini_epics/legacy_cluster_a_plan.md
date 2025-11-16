@@ -85,4 +85,3 @@ Full matrix in `mini_epics/legacy_cluster_a_acceptance_matrix.md`.
 - Track progress in `work_log.md` under “Legacy Cluster A”.
 - Each PR references this plan and updates acceptance matrix row.
 - After TL-04, notify architect for review before moving to Cluster B.
-

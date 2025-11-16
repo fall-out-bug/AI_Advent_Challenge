@@ -11,4 +11,3 @@
 | Add unit tests for service & failure paths | TL-03 | Test files diff | QA | Pending |
 | Update docs + Challenge Days references | TL-04 | Doc diffs (`docs/challenge_days.md`, new guide) | Tech Lead | Pending |
 | Update work_log + gap closure table | TL-04 | work_log entry, table row status | Tech Lead | Pending |
-

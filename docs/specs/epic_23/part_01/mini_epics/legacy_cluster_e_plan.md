@@ -62,4 +62,3 @@
 ## 7. Risks / Notes
 - Need to confirm whether DB documents require migration (if stored names change). If yes, plan migration script or compatibility shim.
 - Ensure no domain → infrastructure leakage: adapter interfaces live in domain/application.
-

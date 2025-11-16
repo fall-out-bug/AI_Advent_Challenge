@@ -1,10 +1,10 @@
 # Critical Issues Review Example (Changes Requested)
 
 ## Review Context
-**Epic:** EP22 User Authentication Module  
-**PR:** PR-389  
-**Developer:** developer_2  
-**Files Changed:** 6 files, 487 lines added  
+**Epic:** EP22 User Authentication Module
+**PR:** PR-389
+**Developer:** developer_2
+**Files Changed:** 6 files, 487 lines added
 **Review Date:** 2025-11-10
 
 ---
@@ -271,7 +271,7 @@ class Password:
 class BcryptPasswordHasher:
     def hash(self, plain: str) -> Password:
         return Password(hashed=bcrypt.hashpw(...))
-    
+
     def verify(self, plain: str, hashed: Password) -> bool:
         return bcrypt.checkpw(plain.encode(), hashed.hashed.encode())
 ```

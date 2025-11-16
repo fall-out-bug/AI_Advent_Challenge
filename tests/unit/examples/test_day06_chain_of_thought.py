@@ -163,4 +163,3 @@ def test_cot_comparison_dataclass() -> None:
     assert comparison.cot_answer == "answer2"
     assert comparison.is_correct_direct is True
     assert comparison.is_correct_cot is True
-

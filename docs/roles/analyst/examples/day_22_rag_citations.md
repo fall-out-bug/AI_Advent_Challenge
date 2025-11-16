@@ -8,9 +8,9 @@ Demonstrate how the Analyst agent queries MongoDB/RAG index for similar past req
 
 ## Scenario
 
-**Epic:** EP26 - Real-Time Analytics Dashboard  
-**Analyst Task:** Gather requirements for analytics system  
-**RAG Enhancement:** Query past epics for similar analytics/dashboard requirements  
+**Epic:** EP26 - Real-Time Analytics Dashboard
+**Analyst Task:** Gather requirements for analytics system
+**RAG Enhancement:** Query past epics for similar analytics/dashboard requirements
 **Expected Benefit:** Reuse proven patterns, reduce design time by 30%
 
 ---
@@ -56,7 +56,7 @@ db.requirements.find({
   clarity_score: { $gte: 0.80 },  // Only high-quality requirements
   status: { $in: ["approved", "implemented"] },  // Validated requirements
   production_validated: true  // Proven in production
-}).sort({ 
+}).sort({
   created_at: -1  // Most recent first
 }).limit(10)
 ```
@@ -196,16 +196,16 @@ Query time: 120ms
 
 **Analyst (Now with RAG context):**
 > "I found 5 similar dashboard requirements from past epics (EP15, EP18, EP19, EP20, EP21). Let me use these as a template for our conversation.
-> 
+>
 > Based on EP18's system health dashboard and EP21's transaction analytics, I'll ask targeted questions:"
 
 **Q1 (Informed by EP18_R-34 & EP21_R-67):**
 > "For your analytics dashboard, which specific metrics should we display?
-> 
+>
 > For reference:
 > - EP18 showed: API latency, error rate, active users, resource usage
 > - EP21 showed: transaction volume, success rate, revenue, top merchants
-> 
+>
 > What metrics are most important for your use case?"
 
 **Stakeholder:**
@@ -322,7 +322,7 @@ Query time: 120ms
     "version": "1.0",
     "rag_enabled": true
   },
-  
+
   "requirements": [
     {
       "id": "REQ-DASH-001",
@@ -350,7 +350,7 @@ Query time: 120ms
         ]
       }
     },
-    
+
     {
       "id": "REQ-DASH-002",
       "text": "Dashboard must use WebSocket for real-time data updates, fallback to polling if WebSocket unavailable",
@@ -374,7 +374,7 @@ Query time: 120ms
         "implementation_reference": "src/infrastructure/websocket/"
       }
     },
-    
+
     {
       "id": "REQ-DASH-003",
       "text": "Dashboard must load in < 3 seconds, render charts in < 1 second, support 2K concurrent users",
@@ -399,7 +399,7 @@ Query time: 120ms
         "implementation_reference": "Caching strategy + CDN from EP15"
       }
     },
-    
+
     {
       "id": "REQ-DASH-004",
       "text": "Dashboard must include data export functionality (CSV, JSON)",
@@ -421,7 +421,7 @@ Query time: 120ms
         "production_notes": "EP21: Export feature used 200+ times/month by finance"
       }
     },
-    
+
     {
       "id": "REQ-DASH-005",
       "text": "Dashboard must show user activity heatmap (24h x 7d grid)",
@@ -444,14 +444,14 @@ Query time: 120ms
       }
     }
   ],
-  
+
   "summary": {
     "total_requirements": 5,
     "clarity_score": 0.89,
     "completeness_score": 0.91,
     "rag_enhanced": true
   },
-  
+
   "rag_summary": {
     "queries_performed": 1,
     "total_results": 10,
@@ -475,12 +475,12 @@ Query time: 120ms
       "Chart library from EP18"
     ]
   },
-  
+
   "open_questions": [
     "Should we include geographic distribution map like EP19? (pending stakeholder input)",
     "Alert thresholds: Use same as EP18 (error rate > 1%) or customize?"
   ],
-  
+
   "notes": "Leveraged 5 proven patterns from EPs 15, 18, 19, 20, 21. All patterns are production-validated. WebSocket architecture (EP20) is particularly well-documented and can be reused with minimal modifications. Estimated time savings: 30% in design phase, 25% in implementation phase due to code reuse."
 }
 ```
@@ -546,8 +546,8 @@ db.requirements.find({
 }).sort({ created_at: -1 }).limit(5)
 ```
 
-**Use When:** Looking for general patterns in a domain  
-**Token Cost:** ~300-400 tokens for 5 results  
+**Use When:** Looking for general patterns in a domain
+**Token Cost:** ~300-400 tokens for 5 results
 **Accuracy:** 70-80% relevant results
 
 ---
@@ -565,8 +565,8 @@ similar_reqs = vector_index.similarity_search(
 )
 ```
 
-**Use When:** Need nuanced semantic matching  
-**Token Cost:** ~500-600 tokens for 10 results  
+**Use When:** Need nuanced semantic matching
+**Token Cost:** ~500-600 tokens for 10 results
 **Accuracy:** 85-92% relevant results
 
 ---
@@ -581,8 +581,8 @@ db.requirements.find({
 }).sort({ created_at: -1 }).limit(3)
 ```
 
-**Use When:** Looking for specific architectural patterns  
-**Token Cost:** ~200-300 tokens for 3 results  
+**Use When:** Looking for specific architectural patterns
+**Token Cost:** ~200-300 tokens for 3 results
 **Accuracy:** 90%+ (very specific)
 
 ---
@@ -594,23 +594,23 @@ db.requirements.find({
 ```python
 def validate_rag_results(results: list) -> list:
     """Filter RAG results for quality and relevance."""
-    
+
     validated = []
     for result in results:
         # Check similarity threshold
         if result["similarity_score"] < 0.75:
             continue
-        
+
         # Check production validation
         if not result.get("production_validated"):
             continue
-        
+
         # Check clarity score
         if result.get("clarity_score", 0) < 0.80:
             continue
-        
+
         validated.append(result)
-    
+
     return validated
 ```
 
@@ -674,15 +674,15 @@ def validate_rag_results(results: list) -> list:
   type: "functional",
   priority: "high",
   clarity_score: 0.89,
-  
+
   // For RAG search
   keywords: ["dashboard", "analytics", "real-time", "metrics"],
   embedding: [0.123, -0.456, ...],  // 1536-dim vector for semantic search
-  
+
   // Status tracking
   status: "approved",  // draft, approved, implemented, deprecated
   production_validated: false,  // Set to true after successful deployment
-  
+
   // Citations (if this requirement was inspired by another)
   rag_citation: {
     source_epic: "EP18",
@@ -690,17 +690,17 @@ def validate_rag_results(results: list) -> list:
     similarity_score: 0.92,
     reused_patterns: [...]
   },
-  
+
   // Traceability
   acceptance_criteria: [...],
   linked_tests: [...],
   linked_architecture: ["MADR-045"],
-  
+
   // Metadata
   created_at: ISODate("2025-11-15T14:30:00Z"),
   updated_at: ISODate("2025-11-15T14:30:00Z"),
   created_by: "analyst_agent",
-  
+
   // Production feedback (added after deployment)
   production_notes: "Dashboard used for 3 months, well-received by users",
   production_metrics: {
@@ -793,4 +793,3 @@ db.requirements.createSearchIndex({
 - See `docs/specs/epic_20/epic_20.md` for RAG architecture
 - See `docs/specs/epic_20/queries.jsonl` for example queries
 - See `docs/operational/shared_infra.md#mongodb` for database schema
-

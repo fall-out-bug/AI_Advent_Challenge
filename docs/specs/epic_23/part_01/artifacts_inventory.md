@@ -1,7 +1,7 @@
 # Epic 23 · Artifacts Inventory
 
-**Epic:** EP23 – Observability & Benchmark Enablement  
-**Completion Date:** 2025-11-16  
+**Epic:** EP23 – Observability & Benchmark Enablement
+**Completion Date:** 2025-11-16
 **Maintained by:** Dev A (cursor_dev_a_v1)
 
 ## Purpose
@@ -281,4 +281,3 @@ This document provides a comprehensive inventory of all artifacts produced durin
 ---
 
 _Maintained by cursor_dev_a_v1 · Updated 2025-11-16_
-

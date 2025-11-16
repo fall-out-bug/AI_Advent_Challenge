@@ -150,4 +150,3 @@ Analyst can visualize own workflow quality using Grafana:
 - `docs/operational/observability_labels.md` - Label taxonomy for Epic 23 metrics
 - `docs/specs/epic_23/tech_lead_plan.md` - TL-04 observability instrumentation requirements
 - `docs/operational/handoff_contracts.md` - Handoff JSON schema with observability metadata
-

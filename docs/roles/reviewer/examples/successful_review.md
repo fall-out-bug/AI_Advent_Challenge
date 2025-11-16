@@ -1,10 +1,10 @@
 # Successful Review Example (Approved with Minor Comments)
 
 ## Review Context
-**Epic:** EP23 Payment Refund Module  
-**PR:** PR-456  
-**Developer:** developer_1  
-**Files Changed:** 4 files, 333 lines added  
+**Epic:** EP23 Payment Refund Module
+**PR:** PR-456
+**Developer:** developer_1
+**Files Changed:** 4 files, 333 lines added
 **Review Date:** 2025-11-15
 
 ---
@@ -139,17 +139,17 @@ async def execute(self, refund_request: RefundRequest) -> RefundResult:
             "transaction_id": refund_request.transaction_id,
             "amount_cents": refund_request.amount_cents
         })
-        
+
         # Validate refund (domain logic)
         refund = Refund(
             transaction_id=refund_request.transaction_id,
             amount_cents=refund_request.amount_cents,
             reason=refund_request.reason
         )
-        
+
         # Execute via provider (infrastructure)
         result = await self.stripe_adapter.process_refund(refund)
-        
+
         refund_transactions.labels(provider="stripe", status="success").inc()
         return result
     except ProviderError as e:
@@ -174,7 +174,7 @@ class Refund:
     amount_cents: int
     reason: str
     status: RefundStatus = RefundStatus.PENDING
-    
+
     def __post_init__(self) -> None:
         """Validate refund data."""
         if self.amount_cents <= 0:

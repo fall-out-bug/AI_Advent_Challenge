@@ -34,19 +34,19 @@ async def test_butler_orchestrator_public_api_characterization():
     # Setup: Create ButlerOrchestrator with mocked dependencies
     mock_mode_classifier = MagicMock()
     mock_mode_classifier.classify = AsyncMock(return_value=DialogMode.IDLE)
-    
+
     mock_task_handler = MagicMock()
     mock_task_handler.handle = AsyncMock(return_value="Task created")
-    
+
     mock_data_handler = MagicMock()
     mock_data_handler.handle = AsyncMock(return_value="Data here")
-    
+
     mock_homework_handler = MagicMock()
     mock_homework_handler.handle = AsyncMock(return_value="Review complete")
-    
+
     mock_chat_handler = MagicMock()
     mock_chat_handler.handle = AsyncMock(return_value="Hello!")
-    
+
     mock_mongodb = MagicMock()
     mock_mongodb.dialog_contexts = MagicMock()
     mock_mongodb.dialog_contexts.find_one = AsyncMock(return_value=None)
@@ -102,16 +102,16 @@ async def test_butler_orchestrator_message_routing_characterization():
     mock_mode_classifier = MagicMock()
     mock_task_handler = MagicMock()
     mock_task_handler.handle = AsyncMock(return_value="Task response")
-    
+
     mock_data_handler = MagicMock()
     mock_data_handler.handle = AsyncMock(return_value="Data response")
-    
+
     mock_homework_handler = MagicMock()
     mock_homework_handler.handle = AsyncMock(return_value="Review response")
-    
+
     mock_chat_handler = MagicMock()
     mock_chat_handler.handle = AsyncMock(return_value="Chat response")
-    
+
     mock_mongodb = MagicMock()
     mock_mongodb.dialog_contexts = MagicMock()
     mock_mongodb.dialog_contexts.find_one = AsyncMock(return_value=None)
@@ -168,12 +168,12 @@ async def test_butler_orchestrator_context_management_characterization():
     # Setup: Create orchestrator with mocked MongoDB
     mock_mode_classifier = MagicMock()
     mock_mode_classifier.classify = AsyncMock(return_value=DialogMode.IDLE)
-    
+
     mock_chat_handler = MagicMock()
     mock_chat_handler.handle = AsyncMock(return_value="Hello")
-    
+
     context_stored = {}
-    
+
     async def find_one_side_effect(filter_dict):
         session_id = filter_dict.get("session_id")
         if session_id:
@@ -181,12 +181,12 @@ async def test_butler_orchestrator_context_management_characterization():
                 if session_id in key:
                     return value
         return None
-    
+
     async def insert_one_side_effect(doc):
         key = f"{doc.get('user_id')}:{doc.get('session_id')}"
         context_stored[key] = doc
         return MagicMock(inserted_id="test_id")
-    
+
     mock_mongodb = MagicMock()
     mock_mongodb.dialog_contexts = MagicMock()
     mock_mongodb.dialog_contexts.find_one = AsyncMock(side_effect=find_one_side_effect)
@@ -205,7 +205,7 @@ async def test_butler_orchestrator_context_management_characterization():
     # Characterize: Context is created/retrieved before processing
     user_id = "123"
     session_id = "session_456"
-    
+
     response = await orchestrator.handle_user_message(
         user_id=user_id, message="Hello", session_id=session_id
     )
@@ -232,7 +232,7 @@ async def test_butler_orchestrator_error_handling_characterization():
     # Setup: Create orchestrator that will raise exception
     mock_mode_classifier = MagicMock()
     mock_mode_classifier.classify = AsyncMock(side_effect=Exception("Classification error"))
-    
+
     mock_mongodb = MagicMock()
     mock_mongodb.dialog_contexts = MagicMock()
     mock_mongodb.dialog_contexts.find_one = AsyncMock(return_value=None)
@@ -478,7 +478,7 @@ async def test_butler_orchestrator_private_attributes_characterization():
     # Note: ButlerOrchestrator in presentation layer uses private attributes (_mode_classifier, etc.)
     # Some tests may access via property (e.g., mongodb property)
     assert hasattr(orchestrator, "mongodb"), "Current tests access mongodb property"
-    
+
     # Characterize: Private attributes exist (should not be accessed in tests after C.2)
     assert hasattr(orchestrator, "_mode_classifier"), "Private attribute exists"
     assert hasattr(orchestrator, "_handlers"), "Private attribute exists"
@@ -515,7 +515,7 @@ async def test_mcp_aware_agent_state_transitions_characterization():
     # Setup: Create agent
     mock_mcp_client = MagicMock()
     mock_mcp_client.discover_tools = AsyncMock(return_value=[])
-    
+
     mock_llm_client = MagicMock()
     mock_llm_client.make_request = AsyncMock(
         return_value=MagicMock(
@@ -548,7 +548,7 @@ async def test_mcp_aware_agent_state_transitions_characterization():
     # Characterize: Process method should return AgentResponse with expected fields
     # Note: Full execution is tested in other integration tests
     assert callable(agent.process), "process should be callable"
-    
+
     # Characterize: AgentResponse schema
     # AgentResponse should have: success, text, tools_used, tokens_used, error, reasoning
     response_fields = AgentResponse.__fields__.keys()
@@ -556,4 +556,3 @@ async def test_mcp_aware_agent_state_transitions_characterization():
     assert "text" in response_fields, "Response should have text field"
     assert "tools_used" in response_fields, "Response should have tools_used field"
     assert "tokens_used" in response_fields, "Response should have tokens_used field"
-

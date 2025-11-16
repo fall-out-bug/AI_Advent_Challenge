@@ -116,5 +116,3 @@ This backlog groups work into clusters A–E plus documentation/archive hygiene.
 - Cluster A–E acceptance criteria in `legacy_refactor_proposal.md` are met and reflected in tests and CI.
 - `make test` passes on the standard shared infra baseline.
 - Documentation and progress trackers are consistent with the refactored codebase.
-
-

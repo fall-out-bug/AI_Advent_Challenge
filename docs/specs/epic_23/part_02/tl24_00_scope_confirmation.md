@@ -1,8 +1,8 @@
 # TL24-00 · Scope Confirmation & Priorities
 
-**Epic:** EP24 – Repository Hygiene & De-Legacy  
-**Stage:** TL24-00  
-**Date:** 2025-11-16  
+**Epic:** EP24 – Repository Hygiene & De-Legacy
+**Stage:** TL24-00
+**Date:** 2025-11-16
 **Owner:** Dev A (cursor_dev_a_v1)
 
 ## Scope Confirmation
@@ -152,4 +152,3 @@ Based on Epic 23 patterns and cluster plans:
 ---
 
 _Scope confirmed by cursor_dev_a_v1 · 2025-11-16_
-

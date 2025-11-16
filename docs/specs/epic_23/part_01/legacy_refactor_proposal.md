@@ -2,7 +2,7 @@
 
 ## 1. Purpose & Scope
 
-**Purpose:** Describe a structured refactor plan for legacy modules discovered while running full test suites during Epic 23 (Day 23).  
+**Purpose:** Describe a structured refactor plan for legacy modules discovered while running full test suites during Epic 23 (Day 23).
 **Scope:** Focus on modules and tests that are clearly out of sync with the current Clean Architecture, rely on legacy async patterns, or assume infrastructure that is no longer the default baseline. The work described here is intended to be executed **within Epic 23** as far as capacity allows (prioritised clusters), with any remaining tail explicitly rolled into future epics if needed.
 
 This document is intended as a handoff to the Architect and Tech Lead to:
@@ -53,11 +53,11 @@ To make the work tractable, the proposal groups changes into five clusters. Each
   - Event loop problems (`RuntimeError: Event loop is closed`) in async tests.
 
 - **Proposed actions:**
-  1. **Unify configuration:**  
+  1. **Unify configuration:**
      - All Mongo access goes through `Settings`/DI (`settings.mongodb_url`, `settings.test_mongodb_url`), reusing Day 21/23 patterns.
-  2. **Repository API normalisation:**  
+  2. **Repository API normalisation:**
      - Encapsulate index creation and cleanup in repository methods (`ensure_indexes`, `drop_test_database`) with logging and explicit usage in tests.
-  3. **Test fixtures:**  
+  3. **Test fixtures:**
      - Introduce a single `real_mongodb`/`test_mongodb` fixture that creates per-test-database (name derived from test id) and handles cleanup.
      - Remove legacy event-loop fixtures and rely on `pytest-asyncio` with `asyncio_mode = auto`.
 
@@ -229,6 +229,4 @@ Before implementation, the following decisions are needed:
 4. **LLM & RAG++ Ownership:**
    - Should LLM client and RAG++ config ownership move to a dedicated “ML Platform” role, with clear contracts for application layer, or remain purely within the current repo?
 
-Once these decisions are made, this proposal can be converted into one or more epics with concrete TL-00…TL-XX stages, similar to Epic 23.  
-
-
+Once these decisions are made, this proposal can be converted into one or more epics with concrete TL-00…TL-XX stages, similar to Epic 23.

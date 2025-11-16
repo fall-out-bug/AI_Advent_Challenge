@@ -233,7 +233,7 @@ def calculate_issue_priority(issue: Issue, history: ReviewHistory) -> float:
     severity_weight = {"critical": 1.0, "high": 0.7, "medium": 0.4, "low": 0.2}
     frequency = history.count_similar_issues(issue) / history.total_reviews
     production_risk = 1.0 if issue.category == "security" else 0.5
-    
+
     priority = (
         severity_weight[issue.severity] * 0.5 +
         frequency * 0.3 +

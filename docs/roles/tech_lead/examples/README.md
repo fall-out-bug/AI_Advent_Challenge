@@ -7,23 +7,23 @@ Detailed examples demonstrating staged planning, CI/CD gates, risk management, a
 ## Examples
 
 ### Staged Planning with CI/CD Gates
-**File:** `staged_planning_cicd_gates.md`  
-**Contains:** 8-stage plan, CI gate matrix, risk register  
+**File:** `staged_planning_cicd_gates.md`
+**Contains:** 8-stage plan, CI gate matrix, risk register
 **Metrics:** 40 days, 8 CI gates, 3 risks identified
 
 ### Risk Management
-**File:** `risk_management.md`  
-**Contains:** Risk register template, severity matrix, mitigation strategies  
+**File:** `risk_management.md`
+**Contains:** Risk register template, severity matrix, mitigation strategies
 **Example:** 3 risks (external API, DB migration, compliance)
 
 ### Deployment Strategy
-**File:** `deployment_strategy.md`  
-**Contains:** Canary rollout (10%→50%→100%), blue-green alternative  
+**File:** `deployment_strategy.md`
+**Contains:** Canary rollout (10%→50%→100%), blue-green alternative
 **Metrics:** < 5min rollback, 24h monitoring window
 
 ### Developer Handoff
-**File:** `handoff_to_developer.md`  
-**Contains:** Complete handoff JSON with stages, commands, CI gates  
+**File:** `handoff_to_developer.md`
+**Contains:** Complete handoff JSON with stages, commands, CI gates
 **Quality:** All DoD defined, rollback plan included
 
 ---

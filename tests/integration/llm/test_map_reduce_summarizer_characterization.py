@@ -248,4 +248,3 @@ def map_reduce_summarizer(
         map_max_tokens=600,
         reduce_max_tokens=2000,
     )
-

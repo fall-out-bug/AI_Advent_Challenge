@@ -1,7 +1,7 @@
 # Epic 24 · Risk Register
 
-**Epic:** EP24 – Repository Hygiene & De-Legacy  
-**Maintained by:** Tech Lead (cursor_tech_lead_v1)  
+**Epic:** EP24 – Repository Hygiene & De-Legacy
+**Maintained by:** Tech Lead (cursor_tech_lead_v1)
 **Last Updated:** 2025-11-16
 
 ## Risk Register
@@ -39,4 +39,3 @@
 ---
 
 _Maintained by cursor_tech_lead_v1 · Last updated: 2025-11-16_
-

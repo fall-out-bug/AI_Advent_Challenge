@@ -11,4 +11,3 @@
 | Refresh domain/integration tests to use public API | TL-03 | Pytest log | QA | Pending |
 | Update docs + Challenge Days narrative | TL-04 | Doc diffs Day 14/18 | Tech Lead | Pending |
 | Update work_log + gap closure entries | TL-04 | Entries updated | Tech Lead | Pending |
-

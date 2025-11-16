@@ -41,5 +41,3 @@ def test_rag_fallback_reason_total_metric_registered() -> None:
     )
     assert value is not None
     assert value >= 1.0
-
-

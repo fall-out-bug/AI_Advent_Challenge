@@ -1,6 +1,6 @@
 # EP23 Owner-Only Addendum · RAG++ Reproducibility
 
-**Access:** This document contains strategy guidance only. No secrets, API keys, or proprietary prompts should be stored here. Sensitive configs live in the private owner repo (`ops/owner_only/secure_configs/`).  
+**Access:** This document contains strategy guidance only. No secrets, API keys, or proprietary prompts should be stored here. Sensitive configs live in the private owner repo (`ops/owner_only/secure_configs/`).
 **Scope:** Supports TL-07 tasks (reproducibility knobs, variance metrics, canary rollout).
 
 ## 1. Tuning Cadence
@@ -92,4 +92,3 @@
 | Version | Date | Author | Summary |
 | --- | --- | --- | --- |
 | v0.1 | 2025-11-15 | cursor_tech_lead_v1 | Scaffold created; populate once TL-07 kicks off. |
-

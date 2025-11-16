@@ -1,4 +1,4 @@
-# Epic 23 · Tech Lead Implementation Plan  
+# Epic 23 · Tech Lead Implementation Plan
 _Observability & Benchmark Enablement · Day 23_
 
 ## 1. Metadata & Inputs
@@ -42,7 +42,7 @@ Parallelization notes:
 ## 4. Stage Details
 
 ### Stage TL-00 · Input Consolidation & MADR Finalization (Day 0–1)
-**Scope:** Confirm completeness of architecture handoff, finalize MADR-EP23-001…004, align acceptance matrices with Analyst and Architect.  
+**Scope:** Confirm completeness of architecture handoff, finalize MADR-EP23-001…004, align acceptance matrices with Analyst and Architect.
 **Tasks:**
 1. Host 30-minute triage with Analyst + Architect to resolve open questions (dataset counts, schema snippets, RAG++ limitations).
 2. Produce `docs/specs/epic_23/plan_status.md` snippet capturing scope, blockers, and token budget per `docs/operational/context_limits.md`.
@@ -57,7 +57,7 @@ Parallelization notes:
 **CI Gates:** `make lint` (plan linting), markdown link checker (`scripts/ci/check_docs.py`).
 
 ### Stage TL-01 · Benchmark Dataset Seeding (Days 1–5)
-**Scope:** Implement `SeedBenchmarkDataUseCase` plus Mongo repository extensions to ingest 5×30-day datasets with RU localisation metadata.  
+**Scope:** Implement `SeedBenchmarkDataUseCase` plus Mongo repository extensions to ingest 5×30-day datasets with RU localisation metadata.
 **Tasks:**
 1. Define `BenchmarkDatasetDomain` validators (latency, feature flags, RU localisation markers).
 2. Implement ingestion pipeline (reuse `scripts/quality/analysis` helpers) with synthetic backfill fallback.
@@ -72,7 +72,7 @@ Parallelization notes:
 **CI Gates:** `pytest tests/unit/domain/test_benchmark_dataset.py`, `pytest tests/unit/application/test_seed_benchmark_data.py`, `mypy src/domain src/application`, `make lint`.
 
 ### Stage TL-02 · Exporter Verification & Artefact Archiving (Days 5–7)
-**Scope:** Guarantee exporters produce JSONL compatible artefacts and align with Stage 05 schema references.  
+**Scope:** Guarantee exporters produce JSONL compatible artefacts and align with Stage 05 schema references.
 **Tasks:**
 1. Create CLI wrappers to run `scripts/quality/analysis/export_digests.py` and `export_review_reports.py` with deterministic seeds.
 2. Validate JSONL outputs against schema snapshots; fail build if structure drifts.
@@ -85,7 +85,7 @@ Parallelization notes:
 **CI Gates:** `python scripts/quality/analysis/export_digests.py --output tmp/digests.jsonl`, `python scripts/quality/analysis/export_review_reports.py --output tmp/reports.jsonl`, `pytest tests/integration/benchmark/test_exporters.py`.
 
 ### Stage TL-03 · Benchmark Execution & Stage 05_03 Pilot (Days 7–10)
-**Scope:** Execute dry-run and live benchmark scenarios, update documentation, and capture governance approval for Stage 05_03.  
+**Scope:** Execute dry-run and live benchmark scenarios, update documentation, and capture governance approval for Stage 05_03.
 **Tasks:**
 1. Run `scripts/quality/benchmark/run_benchmark.py --scenario channel_digest_ru --dry-run` followed by live execution.
 2. Collect Prometheus metrics, Grafana screenshots, and Loki log excerpts; store under `docs/reference/en/PERFORMANCE_BENCHMARKS.md`.
@@ -98,7 +98,7 @@ Parallelization notes:
 **CI Gates:** `python scripts/quality/benchmark/run_benchmark.py --scenario channel_digest_ru --dry-run`, `python scripts/quality/benchmark/run_benchmark.py --scenario channel_digest_ru`, `pytest tests/integration/benchmark/test_benchmark_runner.py`. Gate checks for completion + metric emission, not a specific SLA unless future requirements add one.
 
 ### Stage TL-04 · Day 23 Observability Instrumentation (Days 5–9)
-**Scope:** Extend metrics/logging/tracing across runtimes, update observability docs, and add Analyst example showing telemetry metadata.  
+**Scope:** Extend metrics/logging/tracing across runtimes, update observability docs, and add Analyst example showing telemetry metadata.
 **Tasks:**
 1. Expand metrics modules with counters/histograms listed in architecture packet (`benchmark_export_duration_seconds`, `shared_infra_bootstrap_status`, `structured_logs_total`, `rag_variance_ratio`).
 2. Wire `/metrics` endpoints (MCP HTTP server, Butler sidecar, CLI) to shared registry; add health gauges.
@@ -112,7 +112,7 @@ Parallelization notes:
 **CI Gates:** `pytest tests/unit/infrastructure/metrics`, `pytest tests/integration/presentation/test_metrics_endpoints.py`, `mypy src/infrastructure src/presentation`, `bandit -r src`, `make lint`.
 
 ### Stage TL-05 · Shared Infra Automation & Restart Validation (Days 6–10)
-**Scope:** Automate bootstrap scripts in CI, ensure parity with `make day-12-up`, and prove the single-host stack can restart cleanly (non-DR).  
+**Scope:** Automate bootstrap scripts in CI, ensure parity with `make day-12-up`, and prove the single-host stack can restart cleanly (non-DR).
 **Tasks:**
 1. Integrate `scripts/ci/bootstrap_shared_infra.py` into CI workflow with teardown via `scripts/ci/cleanup_shared_infra.py`.
 2. Provide `make day-23-up` wrapper aligning with `.env.infra` and document ownership (DevOps).
@@ -125,7 +125,7 @@ Parallelization notes:
 **CI Gates:** `python scripts/ci/bootstrap_shared_infra.py --check`, `make day-23-up` (implemented during TL-05), `pytest tests/integration/shared_infra/test_bootstrap.py`, `pre-commit run terraform_validate` (if IaC touched).
 
 ### Stage TL-06 · Documentation, Localisation & Hygiene (Days 8–11)
-**Scope:** Close RU localisation gaps, fix linters, validate YAML/JSON, compress large artefacts, and align README references.  
+**Scope:** Close RU localisation gaps, fix linters, validate YAML/JSON, compress large artefacts, and align README references.
 **Tasks:**
 1. Update RU docs for MCP/Telegram/CLI plus README.ru/README.md with observability and restart validation info.
 2. Fix `shared/tests` lint/type issues; ensure `pre-commit run --all-files` passes cleanly.
@@ -139,7 +139,7 @@ Parallelization notes:
 **CI Gates:** `pre-commit run --all-files`, `make lint`, `pytest tests/shared`, `check-json`, `check-yaml`.
 
 ### Stage TL-07 · RAG++ Reproducibility & Quality Gates (Days 10–13)
-**Scope:** Document and implement owner-only RAG++ tuning cadence, randomness controls, variance metrics, and rollout plan updates.  
+**Scope:** Document and implement owner-only RAG++ tuning cadence, randomness controls, variance metrics, and rollout plan updates.
 **Tasks:**
 1. Extend `config/retrieval_rerank_config.yaml` with `seed`, `variance_window`, `adaptive_threshold` fields.
 2. Instrument Prometheus metrics (`rag_variance_ratio`, `rag_fallback_reason_total`) and expose dashboards.
@@ -227,4 +227,3 @@ Parallelization notes:
 - [ ] Prepare developer onboarding brief referencing this document and `docs/specs/process/agent_workflow.md`.
 
 Once approvals land, this plan becomes the authoritative Tech Lead handoff for Developers executing Epic 23.
-

@@ -47,4 +47,3 @@ def test_digest_sample_to_document_matches_exporter_shape() -> None:
     assert document["channel"] == "@startup_digest_ru"
     assert len(document["posts"]) == 3
     assert document["quality"]["llm_judge"]["scores"]["coverage"] == 0.92
-

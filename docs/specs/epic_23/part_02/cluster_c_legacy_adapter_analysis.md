@@ -1,7 +1,7 @@
 # Cluster C Legacy Adapter Analysis
 
-**Date:** 2025-11-17  
-**Epic:** EP24 — Repository Hygiene & De-Legacy  
+**Date:** 2025-11-17
+**Epic:** EP24 — Repository Hygiene & De-Legacy
 **Cluster:** C.3 — Legacy Adapter (if needed)
 
 ## Purpose
@@ -51,18 +51,18 @@
 ```python
 class ButlerOrchestratorLegacyAdapter:
     """Legacy adapter for backward compatibility.
-    
+
     Purpose:
         Provides public access to internal components for gradual migration.
         Should be removed after all code is migrated to public API.
-    
+
     Deprecated: Use public API (handle_user_message with force_mode) instead.
     """
-    
+
     def __init__(self, orchestrator: ButlerOrchestrator):
         """Initialize adapter with orchestrator instance."""
         self._orchestrator = orchestrator
-    
+
     @property
     def mode_classifier(self) -> ModeClassifier:
         """Get mode classifier (deprecated - use force_mode parameter)."""
@@ -72,7 +72,7 @@ class ButlerOrchestratorLegacyAdapter:
             stacklevel=2
         )
         return self._orchestrator._mode_classifier
-    
+
     @property
     def task_handler(self) -> Handler:
         """Get task handler (deprecated - use public API)."""
@@ -82,7 +82,7 @@ class ButlerOrchestratorLegacyAdapter:
             stacklevel=2
         )
         return self._orchestrator._handlers[DialogMode.TASK]
-    
+
     @property
     def data_handler(self) -> Handler:
         """Get data handler (deprecated - use public API)."""
@@ -92,7 +92,7 @@ class ButlerOrchestratorLegacyAdapter:
             stacklevel=2
         )
         return self._orchestrator._handlers[DialogMode.DATA]
-    
+
     @property
     def chat_handler(self) -> Handler:
         """Get chat handler (deprecated - use public API)."""
@@ -102,7 +102,7 @@ class ButlerOrchestratorLegacyAdapter:
             stacklevel=2
         )
         return self._orchestrator._handlers[DialogMode.IDLE]
-    
+
     async def classify_mode(self, message: str) -> DialogMode:
         """Classify message mode (deprecated - use handle_user_message without force_mode)."""
         warnings.warn(
@@ -134,10 +134,10 @@ def mode_classifier(self) -> ModeClassifier:
 ```python
 class MCPAwareAgentLegacyAdapter:
     """Legacy adapter for MCPAwareAgent backward compatibility."""
-    
+
     def __init__(self, agent: MCPAwareAgent):
         self._agent = agent
-    
+
     @property
     def tool_trace(self) -> List[ToolCall]:
         """Get tool execution trace (deprecated)."""
@@ -187,4 +187,3 @@ class MCPAwareAgentLegacyAdapter:
 ## Conclusion
 
 **Legacy adapter не нужен** для текущего состояния кодовой базы. Все использование можно мигрировать на публичный API. Рекомендуется пропустить C.3 и продолжить с C.5 (рефакторинг E2E тестов).
-

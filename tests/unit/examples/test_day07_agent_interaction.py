@@ -188,4 +188,3 @@ def test_review_result_dataclass() -> None:
     assert review.review_score == 0.75
     assert review.issues == ["issue1"]
     assert review.approval is True
-

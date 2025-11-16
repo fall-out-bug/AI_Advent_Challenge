@@ -100,7 +100,7 @@ db.plans.aggregate([
   }}
 ]);
 ```
-**Results:** `[{stage: "Domain Layer", test_coverage: 100%, tests_passing: "green"}]`  
+**Results:** `[{stage: "Domain Layer", test_coverage: 100%, tests_passing: "green"}]`
 **Token Cost:** ~350 tokens | **Use:** Track test progress per stage
 
 ---
@@ -112,7 +112,7 @@ db.deployments.find({
   environment: "production"
 }).sort({ deployed_at: -1 }).limit(5);
 ```
-**Results:** Last 5 production deployments with: version, strategy (canary/blue-green), success_rate  
+**Results:** Last 5 production deployments with: version, strategy (canary/blue-green), success_rate
 **Token Cost:** ~400 tokens | **Use:** Reference successful deployment patterns
 
 ---
@@ -130,7 +130,7 @@ db.plans.aggregate([
   }}
 ]);
 ```
-**Results:** Stages with blockers and assigned owners  
+**Results:** Stages with blockers and assigned owners
 **Token Cost:** ~300 tokens | **Use:** Daily standup, unblock stages
 
 ---

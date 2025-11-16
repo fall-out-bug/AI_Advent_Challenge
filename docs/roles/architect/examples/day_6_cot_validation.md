@@ -8,9 +8,9 @@ Demonstrate how the Architect agent uses Chain of Thought (CoT) prompting to val
 
 ## Scenario
 
-**Epic:** EP27 - Notification System  
-**Architect Task:** Design microservices architecture for multi-channel notifications  
-**Challenge:** Complex service dependencies, potential circular dependencies, scalability concerns  
+**Epic:** EP27 - Notification System
+**Architect Task:** Design microservices architecture for multi-channel notifications
+**Challenge:** Complex service dependencies, potential circular dependencies, scalability concerns
 **Goal:** Use CoT to catch architectural flaws before implementation
 
 ---
@@ -313,7 +313,7 @@ class NotificationService:
         }
         queue.enqueue(job)
         return {"status": "accepted", "job_id": job["id"]}
-    
+
     def on_delivery_status(self, event: DeliveryStatusEvent):
         """Handle delivery status events (subscriber)."""
         db.notifications.update(event.notification_id, status=event.status)
@@ -326,16 +326,16 @@ class EmailService:
         """Process email notification (subscriber)."""
         if "email" not in event.channels:
             return
-        
+
         # Get minimal user data
         email = user_service.get_email(event.user_id)
-        
+
         # Render template
         html = template_service.render("email_template", event.message)
-        
+
         # Send via SendGrid
         sendgrid.send(to=email, html=html)
-        
+
         # Publish delivery status
         event_bus.publish(NotificationDeliveredEvent(
             notification_id=event.notification_id,
@@ -350,7 +350,7 @@ class EventBus:
     def publish(self, event: Event):
         """Publish event to all subscribers."""
         redis.publish(event.type, json.dumps(event.dict()))
-    
+
     def subscribe(self, event_type: str, handler: Callable):
         """Subscribe to event type."""
         redis_subscriber.subscribe(event_type, handler)
@@ -364,19 +364,19 @@ class EventBus:
 ┌─────────────────────────────────────────────────────┐
 │ Event Bus (Redis Pub/Sub)                          │
 └─────────────────────────────────────────────────────┘
-         ▲              ▲              ▲               
-         │              │              │               
-    publishes      publishes      publishes           
-         │              │              │               
-┌────────┴──────┐  ┌───┴────────┐  ┌─┴──────────┐   
-│Notification   │  │EmailService│  │SMSService  │   
-│Service        │  │            │  │            │   
-│(5 replicas)   │  │(3 replicas)│  │(3 replicas)│   
-└───────────────┘  └────────────┘  └────────────┘   
-         │              │              │               
-    subscribes     subscribes     subscribes          
-         │              │              │               
-         ▼              ▼              ▼               
+         ▲              ▲              ▲
+         │              │              │
+    publishes      publishes      publishes
+         │              │              │
+┌────────┴──────┐  ┌───┴────────┐  ┌─┴──────────┐
+│Notification   │  │EmailService│  │SMSService  │
+│Service        │  │            │  │            │
+│(5 replicas)   │  │(3 replicas)│  │(3 replicas)│
+└───────────────┘  └────────────┘  └────────────┘
+         │              │              │
+    subscribes     subscribes     subscribes
+         │              │              │
+         ▼              ▼              ▼
 ┌─────────────────────────────────────────────────────┐
 │ Event Bus (Redis Pub/Sub)                          │
 └─────────────────────────────────────────────────────┘
@@ -505,24 +505,24 @@ EventBus → (Redis, no circular dependencies)
 
 ### Without CoT (Original Design)
 
-**Time Spent**: 2 hours (design only)  
-**Issues Found**: 0 (missed all critical flaws)  
-**Handoff Status**: Would have been approved ❌  
-**Implementation Cost**: 6 weeks + 3 weeks rework = 9 weeks  
+**Time Spent**: 2 hours (design only)
+**Issues Found**: 0 (missed all critical flaws)
+**Handoff Status**: Would have been approved ❌
+**Implementation Cost**: 6 weeks + 3 weeks rework = 9 weeks
 **Production Issues**: 5 major (circular deps, SPOF, performance)
 
 ---
 
 ### With CoT (Validated Design)
 
-**Time Spent**: 3 hours (2h design + 1h CoT validation + redesign)  
-**Issues Found**: 5 critical issues (caught before implementation)  
-**Handoff Status**: Redesigned, then approved ✅  
-**Implementation Cost**: 6 weeks (no rework)  
+**Time Spent**: 3 hours (2h design + 1h CoT validation + redesign)
+**Issues Found**: 5 critical issues (caught before implementation)
+**Handoff Status**: Redesigned, then approved ✅
+**Implementation Cost**: 6 weeks (no rework)
 **Production Issues**: 0 (issues caught in design phase)
 
-**Time Savings**: 3 weeks (avoided rework)  
-**Cost Savings**: ~$30K (avoided production incidents)  
+**Time Savings**: 3 weeks (avoided rework)
+**Cost Savings**: ~$30K (avoided production incidents)
 **Quality Improvement**: 5 fewer production issues
 
 ---
@@ -616,4 +616,3 @@ EventBus → (Redis, no circular dependencies)
 - See `docs/roles/architect/day_capabilities.md#day-6` for technique details
 - See `docs/operational/handoff_contracts.md` for handoff quality standards
 - See `docs/specs/process/agent_workflow.md` for workflow integration
-

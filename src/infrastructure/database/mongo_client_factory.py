@@ -91,4 +91,3 @@ def get_mongo_client_factory(settings: Optional[Settings] = None) -> MongoClient
         MongoClientFactory: Factory instance.
     """
     return MongoClientFactory(settings)
-

@@ -198,4 +198,3 @@ class TestTelegramAdapterImpl:
                 await adapter.fetch_channel_posts(
                     channel_username="nonexistent", since=since
                 )
-

@@ -116,4 +116,3 @@
 - Updated role docs (`docs/roles/analyst/day_capabilities.md`, `docs/roles/analyst/examples/`).
 - Updated operational docs (`docs/reference/en/PERFORMANCE_BENCHMARKS.md`, `README.ru`, shared infra playbooks, Grafana/Loki IaC).
 - Updated CI workflows/scripts for shared infra automation and observability validation.
-

@@ -150,4 +150,3 @@ def mock_llm_client():
     client.generate = AsyncMock()
     client.batch_generate = AsyncMock()
     return client
-

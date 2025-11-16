@@ -1,4 +1,4 @@
-# Epic 24 · Tech Lead Implementation Plan  
+# Epic 24 · Tech Lead Implementation Plan
 _Repository Hygiene & De-Legacy · Day 24_
 
 ## 1. Metadata & Inputs
@@ -37,7 +37,7 @@ Parallelisation:
 ## 4. Stage Details
 
 ### TL24-00 · Input Consolidation & Acceptance Matrix (Day 0–1)
-**Scope:** Confirm legacy cluster scope (A–E), agree on priorities, and create EP24-specific acceptance matrix.  
+**Scope:** Confirm legacy cluster scope (A–E), agree on priorities, and create EP24-specific acceptance matrix.
 **Tasks:**
 1. Review `legacy_refactor_proposal.md` with Architect + Analyst; adjust cluster boundaries if needed.
 2. Create `docs/specs/epic_24/acceptance_matrix.md` mapping backlog items (A–E tasks + docs hygiene) to stages TL24-01…TL24-06.
@@ -49,7 +49,7 @@ Parallelisation:
 **CI Gates:** `make lint`, markdown link checker.
 
 ### TL24-01 · Cluster A – Mongo & Async Infrastructure (Days 1–4)
-**Scope:** Unify Mongo configuration, fixtures, and async behaviour to remove auth and event-loop errors.  
+**Scope:** Unify Mongo configuration, fixtures, and async behaviour to remove auth and event-loop errors.
 **Tasks:**
 0. **Verify shared infra baseline** — Run `make day-23-up` and `scripts/ci/bootstrap_shared_infra.py --check` to confirm Day 23 infra is ready.
 1. **Create characterization tests** — Capture current repository/worker behavior before refactoring (per cluster characterization test requirements).
@@ -68,7 +68,7 @@ Parallelisation:
 **CI Gates:** `pytest tests/integration/shared_infra`, `pytest tests/infrastructure/repositories`, `mypy src/infrastructure`, `make lint`.
 
 ### TL24-02 · Cluster B – Summarisation & Digest Use Cases (Days 4–7)
-**Scope:** Fix digest use case bugs and align summarisation with a clear contract.  
+**Scope:** Fix digest use case bugs and align summarisation with a clear contract.
 **Tasks:**
 0. **Create characterization tests** — Capture current digest generation flow and summarization behavior before refactoring.
 1. Decide and document whether digest use cases are async or sync, and adjust interfaces accordingly (confirmed: async `async def execute(...) -> DigestResult`).
@@ -83,7 +83,7 @@ Parallelisation:
 **CI Gates:** `pytest tests/integration/summarization`, `pytest tests/unit/application/test_summarizer_service.py`, `mypy src/application`.
 
 ### TL24-03 · Cluster C – Butler Orchestrator & MCP-Aware Agent (Days 5–9)
-**Scope:** Stabilise orchestrator/agent APIs and align tests/metrics with the new architecture.  
+**Scope:** Stabilise orchestrator/agent APIs and align tests/metrics with the new architecture.
 **Tasks:**
 1. Define and document public API surface for `MCPAwareAgent` and `ButlerOrchestrator`.
 2. Refactor tests to rely on public APIs only; remove direct access to private attributes.
@@ -97,7 +97,7 @@ Parallelisation:
 **CI Gates:** `pytest tests/domain/agents`, `pytest tests/integration/butler`, `pytest tests/integration/presentation/mcp`, `mypy src/domain src/presentation`.
 
 ### TL24-04 · Cluster D – LLM Clients & Map-Reduce Summariser (Days 6–8)
-**Scope:** Normalise LLM client API and map-reduce summariser signatures.  
+**Scope:** Normalise LLM client API and map-reduce summariser signatures.
 **Tasks:**
 0. **Create characterization tests** — Capture current LLM client request/response patterns, map-reduce chunking behavior, and error/timeout handling before refactoring.
 1. Define `LLMClient` adapter interface and refactor existing clients to implement it.
@@ -110,7 +110,7 @@ Parallelisation:
 **CI Gates:** `pytest tests/unit/infrastructure/llm`, `pytest tests/unit/infrastructure/llm/summarizers`, `mypy src/infrastructure/llm`.
 
 ### TL24-05 · Cluster E – Telegram Helpers & Workers (Days 8–11)
-**Scope:** Align Telegram helpers, channel normaliser, and workers with domain rules and DI.  
+**Scope:** Align Telegram helpers, channel normaliser, and workers with domain rules and DI.
 **Tasks:**
 0. **Create characterization tests** — Capture current worker execution flow, channel normalization edge cases, and Telegram message processing before refactoring.
 1. Decide and document canonical channel normalisation policy (confirmed: lowercase without @ prefix, e.g. `"onaboka"`).
@@ -123,7 +123,7 @@ Parallelisation:
 **CI Gates:** `pytest tests/unit/domain/test_channel_normalizer.py`, `pytest tests/workers`, `mypy src/workers src/infrastructure/clients`.
 
 ### TL24-06 · Documentation & Archive Hygiene (Days 10–12)
-**Scope:** Bring docs and archive in sync with refactored codebase.  
+**Scope:** Bring docs and archive in sync with refactored codebase.
 **Tasks:**
 1. Review and update `docs/challenge_days.md` and `docs/USER_GUIDE_MULTI_AGENT_WORKFLOW.md` to reflect refactored modules and examples.
 2. Move outdated specs/tests into `archive/` with clear labels; add references from active docs where historically useful.
@@ -159,5 +159,3 @@ To be populated in `docs/specs/epic_24/acceptance_matrix.md` once clusters and t
 - [ ] Architect + Analyst review this plan and confirm cluster priorities.
 - [ ] Create `acceptance_matrix.md` for EP24 and wire it into `work_log.md`.
 - [ ] Kick off TL24-01 (Cluster A) as soon as environment baseline is confirmed.
-
-

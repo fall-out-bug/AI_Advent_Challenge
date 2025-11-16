@@ -67,4 +67,3 @@ See `legacy_cluster_d_acceptance_matrix.md`.
 - Dependent on Cluster B for SummarizerService integration; coordinate merges.
 - Ensure no direct references from domain to infrastructure (interfaces live in domain/application).
 - Prepare migration guide for any scripts referencing old clients (update CLI/backoffice).
-

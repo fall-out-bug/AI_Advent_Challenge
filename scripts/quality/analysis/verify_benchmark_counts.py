@@ -180,4 +180,3 @@ if __name__ == "__main__":
     with report_path.open("w", encoding="utf-8") as handle:
         json.dump(report, handle, indent=2, ensure_ascii=False)
     print(json.dumps(report, indent=2, ensure_ascii=False))
-

@@ -100,8 +100,8 @@ db.architecture.find({
 ]
 ```
 
-**Token Cost:** ~400 tokens  
-**When to Use:** Load current architecture for review/extension  
+**Token Cost:** ~400 tokens
+**When to Use:** Load current architecture for review/extension
 **When NOT to Use:** Historical analysis (use version queries instead)
 
 ---
@@ -131,8 +131,8 @@ db.decisions.find({
 ]
 ```
 
-**Token Cost:** ~300 tokens  
-**When to Use:** Check for unresolved decisions before finalizing architecture  
+**Token Cost:** ~300 tokens
+**When to Use:** Check for unresolved decisions before finalizing architecture
 **When NOT to Use:** After all MADRs approved (use approved status filter)
 
 ---
@@ -169,8 +169,8 @@ db.dependencies.aggregate([
 ]
 ```
 
-**Token Cost:** ~500 tokens  
-**When to Use:** Validate Clean Architecture compliance (Day 10 pattern)  
+**Token Cost:** ~500 tokens
+**When to Use:** Validate Clean Architecture compliance (Day 10 pattern)
 **When NOT to Use:** During initial design (run after implementation)
 
 ---
@@ -207,8 +207,8 @@ db.architecture.aggregate([
 
 **Interpretation:** "metrics" only in 1/3 components → needs coverage expansion
 
-**Token Cost:** ~600 tokens  
-**When to Use:** Validate cross-cutting concerns addressed (Day 11+)  
+**Token Cost:** ~600 tokens
+**When to Use:** Validate cross-cutting concerns addressed (Day 11+)
 **When NOT to Use:** Initial component listing (premature)
 
 ---
@@ -245,8 +245,8 @@ db.architecture.find({
 ]
 ```
 
-**Token Cost:** ~700 tokens (includes patterns + MADRs)  
-**When to Use:** Find proven patterns for reuse (Day 20 RAG)  
+**Token Cost:** ~700 tokens (includes patterns + MADRs)
+**When to Use:** Find proven patterns for reuse (Day 20 RAG)
 **When NOT to Use:** Exact match needed (use epic-specific query)
 
 ---

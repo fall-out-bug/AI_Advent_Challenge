@@ -65,7 +65,7 @@ db.reviews.aggregate([
   }
 ]
 ```
-**Token Cost:** ~700 tokens (10 results)  
+**Token Cost:** ~700 tokens (10 results)
 **Use Case:** Find known issues in similar code before manual review
 
 ---
@@ -97,7 +97,7 @@ db.reviews.find({
   }
 ]
 ```
-**Token Cost:** ~400 tokens  
+**Token Cost:** ~400 tokens
 **Use Case:** Check history of issues in specific files
 
 ---
@@ -160,7 +160,7 @@ db.reviews.aggregate([
   }
 ]
 ```
-**Token Cost:** ~500 tokens  
+**Token Cost:** ~500 tokens
 **Use Case:** Identify systemic issues across project
 
 ---
@@ -209,7 +209,7 @@ db.reviews.aggregate([
   }
 ]
 ```
-**Token Cost:** ~350 tokens  
+**Token Cost:** ~350 tokens
 **Use Case:** Provide personalized coaching feedback
 
 ---
@@ -245,7 +245,7 @@ db.reviews.find({
   }
 ]
 ```
-**Token Cost:** ~300 tokens  
+**Token Cost:** ~300 tokens
 **Use Case:** Enforce Clean Architecture principles
 
 ---
@@ -275,7 +275,7 @@ db.architecture_violations.find({
   }
 ]
 ```
-**Token Cost:** ~200 tokens  
+**Token Cost:** ~200 tokens
 **Use Case:** Identify structural problems early
 
 ---
@@ -335,7 +335,7 @@ db.code_artifacts.aggregate([
   }
 ]
 ```
-**Token Cost:** ~400 tokens  
+**Token Cost:** ~400 tokens
 **Use Case:** Prioritize test-writing efforts
 
 ---
@@ -361,7 +361,7 @@ db.code_artifacts.find({
   }
 ]
 ```
-**Token Cost:** ~250 tokens  
+**Token Cost:** ~250 tokens
 **Use Case:** Ensure critical paths are well-tested
 
 ---
@@ -430,7 +430,7 @@ db.production_issues.aggregate([
   }
 ]
 ```
-**Token Cost:** ~600 tokens  
+**Token Cost:** ~600 tokens
 **Use Case:** Improve review process, learn from missed issues
 
 ---
@@ -485,7 +485,7 @@ db.production_issues.aggregate([
   }
 ]
 ```
-**Token Cost:** ~300 tokens  
+**Token Cost:** ~300 tokens
 **Use Case:** Measure review effectiveness
 
 ---
@@ -541,7 +541,7 @@ db.reviews.aggregate([
   "approval_rate": 0.76  // 76% approved on first review
 }
 ```
-**Token Cost:** ~200 tokens  
+**Token Cost:** ~200 tokens
 **Use Case:** Monthly review performance report
 
 ---
@@ -602,7 +602,7 @@ db.reviews.aggregate([
   }
 ]
 ```
-**Token Cost:** ~350 tokens  
+**Token Cost:** ~350 tokens
 **Use Case:** Track quality improvements over time
 
 ---
@@ -636,16 +636,16 @@ class ReviewerAgent:
     def review_pr(self, pr: PullRequest) -> ReviewReport:
         # 1. Pre-review: Query similar past reviews
         similar_reviews = self.query_similar_reviews(pr.code_embedding)
-        
+
         # 2. Architecture pass: Check for known violations
         arch_violations = self.query_architecture_violations(pr.epic)
-        
+
         # 3. Component pass: Check test coverage
         coverage_gaps = self.query_coverage_gaps(pr.files)
-        
+
         # 4. Synthesis: Correlate with production issues
         related_bugs = self.query_production_issues(pr.files, pr.epic)
-        
+
         # 5. Generate report with citations
         return self.generate_report(
             similar_reviews=similar_reviews,

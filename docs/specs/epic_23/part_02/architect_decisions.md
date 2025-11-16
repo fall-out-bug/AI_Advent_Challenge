@@ -1,8 +1,8 @@
 # Epic 24 · Architect & Analyst Decisions
 
-**Epic:** EP24 – Repository Hygiene & De-Legacy  
-**Date:** 2025-11-16  
-**Architect:** cursor_architect_v1  
+**Epic:** EP24 – Repository Hygiene & De-Legacy
+**Date:** 2025-11-16
+**Architect:** cursor_architect_v1
 **Analyst:** cursor_analyst_v1
 
 ## Decisions & Confirmations
@@ -221,7 +221,7 @@ tests/legacy/
 
 ## Sign-Off
 
-**Architect:** ✅ _cursor_architect_v1 (2025-11-16)_  
+**Architect:** ✅ _cursor_architect_v1 (2025-11-16)_
 **Analyst:** ✅ _cursor_analyst_v1 (2025-11-16)_
 
 All decisions documented and confirmed with detailed clarifications. Ready to proceed with cluster implementation.
@@ -229,4 +229,3 @@ All decisions documented and confirmed with detailed clarifications. Ready to pr
 ---
 
 _Decisions documented by cursor_dev_a_v1 · 2025-11-16 · Architect & Analyst confirmations received_
-

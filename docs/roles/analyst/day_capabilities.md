@@ -8,7 +8,7 @@ This document details how each Challenge Day enhances the Analyst role's capabil
 
 **Capability:** Initiate structured conversations with stakeholders to gather initial requirements.
 
-**Use Case:** 
+**Use Case:**
 - Product Owner describes a new feature idea
 - Analyst agent captures basic requirements in structured format
 - Output: Initial requirement skeleton with Must/Should/Out-of-Scope categories

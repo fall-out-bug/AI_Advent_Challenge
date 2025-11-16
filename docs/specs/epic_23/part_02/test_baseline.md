@@ -1,13 +1,13 @@
 # Epic 24 · Test Baseline
 
-**Epic:** EP24 – Repository Hygiene & De-Legacy  
-**Date:** 2025-11-16  
+**Epic:** EP24 – Repository Hygiene & De-Legacy
+**Date:** 2025-11-16
 **Purpose:** Establish baseline metrics before refactoring to track regression and progress
 
 ## Test Collection Summary
 
-**Total Test Files:** 167+  
-**Total Test Functions:** ~881 (collected via `pytest --collect-only`)  
+**Total Test Files:** 167+
+**Total Test Functions:** ~881 (collected via `pytest --collect-only`)
 **Test Collection Errors:** 7 (expected due to missing dependencies in some tests)
 
 ## Cluster-Specific Test Baseline
@@ -154,7 +154,6 @@ Before refactoring each cluster, **characterization tests must be created** to c
 
 ---
 
-**Baseline established by:** cursor_dev_a_v1  
-**Reviewed by:** cursor_reviewer_v1  
+**Baseline established by:** cursor_dev_a_v1
+**Reviewed by:** cursor_reviewer_v1
 **Date:** 2025-11-16
-

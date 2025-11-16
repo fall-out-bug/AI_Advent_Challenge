@@ -31,5 +31,3 @@ Purpose:
 | 21 | Reranking and filtering | Rerank metrics `src/infrastructure/metrics/rag_metrics.py`, config `config/retrieval_rerank_config.yaml`, `scripts/rag/day_21_demo.py`, EP21 docs | Reranking is wired, but no consolidated Day 21 report comparing quality before/after in this programme. |
 | 22 | Citations and sources | `docs/roles/analyst/day_capabilities.md#day-22`, `docs/roles/analyst/examples/day_22_rag_citations.md`, `docs/roles/analyst/rag_queries.md` | Pattern implemented at doc level; not yet enforced as a mandatory behaviour for specific RAG endpoints with tests. |
 | 23 | Free day → Observability & Benchmarks | Epic 23 files under `docs/specs/epic_23/*`, benchmark data in `data/benchmarks/*`, scripts `scripts/quality/analysis/export_*.py`, `scripts/quality/benchmark/run_benchmark.py`, metrics in `src/infrastructure/metrics/*`, infra bootstrap scripts | Core Epic 23 goals met; Day 23 result not yet summarised back into `docs/challenge_days.md` as a narrative of "what we did". |
-
-

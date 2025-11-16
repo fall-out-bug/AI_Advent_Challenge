@@ -8,18 +8,18 @@ Demonstrate the map-reduce compression technique that reduces requirement gather
 
 ## Compression Challenge
 
-**Problem:** Long requirement sessions generate 8K-12K tokens  
-**Constraint:** 12K context window, need room for continued gathering  
+**Problem:** Long requirement sessions generate 8K-12K tokens
+**Constraint:** 12K context window, need room for continued gathering
 **Solution:** Compress conversation history 80% while preserving decisions, requirements, open questions
 
 ---
 
 ## Scenario
 
-**Epic:** EP25 - E-Commerce Platform Redesign  
-**Session:** 20 exchanges across 4 major topics  
-**Original Size:** 8,142 tokens  
-**Target Size:** ~1,600 tokens (80% reduction)  
+**Epic:** EP25 - E-Commerce Platform Redesign
+**Session:** 20 exchanges across 4 major topics
+**Original Size:** 8,142 tokens
+**Target Size:** ~1,600 tokens (80% reduction)
 **Quality Goal:** ≥90% information retention
 
 ---
@@ -303,14 +303,14 @@ def map_exchanges_to_topics(exchanges: list) -> dict:
 
 ### Step 2: REDUCE - Summarize Each Topic
 
-**Input:** 2,510 tokens (Product Catalog exchanges 1-5)  
-**Process:** Extract core requirements, decisions, open questions  
+**Input:** 2,510 tokens (Product Catalog exchanges 1-5)
+**Process:** Extract core requirements, decisions, open questions
 **Output:** 420 tokens (83% reduction)
 
 ```python
 def reduce_topic_to_summary(topic_exchanges: list) -> TopicSummary:
     """Extract essential information from topic exchanges."""
-    
+
     return TopicSummary(
         requirements=extract_requirements(topic_exchanges),
         decisions=extract_decisions(topic_exchanges),
@@ -326,7 +326,7 @@ def reduce_topic_to_summary(topic_exchanges: list) -> TopicSummary:
 ```python
 def merge_summaries(summaries: list[TopicSummary]) -> CompressedContext:
     """Combine topic summaries into final compressed context."""
-    
+
     return CompressedContext(
         summaries=summaries,
         metadata=CompressionMetadata(
@@ -630,15 +630,15 @@ def compress_conversation(
 ) -> CompressedContext:
     """
     Compress conversation using hierarchical map-reduce.
-    
+
     Args:
         exchanges: List of conversation exchanges
         target_ratio: Target compression ratio (0.80 = 80% reduction)
-    
+
     Returns:
         CompressedContext with preserved information
     """
-    
+
     # Step 1: MAP - Group exchanges by topic
     topics = group_by_topic(exchanges)
     # {
@@ -646,57 +646,57 @@ def compress_conversation(
     #   "cart_checkout": [Ex6, Ex7, Ex8, Ex9, Ex10],
     #   ...
     # }
-    
+
     # Step 2: REDUCE - Extract essentials per topic
     topic_summaries = []
     for topic_name, topic_exchanges in topics.items():
         summary = reduce_to_essentials(topic_exchanges)
         topic_summaries.append(summary)
-    
+
     # Step 3: MERGE - Combine summaries
     compressed = merge_summaries(topic_summaries)
-    
+
     # Step 4: VALIDATE - Check quality
     quality = validate_compression(exchanges, compressed)
     if quality.information_retention < 0.90:
         raise CompressionQualityError(
             f"Retention too low: {quality.information_retention}"
         )
-    
+
     return compressed
 
 
 def reduce_to_essentials(exchanges: list[Exchange]) -> TopicSummary:
     """Extract essential information from topic exchanges."""
-    
+
     essentials = {
         "requirements": [],
         "decisions": [],
         "open_questions": [],
         "clarity_score": 0.0
     }
-    
+
     for exchange in exchanges:
         # Extract structured data
         reqs = extract_requirements(exchange)
         essentials["requirements"].extend(reqs)
-        
+
         # Extract decisions
         decisions = extract_decisions(exchange)
         essentials["decisions"].extend(decisions)
-        
+
         # Extract open questions
         questions = extract_open_questions(exchange)
         essentials["open_questions"].extend(questions)
-    
+
     # Deduplicate and finalize
     essentials["requirements"] = deduplicate(essentials["requirements"])
     essentials["decisions"] = deduplicate(essentials["decisions"])
     essentials["open_questions"] = deduplicate(essentials["open_questions"])
-    
+
     # Calculate clarity
     essentials["clarity_score"] = calculate_clarity(essentials)
-    
+
     return TopicSummary(**essentials)
 
 
@@ -705,20 +705,20 @@ def validate_compression(
     compressed: CompressedContext
 ) -> CompressionQuality:
     """Validate that compression preserved critical information."""
-    
+
     # Check all requirements present
     original_reqs = extract_all_requirements(original)
     compressed_reqs = extract_all_requirements(compressed)
     req_retention = len(compressed_reqs) / len(original_reqs)
-    
+
     # Check all decisions present
     original_decisions = extract_all_decisions(original)
     compressed_decisions = extract_all_decisions(compressed)
     decision_retention = len(compressed_decisions) / len(original_decisions)
-    
+
     # Calculate overall retention
     retention = (req_retention + decision_retention) / 2
-    
+
     return CompressionQuality(
         information_retention=retention,
         requirements_preserved=req_retention >= 1.0,
@@ -905,4 +905,3 @@ Use clear markdown structure:
 - See `docs/roles/analyst/day_capabilities.md#day-8` for token management
 - See `docs/operational/context_limits.md` for budget configuration
 - See `docs/roles/analyst/examples/day_8_token_budgeting.md` for budget tracking
-

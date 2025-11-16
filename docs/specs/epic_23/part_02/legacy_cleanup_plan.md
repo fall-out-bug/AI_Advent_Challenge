@@ -1,10 +1,10 @@
 # Epic 24 · Legacy Code Cleanup Plan
 
-**Purpose:**  
+**Purpose:**
 Document the strategy and process for archiving or removing legacy code as part of Epic 24 refactoring.
 
-**Status:** Draft  
-**Owner:** Tech Lead  
+**Status:** Draft
+**Owner:** Tech Lead
 **Date:** 2025-11-17
 
 ---
@@ -103,8 +103,8 @@ Every archive directory must contain `ARCHIVE_REASON.md`:
 ```markdown
 # Archive Reason
 
-**Date:** YYYY-MM-DD  
-**Epic:** EP24  
+**Date:** YYYY-MM-DD
+**Epic:** EP24
 **Archive Reason:** [Brief description]
 
 **What Was Archived:**
@@ -206,4 +206,3 @@ Before archiving any code:
 - `docs/specs/epic_24/architect_decisions.md` — Legacy test archival policy
 - `docs/specs/epic_23/legacy_refactor_proposal.md` — Original legacy analysis
 - `docs/specs/epic_24/tech_lead_plan.md` — TL24-06 tasks
-

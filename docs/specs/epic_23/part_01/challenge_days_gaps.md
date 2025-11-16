@@ -162,5 +162,3 @@ Purpose:
     code can surface citations.
   - **Gap:** No specific RAG endpoint or flow where citations are *mandatory*
     and enforced by tests as part of the Day 22 closure.
-
-

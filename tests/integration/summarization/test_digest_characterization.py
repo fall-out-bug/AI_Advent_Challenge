@@ -359,7 +359,7 @@ async def test_digest_error_handling_characterization():
         # If it raises, should be a specific exception type (not generic)
         # Note: May raise OperationFailure if DB auth issues, which is acceptable
         from pymongo.errors import OperationFailure
-        
+
         assert isinstance(
             e, (ValueError, KeyError, AttributeError, OperationFailure)
         ), (
@@ -435,4 +435,3 @@ async def test_summarization_method_characterization(mongodb_database_async):
     # Cleanup
     await mongodb_database_async.channels.delete_many({"user_id": 500})
     await mongodb_database_async.posts.delete_many({"user_id": 500})
-

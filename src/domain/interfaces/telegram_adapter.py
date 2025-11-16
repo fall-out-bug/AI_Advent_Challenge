@@ -82,4 +82,3 @@ class TelegramAdapter(Protocol):
             ...     assert "channel" in post
         """
         ...
-

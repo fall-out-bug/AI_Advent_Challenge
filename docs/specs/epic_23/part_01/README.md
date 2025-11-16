@@ -1,7 +1,7 @@
 # Epic 23 · Documentation Index
 
-**Epic:** EP23 – Observability & Benchmark Enablement  
-**Status:** ✅ **COMPLETED**  
+**Epic:** EP23 – Observability & Benchmark Enablement
+**Status:** ✅ **COMPLETED**
 **Completion Date:** 2025-11-16
 
 ## Quick Navigation
@@ -90,4 +90,3 @@ All deliverables complete, all quality gates passed, all documentation comprehen
 ---
 
 _Maintained by cursor_dev_a_v1 · Last updated: 2025-11-16_
-

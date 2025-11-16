@@ -15,7 +15,7 @@ rollout_phases:
       latency_p95: < 2s
       transaction_success_rate: > 99%
     rollback_trigger: Any criteria violated
-    
+
   - name: "Canary 50%"
     replicas: 5/10
     duration: 2 hours
@@ -24,7 +24,7 @@ rollout_phases:
       latency_p95: < 2s
       transaction_success_rate: > 99.5%
     rollback_trigger: Any criteria violated
-    
+
   - name: "Full Production"
     replicas: 10/10
     duration: continuous
@@ -89,17 +89,17 @@ phases:
   - name: "Deploy Green"
     environment: production-green
     traffic: 0%
-    
+
   - name: "Smoke Tests"
     tests: Critical path validation
     duration: 30 minutes
-    
+
   - name: "Switch Traffic"
     from: production-blue
     to: production-green
     traffic: 100%
     duration: Instant switch
-    
+
   - name: "Monitor"
     duration: 1 hour
     rollback: Switch back to blue if issues

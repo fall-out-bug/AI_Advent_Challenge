@@ -44,4 +44,3 @@
 ## Sign-off
 - **Dev A**: _dev_a (2025-11-16)_
 - **Tech Lead**: _pending_
-

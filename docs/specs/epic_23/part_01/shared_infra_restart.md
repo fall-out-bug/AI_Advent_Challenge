@@ -35,4 +35,3 @@ python scripts/ci/cleanup_shared_infra.py
 - Wire the PromQL/Loki checks into GitHub Actions for automated evidence capture (shared_infra_bootstrap_status already exported).
 - Added `--check` flag to `bootstrap_shared_infra.py` for CI gating (TL-05 DoD).
 - Created integration tests in `tests/integration/shared_infra/test_bootstrap.py` to verify bootstrap/cleanup/restart flows.
-

@@ -71,4 +71,3 @@
 - Depends on Cluster A for stable Mongo fixtures (to avoid auth errors in integration tests).
 - Requires coordination with Challenge Day deliverables (Day 3 demo uses new CLI).
 - Ensure LLM adapters from Cluster D accept new service integration later (keep interfaces decoupled).
-

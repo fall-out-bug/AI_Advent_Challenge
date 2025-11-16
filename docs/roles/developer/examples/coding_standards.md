@@ -25,7 +25,7 @@ from dataclasses import dataclass
 @dataclass
 class Payment:
     """Payment entity following Clean Architecture.
-    
+
     Attributes:
         amount_cents: Amount in cents (no floats for money!)
         currency: ISO 4217 code (USD, EUR, GBP)
@@ -34,7 +34,7 @@ class Payment:
     amount_cents: int
     currency: str
     transaction_id: Optional[str] = None
-    
+
     def __post_init__(self) -> None:
         """Validate payment data."""
         if self.amount_cents <= 0:
@@ -67,13 +67,13 @@ repos:
     hooks:
       - id: black
         args: [--line-length=88]
-        
+
   - repo: https://github.com/PyCQA/flake8
     rev: 6.1.0
     hooks:
       - id: flake8
         args: [--max-line-length=88, --extend-ignore=E203]
-        
+
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.7.0
     hooks:

@@ -1,8 +1,8 @@
 # Epic 23 · Completion Summary
 
-**Epic:** EP23 – Observability & Benchmark Enablement  
-**Status:** ✅ **COMPLETED**  
-**Completion Date:** 2025-11-16  
+**Epic:** EP23 – Observability & Benchmark Enablement
+**Status:** ✅ **COMPLETED**
+**Completion Date:** 2025-11-16
 **Owner:** Dev A (cursor_dev_a_v1)
 
 ## Executive Summary
@@ -152,4 +152,3 @@ All 20 tasks from `acceptance_matrix.md` marked as ✅ Done:
 ---
 
 _Completed by cursor_dev_a_v1 · 2025-11-16_
-

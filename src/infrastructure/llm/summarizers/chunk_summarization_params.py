@@ -39,4 +39,3 @@ class ChunkSummarizationParams:
             raise ValueError("max_sentences must be at least 1")
         if self.language not in ("ru", "en"):
             raise ValueError(f"Unsupported language: {self.language}")
-

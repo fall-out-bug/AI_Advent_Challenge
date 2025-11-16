@@ -1,8 +1,8 @@
 # Cluster A · Completion Summary
 
-**Epic:** EP24 – Repository Hygiene & De-Legacy  
-**Cluster:** A – Mongo & Async Infrastructure  
-**Completion Date:** 2025-11-16  
+**Epic:** EP24 – Repository Hygiene & De-Legacy
+**Cluster:** A – Mongo & Async Infrastructure
+**Completion Date:** 2025-11-16
 **Status:** ✅ **COMPLETE**
 
 ## Executive Summary
@@ -132,13 +132,13 @@ Cluster A has been successfully completed. All infrastructure tasks (A.0-A.8) ar
 
 All DoD criteria for Cluster A are met:
 
-✅ **Shared infra baseline verified** — `make day-23-up` passes  
-✅ **No authentication errors** — All 19 tests pass without `OperationFailure: requires authentication`  
-✅ **No event loop errors** — All 19 tests pass without `RuntimeError: Event loop is closed`  
-✅ **Repository tests migrated** — All repository tests use shared fixtures  
-✅ **Integration tests migrated** — Workers and evaluation tests use shared fixtures  
-✅ **Full test suite passes** — No regressions in migrated test suites  
-✅ **Legacy fixtures removed** — Event-loop fixtures removed from 3 legacy files  
+✅ **Shared infra baseline verified** — `make day-23-up` passes
+✅ **No authentication errors** — All 19 tests pass without `OperationFailure: requires authentication`
+✅ **No event loop errors** — All 19 tests pass without `RuntimeError: Event loop is closed`
+✅ **Repository tests migrated** — All repository tests use shared fixtures
+✅ **Integration tests migrated** — Workers and evaluation tests use shared fixtures
+✅ **Full test suite passes** — No regressions in migrated test suites
+✅ **Legacy fixtures removed** — Event-loop fixtures removed from 3 legacy files
 
 **Note:** 7 tests skipped due to architectural dependency (not a blocker for Cluster A completion).
 
@@ -152,4 +152,3 @@ All DoD criteria for Cluster A are met:
 ---
 
 _Completion tracked by cursor_dev_a_v1 · 2025-11-16 · Last updated: 2025-11-16 23:15 UTC_
-

@@ -84,7 +84,7 @@ client = MongoClient(MONGODB_URI)
 
 # Prometheus metrics
 from prometheus_client import Counter, Histogram
-payment_transactions = Counter('payment_transactions_total', 
+payment_transactions = Counter('payment_transactions_total',
                                'Total payment transactions',
                                ['provider', 'status'])
 ```
@@ -126,23 +126,23 @@ repos:
 ```python
 def process_payment(amount_cents: int, currency: str, provider: str) -> TransactionResult:
     """Process payment transaction through specified provider.
-    
+
     Purpose:
         Validates payment parameters, selects provider adapter,
         executes transaction, and returns result with transaction ID.
-    
+
     Args:
         amount_cents: Payment amount in cents (must be > 0)
         currency: ISO 4217 currency code (USD, EUR, GBP)
         provider: Provider name ('stripe', 'paypal')
-    
+
     Returns:
         TransactionResult with transaction_id and status
-    
+
     Raises:
         ValueError: If amount <= 0 or currency invalid
         ProviderError: If provider unavailable
-    
+
     Example:
         >>> result = process_payment(10000, "USD", "stripe")
         >>> result.transaction_id

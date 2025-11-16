@@ -134,4 +134,3 @@ def test_agent_handles_multiturn_conversation() -> None:
         assert spec.title == "Final Spec"
 
     agent.close()
-

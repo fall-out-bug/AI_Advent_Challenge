@@ -31,4 +31,3 @@ class PrometheusBenchmarkSeedingMetrics(BenchmarkSeedingMetrics):
         """Record inserted review report count."""
 
         benchmark_review_records_total.labels(channel=channel).inc(inserted)
-

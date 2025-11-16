@@ -44,4 +44,3 @@ class BenchmarkRepository(Protocol):
         self, samples: Sequence[ReviewReportSample]
     ) -> None:
         """Insert review report samples into storage."""
-

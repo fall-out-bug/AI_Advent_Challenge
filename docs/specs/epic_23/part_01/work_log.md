@@ -32,17 +32,17 @@
 | 2025-11-16 18:00 | Challenge Days Gap Closure - Wave 3 | Updated `docs/challenge_days.md` for Days 19-22 with implementation details (embedding index, RAG comparison, RAG++, citations). Created `tests/integration/rag/test_citations_enforcement.py` (4 tests) to enforce citations in RAG prompts. All 41 tests passing (37 unit + 4 integration). | Wave 3 (Days 19-22) completed: Documentation updated, citations enforcement test added. **Artifacts:** `docs/challenge_days.md` (Days 19-22 updated), `tests/integration/rag/test_citations_enforcement.py`. All 22 Challenge Days now have implementation references in documentation. | Complete closure of Challenge Days gaps as per gap closure plan. |
 
 ## Decisions
-1. **Seeding Strategy:** Synthetic deterministic samples acceptable for unblock; real data backlog remains but no PO blocker (matches TL plan).  
-2. **Metrics Evidence:** `PrometheusBenchmarkSeedingMetrics` increments confirm ingestion counts (visible via `/metrics` once TL-04 wiring complete).  
-3. **Test Failures Handling:** Do not attempt to fix global async failures within TL-01 timebox; escalate to infra once `MONGODB_URL` consistently exported in CI.  
+1. **Seeding Strategy:** Synthetic deterministic samples acceptable for unblock; real data backlog remains but no PO blocker (matches TL plan).
+2. **Metrics Evidence:** `PrometheusBenchmarkSeedingMetrics` increments confirm ingestion counts (visible via `/metrics` once TL-04 wiring complete).
+3. **Test Failures Handling:** Do not attempt to fix global async failures within TL-01 timebox; escalate to infra once `MONGODB_URL` consistently exported in CI.
 4. **Exporter Tests:** Added `tests/integration/benchmark/test_exporters.py` to mirror TL plan and assert CLI output schema; runs require Mongo credentials.
 5. **Review Issues Resolution:** Both low-severity issues (ISSUE-EP23-001, ISSUE-EP23-002) resolved via documentation improvements rather than code refactoring, maintaining educational value of examples.
 6. **Epic Closure:** All deliverables complete, all quality gates passed. Epic ready for closure pending Tech Lead final sign-off.
 
 ## Next Steps
-- Analyst to co-sign RU spot-check and update `acceptance_matrix.md` row `Task 1 – Seed digest samples`. ✅ (done 2025-11-15)  
-- Kick off TL-02 exporter verification once evidence links merged. ✅ (done 2025-11-15)  
-- Integrate `verify_benchmark_counts.py` into CI to guard dataset completeness. ✅ (integrated in CI workflow)  
+- Analyst to co-sign RU spot-check and update `acceptance_matrix.md` row `Task 1 – Seed digest samples`. ✅ (done 2025-11-15)
+- Kick off TL-02 exporter verification once evidence links merged. ✅ (done 2025-11-15)
+- Integrate `verify_benchmark_counts.py` into CI to guard dataset completeness. ✅ (integrated in CI workflow)
 - For CI stability, coordinate with TL-05 owner to source `MONGODB_URL` + bootstrap script inside GitHub Actions. ✅ (done via `make day-23-up/down` and `--check` flag)
 
 ## Epic Closure
@@ -92,4 +92,3 @@ Progress and decisions for clusters A–E (from `legacy_refactor_proposal.md`).
 | C | Butler orchestrator & MCP agent | `mini_epics/legacy_cluster_c_plan.md` | `mini_epics/legacy_cluster_c_acceptance_matrix.md` | Pending TL-00 | Need API inventory |
 | D | LLM clients & map-reduce summarizer | `mini_epics/legacy_cluster_d_plan.md` | `mini_epics/legacy_cluster_d_acceptance_matrix.md` | Pending TL-00 | Align with SummarizerService |
 | E | Telegram helpers & workers | `mini_epics/legacy_cluster_e_plan.md` | `mini_epics/legacy_cluster_e_acceptance_matrix.md` | Pending TL-00 | Lowercase policy to confirm |
-

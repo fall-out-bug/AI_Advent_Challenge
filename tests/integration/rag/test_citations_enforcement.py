@@ -97,4 +97,3 @@ def test_citation_format_in_prompt() -> None:
     # Verify source_path is included in prompt for each chunk
     for chunk in chunks:
         assert chunk.source_path in prompt, f"source_path {chunk.source_path} not found in prompt"
-

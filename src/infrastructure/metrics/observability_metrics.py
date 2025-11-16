@@ -72,4 +72,3 @@ __all__ = [
     "rag_variance_ratio",
     "rag_fallback_reason_total",
 ]
-

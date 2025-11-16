@@ -68,4 +68,3 @@ class TelegramAdapterImpl(TelegramAdapter):
             user_id=user_id,
             save_to_db=save_to_db,
         )
-

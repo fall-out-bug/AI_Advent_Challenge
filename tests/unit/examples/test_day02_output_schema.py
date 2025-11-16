@@ -68,4 +68,3 @@ def test_weather_response_dataclass() -> None:
     assert response.temperature == 20.0
     assert response.condition == "Cloudy"
     assert response.humidity == 60
-

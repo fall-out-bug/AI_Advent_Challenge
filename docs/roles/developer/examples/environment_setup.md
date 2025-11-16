@@ -13,17 +13,17 @@ services:
       MONGO_INITDB_DATABASE: payments_dev
     volumes:
       - mongo_data:/data/db
-      
+
   redis:
     image: redis:7.2-alpine
     ports: ["6379:6379"]
-    
+
   prometheus:
     image: prom/prometheus:v2.47.0
     ports: ["9090:9090"]
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      
+
   app:
     build: .
     ports: ["8000:8000"]

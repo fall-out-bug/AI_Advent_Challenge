@@ -1,7 +1,7 @@
 # Epic 24 · Cluster Dependency Matrix
 
-**Epic:** EP24 – Repository Hygiene & De-Legacy  
-**Date:** 2025-11-16  
+**Epic:** EP24 – Repository Hygiene & De-Legacy
+**Date:** 2025-11-16
 **Purpose:** Explicitly track dependencies between clusters to guide sequencing and parallelisation
 
 ## Dependency Graph
@@ -143,7 +143,6 @@ TL24-06 (Documentation & Archive)
 
 ---
 
-**Dependency matrix maintained by:** cursor_dev_a_v1  
-**Reviewed by:** cursor_reviewer_v1  
+**Dependency matrix maintained by:** cursor_dev_a_v1
+**Reviewed by:** cursor_reviewer_v1
 **Date:** 2025-11-16
-

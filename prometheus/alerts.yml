@@ -237,8 +237,8 @@ groups:
       # Loki log aggregation alerts (via Prometheus)
       - alert: LokiHighErrorRate
         expr: |
-          rate(loki_request_duration_seconds_count{status=~"5.."}[5m]) 
-          / 
+          rate(loki_request_duration_seconds_count{status=~"5.."}[5m])
+          /
           rate(loki_request_duration_seconds_count[5m]) > 0.05
         for: 5m
         labels:

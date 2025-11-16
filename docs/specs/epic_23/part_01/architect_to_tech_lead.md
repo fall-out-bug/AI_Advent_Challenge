@@ -85,4 +85,3 @@ Tech Lead should expect at least these four MADRs finalized before implementatio
 3. Provide feedback if additional instrumentation is required for CLI/backoffice beyond Day 23 baseline.
 
 Once these points are settled, Tech Lead can break work into implementation stages per handoff contract.
-

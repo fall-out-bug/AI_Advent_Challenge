@@ -76,7 +76,7 @@ db.code_artifacts.aggregate([
   }
 ]
 ```
-**Token Cost:** ~600 tokens (5 results with metadata)  
+**Token Cost:** ~600 tokens (5 results with metadata)
 **Use Case:** Find proven implementation patterns before writing new code
 
 ---
@@ -107,7 +107,7 @@ db.code_artifacts.find({
   }
 ]
 ```
-**Token Cost:** ~400 tokens (10 results)  
+**Token Cost:** ~400 tokens (10 results)
 **Use Case:** Identify high-quality code to reuse
 
 ---
@@ -161,7 +161,7 @@ db.tests.aggregate([
   }
 ]
 ```
-**Token Cost:** ~300 tokens  
+**Token Cost:** ~300 tokens
 **Use Case:** Daily test health check
 
 ---
@@ -187,7 +187,7 @@ db.code_artifacts.find({
   }
 ]
 ```
-**Token Cost:** ~200 tokens  
+**Token Cost:** ~200 tokens
 **Action:** Write tests before deploying
 
 ---
@@ -215,7 +215,7 @@ db.tests.find({
   }
 ]
 ```
-**Token Cost:** ~250 tokens per failure  
+**Token Cost:** ~250 tokens per failure
 **Action:** Fix immediately
 
 ---
@@ -256,7 +256,7 @@ db.tasks.find({
   }
 ]
 ```
-**Token Cost:** ~400 tokens (5 tasks)  
+**Token Cost:** ~400 tokens (5 tasks)
 **Use Case:** Morning standup, task planning
 
 ---
@@ -278,7 +278,7 @@ db.tasks.aggregate([
 ]);
 ```
 
-**Token Cost:** ~300 tokens  
+**Token Cost:** ~300 tokens
 **Use Case:** Track stage progress
 
 ---
@@ -309,7 +309,7 @@ db.reviews.find({
   }
 ]
 ```
-**Token Cost:** ~300 tokens (5 comments)  
+**Token Cost:** ~300 tokens (5 comments)
 **Action:** Address before merging
 
 ---
@@ -343,7 +343,7 @@ db.reviews.aggregate([
   { "_id": "wont_fix", "count": 1, "avg_resolution_hours": 0.5 }
 ]
 ```
-**Token Cost:** ~200 tokens  
+**Token Cost:** ~200 tokens
 **Use Case:** Review health metrics
 
 ---
@@ -373,7 +373,7 @@ db.code_artifacts.find({
   }
 ]
 ```
-**Token Cost:** ~350 tokens  
+**Token Cost:** ~350 tokens
 **Use Case:** Find proven design patterns
 
 ---
@@ -401,7 +401,7 @@ db.code_artifacts.findOne({
   "citation": "Adapted from EP19 Stripe integration (0 bugs in 24 deployments)"
 }
 ```
-**Token Cost:** ~500 tokens (includes source code)  
+**Token Cost:** ~500 tokens (includes source code)
 **Use Case:** Cite when adapting code
 
 ---
@@ -431,11 +431,11 @@ from datetime import datetime
 
 class RAGQueryMonitor:
     """Monitor RAG query performance."""
-    
+
     def __init__(self, mongo_uri: str):
         self.client = MongoClient(mongo_uri)
         self.db = self.client.developer_rag
-        
+
     def log_query(self, query_type: str, tokens: int, duration_ms: int):
         """Log query execution metrics."""
         self.db.query_logs.insert_one({

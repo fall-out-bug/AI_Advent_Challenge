@@ -18,5 +18,3 @@ def test_basic_agent_formats_reply() -> None:
     reply = agent.handle("hello")
     assert reply.startswith("Agent reply -> ")
     assert "hello" in reply
-
-

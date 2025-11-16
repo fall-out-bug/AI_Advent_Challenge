@@ -12,4 +12,3 @@
 | Update worker/unit/integration tests | TL-03 | Pytest log, coverage | QA | Pending |
 | Update docs + Challenge Day references | TL-04 | Doc diffs (Days 11/17, new guide) | Tech Lead | Pending |
 | Update work_log + gap table | TL-04 | Entries updated | Tech Lead | Pending |
-

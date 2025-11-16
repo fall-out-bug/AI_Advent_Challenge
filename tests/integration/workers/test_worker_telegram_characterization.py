@@ -209,4 +209,3 @@ class TestTelegramUtilsCharacterization:
         # Note: Actual format expectations will be verified in integration tests
         # This test documents the expected behavior
         assert callable(fetch_channel_posts)
-

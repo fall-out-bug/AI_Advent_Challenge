@@ -62,4 +62,3 @@
 ## 7. Risks
 - Ensure adapter doesn’t leak infrastructure details into domain.
 - Keep orchestrator state machine documented to avoid regressions; consider sequence diagram for review.
-

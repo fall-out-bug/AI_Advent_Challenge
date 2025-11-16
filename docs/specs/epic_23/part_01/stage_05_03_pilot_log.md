@@ -34,14 +34,13 @@ python scripts/quality/benchmark/run_benchmark.py \
 Live run logged two transient `503 Service Unavailable` responses from the local LLM API; ResilientClient retried successfully, so the run completed with usable metrics.
 
 ## 4. Observations & Follow-ups
-1. **Informativeness regression:** Live evaluation dipped to 0.85 (WARN). Needs further sampling or fine-tuning (Stage 05_03 target was ≥0.88).  
-2. **LLM infrastructure:** Local LLM endpoint occasionally returns 503; monitor shared stack before promoting to CI.  
+1. **Informativeness regression:** Live evaluation dipped to 0.85 (WARN). Needs further sampling or fine-tuning (Stage 05_03 target was ≥0.88).
+2. **LLM infrastructure:** Local LLM endpoint occasionally returns 503; monitor shared stack before promoting to CI.
 3. **Stage 05_03 scope:** Fine-tuning itself is still deferred until Epic 23 dataset expansion completes; this pilot only validates benchmark pipeline + governance logging.
 
 ## 5. Approvals
-- **Tech Lead:** cursor_tech_lead_v1 — _ACK (benchmark pipeline verified, no model promotion)_  
-- **Analyst:** cursor_analyst_v1 — _ACK (metrics recorded; requires improved informativeness before go-live)_  
+- **Tech Lead:** cursor_tech_lead_v1 — _ACK (benchmark pipeline verified, no model promotion)_
+- **Analyst:** cursor_analyst_v1 — _ACK (metrics recorded; requires improved informativeness before go-live)_
 - **Architect:** cursor_architect_v1 — _ACK (pipeline ready; FT postponed pending dataset review)_
 
 > NOTE: Since fine-tuning was not executed in this iteration, overall Stage 05_03 remains in monitoring state. This log satisfies TL-03 DoD for EP23 by documenting the benchmark evidence and governance feedback.
-

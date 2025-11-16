@@ -39,4 +39,3 @@ Analyst can update requirement packs without ambiguity.
    reflects the new scope.
 
 _Generated 2025-11-15 based on stakeholder sync._
-

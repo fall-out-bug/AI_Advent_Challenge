@@ -368,4 +368,3 @@ class SeedBenchmarkDataUseCase:
         path = snapshot_dir / "channel_counts.json"
         path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
         return path
-

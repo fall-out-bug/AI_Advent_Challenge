@@ -1,6 +1,6 @@
 # Epic 24 · Acceptance Matrix
-Version: v1.5  
-Owners: Tech Lead (primary), Analyst (co-signer)  
+Version: v1.5
+Owners: Tech Lead (primary), Analyst (co-signer)
 Update Policy: Increment version per backlog change impacting stages; capture change log at bottom; Tech Lead submits PR, Analyst reviews and re-signs.
 
 **Status:** ✅ **CLUSTER A, B & C.0-C.2 COMPLETE** — TL24-01 Cluster A complete (A.0-A.8 done), TL24-02 Cluster B complete (B.0-B.5 done, 20 tests passing), TL24-03 Cluster C.0-C.2 complete (C.0-C.2 done, 22 tests passing: 9 characterization + 13 refactored integration)
@@ -72,4 +72,3 @@ Update Policy: Increment version per backlog change impacting stages; capture ch
 | v1.2 | 2025-11-16 | cursor_dev_a_v1 | Analyst clarifications received and documented: fixture usage prioritized (`mongodb_database` default), async business contract (`async def execute(...) -> DigestResult`), channel normalization canonical form (lowercase without @ in domain, @ allowed on edges), public API method signatures detailed (`handle_message`, `handle_tool_result`, `handle_update`), critical E2E breakdown expanded (Telegram flow, CLI commands, shared infra, MCP guardrails). Updated `architect_decisions.md` and acceptance matrix. |
 | v1.3 | 2025-11-16 | cursor_dev_a_v1 | Reviewer recommendations addressed: created `test_baseline.md` (baseline metrics ~881 tests), added characterization test requirements to all cluster DoD, defined migration order (repositories → workers → channels → evaluation), added risk R24-9 (test regression), added legacy test archival policy, created `dependency_matrix.md`, added shared infra baseline check to TL24-01. Updated `tech_lead_plan.md`, `risk_register.md`, `architect_decisions.md`, and acceptance matrix. |
 | v1.4 | 2025-11-16 | cursor_dev_a_v1 | Cluster A (TL24-01) complete: All tasks A.0-A.8 done. Shared infra baseline verified, MongoClient inventory complete, Settings + Factory implemented, CLI modules migrated, shared fixtures created, repository tests migrated (13 passing), integration tests migrated (19 passing, 7 skipped - architectural dependency), legacy event-loop fixtures removed, no auth/loop errors (3× consecutive runs verified), full test suite validation passed (no regressions). Created `cluster_a_completion_summary.md`. Status: ✅ CLUSTER A COMPLETE. |
-

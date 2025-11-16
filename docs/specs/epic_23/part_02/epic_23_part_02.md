@@ -183,16 +183,16 @@ See `docs/specs/epic_24/backlog.md` for detailed tasks. High-level workstreams:
   - `docs/specs/epic_23/challenge_days_gap_closure_plan.md`
 
 ## Risks & Mitigations
-- **Risk:** Refactors introduce regressions in production flows.  
+- **Risk:** Refactors introduce regressions in production flows.
   **Mitigation:** Characterisation tests before refactor, small-scoped PRs per cluster, strict TDD and CI gates.
 
-- **Risk:** Timebox overrun for clusters A–E.  
+- **Risk:** Timebox overrun for clusters A–E.
   **Mitigation:** Prioritise clusters impacting most tests (A, B, C first), explicitly track any deferred sub-tasks into follow-up backlog items.
 
-- **Risk:** Documentation drift during refactor.  
+- **Risk:** Documentation drift during refactor.
   **Mitigation:** Require doc updates as part of DoD for each cluster; enforce link checks and doc linting.
 
-- **Risk:** Clean Architecture boundaries accidentally violated.  
+- **Risk:** Clean Architecture boundaries accidentally violated.
   **Mitigation:** Architecture review for refactor PRs; add simple static checks or grep-based CI guardrails for forbidden imports.
 
 ## Deliverables
@@ -200,5 +200,3 @@ See `docs/specs/epic_24/backlog.md` for detailed tasks. High-level workstreams:
 - `docs/specs/epic_24/backlog.md` with detailed tasks per cluster and docs cleanup.
 - Cluster-specific mini-epic plans and acceptance matrices (if created) under `docs/specs/epic_24/mini_epics/`.
 - Updated tests, fixtures, and infrastructure scripts ensuring a clean, stable repo for future epics.
-
-

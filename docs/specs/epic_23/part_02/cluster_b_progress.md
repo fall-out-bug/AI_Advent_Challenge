@@ -1,8 +1,8 @@
 # Cluster B · Progress Summary
 
-**Epic:** EP24 – Repository Hygiene & De-Legacy  
-**Cluster:** B – Summarization & Digest Use Cases  
-**Date:** 2025-11-17  
+**Epic:** EP24 – Repository Hygiene & De-Legacy
+**Cluster:** B – Summarization & Digest Use Cases
+**Date:** 2025-11-17
 **Status:** ✅ **COMPLETE** (All 6 tasks completed: B.0, B.1, B.2, B.3, B.4, B.5)
 
 ## Tasks Status
@@ -97,9 +97,9 @@
 
 ## Progress Metrics
 
-**Tasks Completed:** 6 / 6 (100%)  
-**Tasks In Progress:** 0  
-**Tasks Pending:** 0  
+**Tasks Completed:** 6 / 6 (100%)
+**Tasks In Progress:** 0
+**Tasks Pending:** 0
 **Tasks Blocked:** 0
 
 ## Next Steps

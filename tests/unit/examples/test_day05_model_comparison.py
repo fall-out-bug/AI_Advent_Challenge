@@ -178,4 +178,3 @@ def test_quality_score_calculation() -> None:
         assert result.quality_score == 1.0
 
     agent.close()
-

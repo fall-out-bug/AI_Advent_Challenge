@@ -111,4 +111,3 @@ def test_creativity_score_calculation() -> None:
         assert result.creativity_score == 1.0
 
     agent.close()
-

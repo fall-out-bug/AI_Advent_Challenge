@@ -306,4 +306,3 @@ class BenchmarkSeedingResult(BaseModel):
 
     snapshot_path: str
     generated_channels: dict[str, ChannelSnapshot]
-

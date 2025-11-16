@@ -135,5 +135,3 @@
   },
   "summary": "Epic 24 successfully delivers repository hygiene and de-legacy work across clusters A–E. Mongo/async infrastructure is unified, summarization/digest flows use a stable SummarizerService abstraction, Butler/MCP orchestration relies on clear public APIs, LLM clients and map-reduce summarizer share a canonical adapter interface, and Telegram/worker code uses DI-driven adapters with domain-focused tests. Summarization integration tests that rely on real Mongo/data still show 5 failures in a bare local run, but these are documented as known limitations tied to DB/data seeding and do not block EP24 code-level acceptance. Documentation and archive hygiene tasks remain to be finalized in TL24-06. Overall, EP24 is approved with comments, and the repository is in a significantly cleaner, more maintainable state for future epics."
 }
-
-

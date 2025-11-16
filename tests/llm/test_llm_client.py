@@ -36,7 +36,7 @@ class _FakeAsyncClient:
         self.last_url = url
         self.last_json = json
         self.call_count += 1
-        
+
         # If /chat endpoint is called and chat_404 is True, return 404
         if self.chat_404 and "/chat" in url and "/v1/chat/completions" not in url:
             request = httpx.Request("POST", url)
@@ -45,7 +45,7 @@ class _FakeAsyncClient:
                 request=request,
                 response=httpx.Response(404, request=request),
             )
-        
+
         # Verify URL matches expected (config-driven check)
         assert url == self.expected_url or url.endswith(self.expected_url.split("/")[-1])
         return _FakeResponse(self.payload, self.status_code)

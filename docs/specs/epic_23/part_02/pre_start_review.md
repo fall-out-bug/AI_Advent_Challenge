@@ -1,7 +1,7 @@
 # Epic 24 · Pre-Start Review Report
 
-**Reviewer:** cursor_reviewer_v1  
-**Date:** 2025-11-16  
+**Reviewer:** cursor_reviewer_v1
+**Date:** 2025-11-16
 **Status:** ✅ **APPROVED WITH RECOMMENDATIONS**
 
 ## Executive Summary
@@ -25,23 +25,23 @@ Epic 24 plan is **well-structured and ready for execution** with minor recommend
 ### 🟡 High Priority (Address Early)
 
 #### 1. **Test Coverage Baseline Missing**
-**Issue:** No baseline test count/metrics documented before refactoring starts.  
-**Impact:** Difficult to measure progress and ensure no test loss during refactors.  
+**Issue:** No baseline test count/metrics documented before refactoring starts.
+**Impact:** Difficult to measure progress and ensure no test loss during refactors.
 **Recommendation:**
 - Document current test counts per cluster (A–E) in `work_log.md` before TL24-01 starts
 - Track test count changes per cluster to ensure no silent test removal
 - Example: "Cluster A: 45 tests before, 48 tests after (3 new fixtures tests added)"
 
 #### 2. **Characterization Tests Not Explicitly Required**
-**Issue:** Plan mentions "characterisation tests" in risk mitigation but doesn't require them as DoD.  
-**Impact:** Risk R24-1 (refactors break production flows) may not be fully mitigated.  
+**Issue:** Plan mentions "characterisation tests" in risk mitigation but doesn't require them as DoD.
+**Impact:** Risk R24-1 (refactors break production flows) may not be fully mitigated.
 **Recommendation:**
 - Add explicit DoD item for each cluster: "Characterisation tests capture current behaviour before refactor"
 - Example for Cluster B: "Capture current digest output format/behaviour in test before refactoring SummarizerService"
 
 #### 3. **Shared Fixture Migration Strategy Unclear**
-**Issue:** TL24-01 migrates tests to shared fixtures, but migration order/strategy not specified.  
-**Impact:** Potential conflicts if multiple developers work on different test suites simultaneously.  
+**Issue:** TL24-01 migrates tests to shared fixtures, but migration order/strategy not specified.
+**Impact:** Potential conflicts if multiple developers work on different test suites simultaneously.
 **Recommendation:**
 - Define migration order: repositories → workers → channels → evaluation
 - Add DoD item: "All tests in migration order use shared fixture, verified via grep"
@@ -49,22 +49,22 @@ Epic 24 plan is **well-structured and ready for execution** with minor recommend
 ### 🟢 Medium Priority (Nice to Have)
 
 #### 4. **Legacy Test Archive Policy Unclear**
-**Issue:** Plan mentions archiving legacy tests but doesn't specify what gets archived vs. rewritten.  
-**Impact:** Inconsistent decisions across clusters.  
+**Issue:** Plan mentions archiving legacy tests but doesn't specify what gets archived vs. rewritten.
+**Impact:** Inconsistent decisions across clusters.
 **Recommendation:**
 - Add explicit policy: "Tests referencing removed/renamed modules → archive. Tests with wrong contracts → rewrite. Tests with infra issues → fix."
 - Document in `architect_decisions.md` or `tl24_00_scope_confirmation.md`
 
 #### 5. **Cross-Cluster Dependencies Not Explicitly Tracked**
-**Issue:** Some clusters may share modules (e.g., both B and D touch summarization).  
-**Impact:** Potential merge conflicts or duplicate work.  
+**Issue:** Some clusters may share modules (e.g., both B and D touch summarization).
+**Impact:** Potential merge conflicts or duplicate work.
 **Recommendation:**
 - Add dependency matrix in TL24-00: "Cluster B depends on Cluster D for LLM client interface"
 - Or explicitly state: "Clusters B and D can run in parallel if LLMClientProtocol is defined first (TL24-04.1)"
 
 #### 6. **CI Bootstrap Check Timing**
-**Issue:** `bootstrap_shared_infra.py --check` is required for TL24-01 and TL24-05, but timing not specified.  
-**Impact:** Tests may fail if infra not ready.  
+**Issue:** `bootstrap_shared_infra.py --check` is required for TL24-01 and TL24-05, but timing not specified.
+**Impact:** Tests may fail if infra not ready.
 **Recommendation:**
 - Add explicit step in TL24-01: "Verify `make day-23-up` and `bootstrap_shared_infra.py --check` pass before starting"
 - Document in DoD: "Shared infra smoke test passes before repository fixture migration"
@@ -72,15 +72,15 @@ Epic 24 plan is **well-structured and ready for execution** with minor recommend
 ### 🔵 Low Priority (Optional Improvements)
 
 #### 7. **Documentation Update Scope Could Be More Specific**
-**Issue:** TL24-06 mentions updating docs but doesn't list specific files/sections.  
-**Impact:** Risk of missing doc updates.  
+**Issue:** TL24-06 mentions updating docs but doesn't list specific files/sections.
+**Impact:** Risk of missing doc updates.
 **Recommendation:**
 - Add checklist: "Update `docs/challenge_days.md` sections: Day 1 (Telegram), Day 11 (workers), Day 17 (ETL)"
 - Reference specific sections that will change per cluster
 
 #### 8. **Progress Tracker Update Timing**
-**Issue:** `progress.md` update is in TL24-06, but intermediate status updates might be useful.  
-**Impact:** Less visibility during execution.  
+**Issue:** `progress.md` update is in TL24-06, but intermediate status updates might be useful.
+**Impact:** Less visibility during execution.
 **Recommendation:**
 - Consider updating `progress.md` after each cluster completion (not just at TL24-06)
 - Or document: "Progress tracker updated incrementally in work_log.md, final update in TL24-06"
@@ -114,7 +114,7 @@ All identified risks are reasonable and have mitigations:
 - **Description:** Migrating tests to shared fixtures may introduce subtle bugs (fixture scope, cleanup order)
 - **Impact:** Medium
 - **Likelihood:** Medium
-- **Mitigation:** 
+- **Mitigation:**
   - Run full test suite after each fixture migration batch
   - Add smoke test that verifies fixture cleanup (no DB leakage between tests)
   - Document in DoD: "Full test suite passes 3× consecutively after fixture migration"
@@ -181,9 +181,8 @@ The plan is **production-ready** with the following action items:
 
 ---
 
-**Overall Quality Score:** 0.88/1.0  
-**Risk Level:** Low-Medium (mitigated)  
+**Overall Quality Score:** 0.88/1.0
+**Risk Level:** Low-Medium (mitigated)
 **Confidence in Success:** High
 
 The plan demonstrates strong understanding of legacy technical debt and provides a clear, executable roadmap. Minor recommendations above will further reduce execution risk.
-

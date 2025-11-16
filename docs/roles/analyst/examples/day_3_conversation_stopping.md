@@ -8,9 +8,9 @@ Demonstrate how the Analyst agent recognizes when sufficient clarity is achieved
 
 ## Scenario
 
-**Epic:** EP23 - Payment Processing System  
-**Stakeholder:** Product Owner  
-**Analyst Goal:** Gather payment method requirements  
+**Epic:** EP23 - Payment Processing System
+**Stakeholder:** Product Owner
+**Analyst Goal:** Gather payment method requirements
 **Stopping Condition:** `clarity_score >= 0.80` OR `max_exchanges = 15`
 
 ---
@@ -21,7 +21,7 @@ Demonstrate how the Analyst agent recognizes when sufficient clarity is achieved
 
 **Analyst:**
 > "I'm gathering requirements for the payment processing system (EP23). Let's start with the basics:
-> 
+>
 > **Q1:** What payment methods must the system support?"
 
 **Stakeholder (Product Owner):**
@@ -51,9 +51,9 @@ Demonstrate how the Analyst agent recognizes when sufficient clarity is achieved
 
 **Analyst:**
 > "Thank you. Let me clarify:
-> 
-> **Q2:** Which credit card brands specifically? (Visa, Mastercard, American Express, Discover, etc.)  
-> **Q3:** Should we support international credit cards?  
+>
+> **Q2:** Which credit card brands specifically? (Visa, Mastercard, American Express, Discover, etc.)
+> **Q3:** Should we support international credit cards?
 > **Q4:** Is PayPal required for MVP or a future enhancement?"
 
 **Stakeholder:**
@@ -87,9 +87,9 @@ Demonstrate how the Analyst agent recognizes when sufficient clarity is achieved
 
 **Analyst:**
 > "Great, that's much clearer. A few more questions:
-> 
-> **Q5:** What about debit cards separate from credit cards?  
-> **Q6:** Should we support digital wallets (Apple Pay, Google Pay)?  
+>
+> **Q5:** What about debit cards separate from credit cards?
+> **Q6:** Should we support digital wallets (Apple Pay, Google Pay)?
 > **Q7:** Which currencies need to be supported?"
 
 **Stakeholder:**
@@ -125,15 +125,15 @@ Demonstrate how the Analyst agent recognizes when sufficient clarity is achieved
 
 **Analyst:**
 > "Perfect! I have sufficient clarity on payment methods (clarity score: 0.88).
-> 
+>
 > **Summary:**
 > - ✅ REQ-001: Credit/debit cards (Visa, MC, AmEx) + PayPal
 > - ✅ International support
 > - ✅ Currencies: USD, EUR, GBP
 > - ❌ Apple Pay, Google Pay (Phase 2, out of MVP scope)
-> 
+>
 > **Next topic:** Let's discuss transaction security and compliance requirements.
-> 
+>
 > **Q8:** What security standards must we comply with? (e.g., PCI DSS?)"
 
 **Stakeholder:**
@@ -173,7 +173,7 @@ Demonstrate how the Analyst agent recognizes when sufficient clarity is achieved
 ```python
 def calculate_clarity_score(requirement: dict) -> float:
     """Calculate clarity score based on requirement completeness."""
-    
+
     factors = {
         "specificity": 0.0,      # 0.0 = vague, 1.0 = specific
         "measurability": 0.0,    # Can we test it?
@@ -181,7 +181,7 @@ def calculate_clarity_score(requirement: dict) -> float:
         "consistency": 0.0,      # No contradictions?
         "acceptance_ready": 0.0  # Can we write AC?
     }
-    
+
     # Exchange 1: "credit cards and maybe PayPal"
     # specificity: 0.3 (vague)
     # measurability: 0.6 (testable but incomplete)
@@ -189,7 +189,7 @@ def calculate_clarity_score(requirement: dict) -> float:
     # consistency: 1.0 (no contradictions yet)
     # acceptance_ready: 0.2 (can't write clear AC)
     # → Average: 0.45
-    
+
     # Exchange 2: "Visa, MC, AmEx, international, PayPal required"
     # specificity: 0.8 (specific brands)
     # measurability: 0.8 (testable)
@@ -197,7 +197,7 @@ def calculate_clarity_score(requirement: dict) -> float:
     # consistency: 1.0 (no contradictions)
     # acceptance_ready: 0.6 (getting closer)
     # → Average: 0.75
-    
+
     # Exchange 3: "Visa/MC/AmEx credit+debit, PayPal, USD/EUR/GBP"
     # specificity: 1.0 (crystal clear)
     # measurability: 1.0 (fully testable)
@@ -205,7 +205,7 @@ def calculate_clarity_score(requirement: dict) -> float:
     # consistency: 1.0 (no contradictions)
     # acceptance_ready: 0.9 (can write comprehensive AC)
     # → Average: 0.88 ✅ STOP
-    
+
     return sum(factors.values()) / len(factors)
 ```
 
@@ -350,4 +350,3 @@ Comparison to Non-Stopping Sessions:
 - See `docs/roles/analyst/day_capabilities.md#day-3` for technique details
 - See `docs/operational/context_limits.md` for token budgets
 - See `docs/operational/handoff_contracts.md` for output format
-

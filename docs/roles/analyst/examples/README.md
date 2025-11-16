@@ -142,7 +142,7 @@ db.requirements.find({
 }).limit(5)
 ```
 
-**Related:** 
+**Related:**
 - See [`../day_capabilities.md#day-22`](../day_capabilities.md#day-22) for RAG technique
 - See [`../rag_queries.md`](../rag_queries.md) for query patterns with examples
 
@@ -190,7 +190,7 @@ Handoff Quality:
 }
 ```
 
-**Related:** 
+**Related:**
 - See [`../day_capabilities.md#day-23`](../day_capabilities.md#day-23) for observability capability
 - See [`../../operational/observability_labels.md`](../../operational/observability_labels.md) for metric taxonomy
 

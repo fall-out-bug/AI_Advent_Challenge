@@ -18,7 +18,7 @@ def test_payment_currency_must_be_valid():
     with pytest.raises(ValueError, match="Invalid currency"):
         Payment(amount_cents=1000, currency="XXX")
 ```
-**Run:** `pytest tests/unit/domain/test_payment.py`  
+**Run:** `pytest tests/unit/domain/test_payment.py`
 **Result:** ❌ FAIL (Payment class doesn't exist yet)
 
 ### Step 2: GREEN (Minimal Implementation)
@@ -32,14 +32,14 @@ class Payment:
     amount_cents: int
     currency: str
     transaction_id: Optional[str] = None
-    
+
     def __post_init__(self) -> None:
         if self.amount_cents <= 0:
             raise ValueError("Amount must be positive")
         if self.currency not in ["USD", "EUR", "GBP"]:
             raise ValueError(f"Invalid currency: {self.currency}")
 ```
-**Run:** `pytest tests/unit/domain/test_payment.py`  
+**Run:** `pytest tests/unit/domain/test_payment.py`
 **Result:** ✅ PASS (tests pass, implementation works)
 
 ### Step 3: REFACTOR (Improve Design)
@@ -56,10 +56,10 @@ class Payment:
     amount_cents: int
     currency: str
     transaction_id: Optional[str] = None
-    
+
     def __post_init__(self) -> None:
         self._validate()
-    
+
     def _validate(self) -> None:
         """Validate payment attributes."""
         if self.amount_cents <= 0:
@@ -67,7 +67,7 @@ class Payment:
         if self.currency not in SUPPORTED_CURRENCIES:
             raise ValueError(f"Invalid currency: {self.currency}")
 ```
-**Run:** `pytest tests/unit/domain/test_payment.py`  
+**Run:** `pytest tests/unit/domain/test_payment.py`
 **Result:** ✅ PASS (cleaner code, tests still pass)
 
 ## TDD Benefits
@@ -76,5 +76,5 @@ class Payment:
 - ✅ Fast feedback (catch bugs immediately)
 - ✅ Living documentation (tests show usage)
 
-**Coverage:** `pytest --cov=src/domain tests/unit/domain/`  
+**Coverage:** `pytest --cov=src/domain tests/unit/domain/`
 **Expected:** 100% domain layer coverage

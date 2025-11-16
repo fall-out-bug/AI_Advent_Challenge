@@ -102,7 +102,7 @@ After loading, summarize:
 ```
 
 **Замени [ROLE] на:**
-- `analyst` 
+- `analyst`
 - `architect`
 - `tech_lead`
 - `developer`
@@ -472,7 +472,7 @@ Output format:
    docs/epics/ep_23/requirements.json
    docs/epics/ep_23/architecture.json
    docs/epics/ep_23/plan.json
-   
+
    # Агент загружает: "Load requirements from docs/epics/ep_23/requirements.json"
    ```
 

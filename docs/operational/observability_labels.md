@@ -27,23 +27,21 @@ This document tracks Prometheus metrics introduced for Day 23 observability task
 
 ## Label Usage Guidance
 
-1. **`exporter`** – differentiate between digest and reviewer pipelines; add more values if new exporters appear (e.g., `audit_log`).  
-2. **`step`** – reserved for infrastructure bootstrap stages (Mongo, mock services, future additions such as `prometheus`, `grafana`).  
-3. **`service`** – usually the logger name (`__name__` of module). When grouping dashboards, treat top-level package (e.g., `src.presentation.bot`) as the service key.  
-4. **`window`** – for variance gauges; start with `current`, add `rolling_5m` etc. once RAG++ owner-only metrics expand.  
-5. **`tool`** – MCP tool name (canonical label name for all MCP-related metrics). Use lowercase, snake_case tool names (e.g., `get_channel_digest`, `add_channel`).  
-6. **`status`** – operation outcome for MCP/agent metrics. Use lowercase values: `success`, `error` (avoid `Success`, `Error`, `failed`, etc.).  
-7. **`reason`** – retry/failure reason for MCP client metrics. Use lowercase values: `timeout`, `connection_error`, etc.  
+1. **`exporter`** – differentiate between digest and reviewer pipelines; add more values if new exporters appear (e.g., `audit_log`).
+2. **`step`** – reserved for infrastructure bootstrap stages (Mongo, mock services, future additions such as `prometheus`, `grafana`).
+3. **`service`** – usually the logger name (`__name__` of module). When grouping dashboards, treat top-level package (e.g., `src.presentation.bot`) as the service key.
+4. **`window`** – for variance gauges; start with `current`, add `rolling_5m` etc. once RAG++ owner-only metrics expand.
+5. **`tool`** – MCP tool name (canonical label name for all MCP-related metrics). Use lowercase, snake_case tool names (e.g., `get_channel_digest`, `add_channel`).
+6. **`status`** – operation outcome for MCP/agent metrics. Use lowercase values: `success`, `error` (avoid `Success`, `Error`, `failed`, etc.).
+7. **`reason`** – retry/failure reason for MCP client metrics. Use lowercase values: `timeout`, `connection_error`, etc.
 8. **Structured logging:** include `level` label values in lowercase (`info`, `warning`, `error`, etc.) to simplify aggregation.
 
 ## Dashboards & Alerts
 
-- Grafana: update/extend `grafana/dashboards/stage05-benchmarks.json` and `rag_variance.json` to plot the new metrics.  
+- Grafana: update/extend `grafana/dashboards/stage05-benchmarks.json` and `rag_variance.json` to plot the new metrics.
 - Alerts: integrate `shared_infra_bootstrap_status{step="mongo"} == 0` as CI pre-flight check; treat `rag_variance_ratio` > configured threshold as owner-only warning.
 
 ## Future Work
 
-- Add latency histograms for `/metrics` endpoints once Day 23 observability stabilization completes.  
+- Add latency histograms for `/metrics` endpoints once Day 23 observability stabilization completes.
 - Track log volume per component vs `structured_logs_total` for noise reduction.
-
-

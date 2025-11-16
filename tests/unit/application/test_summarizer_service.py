@@ -234,4 +234,3 @@ async def test_summarizer_service_empty_input_handling():
 
     assert isinstance(result_posts, SummaryResult), "Should return SummaryResult even for empty posts"
     assert isinstance(result_posts.text, str), "Should have text (fallback message)"
-

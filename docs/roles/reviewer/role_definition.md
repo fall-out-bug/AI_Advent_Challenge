@@ -192,7 +192,7 @@ def pre_review_gates(pr: PullRequest) -> GateResult:
         "no_merge_conflicts": pr.merge_conflicts == 0,
         "branch_up_to_date": pr.behind_main == 0
     }
-    
+
     if all(gates.values()):
         return GateResult(status="passed", proceed_to_manual_review=True)
     else:
@@ -335,6 +335,6 @@ def pre_review_gates(pr: PullRequest) -> GateResult:
 
 ---
 
-**Last Updated:** 2025-11-15  
-**Version:** 1.0  
+**Last Updated:** 2025-11-15
+**Version:** 1.0
 **Status:** Production-Ready ✅

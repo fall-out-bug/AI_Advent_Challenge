@@ -164,4 +164,3 @@ async def test_summarization_method_selection_characterization():
     assert result_small.method in ["direct", "map_reduce", "error"], (
         f"Method should be direct, map_reduce, or error. Got: {result_small.method}"
     )
-

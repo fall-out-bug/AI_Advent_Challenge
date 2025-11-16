@@ -127,9 +127,9 @@ db.requirements
 ]
 ```
 
-**Token Cost:** ~300 tokens (for 5 results with metadata)  
-**Query Time:** ~50ms  
-**When to Use:** Initial requirement discovery for specific epic  
+**Token Cost:** ~300 tokens (for 5 results with metadata)
+**Query Time:** ~50ms
+**When to Use:** Initial requirement discovery for specific epic
 **When NOT to Use:** Cross-epic pattern search (use semantic search instead)
 
 ---
@@ -149,12 +149,12 @@ db.requirements.aggregate([
       as: "linked_tests"
     }
   },
-  { $project: { 
-      req_id: 1, 
-      title: 1, 
-      "acceptance_criteria": 1, 
+  { $project: {
+      req_id: 1,
+      title: 1,
+      "acceptance_criteria": 1,
       test_coverage: { $size: "$linked_tests" }
-    } 
+    }
   }
 ]);
 ```
@@ -187,9 +187,9 @@ db.requirements.aggregate([
 ]
 ```
 
-**Token Cost:** ~500 tokens (includes aggregation results with test links)  
-**Query Time:** ~120ms (includes JOIN operation)  
-**When to Use:** Validating test coverage before epic sign-off  
+**Token Cost:** ~500 tokens (includes aggregation results with test links)
+**Query Time:** ~120ms (includes JOIN operation)
+**When to Use:** Validating test coverage before epic sign-off
 **When NOT to Use:** Real-time validation (too slow for interactive use)
 
 ---
@@ -245,9 +245,9 @@ db.reviews.find({
 ]
 ```
 
-**Token Cost:** ~400 tokens (for 2 results with remarks)  
-**Query Time:** ~60ms  
-**When to Use:** Before finalizing requirements (check for blockers)  
+**Token Cost:** ~400 tokens (for 2 results with remarks)
+**Query Time:** ~60ms
+**When to Use:** Before finalizing requirements (check for blockers)
 **When NOT to Use:** Historical analysis (use archived reviews)
 
 ---
@@ -263,17 +263,17 @@ db.requirements.aggregate([
       req_id: 1,
       title: 1,
       acceptance_criteria_count: { $size: "$acceptance_criteria" },
-      linked_tests_count: { 
-        $size: { $ifNull: ["$linked_tests", []] } 
+      linked_tests_count: {
+        $size: { $ifNull: ["$linked_tests", []] }
       }
     }
   },
-  { 
-    $match: { 
-      $expr: { 
-        $lt: ["$linked_tests_count", "$acceptance_criteria_count"] 
-      } 
-    } 
+  {
+    $match: {
+      $expr: {
+        $lt: ["$linked_tests_count", "$acceptance_criteria_count"]
+      }
+    }
   }
 ]);
 ```
@@ -298,13 +298,13 @@ db.requirements.aggregate([
 ]
 ```
 
-**Interpretation:** 
+**Interpretation:**
 - REQ-MOD-001: 2 acceptance criteria lack tests (5 - 3 = 2)
 - REQ-PERF-001: 2 acceptance criteria lack tests (4 - 2 = 2)
 
-**Token Cost:** ~250 tokens (for 2 results)  
-**Query Time:** ~100ms (aggregation pipeline)  
-**When to Use:** Pre-implementation validation, CI gate checks  
+**Token Cost:** ~250 tokens (for 2 results)
+**Query Time:** ~100ms (aggregation pipeline)
+**When to Use:** Pre-implementation validation, CI gate checks
 **When NOT to Use:** During active requirement gathering (premature)
 
 ---
@@ -374,9 +374,9 @@ db.requirements.aggregate([
 ]
 ```
 
-**Token Cost:** ~450 tokens (for 5 results with embeddings metadata)  
-**Query Time:** ~150ms (vector index lookup + filters)  
-**When to Use:** Finding similar patterns across epics (Day 22 RAG)  
+**Token Cost:** ~450 tokens (for 5 results with embeddings metadata)
+**Query Time:** ~150ms (vector index lookup + filters)
+**When to Use:** Finding similar patterns across epics (Day 22 RAG)
 **When NOT to Use:** Exact text matching (use keyword search instead)
 
 ---
@@ -487,12 +487,12 @@ class QueryMetrics:
         self.query_count = 0
         self.total_tokens = 0
         self.total_time_ms = 0
-    
+
     def record_query(self, tokens: int, time_ms: int):
         self.query_count += 1
         self.total_tokens += tokens
         self.total_time_ms += time_ms
-    
+
     def report(self):
         return {
             "queries": self.query_count,

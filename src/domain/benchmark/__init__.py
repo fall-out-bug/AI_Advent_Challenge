@@ -13,4 +13,3 @@ __all__ = [
     "DigestSample",
     "ReviewReportSample",
 ]
-

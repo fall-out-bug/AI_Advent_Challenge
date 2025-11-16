@@ -15,4 +15,3 @@
 | `challenge_days_gap_closure_plan.md` + `work_log.md` updated (impact) | TL-04 | Doc diff, worklog entry | Tech Lead | Pending |
 
 Status legend: Pending / In Progress / Done / Blocked.
-

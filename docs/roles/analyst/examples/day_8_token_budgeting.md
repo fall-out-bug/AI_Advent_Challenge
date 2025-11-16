@@ -43,9 +43,9 @@ TOKEN_BUDGET = {
 
 ## Scenario: Complex Epic with Long Session
 
-**Epic:** EP24 - Multi-Tenant SaaS Platform  
-**Complexity:** High (multiple modules, integrations, security)  
-**Expected Exchanges:** 25-30  
+**Epic:** EP24 - Multi-Tenant SaaS Platform
+**Complexity:** High (multiple modules, integrations, security)
+**Expected Exchanges:** 25-30
 **Session Goal:** Gather comprehensive requirements across 5 modules
 
 ---
@@ -156,12 +156,12 @@ Risk: Only ~4-5 more exchanges possible before overflow
 
 **Analyst (Internal Log):**
 > "Token budget critical: 9,445/12,000 used (79%).
-> 
+>
 > **Action:** Apply Day 15 compression pattern
 > - Target: 80% reduction on exchanges 1-15
 > - Preserve: Requirements, clarity scores, decisions, open questions
 > - Discard: Conversational filler, timestamps, redundant details
-> 
+>
 > **Expected result:** 8,645 → ~1,700 tokens
 > **Token freed:** ~6,900 tokens
 > **New remaining:** ~9,400 tokens (78% available)"
@@ -173,23 +173,23 @@ Risk: Only ~4-5 more exchanges possible before overflow
 ```python
 def compress_conversation_history(exchanges: list) -> str:
     """Compress conversation using map-reduce pattern."""
-    
+
     # Map: Group by topic/module
     topics = {
         "authentication": exchanges[0:5],   # 2,450 tokens
         "billing": exchanges[5:10],         # 2,645 tokens
         "integration": exchanges[10:15]     # 2,750 tokens
     }
-    
+
     # Reduce: Summarize each topic
     summaries = []
     for topic, topic_exchanges in topics.items():
         summary = extract_core_info(topic_exchanges)
         summaries.append(summary)
-    
+
     # Merge: Create compressed context
     compressed = merge_summaries(summaries)
-    
+
     return compressed  # ~1,700 tokens (80% reduction)
 ```
 
@@ -426,7 +426,7 @@ def validate_compression_quality(
     compressed: CompressedSummary
 ) -> CompressionQuality:
     """Ensure compression preserves critical information."""
-    
+
     quality_checks = {
         "requirements_preserved": check_all_requirements_present(
             original, compressed
@@ -441,7 +441,7 @@ def validate_compression_quality(
             original, compressed
         )
     }
-    
+
     return CompressionQuality(
         passed=all(quality_checks.values()),
         checks=quality_checks,
@@ -512,19 +512,19 @@ class TokenBudgetTracker:
         self.system_prompts = 800
         self.safety_margin = 2000
         self.compression_threshold = 0.70  # 70% of working budget
-        
+
         self.working_budget = (
             context_window - system_prompts - safety_margin
         )  # 9,200 tokens
-        
+
         self.current_usage = system_prompts
         self.compression_events = []
-    
+
     def should_compress(self) -> bool:
         """Check if compression should be triggered."""
         usage_ratio = self.current_usage / self.context_window
         return usage_ratio >= self.compression_threshold
-    
+
     def remaining_exchanges_estimate(self) -> int:
         """Estimate how many exchanges before compression needed."""
         avg_tokens_per_exchange = 500
@@ -603,4 +603,3 @@ class TokenBudgetTracker:
 - See `docs/roles/analyst/day_capabilities.md#day-15` for compression pattern
 - See `docs/operational/context_limits.md` for budget configuration
 - See `docs/operational/handoff_contracts.md` for output format
-

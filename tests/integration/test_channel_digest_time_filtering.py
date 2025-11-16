@@ -40,30 +40,30 @@ async def _patch_db_for_digest_tools(mongodb_database_async, monkeypatch):
     from src.infrastructure.config.settings import get_settings
     import src.infrastructure.database.mongo as mongo_module
     import src.presentation.mcp.tools.channels.utils as utils_module
-    
+
     # Close existing connection
     await close_client()
-    
+
     # Set MONGODB_URL to test URL
     settings = get_settings()
     monkeypatch.setenv("MONGODB_URL", settings.test_mongodb_url)
-    
+
     # Patch get_db to return test database (keep original for restore)
     original_get_db = mongo_module.get_db
     original_get_database = utils_module.get_database
-    
+
     async def mock_get_db():
         return mongodb_database_async
-    
+
     async def mock_get_database():
         return mongodb_database_async
-    
+
     # Apply patches
     monkeypatch.setattr(mongo_module, "get_db", mock_get_db)
     monkeypatch.setattr(utils_module, "get_database", mock_get_database)
-    
+
     yield
-    
+
     # Restore original functions (monkeypatch will restore automatically, but explicit is clearer)
     monkeypatch.setattr(mongo_module, "get_db", original_get_db)
     monkeypatch.setattr(utils_module, "get_database", original_get_database)
@@ -291,21 +291,21 @@ async def test_digest_updates_last_digest_timestamp(mongodb_database_async, monk
     from src.infrastructure.database.mongo import close_client, get_db
     from src.infrastructure.config.settings import get_settings
     from unittest.mock import patch
-    
+
     # Get test MongoDB URL from settings
     settings = get_settings()
     test_url = settings.test_mongodb_url
-    
+
     # Set MONGODB_URL to test URL so get_db() uses correct credentials
     monkeypatch.setenv("MONGODB_URL", test_url)
-    
+
     # Close any existing connection to force fresh connection with new URL
     await close_client()
-    
+
     # Patch get_db to return our per-test database (which uses test URL)
     async def mock_get_db():
         return mongodb_database_async
-    
+
     # Patch get_database (used by channel tools) to return test database
     with patch("src.presentation.mcp.tools.channels.utils.get_database", side_effect=mock_get_db), \
          patch("src.infrastructure.database.mongo.get_db", side_effect=mock_get_db):
@@ -318,7 +318,7 @@ async def test_digest_updates_last_digest_timestamp(mongodb_database_async, monk
         assert channel_before["last_digest"] is None
 
         await get_channel_digest(user_id=600, hours=24)  # type: ignore[arg-type]
-        
+
         # Verify timestamp is updated - do this inside patch context
         channel_after = await db.channels.find_one(
             {"user_id": 600, "channel_username": "test_channel"}

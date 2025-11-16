@@ -101,4 +101,3 @@ def test_agent_compares_requests() -> None:
     assert short_analysis.token_count < long_analysis.token_count
     assert long_analysis.token_count < overflow_analysis.token_count
     assert overflow_analysis.exceeds_limit
-

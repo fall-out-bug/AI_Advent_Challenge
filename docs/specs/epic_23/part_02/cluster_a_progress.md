@@ -1,8 +1,8 @@
 # Cluster A · Progress Summary
 
-**Epic:** EP24 – Repository Hygiene & De-Legacy  
-**Cluster:** A – Mongo & Async Infrastructure  
-**Date:** 2025-11-16  
+**Epic:** EP24 – Repository Hygiene & De-Legacy
+**Cluster:** A – Mongo & Async Infrastructure
+**Date:** 2025-11-16
 **Status:** ✅ **COMPLETE** (100% - 7 tests skipped due to architectural dependency)
 
 ## Completed Tasks ✅
@@ -87,7 +87,7 @@
 ### A.8: Run Full Test Suite After Each Migration Batch ✅
 - **Status:** Complete
 - **Description:** Full test suite passes after each migration batch
-- **Evidence:** 
+- **Evidence:**
   - After repositories migration: 13 tests passing
   - After workers migration: 4 tests passing
   - After evaluation migration: 2 tests passing
@@ -96,9 +96,9 @@
 
 ## Progress Metrics
 
-**Tasks Completed:** 9 / 9 (100%)  
-**Tasks In Progress:** 0  
-**Tasks Pending:** 0  
+**Tasks Completed:** 9 / 9 (100%)
+**Tasks In Progress:** 0
+**Tasks Pending:** 0
 **Tasks Blocked:** 0 (7 tests skipped due to architectural dependency - will be addressed in Cluster B/C)
 
 **Note:** Cluster A tasks (A.0-A.8) are complete. 7 tests in `test_channel_digest_time_filtering.py` are skipped due to architectural dependency on `digest_tools` refactoring (will be addressed in Cluster B/C when `digest_tools` uses DI pattern).
@@ -157,4 +157,3 @@
 ---
 
 _Progress tracked by cursor_dev_a_v1 · 2025-11-16 · Last updated: 2025-11-16 22:30 UTC_
-

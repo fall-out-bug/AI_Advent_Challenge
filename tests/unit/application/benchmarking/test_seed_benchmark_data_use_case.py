@@ -91,4 +91,3 @@ async def test_seed_use_case_skips_channels_that_meet_threshold(tmp_path: Path) 
     snapshot = json.loads(snapshot_path.read_text())
     assert snapshot["channels"][0]["digests"] == 35
     assert result.generated_channels["@startup_digest_ru"].digests == 35
-

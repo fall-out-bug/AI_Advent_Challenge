@@ -45,7 +45,7 @@ components:
         status: {type: string, enum: [completed, pending]}
         amount_cents: {type: integer}
         currency: {type: string}
-        
+
   responses:
     BadRequest:
       description: Invalid request
@@ -83,6 +83,6 @@ components:
 }
 ```
 
-**Contract Validation:** Run `make validate-contracts` in CI  
-**Integration Tests:** Use contracts to generate test cases  
+**Contract Validation:** Run `make validate-contracts` in CI
+**Integration Tests:** Use contracts to generate test cases
 **Documentation:** Auto-generated from OpenAPI spec

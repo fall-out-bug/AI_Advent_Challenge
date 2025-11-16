@@ -186,4 +186,3 @@ def test_export_review_reports_produces_expected_fields(
         assert record["metadata"]["passes_count"] >= 1
         assert isinstance(record["metadata"]["feature_flags"], dict)
         assert record["latency_seconds"] >= 30.0
-

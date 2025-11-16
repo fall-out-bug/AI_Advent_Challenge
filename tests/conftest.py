@@ -253,7 +253,7 @@ async def mongodb_database_async(
     except Exception:
         # Ignore errors during database drop
         pass
-    
+
     # Close async client (Motor clients can be closed even after operations)
     try:
         async_client.close()
