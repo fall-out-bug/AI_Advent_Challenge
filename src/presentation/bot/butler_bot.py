@@ -20,6 +20,9 @@ from src.presentation.bot.middleware.state_middleware import StatePersistenceMid
 
 logger = get_logger("butler_bot")
 
+# Voice handler will be set up asynchronously
+_voice_handler_initialized = False
+
 
 class ButlerBot:
     """Telegram bot using ButlerOrchestrator for message processing.
@@ -49,6 +52,9 @@ class ButlerBot:
         self._setup_handlers()
         self.dp.include_router(self.router)
 
+        # Voice handler will be set up asynchronously in setup_voice_handler()
+        # This is done to allow async initialization of use cases
+
         # Initialize metrics server
         self.metrics_server = MetricsServer()
         self._metrics = get_butler_metrics()
@@ -77,6 +83,8 @@ class ButlerBot:
         # Include butler handler for natural language processing
         butler_router = setup_butler_handler(self.orchestrator)
         self.dp.include_router(butler_router)
+
+        # Voice handler will be set up asynchronously via setup_voice_handler()
 
     async def cmd_start(self, message: Message) -> None:
         """Handle /start command."""
@@ -115,9 +123,63 @@ class ButlerBot:
             )
             await message.answer("❌ Sorry, I couldn't load the menu. Please try again.")
 
+    async def setup_voice_handler(self) -> None:
+        """Setup voice handler asynchronously.
+
+        Purpose:
+            Initialize voice agent use cases and register voice handler.
+            This is done asynchronously because use cases require async
+            initialization (Redis connection, etc.).
+
+        Example:
+            >>> bot = ButlerBot(token, orchestrator)
+            >>> await bot.setup_voice_handler()
+        """
+        global _voice_handler_initialized
+        if _voice_handler_initialized:
+            logger.debug("Voice handler already initialized")
+            return
+
+        try:
+            from src.infrastructure.voice.factory import create_voice_use_cases
+            from src.presentation.bot.handlers.voice_handler import setup_voice_handler
+
+            # Create voice use cases
+            process_uc, confirmation_uc = await create_voice_use_cases(
+                orchestrator=self.orchestrator,
+                bot=self.bot,
+            )
+
+            # Setup and register voice handler
+            voice_router = setup_voice_handler(
+                process_use_case=process_uc,
+                confirmation_use_case=confirmation_uc,
+            )
+            self.dp.include_router(voice_router)
+
+            logger.info("Voice handler initialized and registered")
+            _voice_handler_initialized = True
+
+        except Exception as e:
+            logger.error(
+                f"Failed to setup voice handler: {e}. "
+                "Bot will continue without voice support.",
+                exc_info=True,
+            )
+            # Log specific error details for debugging
+            import traceback
+            logger.debug(
+                "Voice handler initialization traceback",
+                extra={"traceback": traceback.format_exc()},
+            )
+            # Don't raise - bot should work without voice support
+
     async def run(self) -> None:
         """Start the bot polling loop with graceful shutdown."""
         try:
+            # Setup voice handler (async initialization)
+            await self.setup_voice_handler()
+
             # Start metrics server
             await self.metrics_server.start()
 
@@ -184,11 +246,27 @@ def create_dispatcher() -> Dispatcher:
 async def main() -> None:  # pragma: no cover - manual run helper
     import os
 
+    from src.infrastructure.config.settings import get_settings
     from src.presentation.bot.factory import create_butler_orchestrator
 
+    # Try to get token from environment or Settings
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
     if not token:
-        raise RuntimeError("TELEGRAM_BOT_TOKEN is required")
+        # pydantic-settings automatically loads .env, but os.environ might not have it
+        # Try loading via Settings or dotenv as fallback
+        try:
+            from dotenv import load_dotenv
+
+            load_dotenv()
+            token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+        except ImportError:
+            pass
+
+    if not token:
+        raise RuntimeError(
+            "TELEGRAM_BOT_TOKEN is required. "
+            "Set it in environment variable or .env file."
+        )
 
     # Create orchestrator using factory
     orchestrator = await create_butler_orchestrator()
@@ -200,3 +278,4 @@ async def main() -> None:  # pragma: no cover - manual run helper
 
 if __name__ == "__main__":  # pragma: no cover
     asyncio.run(main())
+
