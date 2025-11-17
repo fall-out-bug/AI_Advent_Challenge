@@ -412,6 +412,28 @@ class Settings(BaseSettings):
         default="embedding:chunk:",
         description="Redis key prefix for stored embeddings",
     )
+    # Voice agent settings (STT)
+    # Note: Separate from LLM service (Mistral/Ollama for LLM, Whisper for STT)
+    whisper_host: str = Field(
+        default="localhost",
+        description="Whisper STT service host (separate from LLM)",
+    )
+    whisper_port: int = Field(
+        default=8005,
+        description="Whisper STT service port",
+    )
+    stt_model: str = Field(
+        default="tiny",  # Fast model for quick testing (for production use larger models like base/small)
+        description="Whisper model name (e.g., tiny, base, small, medium, large, large-v2, large-v3)",
+    )
+    stt_min_confidence: float = Field(
+        default=0.6,
+        description="Minimum confidence threshold for STT transcription (0.0-1.0)",
+    )
+    voice_command_ttl_seconds: int = Field(
+        default=600,
+        description="TTL for pending voice commands in Redis (default 10 minutes)",
+    )
     # RAG retrieval settings
     rag_top_k: int = Field(
         default=5,

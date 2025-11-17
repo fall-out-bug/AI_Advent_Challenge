@@ -95,9 +95,10 @@ services:
       # Required: Telegram bot token from @BotFather
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       # Required: MongoDB connection URL
-      - MONGODB_URL=${MONGODB_URL:-mongodb://shared-mongo:27017/butler?authSource=admin}
+      # Use credentials from shared MongoDB instance
+      - MONGODB_URL=${MONGODB_URL:-mongodb://admin:secure_mongo_password_456@shared-mongo:27017/butler?authSource=admin}
       # Required: Mistral API URL
-      - MISTRAL_API_URL=${MISTRAL_API_URL:-http://mistral-chat:8001}
+      - MISTRAL_API_URL=${MISTRAL_API_URL:-http://llm-api:8000}
       # MCP Server URLs (supports multiple servers)
       # Default: local MCP server
       # Format: comma-separated URLs or JSON array
@@ -106,15 +107,29 @@ services:
       - MCP_SERVER_URLS=${MCP_SERVER_URLS:-http://mcp-server:8004}
       # Backward compatibility: single server
       - MCP_SERVER_URL=${MCP_SERVER_URL:-}
+      # Whisper STT configuration (separate from LLM service)
+      # LLM uses Mistral/Ollama (MISTRAL_API_URL), STT uses Whisper (WHISPER_HOST/PORT)
+      # Note: External port is 8006, internal is 8005 (for Docker network)
+      - WHISPER_HOST=${WHISPER_HOST:-whisper-stt}
+      - WHISPER_PORT=${WHISPER_PORT:-8005}
+      - STT_MODEL=${STT_MODEL:-base}
+      # Redis configuration for voice command store
+      # Use container name for Docker network access
+      - REDIS_HOST=${REDIS_HOST:-shared-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-secure_redis_password_789}
+      # Note: If REDIS_PASSWORD is empty in .env, default above is used
+      # To override, set REDIS_PASSWORD in .env or pass via command line
       # Optional: Logging and configuration
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - PYTHONUNBUFFERED=1
       - METRICS_PORT=9091
       - MISTRAL_TIMEOUT=${MISTRAL_TIMEOUT:-30}
       - MISTRAL_MAX_RETRIES=${MISTRAL_MAX_RETRIES:-3}
-    depends_on:
-      mcp-server:
-        condition: service_healthy
+    # Temporarily remove mcp-server dependency for voice testing
+    # depends_on:
+    #   mcp-server:
+    #     condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import sys; sys.exit(0)' && curl -f http://localhost:9091/health || exit 1"]
       interval: 30s
@@ -243,6 +258,52 @@ services:
           memory: 64M
 
   # =============================================
+  # Whisper STT Server (Speech-to-Text)
+  # =============================================
+  whisper-stt:
+    # Use pre-built image or build from Dockerfile
+    # If build fails, use: docker pull onerahmet/openai-whisper-asr-webservice:latest-gpu
+    build:
+      context: .
+      dockerfile: docker/whisper-server/Dockerfile
+    image: ai-challenge-whisper:latest
+    container_name: whisper-stt
+    environment:
+      - WHISPER_MODEL=${WHISPER_MODEL:-base}
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+    ports:
+      - "8006:8005"  # Whisper API endpoint (8006 external, 8005 internal)
+    volumes:
+      # Persist Whisper model cache between container restarts
+      # This prevents re-downloading models every time
+      - whisper-model-cache:/root/.cache/whisper
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s  # Base model loads in ~30-45s on GPU
+    restart: unless-stopped
+    networks:
+      - butler-network
+      - infra_app-network
+    # GPU support (requires nvidia-docker or Docker with GPU runtime)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+        # Remove CPU limits for GPU usage
+        # limits:
+        #   cpus: '1.0'
+        #   memory: 2G
+        # reservations:
+        #   memory: 1G
+
+  # =============================================
   # Loki log aggregation backend
   # =============================================
   loki:
@@ -284,4 +345,6 @@ networks:
 
 volumes:
   loki-data:
+    driver: local
+  whisper-model-cache:
     driver: local
