@@ -121,3 +121,5 @@ poetry.lock
 
 # FastAPI/Uvicorn
 *.pid
+
+.whisper-cache

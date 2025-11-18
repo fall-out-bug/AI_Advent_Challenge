@@ -20,21 +20,23 @@
 | EP06 | Stage 06_02 | Repository reorganisation | Completed | fall_out_bug | 2025-11-11 | – |
 | EP06 | Stage 06_03 | Automation & quality closure | Completed | fall_out_bug | 2025-11-11 | – |
 | EP06 | Stage 06_04 | Final verification & hand-off | Completed | fall_out_bug | 2025-11-11 | – |
-| EP19 | Stage 19_01 | Discovery & requirements alignment | Planned | fall_out_bug | – | Awaiting corpus inventory & storage decisions |
-| EP19 | Stage 19_02 | Pipeline design & prototyping | Planned | fall_out_bug | – | Depends on Stage 19_01 requirements |
-| EP19 | Stage 19_03 | Implementation & integration | Planned | fall_out_bug | – | Depends on Stage 19_02 design |
-| EP19 | Stage 19_04 | Validation & documentation | Planned | fall_out_bug | – | Depends on Stage 19_03 implementation |
-| EP21 | Stage 21_01 | Requirements & question set update | Planned | fall_out_bug | – | Extend queries; set thresholds/metrics |
-| EP21 | Stage 21_02 | Design & prototype | Planned | fall_out_bug | – | Depends on Stage 21_01 |
-| EP21 | Stage 21_03 | Implementation & tests | Planned | fall_out_bug | – | Depends on Stage 21_02 |
-| EP21 | Stage 21_04 | Validation & report | Planned | fall_out_bug | – | Depends on Stage 21_03 |
-| EP20 | Stage 20_01 | Requirements & question set | Planned | fall_out_bug | – | Awaiting query set and retrieval config |
-| EP20 | Stage 20_02 | Design & prototype | Planned | fall_out_bug | – | Depends on Stage 20_01 decisions |
-| EP20 | Stage 20_03 | Implementation & tests | Planned | fall_out_bug | – | Depends on Stage 20_02 design |
-| EP20 | Stage 20_04 | Validation & report | Planned | fall_out_bug | – | Depends on Stage 20_03 implementation |
+| EP19 | Stage 19_01 | Discovery & requirements alignment | Completed | fall_out_bug | 2025-11-16 | See `docs/specs/epic_19/epic_19.md` |
+| EP19 | Stage 19_02 | Pipeline design & prototyping | Completed | fall_out_bug | 2025-11-16 | See `docs/specs/epic_19/epic_19.md` |
+| EP19 | Stage 19_03 | Implementation & integration | Completed | fall_out_bug | 2025-11-16 | See `docs/specs/epic_19/epic_19.md` |
+| EP19 | Stage 19_04 | Validation & documentation | Completed | fall_out_bug | 2025-11-16 | See `docs/specs/epic_19/epic_19.md` |
+| EP21 | Stage 21_01 | Requirements & question set update | Completed | fall_out_bug | 2025-11-16 | See `docs/specs/epic_21/epic_21.md` |
+| EP21 | Stage 21_02 | Design & prototype | Completed | fall_out_bug | 2025-11-16 | See `docs/specs/epic_21/epic_21.md` |
+| EP21 | Stage 21_03 | Implementation & tests | Completed | fall_out_bug | 2025-11-16 | See `docs/specs/epic_21/epic_21.md` |
+| EP21 | Stage 21_04 | Validation & report | Completed | fall_out_bug | 2025-11-16 | See `docs/specs/epic_21/epic_21.md` |
+| EP20 | Stage 20_01 | Requirements & question set | Completed | fall_out_bug | 2025-11-16 | See `docs/specs/epic_20/epic_20.md` |
+| EP20 | Stage 20_02 | Design & prototype | Completed | fall_out_bug | 2025-11-16 | See `docs/specs/epic_20/epic_20.md` |
+| EP20 | Stage 20_03 | Implementation & tests | Completed | fall_out_bug | 2025-11-16 | See `docs/specs/epic_20/epic_20.md` |
+| EP20 | Stage 20_04 | Validation & report | Completed | fall_out_bug | 2025-11-16 | See `docs/specs/epic_20/epic_20.md` |
 | EP05 | Stage 05_01 | Benchmark & dataset design | Completed | fall_out_bug | 2025-11-10 | – |
 | EP05 | Stage 05_02 | Automation & evaluation tooling | Completed | fall_out_bug | 2025-11-11 | Live data seeding deferred to EP23 |
 | EP05 | Stage 05_03 | Fine-tuning governance & rollout | Completed | fall_out_bug | 2025-11-12 | Pilot execution awaits EP23 tasks |
+| EP23 | Stage 23_01 | Observability & benchmark enablement (Day 23) | Completed | fall_out_bug | 2025-11-18 | See `docs/specs/epic_23/README.md` |
+| EP24 | Stage 24_01 | Voice commands integration (Day 24) | Completed | fall_out_bug | 2025-11-18 | See `docs/specs/epic_24/README.md` |
 
 ## Notes
 - Owners and dates will be filled once stakeholders are assigned.

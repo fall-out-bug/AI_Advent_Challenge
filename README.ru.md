@@ -126,6 +126,10 @@ AI_Challenge/
 | День 18 | Перфоманс-бенчмарки | Prometheus, Benchmarking | ✅ Завершено |
 | День 19 | Индексация документов (эмбеддинги) | Redis/FAISS, Mongo, LLM API | ✅ Завершено |
 | День 20 | Агент RAG vs Non‑RAG | Retrieval, LLM-as-Judge | ✅ Завершено |
+| День 21 | Рефакторинг репозитория и RAG++ | Clean Architecture, Reranking, Observability | ✅ Завершено |
+| День 22 | RAG‑цитаты и источники | RAG, MongoDB, Vector Search | ✅ Завершено |
+| День 23 | Observability & Benchmark Enablement | Prometheus, Grafana, Loki, Benchmarks | ✅ Завершено |
+| День 24 | Голосовой агент | Telegram Bot, Whisper STT, Butler Orchestrator | ✅ Завершено |
 
 ## Основная инфраструктура
 
