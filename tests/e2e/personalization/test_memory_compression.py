@@ -61,4 +61,3 @@ async def test_memory_compression_trigger(
     assert profile is not None
     assert profile.get("memory_summary") is not None
     assert len(profile["memory_summary"]) > 0
-

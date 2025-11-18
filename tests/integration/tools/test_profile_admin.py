@@ -101,4 +101,3 @@ def test_list_command_no_profiles():
 
     # Should not fail, just show no profiles message
     assert result.exit_code == 0
-

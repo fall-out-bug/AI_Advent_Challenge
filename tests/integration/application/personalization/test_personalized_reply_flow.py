@@ -133,4 +133,3 @@ async def test_voice_source_handled(
     # Verify events stored
     events = await memory_repo.get_recent_events(user_id, limit=5)
     assert len(events) == 2
-

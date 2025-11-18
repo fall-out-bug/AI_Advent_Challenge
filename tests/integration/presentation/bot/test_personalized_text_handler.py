@@ -68,4 +68,3 @@ async def test_text_message_with_personalization_disabled(mocker):
     # Verify router is set up
     assert router is not None
     # Note: Full integration test would require aiogram test framework
-

@@ -1,7 +1,7 @@
 # Epic 25 Deployment Checklist
 
-**Epic**: EP25 - Personalised Butler  
-**Status**: ✅ Ready for Production  
+**Epic**: EP25 - Personalised Butler
+**Status**: ✅ Ready for Production
 **Date**: 2025-11-18
 
 ---
@@ -143,7 +143,7 @@ Check: Memory events stored in MongoDB
 **Test Case**: Voice message transcription → personalized reply
 ```
 User: [Sends voice message]
-Expected: 
+Expected:
   1. STT transcription shown
   2. Personalized reply in Alfred style
 Check: Memory saved with source="voice"
@@ -158,7 +158,7 @@ for i in {1..51}; do
   # Send message via Telegram
 done
 
-Expected: 
+Expected:
   - Compression triggered at 50+ events
   - Old events deleted, last 20 kept
   - Summary stored in profile
@@ -330,6 +330,5 @@ mongosh mongodb://admin:${MONGO_PASSWORD}@localhost:27017/butler?authSource=admi
 
 ---
 
-**Status**: ✅ Ready for Deployment  
+**Status**: ✅ Ready for Deployment
 **Last Updated**: 2025-11-18
-

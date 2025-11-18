@@ -1,8 +1,8 @@
 # Epic 25 · Developer Handoff Document
 
-**Epic**: EP25 - Personalised Butler ("Alfred-style дворецкий")  
-**Date**: 2025-11-18  
-**Tech Lead**: cursor_tech_lead_v1  
+**Epic**: EP25 - Personalised Butler ("Alfred-style дворецкий")
+**Date**: 2025-11-18
+**Tech Lead**: cursor_tech_lead_v1
 **Target Audience**: Development Team
 
 ---
@@ -161,12 +161,12 @@ class MemorySlice:
         lines = []
         if self.summary:
             lines.append(f"Summary: {self.summary}\n")
-        
+
         lines.append("Recent interactions:")
         for event in self.events[-10:]:  # Last 10 events
             role_label = "User" if event.role == "user" else "Butler"
             lines.append(f"- {role_label}: {event.content[:200]}")
-        
+
         return "\n".join(lines)
 ```
 
@@ -297,17 +297,17 @@ class MongoUserMemoryRepository:
         # Get all events sorted by created_at
         cursor = self.collection.find({"user_id": user_id}).sort("created_at", -1)
         events = await cursor.to_list(length=None)
-        
+
         if len(events) <= keep_last_n:
             return  # Nothing to compress
-        
+
         # Delete older events (keep last N)
         keep_ids = [e["_id"] for e in events[:keep_last_n]]
         await self.collection.delete_many({
             "user_id": user_id,
             "_id": {"$nin": keep_ids}
         })
-        
+
         # Update profile with summary (done in use case)
 
     async def count_events(self, user_id: str) -> int:
@@ -557,20 +557,20 @@ class PersonalizedReplyUseCase:
     async def _compress_memory(self, user_id: str, profile: UserProfile) -> None:
         """Inline memory compression when threshold exceeded."""
         self.logger.info("Compressing memory", extra={"user_id": user_id})
-        
+
         # Load all events for summarization
         all_events = await self.memory_repo.get_recent_events(user_id, limit=1000)
-        
+
         # Summarize via LLM (simple implementation for MVP)
         events_text = "\n".join([
             f"{e.role}: {e.content[:200]}" for e in all_events
         ])
         summary_prompt = f"Summarise the following conversation history in Russian (max 300 tokens):\n{events_text}"
         summary = await self.llm_client.generate(summary_prompt)
-        
+
         # Compress: keep last 20 events
         await self.memory_repo.compress(user_id, summary, keep_last_n=20)
-        
+
         # Update profile with summary
         updated_profile = UserProfile(
             user_id=profile.user_id,
@@ -583,7 +583,7 @@ class PersonalizedReplyUseCase:
             updated_at=datetime.utcnow(),
         )
         await self.profile_repo.save(updated_profile)
-        
+
         self.logger.info("Memory compressed", extra={"user_id": user_id, "summary_length": len(summary)})
 ```
 
@@ -615,7 +615,7 @@ personalized_memory_compressions_total = Counter(
 async def handle_message(message: Message):
     user_id = str(message.from_user.id)
     text = message.text
-    
+
     # Route to ButlerOrchestrator
     reply = await butler_orchestrator.handle_user_message(user_id, text, session_id)
     await message.answer(reply)
@@ -632,11 +632,11 @@ async def handle_message(message: Message):
 
     user_id = str(message.from_user.id)
     text = message.text
-    
+
     # Route to PersonalizedReplyUseCase
     input_data = PersonalizedReplyInput(user_id=user_id, text=text, source="text")
     output = await personalized_reply_use_case.execute(input_data)
-    
+
     await message.answer(output.reply)
 ```
 
@@ -671,10 +671,10 @@ def create_personalized_use_cases(
     # Create repos
     profile_repo = MongoUserProfileRepository(mongo_client, settings.mongo_database)
     memory_repo = MongoUserMemoryRepository(mongo_client, settings.mongo_database)
-    
+
     # Create service
     personalization_service = PersonalizationServiceImpl(profile_repo, memory_repo)
-    
+
     # Create use cases
     personalized_reply_use_case = PersonalizedReplyUseCase(
         personalization_service=personalization_service,
@@ -682,12 +682,12 @@ def create_personalized_use_cases(
         profile_repo=profile_repo,
         llm_client=llm_client,
     )
-    
+
     reset_use_case = ResetPersonalizationUseCase(
         profile_repo=profile_repo,
         memory_repo=memory_repo,
     )
-    
+
     return personalized_reply_use_case, reset_use_case
 ```
 
@@ -770,13 +770,13 @@ async def test_personalized_text_flow(telegram_bot, fake_mongo, llm_client):
     """Test: text message → personalized reply → memory stored."""
     user_id = "test_user_123"
     message_text = "Привет, как дела?"
-    
+
     # Send message
     response = await telegram_bot.send_message(user_id, message_text)
-    
+
     # Verify reply has Alfred persona
     assert "сэр" in response.text or "надеюсь" in response.text
-    
+
     # Verify memory stored
     events = await fake_mongo.butler.user_memory.find({"user_id": user_id}).to_list(length=10)
     assert len(events) == 2  # user + assistant
@@ -787,15 +787,15 @@ async def test_personalized_text_flow(telegram_bot, fake_mongo, llm_client):
 async def test_memory_compression(telegram_bot, fake_mongo, llm_client):
     """Test: >50 messages → memory compressed."""
     user_id = "test_user_compression"
-    
+
     # Send 51 messages
     for i in range(51):
         await telegram_bot.send_message(user_id, f"Message {i}")
-    
+
     # Verify compression triggered
     event_count = await fake_mongo.butler.user_memory.count_documents({"user_id": user_id})
     assert event_count <= 20  # Compressed to last 20
-    
+
     # Verify summary exists in profile
     profile = await fake_mongo.butler.user_profiles.find_one({"user_id": user_id})
     assert profile["memory_summary"] is not None
@@ -919,7 +919,6 @@ LLM_API_URL=http://llm-api:8000
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2025-11-18  
+**Document Version**: 1.0
+**Last Updated**: 2025-11-18
 **Status**: Ready for implementation
-

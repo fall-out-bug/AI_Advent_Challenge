@@ -8,4 +8,3 @@ from src.application.personalization.use_cases.reset_personalization import (
 )
 
 __all__ = ["PersonalizedReplyUseCase", "ResetPersonalizationUseCase"]
-

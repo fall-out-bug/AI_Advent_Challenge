@@ -105,4 +105,3 @@ class ResetPersonalizationUseCase:
                 profile_reset=False,
                 memory_deleted_count=0,
             )
-

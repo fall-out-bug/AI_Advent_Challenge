@@ -1,6 +1,6 @@
 # Persona Template Configuration Guide
 
-**Epic**: EP25 - Personalised Butler  
+**Epic**: EP25 - Personalised Butler
 **Purpose**: Edit Alfred-style дворецкий persona prompt without code changes
 
 ---
@@ -197,7 +197,6 @@ python -c "import yaml; yaml.safe_load(open('config/persona_templates.yaml'))"
 
 ---
 
-**Status**: ✅ Implemented  
-**File**: `config/persona_templates.yaml`  
+**Status**: ✅ Implemented
+**File**: `config/persona_templates.yaml`
 **Reload**: Restart Butler bot after editing
-

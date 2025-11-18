@@ -1,8 +1,8 @@
 # Epic 25 · Closure Document
 
-**Epic**: EP25 - Personalised Butler ("Alfred-style дворецкий")  
-**Status**: ✅ **CLOSED**  
-**Closure Date**: 2025-11-18  
+**Epic**: EP25 - Personalised Butler ("Alfred-style дворецкий")
+**Status**: ✅ **CLOSED**
+**Closure Date**: 2025-11-18
 **Final Approval**: Tech Lead
 
 ---
@@ -242,9 +242,9 @@ All issues identified during development have been resolved:
 
 ## Archive Information
 
-**Epic Status**: ✅ **CLOSED**  
-**Closure Date**: 2025-11-18  
-**Final Approval**: Tech Lead  
+**Epic Status**: ✅ **CLOSED**
+**Closure Date**: 2025-11-18
+**Final Approval**: Tech Lead
 **Production Deployment**: Ready
 
 **Related Documents**:
@@ -311,8 +311,7 @@ All issues identified during development have been resolved:
 
 ---
 
-**Epic 25 Closure Completed**: 2025-11-18  
+**Epic 25 Closure Completed**: 2025-11-18
 **Status**: ✅ **CLOSED AND APPROVED FOR PRODUCTION**
 
 **Next Epic**: Ready for Epic 26 planning
-

@@ -1,9 +1,9 @@
 # Worklog: Epic 25 - TL-01, TL-02, TL-03 Implementation
 
-**Epic**: EP25 - Personalised Butler ("Alfred-style дворецкий")  
-**Developer**: Auto (AI Assistant)  
-**Date**: 2025-11-18  
-**Stages Completed**: TL-01, TL-02, TL-03  
+**Epic**: EP25 - Personalised Butler ("Alfred-style дворецкий")
+**Developer**: Auto (AI Assistant)
+**Date**: 2025-11-18
+**Stages Completed**: TL-01, TL-02, TL-03
 **Status**: ✅ Completed
 
 ---
@@ -121,7 +121,7 @@ All stages completed with 100% type coverage, comprehensive tests (≥90% covera
 
 ### Technical Decisions
 
-1. **Token Limits**: 
+1. **Token Limits**:
    - Total: 2000 tokens
    - Persona: ≤200 tokens
    - Memory: ≤800 tokens
@@ -153,27 +153,27 @@ All stages completed with 100% type coverage, comprehensive tests (≥90% covera
 ## Technical Decisions & Rationale
 
 ### 1. Immutable Value Objects
-**Decision**: All domain value objects use `frozen=True`  
+**Decision**: All domain value objects use `frozen=True`
 **Rationale**: Prevents accidental mutations, ensures thread safety, aligns with DDD principles
 
 ### 2. Auto-Creation of Default Profiles
-**Decision**: Repository auto-creates default profile on first access  
+**Decision**: Repository auto-creates default profile on first access
 **Rationale**: Simplifies use case logic, ensures all users have profiles, reduces boilerplate
 
 ### 3. Inline Memory Compression
-**Decision**: Compress memory inline when threshold exceeded (>50 events)  
+**Decision**: Compress memory inline when threshold exceeded (>50 events)
 **Rationale**: Avoids unbounded growth, keeps recent context available, simpler than background worker for MVP
 
 ### 4. Token Estimation Heuristic
-**Decision**: Use `len(prompt) // 4` for token estimation  
+**Decision**: Use `len(prompt) // 4` for token estimation
 **Rationale**: Simple, fast, sufficient for limit enforcement (actual tokenization would require LLM API call)
 
 ### 5. Chronological Event Ordering
-**Decision**: Return events oldest-first in `get_recent_events()`  
+**Decision**: Return events oldest-first in `get_recent_events()`
 **Rationale**: Natural conversation flow, easier to format for prompts, matches user expectation
 
 ### 6. Defensive None Handling
-**Decision**: Check for None in `load_profile()` even though repository auto-creates  
+**Decision**: Check for None in `load_profile()` even though repository auto-creates
 **Rationale**: Type safety, defensive programming, handles edge cases if repository behavior changes
 
 ---
@@ -203,15 +203,15 @@ All stages completed with 100% type coverage, comprehensive tests (≥90% covera
 ## Issues & Resolutions
 
 ### Issue 1: Type Checking for AsyncIOMotorClient
-**Problem**: mypy strict mode requires type parameters for generic types  
+**Problem**: mypy strict mode requires type parameters for generic types
 **Resolution**: Added `# type: ignore[type-arg]` comments (consistent with existing codebase pattern)
 
 ### Issue 2: Test Coverage for Truncation Logic
-**Problem**: Truncation path (lines 138-154) not fully covered  
+**Problem**: Truncation path (lines 138-154) not fully covered
 **Resolution**: Test exists but truncation threshold hard to trigger; 94% coverage acceptable (exceeds 80% requirement)
 
 ### Issue 3: MongoDB Authentication in Tests
-**Problem**: Integration tests require MongoDB authentication  
+**Problem**: Integration tests require MongoDB authentication
 **Resolution**: Tests use `real_mongodb` fixture; authentication handled by test environment setup
 
 ---
@@ -239,7 +239,7 @@ All stages completed with 100% type coverage, comprehensive tests (≥90% covera
 pytest tests/unit/domain/personalization/ -v --cov=src/domain/personalization
 # Result: 38 passed, 100% coverage
 
-# Application layer  
+# Application layer
 pytest tests/unit/application/personalization/ -v --cov=src/application/personalization
 # Result: 17 passed, 94.12% coverage
 
@@ -260,6 +260,5 @@ pytest tests/integration/infrastructure/personalization/ -v
 
 ---
 
-**Status**: ✅ All stages completed successfully  
+**Status**: ✅ All stages completed successfully
 **Ready for**: TL-04 (Personalized Reply Use Case)
-

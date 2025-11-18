@@ -377,4 +377,3 @@ class PersonalizedReplyUseCase:
             # Don't fail the whole request on compression failure
             # Return original profile
             return profile
-

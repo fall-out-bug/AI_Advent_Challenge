@@ -68,4 +68,3 @@ async def test_execute_with_zero_memory(use_case, mock_memory_repo):
 
     assert output.success is True
     assert output.memory_deleted_count == 0
-

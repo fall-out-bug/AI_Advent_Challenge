@@ -822,7 +822,7 @@ async def get_channel_digest_by_name(
 
     # Get channel title from existing channel document
     channel_title = existing.get("title") if existing else None
-    
+
     # Generate summary - ensure we pass the actual filtered posts
     summary = await _generate_summary(
         normalized_posts,
@@ -952,7 +952,7 @@ async def get_channel_digest(user_id: int, hours: int = 24) -> Dict[str, Any]:
             normalized_posts = await _normalize_post_dates(posts)
             # Get channel title from channel document
             channel_title = channel.get("title") if channel else None
-            
+
             summary = await _generate_summary(
                 normalized_posts,
                 settings.digest_summary_sentences,

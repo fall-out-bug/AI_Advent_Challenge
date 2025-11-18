@@ -172,4 +172,3 @@ Profile not found for user_id: 123
 
 - Epic 25 Documentation: `docs/specs/epic_25/`
 - Personalization Service: `src/application/personalization/`
-

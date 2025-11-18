@@ -258,4 +258,3 @@ async def test_compress_memory_handles_llm_failure(
     # Request should still succeed
     assert output.used_persona is True
     assert output.reply == "Good day, sir"
-

@@ -1,6 +1,6 @@
 # Automatic Service Configuration Guide
 
-**Epic**: EP25 - Personalised Butler  
+**Epic**: EP25 - Personalised Butler
 **Purpose**: Zero-configuration setup using Docker service discovery
 
 ---
@@ -58,14 +58,14 @@ Use **simple defaults** that match Docker service names:
 environment:
   # MongoDB: Use service name, credentials from shared infra
   - MONGODB_URL=${MONGODB_URL:-mongodb://shared-mongo:27017/butler?authSource=admin}
-  
+
   # LLM: Use service name
   - LLM_URL=${LLM_URL:-http://llm-api:8000}
-  
+
   # Whisper: Use service name
   - WHISPER_HOST=${WHISPER_HOST:-whisper-stt}
   - WHISPER_PORT=${WHISPER_PORT:-8005}
-  
+
   # Redis: Use service name
   - VOICE_REDIS_HOST=${VOICE_REDIS_HOST:-shared-redis}
 ```
@@ -87,10 +87,10 @@ environment:
 
 ## Benefits
 
-✅ **Zero Configuration**: Works out of the box with `make butler-up`  
-✅ **Docker Native**: Uses Docker service discovery  
-✅ **Override Friendly**: Can still override via `.env` or environment  
-✅ **Network Aware**: Automatically works in Docker networks  
+✅ **Zero Configuration**: Works out of the box with `make butler-up`
+✅ **Docker Native**: Uses Docker service discovery
+✅ **Override Friendly**: Can still override via `.env` or environment
+✅ **Network Aware**: Automatically works in Docker networks
 ✅ **Local Dev**: Can override for local development if needed
 
 ---
@@ -145,6 +145,5 @@ docker-compose -f docker-compose.butler.yml up -d \
 
 ---
 
-**Status**: ✅ Implemented  
+**Status**: ✅ Implemented
 **Result**: Zero-configuration deployment using Docker service discovery
-

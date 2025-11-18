@@ -328,4 +328,3 @@ JSON:"""
             Basic summary string.
         """
         return f"User discussed various topics in {len(events)} messages."
-

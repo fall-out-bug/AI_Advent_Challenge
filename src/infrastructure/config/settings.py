@@ -459,7 +459,7 @@ class Settings(BaseSettings):
         default=None,
         description="Redis password for voice command store (reads from VOICE_REDIS_PASSWORD or REDIS_PASSWORD env var)",
     )
-    
+
     @field_validator("voice_redis_password", mode="before")
     @classmethod
     def validate_voice_redis_password(cls, v: str | None) -> str | None:

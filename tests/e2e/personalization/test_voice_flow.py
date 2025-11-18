@@ -54,4 +54,3 @@ async def test_voice_personalized_reply_flow(
     user_event = next((e for e in events if e["role"] == "user"), None)
     assert user_event is not None
     assert user_event["content"] == "Привет, как дела?"
-

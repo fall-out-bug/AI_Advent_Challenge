@@ -1,10 +1,10 @@
 # Stage TL-06: Admin Tools Only (No Public Commands)
 
-**Epic**: EP25 - Personalised Butler  
-**Stage**: TL-06  
-**Duration**: 1 day  
-**Owner**: Dev C  
-**Dependencies**: TL-05  
+**Epic**: EP25 - Personalised Butler
+**Stage**: TL-06
+**Duration**: 1 day
+**Owner**: Dev C
+**Dependencies**: TL-05
 **Status**: Pending
 
 ---
@@ -95,10 +95,10 @@ console = Console()
 @click.group()
 def cli():
     """Admin CLI for user profiles and memory.
-    
+
     Purpose:
         Manage personalization settings and memory for users.
-    
+
     Example:
         python scripts/tools/profile_admin.py list
     """
@@ -108,25 +108,25 @@ def cli():
 @cli.command()
 def list():
     """List all user profiles.
-    
+
     Purpose:
         Display summary of all user profiles in system.
-    
+
     Example:
         python scripts/tools/profile_admin.py list
     """
     async def _list():
         settings = get_settings()
         client = AsyncIOMotorClient(settings.mongodb_url)
-        
+
         try:
             db = client[settings.db_name]
             profiles = await db.user_profiles.find().to_list(length=1000)
-            
+
             if not profiles:
                 console.print("[yellow]No profiles found[/yellow]")
                 return
-            
+
             # Create table
             table = Table(title="User Profiles")
             table.add_column("User ID", style="cyan")
@@ -134,7 +134,7 @@ def list():
             table.add_column("Language", style="blue")
             table.add_column("Tone", style="magenta")
             table.add_column("Has Summary", style="yellow")
-            
+
             for profile in profiles:
                 table.add_row(
                     profile["user_id"],
@@ -143,16 +143,16 @@ def list():
                     profile["tone"],
                     "✓" if profile.get("memory_summary") else "✗",
                 )
-            
+
             console.print(table)
             console.print(f"\n[green]Total profiles: {len(profiles)}[/green]")
-            
+
         except Exception as e:
             console.print(f"[red]Error: {str(e)}[/red]")
             logger.error("Failed to list profiles", extra={"error": str(e)})
         finally:
             client.close()
-    
+
     asyncio.run(_list())
 
 
@@ -160,53 +160,53 @@ def list():
 @click.argument("user_id")
 def show(user_id):
     """Show profile and memory stats for user.
-    
+
     Purpose:
         Display detailed information about user's profile and memory.
-    
+
     Args:
         user_id: User identifier.
-    
+
     Example:
         python scripts/tools/profile_admin.py show 123456789
     """
     async def _show():
         settings = get_settings()
         client = AsyncIOMotorClient(settings.mongodb_url)
-        
+
         try:
             db = client[settings.db_name]
-            
+
             # Get profile
             profile = await db.user_profiles.find_one({"user_id": user_id})
-            
+
             if not profile:
                 console.print(f"[red]Profile not found for user_id: {user_id}[/red]")
                 return
-            
+
             # Get memory stats
             event_count = await db.user_memory.count_documents({"user_id": user_id})
-            
+
             # Get recent events
             recent_events = await db.user_memory.find(
                 {"user_id": user_id}
             ).sort("created_at", -1).limit(5).to_list(length=5)
-            
+
             # Display profile
             console.print(f"\n[bold cyan]Profile for user_id: {user_id}[/bold cyan]")
             console.print(f"Persona: [green]{profile['persona']}[/green]")
             console.print(f"Language: [blue]{profile['language']}[/blue]")
             console.print(f"Tone: [magenta]{profile['tone']}[/magenta]")
             console.print(f"Preferred topics: {', '.join(profile.get('preferred_topics', []))}")
-            
+
             if profile.get("memory_summary"):
                 console.print(f"\n[bold]Memory Summary:[/bold]")
                 console.print(f"{profile['memory_summary'][:200]}...")
-            
+
             # Display memory stats
             console.print(f"\n[bold]Memory Stats:[/bold]")
             console.print(f"Total events: [yellow]{event_count}[/yellow]")
-            
+
             if recent_events:
                 console.print(f"\n[bold]Recent Events:[/bold]")
                 for event in recent_events:
@@ -214,7 +214,7 @@ def show(user_id):
                     content = event["content"][:100]
                     created_at = event["created_at"]
                     console.print(f"  [{role}] {content}... ({created_at})")
-            
+
         except Exception as e:
             console.print(f"[red]Error: {str(e)}[/red]")
             logger.error(
@@ -223,7 +223,7 @@ def show(user_id):
             )
         finally:
             client.close()
-    
+
     asyncio.run(_show())
 
 
@@ -232,21 +232,21 @@ def show(user_id):
 @click.confirmation_option(prompt="Are you sure you want to reset this user?")
 def reset(user_id):
     """Reset profile and memory for user.
-    
+
     Purpose:
         Delete all memory and reset profile to defaults.
         Requires confirmation.
-    
+
     Args:
         user_id: User identifier.
-    
+
     Example:
         python scripts/tools/profile_admin.py reset 123456789
     """
     async def _reset():
         settings = get_settings()
         client = AsyncIOMotorClient(settings.mongodb_url)
-        
+
         try:
             # Use reset use case
             from src.infrastructure.personalization.profile_repository import (
@@ -259,25 +259,25 @@ def reset(user_id):
                 ResetPersonalizationUseCase
             )
             from src.application.personalization.dtos import ResetPersonalizationInput
-            
+
             profile_repo = MongoUserProfileRepository(client, settings.db_name)
             memory_repo = MongoUserMemoryRepository(client, settings.db_name)
-            
+
             reset_use_case = ResetPersonalizationUseCase(
                 profile_repo=profile_repo,
                 memory_repo=memory_repo,
             )
-            
+
             input_data = ResetPersonalizationInput(user_id=user_id)
             output = await reset_use_case.execute(input_data)
-            
+
             if output.success:
                 console.print(f"[green]✓ Reset complete for user_id: {user_id}[/green]")
                 console.print(f"  Profile reset: {output.profile_reset}")
                 console.print(f"  Memory deleted: {output.memory_deleted_count} events")
             else:
                 console.print(f"[red]✗ Reset failed for user_id: {user_id}[/red]")
-            
+
         except Exception as e:
             console.print(f"[red]Error: {str(e)}[/red]")
             logger.error(
@@ -286,7 +286,7 @@ def reset(user_id):
             )
         finally:
             client.close()
-    
+
     asyncio.run(_reset())
 
 
@@ -297,33 +297,33 @@ def reset(user_id):
 @click.option("--language", help="Update language (ru/en)")
 def update(user_id, persona, tone, language):
     """Update profile settings for user.
-    
+
     Purpose:
         Modify profile settings without affecting memory.
-    
+
     Args:
         user_id: User identifier.
         persona: New persona name (optional).
         tone: New tone (optional).
         language: New language (optional).
-    
+
     Example:
         python scripts/tools/profile_admin.py update 123 --tone formal
     """
     async def _update():
         settings = get_settings()
         client = AsyncIOMotorClient(settings.mongodb_url)
-        
+
         try:
             db = client[settings.db_name]
-            
+
             # Get current profile
             profile_doc = await db.user_profiles.find_one({"user_id": user_id})
-            
+
             if not profile_doc:
                 console.print(f"[red]Profile not found for user_id: {user_id}[/red]")
                 return
-            
+
             # Build update
             updates = {}
             if persona:
@@ -332,25 +332,25 @@ def update(user_id, persona, tone, language):
                 updates["tone"] = tone
             if language:
                 updates["language"] = language
-            
+
             if not updates:
                 console.print("[yellow]No updates specified[/yellow]")
                 return
-            
+
             # Update profile
             from datetime import datetime
             updates["updated_at"] = datetime.utcnow()
-            
+
             await db.user_profiles.update_one(
                 {"user_id": user_id},
                 {"$set": updates}
             )
-            
+
             console.print(f"[green]✓ Profile updated for user_id: {user_id}[/green]")
             for key, value in updates.items():
                 if key != "updated_at":
                     console.print(f"  {key}: {value}")
-            
+
         except Exception as e:
             console.print(f"[red]Error: {str(e)}[/red]")
             logger.error(
@@ -359,7 +359,7 @@ def update(user_id, persona, tone, language):
             )
         finally:
             client.close()
-    
+
     asyncio.run(_update())
 
 
@@ -603,7 +603,7 @@ def test_list_command(seed_test_data):
     """Test list command."""
     runner = CliRunner()
     result = runner.invoke(cli, ["list"])
-    
+
     assert result.exit_code == 0
     assert "test_123" in result.output
     assert "Alfred-style дворецкий" in result.output
@@ -613,7 +613,7 @@ def test_show_command(seed_test_data):
     """Test show command."""
     runner = CliRunner()
     result = runner.invoke(cli, ["show", "test_123"])
-    
+
     assert result.exit_code == 0
     assert "test_123" in result.output
     assert "witty" in result.output
@@ -623,7 +623,7 @@ def test_reset_command_with_confirmation(seed_test_data):
     """Test reset command with confirmation."""
     runner = CliRunner()
     result = runner.invoke(cli, ["reset", "test_123"], input="y\n")
-    
+
     assert result.exit_code == 0
     assert "Reset complete" in result.output
 
@@ -632,7 +632,7 @@ def test_update_command(seed_test_data):
     """Test update command."""
     runner = CliRunner()
     result = runner.invoke(cli, ["update", "test_123", "--tone", "formal"])
-    
+
     assert result.exit_code == 0
     assert "Profile updated" in result.output
 ```
@@ -689,7 +689,6 @@ After completion:
 
 ---
 
-**Status**: Pending  
-**Estimated Effort**: 1 day  
+**Status**: Pending
+**Estimated Effort**: 1 day
 **Priority**: Medium
-

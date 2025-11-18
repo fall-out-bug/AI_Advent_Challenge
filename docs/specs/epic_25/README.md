@@ -203,8 +203,8 @@ Butler:
 **Truncation**: If prompt >2000 tokens → keep summary + last 5 events
 
 ## Status
-**Status**: ✅ **COMPLETED & DEPLOYED**  
-**Completion Date**: 2025-11-18  
+**Status**: ✅ **COMPLETED & DEPLOYED**
+**Completion Date**: 2025-11-18
 **Tech Lead**: Approved and signed off
 
 ## Implementation Stages
@@ -270,7 +270,6 @@ Butler:
 
 ---
 
-**README Version**: 2.0  
-**Last Updated**: 2025-11-18  
+**README Version**: 2.0
+**Last Updated**: 2025-11-18
 **Status**: ✅ Epic 25 Complete - All stages delivered, tested, and deployed
-

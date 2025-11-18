@@ -1,6 +1,6 @@
 # Epic 25 Deployment Status
 
-**Date**: 2025-11-18  
+**Date**: 2025-11-18
 **Status**: ⚠️ **READY FOR DEPLOYMENT** (MongoDB credentials needed)
 
 ---
@@ -184,13 +184,13 @@ poetry run python -c "from src.infrastructure.config.settings import get_setting
 
 ## Current Status
 
-✅ **Code**: Ready  
-✅ **Configuration**: Feature flag default = True  
-✅ **Alerts**: Configured  
-✅ **Metrics**: Implemented  
-⚠️ **MongoDB**: Needs credentials setup  
-⚠️ **Indexes**: Need to run migration  
-⏳ **Deployment**: Pending MongoDB setup  
+✅ **Code**: Ready
+✅ **Configuration**: Feature flag default = True
+✅ **Alerts**: Configured
+✅ **Metrics**: Implemented
+⚠️ **MongoDB**: Needs credentials setup
+⚠️ **Indexes**: Need to run migration
+⏳ **Deployment**: Pending MongoDB setup
 
 ---
 
@@ -204,6 +204,5 @@ poetry run python -c "from src.infrastructure.config.settings import get_setting
 
 ---
 
-**Ready for**: Live deployment after MongoDB setup  
+**Ready for**: Live deployment after MongoDB setup
 **Support**: See `DEPLOYMENT_CHECKLIST.md` for detailed instructions
-

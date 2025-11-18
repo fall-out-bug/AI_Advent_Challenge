@@ -1,10 +1,10 @@
 # Stage TL-05: Telegram Bot Integration
 
-**Epic**: EP25 - Personalised Butler  
-**Stage**: TL-05  
-**Duration**: 2 days  
-**Owner**: Dev C  
-**Dependencies**: TL-04  
+**Epic**: EP25 - Personalised Butler
+**Stage**: TL-05
+**Duration**: 2 days
+**Owner**: Dev C
+**Dependencies**: TL-04
 **Status**: Pending
 
 ---
@@ -60,7 +60,7 @@ tests/integration/bot/
 ```python
 class Settings(BaseSettings):
     # ... existing settings ...
-    
+
     # Personalization settings
     personalization_enabled: bool = Field(
         default=False,  # Opt-in for gradual rollout
@@ -115,32 +115,32 @@ def create_personalized_use_cases(
     llm_client: "LLMClient",
 ) -> Tuple[PersonalizedReplyUseCase, ResetPersonalizationUseCase]:
     """Create personalization use cases with dependencies.
-    
+
     Purpose:
         Factory function for dependency injection.
         Creates all required repositories, services, and use cases.
-    
+
     Args:
         settings: Application settings.
         mongo_client: MongoDB async client.
         llm_client: LLM client for generation.
-    
+
     Returns:
         Tuple of (PersonalizedReplyUseCase, ResetPersonalizationUseCase).
-    
+
     Example:
         >>> from motor.motor_asyncio import AsyncIOMotorClient
         >>> client = AsyncIOMotorClient("mongodb://localhost")
         >>> reply_uc, reset_uc = create_personalized_use_cases(
         ...     settings, client, llm_client
         ... )
-    
+
     Raises:
         Exception: If initialization fails.
     """
     try:
         logger.info("Creating personalization use cases...")
-        
+
         # Create repositories
         profile_repo = MongoUserProfileRepository(
             mongo_client, settings.db_name
@@ -148,14 +148,14 @@ def create_personalized_use_cases(
         memory_repo = MongoUserMemoryRepository(
             mongo_client, settings.db_name
         )
-        
+
         logger.info("Repositories created")
-        
+
         # Create service
         personalization_service = PersonalizationServiceImpl(profile_repo)
-        
+
         logger.info("PersonalizationService created")
-        
+
         # Create use cases
         personalized_reply_use_case = PersonalizedReplyUseCase(
             personalization_service=personalization_service,
@@ -163,16 +163,16 @@ def create_personalized_use_cases(
             profile_repo=profile_repo,
             llm_client=llm_client,
         )
-        
+
         reset_use_case = ResetPersonalizationUseCase(
             profile_repo=profile_repo,
             memory_repo=memory_repo,
         )
-        
+
         logger.info("Personalization use cases created successfully")
-        
+
         return personalized_reply_use_case, reset_use_case
-        
+
     except Exception as e:
         logger.error(
             "Failed to create personalization use cases",
@@ -207,18 +207,18 @@ def setup_butler_handler(
     personalized_reply_use_case: Optional["PersonalizedReplyUseCase"] = None,
 ) -> Router:
     """Setup butler handler with orchestrator dependency.
-    
+
     Args:
         orchestrator: ButlerOrchestrator instance for message processing.
         personalized_reply_use_case: Optional personalized reply use case.
-    
+
     Returns:
         Configured aiogram Router.
     """
     global _orchestrator, _personalized_reply_use_case
     _orchestrator = orchestrator
     _personalized_reply_use_case = personalized_reply_use_case
-    
+
     router = Router()
     router.message.register(handle_any_message, F.text)
     return router
@@ -226,11 +226,11 @@ def setup_butler_handler(
 
 async def handle_any_message(message: Message, state: FSMContext | None = None) -> None:
     """Handle any text message using ButlerOrchestrator or PersonalizedReplyUseCase.
-    
+
     Purpose:
         Main entry point for processing user messages.
         Routes through personalization if enabled, otherwise uses Butler.
-    
+
     Args:
         message: Telegram message object.
         state: Optional FSM context for state management.
@@ -238,36 +238,36 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
     if not message.text or not message.from_user:
         logger.warning("Received message without text or user")
         return
-    
+
     if _orchestrator is None:
         logger.error("ButlerOrchestrator not initialized")
         await _handle_error(message, RuntimeError("Orchestrator not initialized"))
         return
-    
+
     user_id = str(message.from_user.id)
     text = message.text
     settings = get_settings()
-    
+
     # Check if personalization is enabled and use case is available
     if settings.personalization_enabled and _personalized_reply_use_case is not None:
         logger.info(
             "Routing through personalized reply",
             extra={"user_id": user_id, "text_preview": text[:50]}
         )
-        
+
         try:
             from src.application.personalization.dtos import PersonalizedReplyInput
-            
+
             input_data = PersonalizedReplyInput(
                 user_id=user_id,
                 text=text,
                 source="text"
             )
-            
+
             output = await _personalized_reply_use_case.execute(input_data)
-            
+
             await message.answer(output.reply)
-            
+
             logger.info(
                 "Personalized reply sent",
                 extra={
@@ -278,7 +278,7 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                 }
             )
             return
-            
+
         except Exception as e:
             logger.error(
                 "Personalized reply failed, falling back to Butler",
@@ -286,10 +286,10 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                 exc_info=True,
             )
             # Fall through to Butler fallback
-    
+
     # Fallback to Butler orchestrator
     session_id = f"telegram_{user_id}_{message.message_id}"
-    
+
     # ... rest of existing Butler handler logic ...
 ```
 
@@ -318,18 +318,18 @@ def setup_voice_handler(
     personalized_reply_use_case: Optional["PersonalizedReplyUseCase"] = None,
 ) -> Router:
     """Setup voice handler with use case dependencies.
-    
+
     Args:
         process_voice_command_use_case: Use case for voice processing.
         personalized_reply_use_case: Optional personalized reply use case.
-    
+
     Returns:
         Configured aiogram Router.
     """
     global _process_voice_command_use_case, _personalized_reply_use_case
     _process_voice_command_use_case = process_voice_command_use_case
     _personalized_reply_use_case = personalized_reply_use_case
-    
+
     router = Router()
     router.message.register(handle_voice_message, F.content_type.in_({"voice", "audio"}))
     return router
@@ -337,7 +337,7 @@ def setup_voice_handler(
 
 async def handle_voice_message(message: Message) -> None:
     """Handle voice/audio messages with STT and personalization.
-    
+
     Purpose:
         Process voice messages through:
         1. STT (Whisper) for transcription
@@ -345,34 +345,34 @@ async def handle_voice_message(message: Message) -> None:
         3. Send transcription + reply to user
     """
     # ... existing STT logic ...
-    
+
     # After transcription:
     user_id = str(message.from_user.id)
     settings = get_settings()
-    
+
     if settings.personalization_enabled and _personalized_reply_use_case is not None:
         logger.info(
             "Routing voice transcription through personalized reply",
             extra={"user_id": user_id, "transcription": transcription.text[:50]}
         )
-        
+
         try:
             from src.application.personalization.dtos import PersonalizedReplyInput
-            
+
             input_data = PersonalizedReplyInput(
                 user_id=user_id,
                 text=transcription.text,
                 source="voice"
             )
-            
+
             output = await _personalized_reply_use_case.execute(input_data)
-            
+
             # Send transcription + personalized reply
             await message.answer(
                 f"🎤 Распознала: «{transcription.text[:500]}{'...' if len(transcription.text) > 500 else ''}»\n\n"
                 f"{output.reply}"
             )
-            
+
             logger.info(
                 "Voice command processed with personalization",
                 extra={
@@ -381,7 +381,7 @@ async def handle_voice_message(message: Message) -> None:
                 }
             )
             return
-            
+
         except Exception as e:
             logger.error(
                 "Personalized voice reply failed",
@@ -389,7 +389,7 @@ async def handle_voice_message(message: Message) -> None:
                 exc_info=True,
             )
             # Fall through to fallback
-    
+
     # Fallback: send transcription only
     await message.answer(f"🎤 Распознала: «{transcription.text}»")
 ```
@@ -416,7 +416,7 @@ class ButlerBot:
         mongo_client: AsyncIOMotorClient,
     ) -> None:
         """Initialize Butler bot.
-        
+
         Args:
             token: Telegram bot token.
             orchestrator: ButlerOrchestrator instance (injected via DI).
@@ -430,9 +430,9 @@ class ButlerBot:
         self.orchestrator = orchestrator
         self._setup_handlers(llm_client, mongo_client)
         self.dp.include_router(self.router)
-        
+
         # ... rest of initialization ...
-    
+
     def _setup_handlers(
         self,
         llm_client: "LLMClient",
@@ -440,9 +440,9 @@ class ButlerBot:
     ) -> None:
         """Setup all bot handlers with personalization support."""
         from src.infrastructure.config.settings import get_settings
-        
+
         settings = get_settings()
-        
+
         # Create personalization use cases if enabled
         personalized_reply_use_case = None
         if settings.personalization_enabled:
@@ -451,13 +451,13 @@ class ButlerBot:
                 from src.infrastructure.personalization.factory import (
                     create_personalized_use_cases
                 )
-                
+
                 personalized_reply_use_case, reset_use_case = (
                     create_personalized_use_cases(
                         settings, mongo_client, llm_client
                     )
                 )
-                
+
                 logger.info("Personalization use cases created")
             except Exception as e:
                 logger.error(
@@ -467,9 +467,9 @@ class ButlerBot:
                 )
         else:
             logger.info("Personalization disabled")
-        
+
         # ... existing command handlers ...
-        
+
         # Include butler handler with personalization
         butler_router = setup_butler_handler(
             self.orchestrator,
@@ -504,7 +504,7 @@ async def test_text_message_with_personalization_enabled(mocker):
         "src.infrastructure.config.settings.get_settings",
         return_value=MagicMock(personalization_enabled=True)
     )
-    
+
     # Mock use case
     mock_use_case = MagicMock()
     from src.application.personalization.dtos import PersonalizedReplyOutput
@@ -516,13 +516,13 @@ async def test_text_message_with_personalization_enabled(mocker):
             compressed=False,
         )
     )
-    
+
     # Setup handler
     from src.presentation.bot.handlers.butler_handler import (
         setup_butler_handler,
         handle_any_message,
     )
-    
+
     # ... test implementation ...
 
 
@@ -533,7 +533,7 @@ async def test_text_message_with_personalization_disabled(mocker):
         "src.infrastructure.config.settings.get_settings",
         return_value=MagicMock(personalization_enabled=False)
     )
-    
+
     # ... test implementation ...
 ```
 
@@ -644,7 +644,6 @@ After completion:
 
 ---
 
-**Status**: Pending  
-**Estimated Effort**: 2 days  
+**Status**: Pending
+**Estimated Effort**: 2 days
 **Priority**: High
-

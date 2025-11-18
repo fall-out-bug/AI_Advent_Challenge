@@ -60,4 +60,3 @@ async def test_reset_with_no_memory(reset_use_case, profile_repo):
     # Verify reset succeeded
     assert output.success is True
     assert output.memory_deleted_count == 0
-

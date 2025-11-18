@@ -111,4 +111,3 @@ async def test_personalization_profile_auto_creation(
     assert profile_after["persona"] == "Alfred-style дворецкий"
     assert profile_after["language"] == "ru"
     assert output.used_persona is True
-

@@ -1,8 +1,8 @@
 # Epic 25 Final Approval: Personalised Butler
 
-**Epic**: EP25 - Personalised Butler ("Alfred-style дворецкий")  
-**Reviewer**: Reviewer (AI Assistant)  
-**Approval Date**: 2025-11-18  
+**Epic**: EP25 - Personalised Butler ("Alfred-style дворецкий")
+**Reviewer**: Reviewer (AI Assistant)
+**Approval Date**: 2025-11-18
 **Status**: ✅ **APPROVED**
 
 ---
@@ -17,7 +17,7 @@ Epic 25 has been **fully reviewed and approved** for production deployment. All 
 
 ### ✅ Blocker 1: Prometheus Alerts - RESOLVED
 
-**Location**: `prometheus/alerts.yml`  
+**Location**: `prometheus/alerts.yml`
 **Status**: ✅ **VERIFIED**
 
 **Alerts Implemented**:
@@ -46,7 +46,7 @@ $ grep -r "PersonalizationHighErrorRate\|MemoryCompressionFailures" prometheus/a
 
 ### ✅ Blocker 2: Feature Flag Default - RESOLVED
 
-**Location**: `src/infrastructure/config/settings.py:144`  
+**Location**: `src/infrastructure/config/settings.py:144`
 **Status**: ✅ **VERIFIED**
 
 **Change**:
@@ -135,15 +135,14 @@ personalization_enabled: bool = Field(
 
 ## Sign-Off
 
-**Reviewer**: Reviewer (AI Assistant)  
-**Date**: 2025-11-18  
+**Reviewer**: Reviewer (AI Assistant)
+**Date**: 2025-11-18
 **Status**: ✅ **APPROVED**
 
 **Final Verdict**: Epic 25 is **production-ready** and approved for deployment.
 
 ---
 
-**Approval Version**: 1.0  
-**Review Report**: `docs/specs/epic_25/REVIEW_REPORT.md`  
+**Approval Version**: 1.0
+**Review Report**: `docs/specs/epic_25/REVIEW_REPORT.md`
 **Fixes Document**: `docs/specs/epic_25/REVIEW_FIXES.md`
-

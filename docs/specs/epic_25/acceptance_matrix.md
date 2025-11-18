@@ -1,9 +1,9 @@
 # Epic 25 · Acceptance Matrix (Day 25 Personalised Butler)
 
-**Epic**: EP25 - Personalised Butler ("Alfred-style дворецкий")  
-**Owner**: Tech Lead  
-**Co-signer**: Analyst  
-**Version**: 1.0  
+**Epic**: EP25 - Personalised Butler ("Alfred-style дворецкий")
+**Owner**: Tech Lead
+**Co-signer**: Analyst
+**Version**: 1.0
 **Date**: 2025-11-18
 
 ---
@@ -95,11 +95,10 @@
 
 ## Review Sign-Off
 
-**Tech Lead**: ________________ (Date: ________)  
+**Tech Lead**: ________________ (Date: ________)
 **Analyst**: ________________ (Date: ________)
 
 ---
 
-**Matrix Version**: 1.0  
+**Matrix Version**: 1.0
 **Status**: Ready for TL-00 kickoff
-

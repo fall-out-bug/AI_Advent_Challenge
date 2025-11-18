@@ -1,9 +1,9 @@
 # Task 16 · Interest Extraction & Profile Enrichment
 
-**Epic**: EP25 - Personalised Butler  
-**Task**: Task 16 from Epic 25 Backlog  
-**Owner**: Dev A (Application) + Dev B (Infrastructure)  
-**Estimated Effort**: 2-3 days  
+**Epic**: EP25 - Personalised Butler
+**Task**: Task 16 from Epic 25 Backlog
+**Owner**: Dev A (Application) + Dev B (Infrastructure)
+**Estimated Effort**: 2-3 days
 **Date**: 2025-11-18
 
 ---
@@ -106,17 +106,17 @@ Save to Mongo via profile_repo
   ```python
   class InterestExtractionService:
       async def extract_interests(
-          self, 
-          events: List[UserMemoryEvent], 
+          self,
+          events: List[UserMemoryEvent],
           existing_topics: List[str]
       ) -> Tuple[str, List[str]]:
           """
           Extract summary and interests from conversation history.
-          
+
           Args:
               events: List of memory events to analyze.
               existing_topics: Current preferred_topics from profile.
-          
+
           Returns:
               Tuple of (summary_text, interests_list).
               interests_list is stable (3-7 items), no sensitive data.
@@ -137,10 +137,10 @@ Save to Mongo via profile_repo
   ```python
   def with_topics(self, topics: List[str]) -> "UserProfile":
       """Create new profile with updated preferred_topics.
-      
+
       Args:
           topics: New list of preferred topics (3-7 items).
-      
+
       Returns:
           New UserProfile with updated topics and timestamp.
       """
@@ -154,24 +154,24 @@ Save to Mongo via profile_repo
     Analyze the following conversation history and extract:
     1. Summary: Brief summary of what was discussed (max 300 tokens)
     2. Interests: List of 3-7 recurring topics, technologies, or domains the user cares about
-    
+
     Rules for interests:
     - Focus on technologies (Python, Docker), concepts (RAG, Clean Architecture), domains (ML, Telegram bots)
     - Use clear, canonical names (e.g., "Python" not "python coding")
     - Exclude sensitive data (API keys, passwords, personal info, file paths)
     - Prefer stability: if user mentioned topic before, keep it
-    
+
     Output format (JSON):
     {
       "summary": "User discussed Python development and asked about...",
       "interests": ["Python", "Docker", "Clean Architecture", "Telegram bots"]
     }
-    
+
     Conversation history:
     {events}
-    
+
     Existing interests: {existing_topics}
-    
+
     JSON output:
   ```
 
@@ -286,26 +286,26 @@ Save to Mongo via profile_repo
 
 ```python
 def _merge_interests(
-    existing: List[str], 
-    new: List[str], 
+    existing: List[str],
+    new: List[str],
     max_items: int = 7
 ) -> List[str]:
     """Merge new interests with existing, preserving stability.
-    
+
     Algorithm:
     1. Combine existing + new (deduplicate, case-insensitive)
     2. Rank by frequency (topics in both lists ranked higher)
     3. Keep top N (default 7)
     4. Preserve order: existing topics first, then new
-    
+
     Args:
         existing: Current preferred_topics from profile.
         new: Newly extracted topics from conversation.
         max_items: Maximum topics to keep (default 7).
-    
+
     Returns:
         Merged list of topics (max_items length).
-    
+
     Example:
         >>> existing = ["Python", "Docker"]
         >>> new = ["Python", "Clean Architecture", "Telegram bots"]
@@ -315,23 +315,23 @@ def _merge_interests(
     # Normalize: lowercase for comparison
     existing_normalized = {t.lower(): t for t in existing}
     new_normalized = {t.lower(): t for t in new}
-    
+
     # Priority: topics in both lists (confirmed interests)
     confirmed = []
     for key in existing_normalized:
         if key in new_normalized:
             confirmed.append(existing_normalized[key])
-    
+
     # Add remaining existing topics
     for topic in existing:
         if topic not in confirmed:
             confirmed.append(topic)
-    
+
     # Add new topics (if space remains)
     for topic in new:
         if topic not in confirmed and len(confirmed) < max_items:
             confirmed.append(topic)
-    
+
     return confirmed[:max_items]
 ```
 
@@ -348,10 +348,10 @@ SENSITIVE_PATTERNS = [
 
 def _contains_sensitive_data(text: str) -> bool:
     """Check if text contains sensitive data patterns.
-    
+
     Args:
         text: Topic candidate string.
-    
+
     Returns:
         True if sensitive data detected.
     """
@@ -475,7 +475,7 @@ INTEREST_EXTRACTION_LLM_TEMPERATURE=0.3  # Lower = more deterministic
 
 class PersonalizationSettings(BaseSettings):
     # ... existing settings ...
-    
+
     interest_extraction_enabled: bool = True
     interest_extraction_max_topics: int = Field(default=7, ge=3, le=10)
     interest_extraction_llm_temperature: float = Field(default=0.3, ge=0.0, le=1.0)
@@ -644,8 +644,7 @@ Add to `docs/operational/metrics.md`:
 
 ---
 
-**Spec Version**: 1.0  
-**Status**: Ready for implementation  
-**Estimated Effort**: 2-3 days  
+**Spec Version**: 1.0
+**Status**: Ready for implementation
+**Estimated Effort**: 2-3 days
 **Dependencies**: Epic 25 TL-01 to TL-07 complete
-

@@ -1,9 +1,9 @@
 # Stage TL-00: Scope Confirmation & Decisions
 
-**Epic**: EP25 - Personalised Butler  
-**Stage**: TL-00  
-**Duration**: 1 day  
-**Owner**: Tech Lead  
+**Epic**: EP25 - Personalised Butler
+**Stage**: TL-00
+**Duration**: 1 day
+**Owner**: Tech Lead
 **Status**: Ready
 
 ---
@@ -67,7 +67,7 @@ Butler: "Ах, вечный вопрос. Позвольте проверить 
   4. Update profile with summary
 - **Auto-Cleanup**: TTL index (90 days) for archived events
 
-**Rationale**: 
+**Rationale**:
 - 50 events = ~25 conversation turns, sufficient for context
 - Inline compression keeps system simple (no background worker needed initially)
 - 20 retained events maintain recent context
@@ -190,16 +190,16 @@ Butler: "Ах, вечный вопрос. Позвольте проверить 
 1. **Domain Layer**: Pure business logic, no external dependencies
    - Value objects: UserProfile, UserMemoryEvent, MemorySlice, PersonalizedPrompt
    - Protocols: Repository and service interfaces
-   
+
 2. **Application Layer**: Use cases and orchestration
    - Use cases: PersonalizedReplyUseCase, ResetPersonalizationUseCase
    - Services: PersonalizationServiceImpl
    - Templates: Prompt templates
-   
+
 3. **Infrastructure Layer**: External integrations
    - Repositories: MongoUserProfileRepository, MongoUserMemoryRepository
    - Metrics: Prometheus counters and histograms
-   
+
 4. **Presentation Layer**: API and bot handlers
    - Handlers: Updated message_handler, voice_handler
    - CLI: profile_admin.py
@@ -288,7 +288,6 @@ Butler: "Ах, вечный вопрос. Позвольте проверить 
 
 ---
 
-**Status**: ✅ Complete  
-**Sign-off**: Tech Lead  
+**Status**: ✅ Complete
+**Sign-off**: Tech Lead
 **Date**: 2025-11-18
-

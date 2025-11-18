@@ -1,7 +1,7 @@
 # Review Fixes: Epic 25 Blockers Resolution
 
-**Date**: 2025-11-18  
-**Epic**: EP25 - Personalised Butler  
+**Date**: 2025-11-18
+**Epic**: EP25 - Personalised Butler
 **Status**: ✅ **ALL BLOCKERS RESOLVED**
 
 ---
@@ -85,6 +85,5 @@ Both blockers from the review report have been resolved:
 
 ---
 
-**Status**: ✅ **ALL BLOCKERS RESOLVED**  
+**Status**: ✅ **ALL BLOCKERS RESOLVED**
 **Ready for**: Re-review and final approval
-

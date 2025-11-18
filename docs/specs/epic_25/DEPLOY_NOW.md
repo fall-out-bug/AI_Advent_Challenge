@@ -66,4 +66,3 @@ make butler-ps
 **Готово!** 🚀
 
 Подробности: `DEPLOYMENT_STATUS.md`
-

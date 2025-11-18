@@ -1,7 +1,7 @@
 # Epic 25 Stage Specifications
 
-**Epic**: EP25 - Personalised Butler  
-**Status**: Ready for Implementation  
+**Epic**: EP25 - Personalised Butler
+**Status**: Ready for Implementation
 **Created**: 2025-11-18
 
 ---
@@ -326,13 +326,12 @@ After TL-07 completion:
 
 ## Contact
 
-**Tech Lead**: cursor_tech_lead_v1  
-**Epic Owner**: Tech Lead  
+**Tech Lead**: cursor_tech_lead_v1
+**Epic Owner**: Tech Lead
 **Questions**: See `../README.md` for contact information
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2025-11-18  
+**Document Version**: 1.0
+**Last Updated**: 2025-11-18
 **Status**: Ready for Implementation
-

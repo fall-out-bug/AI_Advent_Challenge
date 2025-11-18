@@ -1,10 +1,10 @@
 # Stage TL-04: Personalized Reply Use Case
 
-**Epic**: EP25 - Personalised Butler  
-**Stage**: TL-04  
-**Duration**: 2 days  
-**Owner**: Dev A  
-**Dependencies**: TL-01, TL-02, TL-03  
+**Epic**: EP25 - Personalised Butler
+**Stage**: TL-04
+**Duration**: 2 days
+**Owner**: Dev A
+**Dependencies**: TL-01, TL-02, TL-03
 **Status**: Pending
 
 ---
@@ -71,15 +71,15 @@ from typing import Literal
 @dataclass(frozen=True)
 class PersonalizedReplyInput:
     """Input DTO for personalized reply use case.
-    
+
     Purpose:
         Encapsulates input data for generating personalized replies.
-    
+
     Attributes:
         user_id: User identifier (Telegram user ID).
         text: User message text to respond to.
         source: Message source ("text" or "voice").
-    
+
     Example:
         >>> input_data = PersonalizedReplyInput(
         ...     user_id="123",
@@ -87,7 +87,7 @@ class PersonalizedReplyInput:
         ...     source="text"
         ... )
     """
-    
+
     user_id: str
     text: str
     source: Literal["text", "voice"] = "text"
@@ -96,16 +96,16 @@ class PersonalizedReplyInput:
 @dataclass(frozen=True)
 class PersonalizedReplyOutput:
     """Output DTO for personalized reply use case.
-    
+
     Purpose:
         Encapsulates result of personalized reply generation.
-    
+
     Attributes:
         reply: Generated reply text from LLM.
         used_persona: Whether personalization was applied.
         memory_events_used: Number of memory events used for context.
         compressed: Whether memory was compressed during this request.
-    
+
     Example:
         >>> output = PersonalizedReplyOutput(
         ...     reply="Good day, sir",
@@ -114,7 +114,7 @@ class PersonalizedReplyOutput:
         ...     compressed=False
         ... )
     """
-    
+
     reply: str
     used_persona: bool
     memory_events_used: int
@@ -124,32 +124,32 @@ class PersonalizedReplyOutput:
 @dataclass(frozen=True)
 class ResetPersonalizationInput:
     """Input DTO for reset personalization use case.
-    
+
     Purpose:
         Encapsulates input for resetting user profile and memory.
-    
+
     Attributes:
         user_id: User identifier.
-    
+
     Example:
         >>> input_data = ResetPersonalizationInput(user_id="123")
     """
-    
+
     user_id: str
 
 
 @dataclass(frozen=True)
 class ResetPersonalizationOutput:
     """Output DTO for reset personalization use case.
-    
+
     Purpose:
         Encapsulates result of reset operation.
-    
+
     Attributes:
         success: Whether reset was successful.
         profile_reset: Whether profile was reset.
         memory_deleted_count: Number of memory events deleted.
-    
+
     Example:
         >>> output = ResetPersonalizationOutput(
         ...     success=True,
@@ -157,7 +157,7 @@ class ResetPersonalizationOutput:
         ...     memory_deleted_count=50
         ... )
     """
-    
+
     success: bool
     profile_reset: bool
     memory_deleted_count: int
@@ -214,7 +214,7 @@ MAX_CONTEXT_EVENTS = 20
 
 class LLMClient(Protocol):
     """Protocol for LLM client."""
-    
+
     async def generate(self, prompt: str) -> str:
         """Generate text from prompt."""
         ...
@@ -222,17 +222,17 @@ class LLMClient(Protocol):
 
 class PersonalizedReplyUseCase:
     """Use case for generating personalized replies.
-    
+
     Purpose:
         Orchestrates profile loading, memory management, prompt assembly,
         and LLM generation for personalized interactions.
-    
+
     Attributes:
         personalization_service: Service for profile and prompt operations.
         memory_repo: Repository for user memory.
         profile_repo: Repository for user profiles.
         llm_client: Client for LLM generation.
-    
+
     Example:
         >>> use_case = PersonalizedReplyUseCase(
         ...     personalization_service,
@@ -243,7 +243,7 @@ class PersonalizedReplyUseCase:
         >>> input_data = PersonalizedReplyInput(user_id="123", text="Hello")
         >>> output = await use_case.execute(input_data)
     """
-    
+
     def __init__(
         self,
         personalization_service: PersonalizationService,
@@ -252,7 +252,7 @@ class PersonalizedReplyUseCase:
         llm_client: LLMClient,
     ) -> None:
         """Initialize use case with dependencies.
-        
+
         Args:
             personalization_service: Service for personalization operations.
             memory_repo: Repository for user memory.
@@ -264,12 +264,12 @@ class PersonalizedReplyUseCase:
         self.profile_repo = profile_repo
         self.llm_client = llm_client
         logger.info("PersonalizedReplyUseCase initialized")
-    
+
     async def execute(
         self, input_data: PersonalizedReplyInput
     ) -> PersonalizedReplyOutput:
         """Execute personalized reply generation.
-        
+
         Purpose:
             Main orchestration method that:
             1. Loads profile (auto-create if missing)
@@ -278,13 +278,13 @@ class PersonalizedReplyUseCase:
             4. Builds personalized prompt
             5. Calls LLM
             6. Saves interaction to memory
-        
+
         Args:
             input_data: Input DTO with user_id, text, source.
-        
+
         Returns:
             PersonalizedReplyOutput with reply and metadata.
-        
+
         Example:
             >>> input_data = PersonalizedReplyInput("123", "Hello")
             >>> output = await use_case.execute(input_data)
@@ -293,16 +293,16 @@ class PersonalizedReplyUseCase:
         """
         try:
             start_time = time.time()
-            
+
             # 1. Load profile (auto-create if missing)
             profile = await self.personalization_service.load_profile(
                 input_data.user_id
             )
-            
+
             # 2. Check memory count and compress if needed
             event_count = await self.memory_repo.count_events(input_data.user_id)
             compressed = False
-            
+
             if event_count > MEMORY_CAP:
                 logger.info(
                     "Memory exceeds cap, triggering compression",
@@ -316,25 +316,25 @@ class PersonalizedReplyUseCase:
                 compressed = True
                 # Reload profile with updated summary
                 profile = await self.profile_repo.get(input_data.user_id)
-            
+
             # 3. Load recent memory
             recent_events = await self.memory_repo.get_recent_events(
                 input_data.user_id, limit=MAX_CONTEXT_EVENTS
             )
-            
+
             memory_slice = MemorySlice(
                 events=recent_events,
                 summary=profile.memory_summary,
                 total_events=event_count,
             )
-            
+
             # 4. Build personalized prompt
             prompt = await self.personalization_service.build_personalized_prompt(
                 profile=profile,
                 memory_slice=memory_slice,
                 new_message=input_data.text,
             )
-            
+
             logger.info(
                 "Built personalized prompt",
                 extra={
@@ -345,10 +345,10 @@ class PersonalizedReplyUseCase:
                     "source": input_data.source,
                 }
             )
-            
+
             # 5. Call LLM
             reply = await self.llm_client.generate(prompt.full_prompt)
-            
+
             # 6. Save interaction to memory
             user_event = UserMemoryEvent.create_user_event(
                 input_data.user_id, input_data.text
@@ -357,9 +357,9 @@ class PersonalizedReplyUseCase:
                 input_data.user_id, reply
             )
             await self.memory_repo.append_events([user_event, assistant_event])
-            
+
             elapsed = time.time() - start_time
-            
+
             logger.info(
                 "Personalized reply generated",
                 extra={
@@ -370,14 +370,14 @@ class PersonalizedReplyUseCase:
                     "elapsed_seconds": round(elapsed, 2),
                 }
             )
-            
+
             return PersonalizedReplyOutput(
                 reply=reply,
                 used_persona=True,
                 memory_events_used=len(recent_events),
                 compressed=compressed,
             )
-            
+
         except Exception as e:
             logger.error(
                 "Failed to generate personalized reply",
@@ -388,7 +388,7 @@ class PersonalizedReplyUseCase:
                 },
                 exc_info=True,
             )
-            
+
             # Graceful fallback
             return PersonalizedReplyOutput(
                 reply="Извините, временные технические проблемы. Попробуйте позже.",
@@ -396,57 +396,57 @@ class PersonalizedReplyUseCase:
                 memory_events_used=0,
                 compressed=False,
             )
-    
+
     async def _compress_memory(
         self, user_id: str, profile: "UserProfile"
     ) -> None:
         """Compress user memory inline.
-        
+
         Purpose:
             Summarize old events and keep only recent ones.
             Updates profile with summary.
-        
+
         Args:
             user_id: User identifier.
             profile: Current user profile.
         """
         start_time = time.time()
-        
+
         try:
             logger.info(
                 "Starting memory compression",
                 extra={"user_id": user_id}
             )
-            
+
             # Load all events for summarization
             all_events = await self.memory_repo.get_recent_events(
                 user_id, limit=1000
             )
-            
+
             # Build events text for LLM summarization
             events_text = "\n".join([
                 f"{e.role}: {e.content[:200]}" for e in all_events
             ])
-            
+
             # Summarize via LLM (simple implementation)
             summary_prompt = (
                 f"Summarise the following conversation history in Russian "
                 f"(max 300 tokens):\n\n{events_text}"
             )
             summary = await self.llm_client.generate(summary_prompt)
-            
+
             # Compress: keep last N events
             await self.memory_repo.compress(
                 user_id, summary, keep_last_n=KEEP_AFTER_COMPRESSION
             )
-            
+
             # Update profile with summary
             updated_profile = profile.with_summary(summary)
             await self.profile_repo.save(updated_profile)
-            
+
             elapsed = time.time() - start_time
             user_memory_compression_duration_seconds.observe(elapsed)
-            
+
             logger.info(
                 "Memory compressed successfully",
                 extra={
@@ -457,7 +457,7 @@ class PersonalizedReplyUseCase:
                     "elapsed_seconds": round(elapsed, 2),
                 }
             )
-            
+
         except Exception as e:
             logger.error(
                 "Memory compression failed",
@@ -541,7 +541,7 @@ async def test_execute_generates_reply(use_case, mock_personalization_service, m
     """Test successful reply generation."""
     profile = UserProfile.create_default_profile("123")
     mock_personalization_service.load_profile.return_value = profile
-    
+
     from src.domain.personalization.personalized_prompt import PersonalizedPrompt
     prompt = PersonalizedPrompt(
         persona_section="You are Alfred",
@@ -550,10 +550,10 @@ async def test_execute_generates_reply(use_case, mock_personalization_service, m
         full_prompt="You are Alfred\n\nUser: Hello\nButler:"
     )
     mock_personalization_service.build_personalized_prompt.return_value = prompt
-    
+
     input_data = PersonalizedReplyInput(user_id="123", text="Hello")
     output = await use_case.execute(input_data)
-    
+
     assert output.reply == "Good day, sir"
     assert output.used_persona is True
     mock_llm_client.generate.assert_called_once()
@@ -570,18 +570,18 @@ async def test_execute_compresses_memory_when_exceeds_cap(
     # Simulate 51 events (exceeds cap of 50)
     mock_memory_repo.count_events.return_value = 51
     mock_memory_repo.get_recent_events.return_value = []
-    
+
     profile = UserProfile.create_default_profile("123")
     mock_personalization_service.load_profile.return_value = profile
     mock_profile_repo.get.return_value = profile
-    
+
     from src.domain.personalization.personalized_prompt import PersonalizedPrompt
     prompt = PersonalizedPrompt("", "", "Hi", "Hi")
     mock_personalization_service.build_personalized_prompt.return_value = prompt
-    
+
     input_data = PersonalizedReplyInput(user_id="123", text="Hi")
     output = await use_case.execute(input_data)
-    
+
     # Verify compression was triggered
     assert output.compressed is True
     mock_memory_repo.compress.assert_called_once()
@@ -595,10 +595,10 @@ async def test_execute_handles_errors_gracefully(
     """Test graceful error handling."""
     # Simulate error
     mock_personalization_service.load_profile.side_effect = Exception("DB error")
-    
+
     input_data = PersonalizedReplyInput(user_id="123", text="Hello")
     output = await use_case.execute(input_data)
-    
+
     # Should return fallback message
     assert "Извините" in output.reply
     assert output.used_persona is False
@@ -635,28 +635,28 @@ logger = get_logger("reset_personalization_use_case")
 
 class ResetPersonalizationUseCase:
     """Use case for resetting user personalization.
-    
+
     Purpose:
         Reset user profile to defaults and delete all memory events.
         Used for "start fresh" functionality.
-    
+
     Attributes:
         profile_repo: Repository for user profiles.
         memory_repo: Repository for user memory.
-    
+
     Example:
         >>> use_case = ResetPersonalizationUseCase(profile_repo, memory_repo)
         >>> input_data = ResetPersonalizationInput(user_id="123")
         >>> output = await use_case.execute(input_data)
     """
-    
+
     def __init__(
         self,
         profile_repo: UserProfileRepository,
         memory_repo: UserMemoryRepository,
     ) -> None:
         """Initialize use case with repositories.
-        
+
         Args:
             profile_repo: Repository for user profiles.
             memory_repo: Repository for user memory.
@@ -664,21 +664,21 @@ class ResetPersonalizationUseCase:
         self.profile_repo = profile_repo
         self.memory_repo = memory_repo
         logger.info("ResetPersonalizationUseCase initialized")
-    
+
     async def execute(
         self, input_data: ResetPersonalizationInput
     ) -> ResetPersonalizationOutput:
         """Execute personalization reset.
-        
+
         Purpose:
             Reset profile and delete memory for user.
-        
+
         Args:
             input_data: Input DTO with user_id.
-        
+
         Returns:
             ResetPersonalizationOutput with success status.
-        
+
         Example:
             >>> input_data = ResetPersonalizationInput(user_id="123")
             >>> output = await use_case.execute(input_data)
@@ -688,15 +688,15 @@ class ResetPersonalizationUseCase:
         try:
             # Count events before deletion
             event_count = await self.memory_repo.count_events(input_data.user_id)
-            
+
             # Reset profile (delete and recreate with defaults)
             await self.profile_repo.reset(input_data.user_id)
-            
+
             # Delete all memory events (via compression with keep_last_n=0)
             await self.memory_repo.compress(
                 input_data.user_id, "", keep_last_n=0
             )
-            
+
             logger.info(
                 "Personalization reset successfully",
                 extra={
@@ -704,20 +704,20 @@ class ResetPersonalizationUseCase:
                     "memory_deleted_count": event_count,
                 }
             )
-            
+
             return ResetPersonalizationOutput(
                 success=True,
                 profile_reset=True,
                 memory_deleted_count=event_count,
             )
-            
+
         except Exception as e:
             logger.error(
                 "Failed to reset personalization",
                 extra={"user_id": input_data.user_id, "error": str(e)},
                 exc_info=True,
             )
-            
+
             return ResetPersonalizationOutput(
                 success=False,
                 profile_reset=False,
@@ -803,7 +803,6 @@ After completion:
 
 ---
 
-**Status**: Pending  
-**Estimated Effort**: 2 days  
+**Status**: Pending
+**Estimated Effort**: 2 days
 **Priority**: High
-

@@ -312,12 +312,11 @@ export INTEREST_EXTRACTION_ENABLED=true
 
 ---
 
-**Status**: ✅ Ready for implementation  
-**Effort**: 2-3 days development  
-**Priority**: Medium (enhancement, not blocking)  
+**Status**: ✅ Ready for implementation
+**Effort**: 2-3 days development
+**Priority**: Medium (enhancement, not blocking)
 **Dependencies**: Epic 25 TL-01 to TL-07 complete
 
 ---
 
 **Questions?** See full specification or ask Tech Lead.
-

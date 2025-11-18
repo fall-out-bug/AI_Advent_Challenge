@@ -246,7 +246,7 @@ def get_direct_summarization_prompt(
                 get_digest_summarization_prompt,
                 get_persona_template,
             )
-            
+
             # Get persona section (formatted with default values for digest context)
             persona_template = get_persona_template()
             persona_section = persona_template.format(
@@ -255,10 +255,10 @@ def get_direct_summarization_prompt(
                 language="ru",
                 preferred_topics="general topics",
             )
-            
+
             # Get digest prompt template
             digest_template = get_digest_summarization_prompt()
-            
+
             # Format digest prompt with persona and posts
             return digest_template.format(
                 persona_section=persona_section,

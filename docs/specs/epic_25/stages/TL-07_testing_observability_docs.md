@@ -1,10 +1,10 @@
 # Stage TL-07: Testing, Observability & Documentation
 
-**Epic**: EP25 - Personalised Butler  
-**Stage**: TL-07  
-**Duration**: 1.5 days  
-**Owner**: Tech Lead + QA  
-**Dependencies**: TL-06  
+**Epic**: EP25 - Personalised Butler
+**Stage**: TL-07
+**Duration**: 1.5 days
+**Owner**: Tech Lead + QA
+**Dependencies**: TL-06
 **Status**: Pending
 
 ---
@@ -83,7 +83,7 @@ async def test_text_personalized_reply_flow(
     settings
 ):
     """Test full text message personalization flow.
-    
+
     Purpose:
         Verify that:
         1. User profile is auto-created with Alfred persona
@@ -95,18 +95,18 @@ async def test_text_personalized_reply_flow(
     reply_use_case, _ = create_personalized_use_cases(
         settings, mongo_client, llm_client
     )
-    
+
     user_id = "e2e_test_text_123"
-    
+
     # First interaction
     input_data1 = PersonalizedReplyInput(
         user_id=user_id,
         text="Hello, who are you?",
         source="text"
     )
-    
+
     output1 = await reply_use_case.execute(input_data1)
-    
+
     # Verify reply has Alfred characteristics
     assert output1.used_persona is True
     assert output1.reply
@@ -118,31 +118,31 @@ async def test_text_personalized_reply_flow(
         "дворецкий" in reply_lower,
     ])
     assert has_alfred_markers or len(output1.reply) > 20  # Reasonable reply
-    
+
     # Verify memory was saved
     assert output1.memory_events_used == 0  # First interaction
-    
+
     # Second interaction (should use memory from first)
     input_data2 = PersonalizedReplyInput(
         user_id=user_id,
         text="What did I just ask you?",
         source="text"
     )
-    
+
     output2 = await reply_use_case.execute(input_data2)
-    
+
     # Verify memory context used
     assert output2.used_persona is True
     assert output2.memory_events_used >= 2  # User + assistant from first interaction
-    
+
     # Verify profile exists in MongoDB
     db = mongo_client[settings.db_name]
     profile = await db.user_profiles.find_one({"user_id": user_id})
-    
+
     assert profile is not None
     assert profile["persona"] == "Alfred-style дворецкий"
     assert profile["language"] == "ru"
-    
+
     # Verify memory events exist
     event_count = await db.user_memory.count_documents({"user_id": user_id})
     assert event_count == 4  # 2 interactions × 2 events (user + assistant)
@@ -176,7 +176,7 @@ async def test_voice_personalized_reply_flow(
     settings
 ):
     """Test full voice message personalization flow.
-    
+
     Purpose:
         Verify that:
         1. Voice is transcribed via Whisper STT
@@ -202,7 +202,7 @@ async def test_memory_compression_trigger(
     settings
 ):
     """Test that memory compression triggers at threshold.
-    
+
     Purpose:
         Verify that:
         1. >50 events triggers compression
@@ -214,13 +214,13 @@ async def test_memory_compression_trigger(
         create_personalized_use_cases
     )
     from src.application.personalization.dtos import PersonalizedReplyInput
-    
+
     reply_use_case, _ = create_personalized_use_cases(
         settings, mongo_client, llm_client
     )
-    
+
     user_id = "e2e_test_compression_123"
-    
+
     # Send 51 messages to trigger compression (cap is 50)
     for i in range(51):
         input_data = PersonalizedReplyInput(
@@ -229,18 +229,18 @@ async def test_memory_compression_trigger(
             source="text"
         )
         output = await reply_use_case.execute(input_data)
-        
+
         # Last message should trigger compression
         if i == 50:
             assert output.compressed is True
-    
+
     # Verify compression result
     db = mongo_client[settings.db_name]
-    
+
     # Check event count (should be ≤20 after compression)
     event_count = await db.user_memory.count_documents({"user_id": user_id})
     assert event_count <= 20
-    
+
     # Check profile has summary
     profile = await db.user_profiles.find_one({"user_id": user_id})
     assert profile["memory_summary"] is not None
@@ -268,8 +268,8 @@ groups:
       # Alert: High error rate in personalized requests
       - alert: PersonalizationHighErrorRate
         expr: |
-          rate(personalized_requests_total{status="error"}[5m]) 
-          / 
+          rate(personalized_requests_total{status="error"}[5m])
+          /
           rate(personalized_requests_total[5m]) > 0.1
         for: 5m
         labels:
@@ -295,7 +295,7 @@ groups:
       # Alert: High profile read latency
       - alert: ProfileReadHighLatency
         expr: |
-          histogram_quantile(0.95, 
+          histogram_quantile(0.95,
             rate(user_profile_read_duration_seconds_bucket[5m])
           ) > 1.0
         for: 10m
@@ -438,7 +438,7 @@ Butler поддерживает голосовые сообщения:
 
 ---
 
-**Версия**: 1.0  
+**Версия**: 1.0
 **Дата обновления**: 2025-11-18
 ```
 
@@ -533,7 +533,7 @@ See [Personalized Butler User Guide](docs/guides/personalized_butler_user_guide.
   - Profile auto-creation
   - Memory persistence
   - Context usage
-  
+
 - **Voice Flow**: 100%
   - STT integration
   - Personalized reply
@@ -603,7 +603,6 @@ After completion:
 
 ---
 
-**Status**: Pending  
-**Estimated Effort**: 1.5 days  
+**Status**: Pending
+**Estimated Effort**: 1.5 days
 **Priority**: High
-

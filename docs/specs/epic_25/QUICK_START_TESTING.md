@@ -1,6 +1,6 @@
 # Quick Start: Live Testing Epic 25
 
-**Epic**: EP25 - Personalised Butler  
+**Epic**: EP25 - Personalised Butler
 **Status**: ✅ Deployed, Ready for Testing
 
 ---
@@ -80,7 +80,7 @@ Expected: Bot remembers name "Иван"
 ### Scenario 3: Voice Message
 ```
 User: [Sends voice message]
-Expected: 
+Expected:
   1. Transcription shown
   2. Personalized reply in Alfred style
 Check: Memory saved with source="voice"
@@ -166,16 +166,15 @@ docker-compose up -d --build butler-bot
 
 ## Success Indicators
 
-✅ Bot responds with Alfred-style persona  
-✅ User profiles auto-created  
-✅ Memory persists across messages  
-✅ Voice messages work  
-✅ Metrics visible in Prometheus  
-✅ No errors in logs  
-✅ Response time <2s  
+✅ Bot responds with Alfred-style persona
+✅ User profiles auto-created
+✅ Memory persists across messages
+✅ Voice messages work
+✅ Metrics visible in Prometheus
+✅ No errors in logs
+✅ Response time <2s
 
 ---
 
-**Ready for**: Live Testing  
+**Ready for**: Live Testing
 **Support**: See `DEPLOYMENT_CHECKLIST.md` for detailed instructions
-

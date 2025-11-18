@@ -174,7 +174,7 @@ async def summarize_posts(
                 get_digest_summarization_prompt,
                 get_persona_template,
             )
-            
+
             # Get persona section (formatted with default values for digest context)
             persona_template = get_persona_template()
             persona_section = persona_template.format(
@@ -183,10 +183,10 @@ async def summarize_posts(
                 language="ru",
                 preferred_topics="general topics",
             )
-            
+
             # Get digest prompt template
             digest_template = get_digest_summarization_prompt()
-            
+
             # Format digest prompt with persona and posts
             prompt = digest_template.format(
                 persona_section=persona_section,
@@ -392,7 +392,7 @@ Summary (this channel only):"""
                         logger.info(
                             f"Summary truncated to {len(cleaned_summary)} chars (was {len(summary)} chars)"
                         )
-                    
+
                     logger.info(
                         f"Final summary generated: length={len(cleaned_summary)} chars, "
                         f"preview={cleaned_summary[:200]}..."

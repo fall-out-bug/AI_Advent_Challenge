@@ -449,4 +449,3 @@ async def handle_voice_callback(callback: CallbackQuery) -> None:
             exc_info=True,
         )
         await callback.answer("❌ Ошибка при обработке команды.")
-

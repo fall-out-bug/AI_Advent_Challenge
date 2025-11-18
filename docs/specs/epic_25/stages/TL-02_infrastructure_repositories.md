@@ -1,10 +1,10 @@
 # Stage TL-02: Infrastructure Repositories
 
-**Epic**: EP25 - Personalised Butler  
-**Stage**: TL-02  
-**Duration**: 2 days  
-**Owner**: Dev B  
-**Dependencies**: TL-01  
+**Epic**: EP25 - Personalised Butler
+**Stage**: TL-02
+**Duration**: 2 days
+**Owner**: Dev B
+**Dependencies**: TL-01
 **Status**: Pending
 
 ---
@@ -131,28 +131,28 @@ logger = get_logger("profile_repository")
 
 class MongoUserProfileRepository:
     """Mongo-backed repository for user profiles.
-    
+
     Purpose:
         Implements UserProfileRepository protocol using MongoDB.
         Handles persistence, retrieval, and default profile creation.
-    
+
     Attributes:
         collection: MongoDB collection for user_profiles.
-    
+
     Example:
         >>> from motor.motor_asyncio import AsyncIOMotorClient
         >>> client = AsyncIOMotorClient("mongodb://localhost:27017")
         >>> repo = MongoUserProfileRepository(client, "butler")
         >>> profile = await repo.get("123456789")
     """
-    
+
     def __init__(
         self,
         mongo_client: AsyncIOMotorClient,
         database: str = "butler"
     ) -> None:
         """Initialize repository with Mongo client.
-        
+
         Args:
             mongo_client: Motor async Mongo client.
             database: Database name (default: "butler").
@@ -162,33 +162,33 @@ class MongoUserProfileRepository:
             "MongoUserProfileRepository initialized",
             extra={"database": database, "collection": "user_profiles"}
         )
-    
+
     async def get(self, user_id: str) -> Optional[UserProfile]:
         """Get profile by user ID (auto-create if missing).
-        
+
         Purpose:
             Retrieve user profile from MongoDB. If profile doesn't exist,
             automatically create and save default profile.
-        
+
         Args:
             user_id: User identifier.
-        
+
         Returns:
             UserProfile (newly created if didn't exist).
-        
+
         Raises:
             PyMongoError: If MongoDB operation fails.
-        
+
         Example:
             >>> profile = await repo.get("123")
             >>> profile.persona
             'Alfred-style дворецкий'
         """
         user_profile_reads_total.inc()
-        
+
         try:
             doc = await self.collection.find_one({"user_id": user_id})
-            
+
             if not doc:
                 # Auto-create default profile
                 logger.info(
@@ -198,7 +198,7 @@ class MongoUserProfileRepository:
                 profile = UserProfile.create_default_profile(user_id)
                 await self.save(profile)
                 return profile
-            
+
             # Convert document to UserProfile
             profile = self._doc_to_profile(doc)
             logger.debug(
@@ -210,7 +210,7 @@ class MongoUserProfileRepository:
                 }
             )
             return profile
-            
+
         except PyMongoError as e:
             logger.error(
                 "Failed to get profile",
@@ -218,25 +218,25 @@ class MongoUserProfileRepository:
                 exc_info=True
             )
             raise
-    
+
     async def save(self, profile: UserProfile) -> None:
         """Save (upsert) user profile.
-        
+
         Purpose:
             Persist profile to MongoDB using upsert (insert or update).
-        
+
         Args:
             profile: Profile to save.
-        
+
         Raises:
             PyMongoError: If MongoDB operation fails.
-        
+
         Example:
             >>> profile = UserProfile.create_default_profile("123")
             >>> await repo.save(profile)
         """
         user_profile_writes_total.inc()
-        
+
         try:
             doc = self._profile_to_doc(profile)
             await self.collection.update_one(
@@ -244,7 +244,7 @@ class MongoUserProfileRepository:
                 {"$set": doc},
                 upsert=True
             )
-            
+
             logger.info(
                 "Profile saved",
                 extra={
@@ -253,7 +253,7 @@ class MongoUserProfileRepository:
                     "has_summary": profile.memory_summary is not None
                 }
             )
-            
+
         except PyMongoError as e:
             logger.error(
                 "Failed to save profile",
@@ -261,36 +261,36 @@ class MongoUserProfileRepository:
                 exc_info=True
             )
             raise
-    
+
     async def reset(self, user_id: str) -> None:
         """Delete profile and recreate with defaults.
-        
+
         Purpose:
             Remove existing profile and create fresh default profile.
             Used for "reset memory" functionality.
-        
+
         Args:
             user_id: User identifier.
-        
+
         Raises:
             PyMongoError: If MongoDB operation fails.
-        
+
         Example:
             >>> await repo.reset("123")
         """
         try:
             # Delete existing profile
             await self.collection.delete_one({"user_id": user_id})
-            
+
             # Create default profile
             profile = UserProfile.create_default_profile(user_id)
             await self.save(profile)
-            
+
             logger.info(
                 "Profile reset to defaults",
                 extra={"user_id": user_id}
             )
-            
+
         except PyMongoError as e:
             logger.error(
                 "Failed to reset profile",
@@ -298,13 +298,13 @@ class MongoUserProfileRepository:
                 exc_info=True
             )
             raise
-    
+
     def _doc_to_profile(self, doc: dict) -> UserProfile:
         """Convert Mongo document to UserProfile.
-        
+
         Args:
             doc: MongoDB document.
-        
+
         Returns:
             UserProfile value object.
         """
@@ -318,13 +318,13 @@ class MongoUserProfileRepository:
             created_at=doc["created_at"],
             updated_at=doc["updated_at"],
         )
-    
+
     def _profile_to_doc(self, profile: UserProfile) -> dict:
         """Convert UserProfile to Mongo document.
-        
+
         Args:
             profile: UserProfile value object.
-        
+
         Returns:
             MongoDB document dictionary.
         """
@@ -375,10 +375,10 @@ def repo(mongo_client):
 async def test_get_creates_default_profile(repo):
     """Test that get() auto-creates default profile."""
     user_id = "test_user_123"
-    
+
     # Get profile (should auto-create)
     profile = await repo.get(user_id)
-    
+
     assert profile is not None
     assert profile.user_id == user_id
     assert profile.persona == "Alfred-style дворецкий"
@@ -391,10 +391,10 @@ async def test_save_and_get_profile(repo):
     """Test save and retrieve profile."""
     user_id = "test_user_456"
     profile = UserProfile.create_default_profile(user_id)
-    
+
     # Save profile
     await repo.save(profile)
-    
+
     # Retrieve and verify
     retrieved = await repo.get(user_id)
     assert retrieved.user_id == profile.user_id
@@ -405,15 +405,15 @@ async def test_save_and_get_profile(repo):
 async def test_reset_profile(repo):
     """Test reset profile to defaults."""
     user_id = "test_user_789"
-    
+
     # Create profile with custom summary
     profile = UserProfile.create_default_profile(user_id)
     profile_with_summary = profile.with_summary("Custom summary")
     await repo.save(profile_with_summary)
-    
+
     # Reset
     await repo.reset(user_id)
-    
+
     # Verify reset to defaults
     reset_profile = await repo.get(user_id)
     assert reset_profile.memory_summary is None
@@ -457,26 +457,26 @@ logger = get_logger("memory_repository")
 
 class MongoUserMemoryRepository:
     """Mongo-backed repository for user memory events.
-    
+
     Purpose:
         Implements UserMemoryRepository protocol using MongoDB.
         Stores conversation history with chronological ordering.
-    
+
     Attributes:
         collection: MongoDB collection for user_memory.
-    
+
     Example:
         >>> repo = MongoUserMemoryRepository(client, "butler")
         >>> events = await repo.get_recent_events("123", limit=10)
     """
-    
+
     def __init__(
         self,
         mongo_client: AsyncIOMotorClient,
         database: str = "butler"
     ) -> None:
         """Initialize repository with Mongo client.
-        
+
         Args:
             mongo_client: Motor async Mongo client.
             database: Database name (default: "butler").
@@ -486,34 +486,34 @@ class MongoUserMemoryRepository:
             "MongoUserMemoryRepository initialized",
             extra={"database": database, "collection": "user_memory"}
         )
-    
+
     async def append_events(self, events: List[UserMemoryEvent]) -> None:
         """Append new memory events.
-        
+
         Purpose:
             Insert new events into MongoDB in batch.
-        
+
         Args:
             events: List of events to append.
-        
+
         Raises:
             PyMongoError: If MongoDB operation fails.
-        
+
         Example:
             >>> event = UserMemoryEvent.create_user_event("123", "Hello")
             >>> await repo.append_events([event])
         """
         if not events:
             return
-        
+
         try:
             docs = [self._event_to_doc(e) for e in events]
             await self.collection.insert_many(docs)
-            
+
             # Update metrics
             for event in events:
                 user_memory_events_total.labels(role=event.role).inc()
-            
+
             logger.info(
                 "Memory events appended",
                 extra={
@@ -522,7 +522,7 @@ class MongoUserMemoryRepository:
                     "roles": [e.role for e in events]
                 }
             )
-            
+
         except PyMongoError as e:
             logger.error(
                 "Failed to append events",
@@ -534,26 +534,26 @@ class MongoUserMemoryRepository:
                 exc_info=True
             )
             raise
-    
+
     async def get_recent_events(
         self, user_id: str, limit: int
     ) -> List[UserMemoryEvent]:
         """Get recent events in chronological order.
-        
+
         Purpose:
             Retrieve most recent N events for context building.
             Returns in chronological order (oldest first).
-        
+
         Args:
             user_id: User identifier.
             limit: Maximum events to return.
-        
+
         Returns:
             List of recent events (chronological order).
-        
+
         Raises:
             PyMongoError: If MongoDB operation fails.
-        
+
         Example:
             >>> events = await repo.get_recent_events("123", limit=20)
             >>> len(events) <= 20
@@ -564,13 +564,13 @@ class MongoUserMemoryRepository:
             cursor = self.collection.find(
                 {"user_id": user_id}
             ).sort("created_at", -1).limit(limit)
-            
+
             docs = await cursor.to_list(length=limit)
             events = [self._doc_to_event(d) for d in docs]
-            
+
             # Reverse to chronological order
             events_chronological = list(reversed(events))
-            
+
             logger.debug(
                 "Recent events loaded",
                 extra={
@@ -579,9 +579,9 @@ class MongoUserMemoryRepository:
                     "actual_count": len(events_chronological)
                 }
             )
-            
+
             return events_chronological
-            
+
         except PyMongoError as e:
             logger.error(
                 "Failed to get recent events",
@@ -589,51 +589,51 @@ class MongoUserMemoryRepository:
                 exc_info=True
             )
             raise
-    
+
     async def compress(
         self, user_id: str, summary: str, keep_last_n: int
     ) -> None:
         """Compress memory by deleting old events.
-        
+
         Purpose:
             Delete older events while keeping recent N events.
             Summary of deleted content stored in user profile.
-        
+
         Args:
             user_id: User identifier.
             summary: Summary of deleted events (stored separately).
             keep_last_n: Number of recent events to retain.
-        
+
         Raises:
             PyMongoError: If MongoDB operation fails.
-        
+
         Example:
             >>> await repo.compress("123", "User talked about Python", 20)
         """
         user_memory_compressions_total.inc()
-        
+
         try:
             # Get all events sorted descending
             cursor = self.collection.find(
                 {"user_id": user_id}
             ).sort("created_at", -1)
-            
+
             all_events = await cursor.to_list(length=None)
-            
+
             if len(all_events) <= keep_last_n:
                 logger.info(
                     "No compression needed",
                     extra={"user_id": user_id, "event_count": len(all_events)}
                 )
                 return
-            
+
             # Keep last N, delete rest
             keep_ids = [e["_id"] for e in all_events[:keep_last_n]]
             result = await self.collection.delete_many({
                 "user_id": user_id,
                 "_id": {"$nin": keep_ids}
             })
-            
+
             logger.info(
                 "Memory compressed",
                 extra={
@@ -643,7 +643,7 @@ class MongoUserMemoryRepository:
                     "summary_length": len(summary)
                 }
             )
-            
+
         except PyMongoError as e:
             logger.error(
                 "Failed to compress memory",
@@ -655,22 +655,22 @@ class MongoUserMemoryRepository:
                 exc_info=True
             )
             raise
-    
+
     async def count_events(self, user_id: str) -> int:
         """Count total events for user.
-        
+
         Purpose:
             Get event count for compression threshold checks.
-        
+
         Args:
             user_id: User identifier.
-        
+
         Returns:
             Total event count.
-        
+
         Raises:
             PyMongoError: If MongoDB operation fails.
-        
+
         Example:
             >>> count = await repo.count_events("123")
             >>> count >= 0
@@ -678,14 +678,14 @@ class MongoUserMemoryRepository:
         """
         try:
             count = await self.collection.count_documents({"user_id": user_id})
-            
+
             logger.debug(
                 "Event count retrieved",
                 extra={"user_id": user_id, "count": count}
             )
-            
+
             return count
-            
+
         except PyMongoError as e:
             logger.error(
                 "Failed to count events",
@@ -693,13 +693,13 @@ class MongoUserMemoryRepository:
                 exc_info=True
             )
             raise
-    
+
     def _event_to_doc(self, event: UserMemoryEvent) -> dict:
         """Convert UserMemoryEvent to Mongo document.
-        
+
         Args:
             event: UserMemoryEvent value object.
-        
+
         Returns:
             MongoDB document dictionary.
         """
@@ -711,13 +711,13 @@ class MongoUserMemoryRepository:
             "created_at": event.created_at,
             "tags": event.tags,
         }
-    
+
     def _doc_to_event(self, doc: dict) -> UserMemoryEvent:
         """Convert Mongo document to UserMemoryEvent.
-        
+
         Args:
             doc: MongoDB document.
-        
+
         Returns:
             UserMemoryEvent value object.
         """
@@ -764,19 +764,19 @@ def repo(mongo_client):
 async def test_append_and_get_events(repo):
     """Test appending and retrieving events."""
     user_id = "test_user_123"
-    
+
     # Create events
     events = [
         UserMemoryEvent.create_user_event(user_id, "Hello"),
         UserMemoryEvent.create_assistant_event(user_id, "Hi there!"),
     ]
-    
+
     # Append
     await repo.append_events(events)
-    
+
     # Retrieve
     retrieved = await repo.get_recent_events(user_id, limit=10)
-    
+
     assert len(retrieved) == 2
     assert retrieved[0].role == "user"
     assert retrieved[0].content == "Hello"
@@ -787,18 +787,18 @@ async def test_append_and_get_events(repo):
 async def test_count_events(repo):
     """Test counting events."""
     user_id = "test_user_456"
-    
+
     # Initial count should be 0
     count = await repo.count_events(user_id)
     assert count == 0
-    
+
     # Add events
     events = [
         UserMemoryEvent.create_user_event(user_id, f"Message {i}")
         for i in range(5)
     ]
     await repo.append_events(events)
-    
+
     # Count should be 5
     count = await repo.count_events(user_id)
     assert count == 5
@@ -808,21 +808,21 @@ async def test_count_events(repo):
 async def test_compress_memory(repo):
     """Test memory compression."""
     user_id = "test_user_789"
-    
+
     # Create 30 events
     events = [
         UserMemoryEvent.create_user_event(user_id, f"Message {i}")
         for i in range(30)
     ]
     await repo.append_events(events)
-    
+
     # Compress: keep last 10
     await repo.compress(user_id, "Summary of old messages", keep_last_n=10)
-    
+
     # Verify only 10 remain
     count = await repo.count_events(user_id)
     assert count == 10
-    
+
     # Verify recent events are kept
     recent = await repo.get_recent_events(user_id, limit=20)
     assert len(recent) == 10
@@ -855,18 +855,18 @@ logger = get_logger("personalization_indexes")
 
 async def create_indexes() -> None:
     """Create MongoDB indexes for personalization.
-    
+
     Purpose:
         Create indexes for user_profiles and user_memory collections.
         Ensures efficient queries and TTL cleanup.
-    
+
     Example:
         >>> await create_indexes()
     """
     settings = get_settings()
     client = AsyncIOMotorClient(settings.mongodb_url)
     db = client[settings.db_name]
-    
+
     try:
         # User profiles indexes
         logger.info("Creating user_profiles indexes...")
@@ -876,17 +876,17 @@ async def create_indexes() -> None:
             name="user_id_unique"
         )
         logger.info("✓ user_profiles.user_id_unique index created")
-        
+
         # User memory indexes
         logger.info("Creating user_memory indexes...")
-        
+
         # Compound index for efficient queries
         await db.user_memory.create_index(
             [("user_id", 1), ("created_at", -1)],
             name="user_id_created_at"
         )
         logger.info("✓ user_memory.user_id_created_at index created")
-        
+
         # TTL index for auto-cleanup (90 days)
         await db.user_memory.create_index(
             [("created_at", 1)],
@@ -894,9 +894,9 @@ async def create_indexes() -> None:
             name="created_at_ttl"
         )
         logger.info("✓ user_memory.created_at_ttl index created (90 days)")
-        
+
         logger.info("All personalization indexes created successfully")
-        
+
     except Exception as e:
         logger.error(
             "Failed to create indexes",
@@ -998,7 +998,6 @@ After completion:
 
 ---
 
-**Status**: Pending  
-**Estimated Effort**: 2 days  
+**Status**: Pending
+**Estimated Effort**: 2 days
 **Priority**: High
-

@@ -1,10 +1,10 @@
 # Stage TL-08: Background Memory Compression Worker
 
-**Epic**: EP25 - Personalised Butler  
-**Stage**: TL-08  
-**Duration**: 2 days  
-**Owner**: Dev B  
-**Dependencies**: TL-07  
+**Epic**: EP25 - Personalised Butler
+**Stage**: TL-08
+**Duration**: 2 days
+**Owner**: Dev B
+**Dependencies**: TL-07
 **Status**: Optional (Future Enhancement)
 
 ---
@@ -139,18 +139,18 @@ LOCK_KEY = "personalization:worker:lock"
 
 class MemoryWorker:
     """Background worker for memory compression.
-    
+
     Purpose:
         Scan MongoDB for users exceeding memory threshold.
         Compress memory for each user using summarization.
-    
+
     Attributes:
         settings: Application settings.
         mongo_client: MongoDB client.
         redis_client: Redis client for locking.
         llm_client: LLM client for summarization.
     """
-    
+
     def __init__(
         self,
         settings: "Settings",
@@ -159,7 +159,7 @@ class MemoryWorker:
         llm_client: "LLMClient",
     ) -> None:
         """Initialize worker.
-        
+
         Args:
             settings: Application settings.
             mongo_client: MongoDB client.
@@ -172,28 +172,28 @@ class MemoryWorker:
         self.llm_client = llm_client
         self.db = mongo_client[settings.db_name]
         logger.info("MemoryWorker initialized")
-    
+
     async def run(
         self,
         dry_run: bool = False,
         limit: int | None = None,
     ) -> dict:
         """Run worker to compress memories.
-        
+
         Purpose:
             Main worker loop:
             1. Acquire distributed lock
             2. Find users exceeding threshold
             3. Compress each user's memory
             4. Release lock
-        
+
         Args:
             dry_run: If True, only scan without compressing.
             limit: Maximum users to process (None = all).
-        
+
         Returns:
             Dict with run statistics.
-        
+
         Example:
             >>> worker = MemoryWorker(...)
             >>> stats = await worker.run(dry_run=False, limit=100)
@@ -202,7 +202,7 @@ class MemoryWorker:
         """
         worker_runs_total.inc()
         start_time = time.time()
-        
+
         try:
             # Acquire distributed lock
             lock_acquired = await self._acquire_lock()
@@ -213,17 +213,17 @@ class MemoryWorker:
                     "reason": "lock_not_acquired",
                     "users_processed": 0,
                 }
-            
+
             logger.info("Lock acquired, starting worker run")
-            
+
             # Find users exceeding threshold
             users_to_compress = await self._find_users_exceeding_threshold()
-            
+
             logger.info(
                 f"Found {len(users_to_compress)} users exceeding threshold",
                 extra={"count": len(users_to_compress)}
             )
-            
+
             if dry_run:
                 logger.info("Dry run mode, skipping compression")
                 return {
@@ -232,21 +232,21 @@ class MemoryWorker:
                     "users_found": len(users_to_compress),
                     "users_processed": 0,
                 }
-            
+
             # Process users (with limit)
             users_to_process = users_to_compress[:limit] if limit else users_to_compress
             processed_count = 0
             error_count = 0
-            
+
             for user_data in users_to_process:
                 user_id = user_data["user_id"]
                 event_count = user_data["event_count"]
-                
+
                 try:
                     await self._compress_user_memory(user_id, event_count)
                     processed_count += 1
                     worker_users_processed_total.inc()
-                    
+
                     logger.info(
                         "User memory compressed",
                         extra={
@@ -254,7 +254,7 @@ class MemoryWorker:
                             "event_count_before": event_count,
                         }
                     )
-                    
+
                 except Exception as e:
                     error_count += 1
                     worker_errors_total.inc()
@@ -263,10 +263,10 @@ class MemoryWorker:
                         extra={"user_id": user_id, "error": str(e)},
                         exc_info=True,
                     )
-            
+
             elapsed = time.time() - start_time
             worker_duration_seconds.observe(elapsed)
-            
+
             logger.info(
                 "Worker run complete",
                 extra={
@@ -275,7 +275,7 @@ class MemoryWorker:
                     "elapsed_seconds": round(elapsed, 2),
                 }
             )
-            
+
             return {
                 "success": True,
                 "users_found": len(users_to_compress),
@@ -283,7 +283,7 @@ class MemoryWorker:
                 "errors": error_count,
                 "elapsed_seconds": elapsed,
             }
-            
+
         except Exception as e:
             worker_errors_total.inc()
             logger.error(
@@ -300,10 +300,10 @@ class MemoryWorker:
             # Release lock
             await self._release_lock()
             logger.info("Lock released")
-    
+
     async def _acquire_lock(self) -> bool:
         """Acquire distributed lock via Redis.
-        
+
         Returns:
             True if lock acquired, False otherwise.
         """
@@ -323,7 +323,7 @@ class MemoryWorker:
                 exc_info=True,
             )
             return False
-    
+
     async def _release_lock(self) -> None:
         """Release distributed lock."""
         try:
@@ -334,10 +334,10 @@ class MemoryWorker:
                 extra={"error": str(e)},
                 exc_info=True,
             )
-    
+
     async def _find_users_exceeding_threshold(self) -> List[dict]:
         """Find users with event count > threshold.
-        
+
         Returns:
             List of dicts with user_id and event_count.
         """
@@ -358,23 +358,23 @@ class MemoryWorker:
                 "$sort": {"event_count": -1}  # Process highest first
             }
         ]
-        
+
         cursor = self.db.user_memory.aggregate(pipeline)
         results = await cursor.to_list(length=None)
-        
+
         # Convert to list of dicts
         users = [
             {"user_id": r["_id"], "event_count": r["event_count"]}
             for r in results
         ]
-        
+
         return users
-    
+
     async def _compress_user_memory(
         self, user_id: str, event_count: int
     ) -> None:
         """Compress memory for single user.
-        
+
         Args:
             user_id: User identifier.
             event_count: Current event count.
@@ -385,39 +385,39 @@ class MemoryWorker:
         from src.infrastructure.personalization.memory_repository import (
             MongoUserMemoryRepository
         )
-        
+
         profile_repo = MongoUserProfileRepository(
             self.mongo_client, self.settings.db_name
         )
         memory_repo = MongoUserMemoryRepository(
             self.mongo_client, self.settings.db_name
         )
-        
+
         # Get profile
         profile = await profile_repo.get(user_id)
-        
+
         # Load all events for summarization
         all_events = await memory_repo.get_recent_events(user_id, limit=1000)
-        
+
         # Build events text for LLM
         events_text = "\n".join([
             f"{e.role}: {e.content[:200]}" for e in all_events
         ])
-        
+
         # Summarize via LLM
         summary_prompt = (
             f"Summarise the following conversation history in Russian "
             f"(max 300 tokens):\n\n{events_text}"
         )
         summary = await self.llm_client.generate(summary_prompt)
-        
+
         # Compress: keep last 20
         await memory_repo.compress(user_id, summary, keep_last_n=20)
-        
+
         # Update profile with summary
         updated_profile = profile.with_summary(summary)
         await profile_repo.save(updated_profile)
-        
+
         logger.info(
             "Memory compressed",
             extra={
@@ -433,17 +433,17 @@ class MemoryWorker:
 @click.option("--limit", type=int, help="Maximum users to process")
 def main(dry_run: bool, limit: int | None):
     """Run memory compression worker.
-    
+
     Purpose:
         Background worker for compressing user memories.
-    
+
     Example:
         python scripts/workers/personalization_memory_worker.py --dry-run
         python scripts/workers/personalization_memory_worker.py --limit 100
     """
     async def _main():
         settings = get_settings()
-        
+
         # Initialize clients
         mongo_client = AsyncIOMotorClient(settings.mongodb_url)
         redis_client = aioredis.from_url(
@@ -452,19 +452,19 @@ def main(dry_run: bool, limit: int | None):
             encoding="utf-8",
             decode_responses=True,
         )
-        
+
         # Mock LLM client (replace with real implementation)
         from unittest.mock import AsyncMock, MagicMock
         llm_client = MagicMock()
         llm_client.generate = AsyncMock(return_value="Summary of conversation")
-        
+
         try:
             worker = MemoryWorker(
                 settings, mongo_client, redis_client, llm_client
             )
-            
+
             stats = await worker.run(dry_run=dry_run, limit=limit)
-            
+
             # Print stats
             click.echo("\n=== Worker Run Statistics ===")
             click.echo(f"Success: {stats.get('success')}")
@@ -474,7 +474,7 @@ def main(dry_run: bool, limit: int | None):
                 click.echo(f"Errors: {stats['errors']}")
             if "elapsed_seconds" in stats:
                 click.echo(f"Elapsed: {stats['elapsed_seconds']:.2f}s")
-            
+
             # Push metrics to Pushgateway (if configured)
             if settings.prometheus_pushgateway_url:
                 push_to_gateway(
@@ -482,11 +482,11 @@ def main(dry_run: bool, limit: int | None):
                     job="personalization_memory_worker",
                     registry=None,  # Use default registry
                 )
-            
+
         finally:
             mongo_client.close()
             await redis_client.close()
-    
+
     asyncio.run(_main())
 
 
@@ -706,11 +706,11 @@ async def test_worker_finds_users_exceeding_threshold(
             "created_at": datetime.utcnow(),
             "tags": [],
         })
-    
+
     worker = MemoryWorker(settings, mongo_client, redis_client, llm_client)
-    
+
     stats = await worker.run(dry_run=False, limit=10)
-    
+
     assert stats["success"] is True
     assert stats["users_processed"] == 1
 
@@ -808,7 +808,6 @@ After completion:
 
 ---
 
-**Status**: Optional (Future Enhancement)  
-**Estimated Effort**: 2 days  
+**Status**: Optional (Future Enhancement)
+**Estimated Effort**: 2 days
 **Priority**: Low (can defer to post-MVP)
-

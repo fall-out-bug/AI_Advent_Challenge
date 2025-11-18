@@ -1,8 +1,8 @@
 # Epic 25 Closure Report: Personalised Butler
 
-**Epic**: EP25 - Personalised Butler ("Alfred-style дворецкий")  
-**Status**: ✅ **COMPLETED & DEPLOYED**  
-**Completion Date**: 2025-11-18  
+**Epic**: EP25 - Personalised Butler ("Alfred-style дворецкий")
+**Status**: ✅ **COMPLETED & DEPLOYED**
+**Completion Date**: 2025-11-18
 **Deployment Date**: 2025-11-18
 
 ---
@@ -185,9 +185,9 @@ Epic 25 successfully transformed the Butler Telegram bot into a personalized ass
 
 ## Sign-Off
 
-**Epic Owner**: Tech Lead  
-**Developer**: Auto (AI Assistant)  
-**Reviewer**: Reviewer (AI Assistant)  
+**Epic Owner**: Tech Lead
+**Developer**: Auto (AI Assistant)
+**Reviewer**: Reviewer (AI Assistant)
 **Status**: ✅ **APPROVED & DEPLOYED**
 
 **Final Approval**: All acceptance criteria met, all blockers resolved, code deployed, ready for live testing.
@@ -204,13 +204,12 @@ Epic 25 successfully transformed the Butler Telegram bot into a personalized ass
 
 ---
 
-**Epic Status**: ✅ **COMPLETE**  
-**Deployment Status**: ✅ **DEPLOYED**  
+**Epic Status**: ✅ **COMPLETE**
+**Deployment Status**: ✅ **DEPLOYED**
 **Ready for**: Live Testing
 
 ---
 
-**Report Generated**: 2025-11-18  
-**Epic Duration**: 7 stages (TL-01 through TL-07)  
+**Report Generated**: 2025-11-18
+**Epic Duration**: 7 stages (TL-01 through TL-07)
 **Total Effort**: ~15-20 days estimated
-

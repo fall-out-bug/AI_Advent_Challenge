@@ -246,11 +246,11 @@ def get_interest_extraction_prompt() -> str:
 
 def get_digest_summarization_prompt() -> str:
     """Get digest summarization prompt from YAML file.
-    
+
     Purpose:
         Load digest summarization prompt template from config/persona_templates.yaml.
         Falls back to defaults if file doesn't exist.
-    
+
     Returns:
         Digest summarization prompt template string.
     """
@@ -259,10 +259,10 @@ def get_digest_summarization_prompt() -> str:
 
 def get_digest_map_prompt() -> str:
     """Get digest map phase prompt from YAML file.
-    
+
     Purpose:
         Load map phase prompt template for digest summarization.
-    
+
     Returns:
         Map phase prompt template string.
     """
@@ -271,10 +271,10 @@ def get_digest_map_prompt() -> str:
 
 def get_digest_reduce_prompt() -> str:
     """Get digest reduce phase prompt from YAML file.
-    
+
     Purpose:
         Load reduce phase prompt template for digest summarization.
-    
+
     Returns:
         Reduce phase prompt template string.
     """

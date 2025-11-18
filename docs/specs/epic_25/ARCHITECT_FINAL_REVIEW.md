@@ -1,8 +1,8 @@
 # Epic 25 · Final Architect Review
 _Personalised Butler ("Alfred-style дворецкий")_
 
-**Review Date**: 2025-11-18  
-**Architect**: cursor_architect_v1  
+**Review Date**: 2025-11-18
+**Architect**: cursor_architect_v1
 **Epic Status**: ✅ **APPROVED FOR PRODUCTION**
 
 ---
@@ -225,17 +225,16 @@ Epic 25 successfully delivers a personalised Butler assistant with user profiles
 
 ## Sign-Off
 
-**Architect**: cursor_architect_v1  
-**Date**: 2025-11-18  
+**Architect**: cursor_architect_v1
+**Date**: 2025-11-18
 **Status**: ✅ **APPROVED**
 
-**Epic Status**: ✅ **EPIC 25 COMPLETE**  
-**Quality**: Production-ready  
+**Epic Status**: ✅ **EPIC 25 COMPLETE**
+**Quality**: Production-ready
 **Ready for**: Final stakeholder sign-off and deployment
 
 ---
 
-**Review Version**: 1.0  
-**Epic Owner**: Tech Lead  
+**Review Version**: 1.0
+**Epic Owner**: Tech Lead
 **Next Steps**: Update `docs/specs/progress.md` with EP25 completion status
-

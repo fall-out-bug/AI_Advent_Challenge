@@ -81,4 +81,3 @@ See `docs/reference/en/MONITORING.md` for MCP server metrics documentation.
 ## Unified Worker Metrics
 
 See `docs/reference/en/MONITORING.md` for unified worker metrics documentation.
-

@@ -89,13 +89,11 @@ See `docs/specs/epic_25/backlog.md` for detailed tasks. High-level workstreams:
 - Day 23 observability and Day 24 voice integration.
 
 ## Risks & Mitigations
-- **Risk:** Memory grows unbounded.  
+- **Risk:** Memory grows unbounded.
   **Mitigation:** Limit stored events per user (e.g. last N events or time-based TTL).
 
-- **Risk:** Persona prompt too long / noisy.  
+- **Risk:** Persona prompt too long / noisy.
   **Mitigation:** Compress/summarise older memory; keep persona section short and focused.
 
-- **Risk:** Personalisation breaks existing flows.  
+- **Risk:** Personalisation breaks existing flows.
   **Mitigation:** Start with a dedicated `/personal` mode or feature flag; roll out gradually.
-
-

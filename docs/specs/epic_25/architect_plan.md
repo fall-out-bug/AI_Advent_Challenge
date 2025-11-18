@@ -110,10 +110,9 @@ Telegram Response
 
 ## 10. Open Questions & Decisions
 1. **Memory compression cadence** – ✅ Решение: гибридный подход
-   - Inline safeguard: после каждого ответа проверяем лимит (например, >50 событий) и при превышении сразу сжимаем (summary + последние N).  
+   - Inline safeguard: после каждого ответа проверяем лимит (например, >50 событий) и при превышении сразу сжимаем (summary + последние N).
    - Фоновый worker/cron: периодически оптимизирует память, обновляет summary, убирает старые записи. Worker работает через тот же `UserMemoryRepository.compress(user_id)`.
 2. **Profile customization exposure** – ✅ Для Day 25 достаточно внутреннего CLI/скрипта (`scripts/tools/profile_admin.py`). Публичных команд настройки/сброса профиля нет.
 3. **LLM prompt size** – ✅ Qwen-7B локально имеет окно 4 096 токенов; держим персонализированный prompt ≤ ~2 000 токенов (persona ≤200, memory slice ≤800, summary ≤300, новое сообщение ≤200, остальной запас для служебного текста).
 
 Эти решения зафиксировать в TL-00 и acceptance matrix перед стартом разработки.
-

@@ -245,13 +245,13 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                     name_lower.endswith(ending) and len(name_lower) > len(ending)
                     for ending in declension_endings
                 ) and not name_lower.endswith(("канал", "канала", "канале"))
-                
+
                 # Also check if name is single word but request has more context
                 is_single_word = len(channel_name.split()) == 1
                 has_digest_context = any(
                     kw in text_lower for kw in ["дайджест", "дайджет", "digest", "по", "канала", "канал"]
                 )
-                
+
                 if is_declension or (is_single_word and has_digest_context):
                     # Name is in declension or might need LLM parsing, use LLM to restore nominative
                     logger.debug(
@@ -348,7 +348,7 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                                 # Small delay to ensure DB write is committed
                                 # Also verify subscription was saved
                                 await asyncio.sleep(1.0)  # Increased delay for MongoDB write
-                                
+
                                 # Verify subscription was saved
                                 try:
                                     from src.presentation.mcp.tools.channels.channel_management import (
@@ -366,7 +366,7 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                                         logger.info(
                                             f"✅ Verified subscription saved: username={resolved_username}"
                                         )
-                                        
+
                                         # Start automatic post collection for the new channel
                                         try:
                                             from src.presentation.mcp.tools.channels.posts_management import (
@@ -441,7 +441,7 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                     else:
                         # Just ensure resolved username is used
                         text = f"дайджест по {resolved_username}"
-                    
+
                     # Check if posts exist for this channel, and collect if missing
                     # This handles cases where channel is subscribed but posts haven't been collected yet
                     logger.info(
@@ -467,7 +467,7 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                         logger.info(
                             f"📊 Posts count for {resolved_username}: {posts_count}"
                         )
-                        
+
                         if posts_count == 0:
                             logger.info(
                                 f"⚠️ No posts found for channel {resolved_username}, "
@@ -517,7 +517,7 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                             },
                         )
                         # Continue anyway - digest generation will handle empty posts
-                    
+
                     # Log that we're proceeding to orchestrator after auto-subscription
                     logger.info(
                         f"✅ Proceeding to orchestrator after channel resolution: "
@@ -530,14 +530,14 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                         f"top_score={resolution.confidence_score:.3f}, user_id={user_id}. "
                         f"Trying LLM search in metadata..."
                     )
-                    
+
                     # Try to find channel using LLM in user's subscription metadata
                     llm_resolution = await _find_channel_in_metadata_with_llm(
                         user_id=int(user_id),
                         user_query=text,
                         channel_name=channel_name,
                     )
-                    
+
                     if llm_resolution and llm_resolution.get("found"):
                         # LLM found the channel in metadata
                         resolved_username = llm_resolution.get("channel_username")
@@ -547,18 +547,18 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                             f"input='{channel_name}' -> username='{resolved_username}', "
                             f"title='{resolved_title}', user_id={user_id}"
                         )
-                        
+
                         # Use the found channel for digest generation
                         text = text.replace(channel_name, resolved_username)
                         text = text.replace(channel_name.lower(), resolved_username)
                         text = text.replace(channel_name.upper(), resolved_username)
-                        
+
                         if hours:
                             days = hours // 24
                             text = f"дайджест по {resolved_username} за {days} дней"
                         else:
                             text = f"дайджест по {resolved_username}"
-                        
+
                         logger.info(
                             f"✅ Proceeding to orchestrator after LLM metadata search: "
                             f"username={resolved_username}"
@@ -584,14 +584,14 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                             f"title='{resolution.channel_title}', input='{channel_name}'. "
                             f"Trying LLM search in metadata..."
                         )
-                        
+
                         # Telegram search failed, try LLM search in subscription metadata
                         llm_resolution = await _find_channel_in_metadata_with_llm(
                             user_id=int(user_id),
                             user_query=text,
                             channel_name=channel_name,
                         )
-                        
+
                         if llm_resolution and llm_resolution.get("found"):
                             # LLM found the channel in metadata
                             resolved_username = llm_resolution.get("channel_username")
@@ -601,18 +601,18 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                                 f"input='{channel_name}' -> username='{resolved_username}', "
                                 f"title='{resolved_title}', user_id={user_id}"
                             )
-                            
+
                             # Use the found channel for digest generation
                             text = text.replace(channel_name, resolved_username)
                             text = text.replace(channel_name.lower(), resolved_username)
                             text = text.replace(channel_name.upper(), resolved_username)
-                            
+
                             if hours:
                                 days = hours // 24
                                 text = f"дайджест по {resolved_username} за {days} дней"
                             else:
                                 text = f"дайджест по {resolved_username}"
-                            
+
                             logger.info(
                                 f"✅ Proceeding to orchestrator after LLM metadata search: "
                                 f"username={resolved_username}"
@@ -1094,14 +1094,14 @@ async def _find_channel_in_metadata_with_llm(
             username = ch.get("channel_username", "")
             title = ch.get("title", "")
             description = ch.get("description", "")
-            
+
             # Build channel description
             channel_desc = f"@{username}"
             if title:
                 channel_desc += f" - {title}"
             if description:
                 channel_desc += f" ({description[:100]})"  # Limit description length
-            
+
             channels_text.append(channel_desc)
 
         if not channels_text:
@@ -1158,11 +1158,11 @@ async def _find_channel_in_metadata_with_llm(
         if json_match:
             data = json.loads(json_match.group(0))
             found = data.get("found", False)
-            
+
             if found:
                 username = data.get("channel_username", "").strip().lstrip("@")
                 title = data.get("channel_title", "").strip()
-                
+
                 if username:
                     logger.info(
                         f"LLM found channel in metadata: "

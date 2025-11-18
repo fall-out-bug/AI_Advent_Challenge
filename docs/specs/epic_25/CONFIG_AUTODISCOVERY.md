@@ -1,6 +1,6 @@
 # Service Auto-Discovery Configuration
 
-**Epic**: EP25  
+**Epic**: EP25
 **Status**: ✅ Implemented
 
 ---
@@ -84,10 +84,10 @@ make butler-up
 
 ## Benefits
 
-✅ **Zero Configuration**: Works out of the box  
-✅ **Docker Native**: Uses Docker service discovery  
-✅ **Network Aware**: Automatically works in Docker networks  
-✅ **Override Friendly**: Can still customize if needed  
+✅ **Zero Configuration**: Works out of the box
+✅ **Docker Native**: Uses Docker service discovery
+✅ **Network Aware**: Automatically works in Docker networks
+✅ **Override Friendly**: Can still customize if needed
 ✅ **Consistent**: Same service names everywhere
 
 ---
@@ -107,4 +107,3 @@ make butler-up
 ---
 
 **Result**: Never need to configure MongoDB, LLM, or other services manually again! 🎉
-

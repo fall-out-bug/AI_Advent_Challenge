@@ -238,4 +238,3 @@ async def test_contains_sensitive_data():
     assert not service._contains_sensitive_data("Python")
     assert not service._contains_sensitive_data("Docker")
     assert not service._contains_sensitive_data("Clean Architecture")
-

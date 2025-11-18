@@ -156,11 +156,11 @@ _Day 25 · Personalised Butler ("Alfred-style дворецкий")_
      ```
    - For MVP: inline summarization in `PersonalizedReplyUseCase` when threshold exceeded (no separate worker).
 3. Implement prompt templates (`src/application/personalization/templates.py`):
-   - `PERSONA_TEMPLATE`: 
+   - `PERSONA_TEMPLATE`:
      ```
      Ты — {persona}. Твой тон: {tone}. Язык ответа: {language}.
      Preferred topics: {preferred_topics}.
-     
+
      Instructions:
      - Отвечай как Alfred из Batman (вежливый, ироничный, заботливый).
      - Используй английский юмор, но говори на русском.
@@ -170,15 +170,15 @@ _Day 25 · Personalised Butler ("Alfred-style дворецкий")_
      ```
      Previous interactions:
      {memory_events}
-     
+
      Summary: {summary}
      ```
    - `FULL_PROMPT_TEMPLATE`:
      ```
      {persona_section}
-     
+
      {memory_context}
-     
+
      User: {new_message}
      Butler:
      ```
@@ -371,6 +371,5 @@ _Day 25 · Personalised Butler ("Alfred-style дворецкий")_
 
 ---
 
-**Plan Version**: 1.0  
+**Plan Version**: 1.0
 **Status**: Ready for TL-00 review and kickoff
-

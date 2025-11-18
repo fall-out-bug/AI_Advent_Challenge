@@ -97,4 +97,3 @@ class ResetPersonalizationOutput:
     success: bool
     profile_reset: bool
     memory_deleted_count: int
-

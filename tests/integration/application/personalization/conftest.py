@@ -65,4 +65,3 @@ def personalized_reply_use_case(
 def reset_use_case(profile_repo, memory_repo):
     """Provide ResetPersonalizationUseCase instance."""
     return ResetPersonalizationUseCase(profile_repo, memory_repo)
-
