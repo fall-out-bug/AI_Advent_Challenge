@@ -4,6 +4,7 @@ Following Clean Architecture: Presentation layer delegates to domain layer.
 Following Python Zen: Simple is better than complex.
 """
 
+<<<<<<< HEAD
 import asyncio
 import base64
 import re
@@ -13,6 +14,11 @@ if TYPE_CHECKING:
     from typing import Any
 else:
     Any = object
+=======
+import base64
+import re
+from typing import Any, Optional
+>>>>>>> origin/master
 
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
@@ -31,6 +37,7 @@ logger = get_logger("butler_handler")
 
 # Global orchestrator instance (set by setup_butler_handler)
 _orchestrator: Optional[ButlerOrchestrator] = None
+<<<<<<< HEAD
 # Global personalized reply use case (set by setup_butler_handler)
 _personalized_reply_use_case: Optional[Any] = None
 
@@ -39,6 +46,11 @@ def setup_butler_handler(
     orchestrator: ButlerOrchestrator,
     personalized_reply_use_case: Optional[Any] = None,
 ) -> Router:
+=======
+
+
+def setup_butler_handler(orchestrator: ButlerOrchestrator) -> Router:
+>>>>>>> origin/master
     """Setup butler handler with orchestrator dependency.
 
     Purpose:
@@ -46,19 +58,30 @@ def setup_butler_handler(
 
     Args:
         orchestrator: ButlerOrchestrator instance for message processing
+<<<<<<< HEAD
         personalized_reply_use_case: Optional PersonalizedReplyUseCase for personalization
+=======
+>>>>>>> origin/master
 
     Returns:
         Configured aiogram Router
 
     Example:
         >>> orchestrator = await create_butler_orchestrator()
+<<<<<<< HEAD
         >>> router = setup_butler_handler(orchestrator, personalized_reply_use_case)
         >>> dp.include_router(router)
     """
     global _orchestrator, _personalized_reply_use_case
     _orchestrator = orchestrator
     _personalized_reply_use_case = personalized_reply_use_case
+=======
+        >>> router = setup_butler_handler(orchestrator)
+        >>> dp.include_router(router)
+    """
+    global _orchestrator
+    _orchestrator = orchestrator
+>>>>>>> origin/master
 
     router = Router()
     # Register handler - FSMContext will be automatically injected by aiogram if available
@@ -100,6 +123,7 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
     )
 
     try:
+<<<<<<< HEAD
         # Check if personalization is enabled and message is not a special command
         # Only route through personalization for regular text messages
         from src.infrastructure.config.settings import get_settings
@@ -156,6 +180,8 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                 )
                 # Fall through to Butler fallback
 
+=======
+>>>>>>> origin/master
         # Check for list channels request
         if _is_list_channels_request(text):
             logger.info(
@@ -199,6 +225,7 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
             return
 
         # Check if message contains digest request with channel name
+<<<<<<< HEAD
         # For better accuracy with multi-word names and Russian declensions, prefer LLM parsing when:
         # 1. Request contains "канала" or "канал" (indicates multi-word name likely)
         # 2. Request contains "дайджест" + "по" (indicates channel name in different case/declension)
@@ -278,6 +305,18 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
             logger.info(
                 f"🔍 Intercepting digest request: channel_name={channel_name}, user_id={user_id}"
             )
+=======
+        # Try regex first (fast)
+        channel_name, hours = _extract_digest_request_info(text)
+
+        # If regex failed, try LLM parsing (slower but more reliable)
+        if not channel_name:
+            logger.debug(f"Regex parsing failed, trying LLM parsing for: {text[:50]}")
+            channel_name, hours = await _parse_digest_request_with_llm(text)
+
+        if channel_name:
+            # Intercept digest request and use channel resolver
+>>>>>>> origin/master
             try:
                 use_case = ResolveChannelNameUseCase(allow_telegram_search=True)
                 resolution = await use_case.execute(
@@ -286,11 +325,14 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                     allow_telegram_search=True,
                 )
 
+<<<<<<< HEAD
                 logger.info(
                     f"🔍 Resolution result: found={resolution.found}, "
                     f"username={resolution.channel_username}, source={resolution.source}"
                 )
 
+=======
+>>>>>>> origin/master
                 if resolution.found and resolution.channel_username:
                     # Channel resolved, proceed with digest
                     logger.info(
@@ -302,6 +344,7 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                     # This ensures we use the correct username (onaboka) instead of title (Набока)
                     resolved_username = resolution.channel_username
 
+<<<<<<< HEAD
                     # If channel found via search (not in subscriptions), try to auto-subscribe
                     # This allows digest generation for channels found via Telegram search
                     # IMPORTANT: Check source FIRST before other conditions
@@ -426,6 +469,8 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                             # Continue anyway - MCP tool will handle not_subscribed case
 
                     # After auto-subscription (if needed), proceed with digest
+=======
+>>>>>>> origin/master
                     # Replace channel name in text with resolved username
                     # Also handle case where channel_name might be in different case or declension
                     text = text.replace(channel_name, resolved_username)
@@ -441,6 +486,7 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                     else:
                         # Just ensure resolved username is used
                         text = f"дайджест по {resolved_username}"
+<<<<<<< HEAD
 
                     # Check if posts exist for this channel, and collect if missing
                     # This handles cases where channel is subscribed but posts haven't been collected yet
@@ -575,12 +621,28 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                             f"Попробуйте подписаться на канал или уточните название."
                         )
                         return
+=======
+                elif not resolution.found and resolution.source == "subscription":
+                    # Channel not found in subscriptions, try search
+                    logger.info(
+                        f"Channel not found in subscriptions: input={channel_name}, "
+                        f"top_score={resolution.confidence_score:.3f}, user_id={user_id}"
+                    )
+                    # If confidence is low, channel might not be in subscriptions
+                    # For digest requests, we can't proceed without a channel
+                    await message.answer(
+                        f"❌ Канал '{channel_name}' не найден в ваших подписках.\n\n"
+                        f"Попробуйте подписаться на канал или уточните название."
+                    )
+                    return
+>>>>>>> origin/master
                 elif resolution.source == "search":
                     # Channel found via search, but we need valid username and title
                     if not resolution.channel_username or not resolution.channel_title:
                         logger.warning(
                             f"Channel search returned invalid result: "
                             f"username='{resolution.channel_username}', "
+<<<<<<< HEAD
                             f"title='{resolution.channel_title}', input='{channel_name}'. "
                             f"Trying LLM search in metadata..."
                         )
@@ -629,6 +691,21 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                                 f"Попробуйте подписаться на канал через команду подписки."
                             )
                             return
+=======
+                            f"title='{resolution.channel_title}', input='{channel_name}'",
+                            extra={
+                                "user_id": user_id,
+                                "input": channel_name,
+                                "username": resolution.channel_username,
+                                "title": resolution.channel_title,
+                            },
+                        )
+                        await message.answer(
+                            f"❌ Канал '{channel_name}' не найден в подписках.\n\n"
+                            f"Попробуйте подписаться на канал через команду подписки."
+                        )
+                        return
+>>>>>>> origin/master
 
                     # Channel found via search, need confirmation
                     if state is None:
@@ -983,6 +1060,7 @@ async def _parse_digest_request_with_llm(text: str) -> tuple[str | None, int | N
         llm_client = container.llm_client()
 
         prompt = f"""Ты - парсер запросов для Telegram-бота. Извлеки из запроса пользователя:
+<<<<<<< HEAD
 1. Полное название канала (если есть) - ВКЛЮЧАЯ все слова (имя, фамилию, если указаны)
 2. Период времени в днях или часах (если указан)
 
@@ -992,11 +1070,20 @@ async def _parse_digest_request_with_llm(text: str) -> tuple[str | None, int | N
 - Если указано одно слово в падеже (например, "Набоке"), восстанови его в именительном падеже (например, "Набока")
 - Название канала должно быть в именительном падеже (как оно обычно пишется)
 
+=======
+1. Название канала (если есть)
+2. Период времени в днях или часах (если указан)
+
+>>>>>>> origin/master
 Запрос пользователя: "{text}"
 
 Верни ответ ТОЛЬКО в JSON формате:
 {{
+<<<<<<< HEAD
   "channel_name": "полное_название_канала_в_именительном_падеже_или_null",
+=======
+  "channel_name": "название_канала_или_null",
+>>>>>>> origin/master
   "days": число_дней_или_null,
   "hours": число_часов_или_null
 }}
@@ -1005,12 +1092,15 @@ async def _parse_digest_request_with_llm(text: str) -> tuple[str | None, int | N
 Запрос: "дай дайджет Набоки за 5 дней"
 Ответ: {{"channel_name": "Набока", "days": 5, "hours": 120}}
 
+<<<<<<< HEAD
 Запрос: "дайджест канала Алексея Гладкова"
 Ответ: {{"channel_name": "Алексей Гладков", "days": null, "hours": null}}
 
 Запрос: "Можешь ли передать мне дайджест канала Алексея Гладкова?"
 Ответ: {{"channel_name": "Алексей Гладков", "days": null, "hours": null}}
 
+=======
+>>>>>>> origin/master
 Запрос: "дайджест по python за неделю"
 Ответ: {{"channel_name": "python", "days": 7, "hours": 168}}
 
@@ -1046,6 +1136,7 @@ async def _parse_digest_request_with_llm(text: str) -> tuple[str | None, int | N
         return (None, None)
 
 
+<<<<<<< HEAD
 async def _find_channel_in_metadata_with_llm(
     user_id: int,
     user_query: str,
@@ -1196,6 +1287,8 @@ async def _find_channel_in_metadata_with_llm(
         return None
 
 
+=======
+>>>>>>> origin/master
 def _extract_channel_name_from_digest_request(text: str) -> str | None:
     """Extract channel name from digest request (backward compatibility).
 

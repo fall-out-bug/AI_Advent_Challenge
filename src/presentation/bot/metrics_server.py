@@ -17,7 +17,11 @@ from typing import Optional
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from src.infrastructure.logging import get_logger
+<<<<<<< HEAD
 from src.infrastructure.metrics import get_butler_metrics
+=======
+from src.infrastructure.monitoring.prometheus_metrics import get_metrics_registry
+>>>>>>> origin/master
 
 logger = get_logger("metrics_server")
 
@@ -29,14 +33,29 @@ class MetricsHandler(BaseHTTPRequestHandler):
         """Handle GET requests to /metrics endpoint."""
         if self.path == "/metrics":
             try:
+<<<<<<< HEAD
                 metrics = get_butler_metrics()
                 registry = metrics.get_registry()
                 output = generate_latest(registry).decode("utf-8")
+=======
+                registry = get_metrics_registry()
+                if registry is None:
+                    self.send_response(503)
+                    self.end_headers()
+                    self.wfile.write(b"# Metrics registry unavailable\n")
+                    return
+
+                output = generate_latest(registry)
+>>>>>>> origin/master
 
                 self.send_response(200)
                 self.send_header("Content-Type", CONTENT_TYPE_LATEST)
                 self.end_headers()
+<<<<<<< HEAD
                 self.wfile.write(output.encode("utf-8"))
+=======
+                self.wfile.write(output)
+>>>>>>> origin/master
             except Exception as e:
                 logger.error(f"Error generating metrics: {e}", exc_info=True)
                 self.send_response(500)

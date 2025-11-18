@@ -16,6 +16,7 @@ from unittest.mock import patch
 
 
 @pytest.fixture(autouse=True)
+<<<<<<< HEAD
 def _set_test_db_env(monkeypatch):
     """Set test database environment."""
     monkeypatch.setenv("DB_NAME", "butler_test")
@@ -38,6 +39,59 @@ async def _cleanup_db():
     except ImportError:
         # Skip if MongoDB dependencies not available
         pytest.skip("MongoDB dependencies not available")
+=======
+async def _cleanup_db(mongodb_database_async):
+    """Cleanup database before and after tests.
+
+    Args:
+        mongodb_database_async: Per-test async MongoDB database fixture.
+    """
+    # Per-test DB is already isolated, just clean channels collection
+    await mongodb_database_async.channels.delete_many({})
+    yield
+    # Cleanup happens automatically via mongodb_database_async fixture
+
+
+@pytest.fixture(autouse=True)
+async def _patch_db_for_digest_tools(mongodb_database_async, monkeypatch):
+    """Patch get_db() to use test database for digest_tools.
+
+    Args:
+        mongodb_database_async: Per-test async MongoDB database fixture.
+        monkeypatch: Pytest monkeypatch fixture.
+    """
+    from src.infrastructure.database.mongo import close_client
+    from src.infrastructure.config.settings import get_settings
+    import src.infrastructure.database.mongo as mongo_module
+    import src.presentation.mcp.tools.channels.utils as utils_module
+
+    # Close existing connection
+    await close_client()
+
+    # Set MONGODB_URL to test URL
+    settings = get_settings()
+    monkeypatch.setenv("MONGODB_URL", settings.test_mongodb_url)
+
+    # Patch get_db to return test database (keep original for restore)
+    original_get_db = mongo_module.get_db
+    original_get_database = utils_module.get_database
+
+    async def mock_get_db():
+        return mongodb_database_async
+
+    async def mock_get_database():
+        return mongodb_database_async
+
+    # Apply patches
+    monkeypatch.setattr(mongo_module, "get_db", mock_get_db)
+    monkeypatch.setattr(utils_module, "get_database", mock_get_database)
+
+    yield
+
+    # Restore original functions (monkeypatch will restore automatically, but explicit is clearer)
+    monkeypatch.setattr(mongo_module, "get_db", original_get_db)
+    monkeypatch.setattr(utils_module, "get_database", original_get_database)
+>>>>>>> origin/master
 
 
 @pytest.fixture
@@ -120,6 +174,10 @@ async def test_digest_filters_posts_by_24_hours(mock_channel_posts):
 
 @pytest.mark.asyncio
 @pytest.mark.integration
+<<<<<<< HEAD
+=======
+@pytest.mark.skip(reason="Requires digest_tools refactoring to use DI/test DB injection")
+>>>>>>> origin/master
 async def test_digest_filters_posts_by_custom_hours(mock_channel_posts):
     """Test that digest respects custom hours parameter."""
     from src.presentation.mcp.tools.digest_tools import add_channel, get_channel_digest
@@ -149,6 +207,10 @@ async def test_digest_filters_posts_by_custom_hours(mock_channel_posts):
 
 @pytest.mark.asyncio
 @pytest.mark.integration
+<<<<<<< HEAD
+=======
+@pytest.mark.skip(reason="Requires digest_tools refactoring to use DI/test DB injection")
+>>>>>>> origin/master
 async def test_digest_empty_when_no_posts_in_timeframe():
     """Test that digest returns empty list when no posts in timeframe."""
     from src.presentation.mcp.tools.digest_tools import add_channel, get_channel_digest
@@ -172,6 +234,10 @@ async def test_digest_empty_when_no_posts_in_timeframe():
 
 @pytest.mark.asyncio
 @pytest.mark.integration
+<<<<<<< HEAD
+=======
+@pytest.mark.skip(reason="Requires digest_tools refactoring to use DI/test DB injection")
+>>>>>>> origin/master
 async def test_digest_summarizes_multiple_channels():
     """Test that digest processes multiple channels correctly."""
     from src.presentation.mcp.tools.digest_tools import add_channel, get_channel_digest
@@ -209,6 +275,10 @@ async def test_digest_summarizes_multiple_channels():
 
 @pytest.mark.asyncio
 @pytest.mark.integration
+<<<<<<< HEAD
+=======
+@pytest.mark.skip(reason="Requires digest_tools refactoring to use DI/test DB injection")
+>>>>>>> origin/master
 async def test_digest_filters_only_recent_posts_correctly(mock_channel_posts):
     """Test that time filtering correctly excludes old posts."""
     from src.presentation.mcp.tools.digest_tools import add_channel, get_channel_digest
@@ -246,6 +316,7 @@ async def test_digest_filters_only_recent_posts_correctly(mock_channel_posts):
 
 @pytest.mark.asyncio
 @pytest.mark.integration
+<<<<<<< HEAD
 async def test_digest_updates_last_digest_timestamp():
     """Test that digest updates last_digest timestamp."""
     from src.presentation.mcp.tools.digest_tools import add_channel, get_channel_digest
@@ -281,6 +352,53 @@ async def test_digest_updates_last_digest_timestamp():
         {"user_id": 600, "channel_username": "test_channel"}
     )
     assert channel_after["last_digest"] is not None
+=======
+@pytest.mark.skip(reason="Requires proper DB patching - auth issue in digest_tools using get_db()")
+async def test_digest_updates_last_digest_timestamp(mongodb_database_async, monkeypatch):
+    """Test that digest updates last_digest timestamp.
+
+    Args:
+        mongodb_database_async: Per-test async MongoDB database fixture.
+        monkeypatch: Pytest monkeypatch fixture for environment variables.
+    """
+    from src.presentation.mcp.tools.digest_tools import add_channel, get_channel_digest
+    from src.infrastructure.database.mongo import close_client, get_db
+    from src.infrastructure.config.settings import get_settings
+    from unittest.mock import patch
+
+    # Get test MongoDB URL from settings
+    settings = get_settings()
+    test_url = settings.test_mongodb_url
+
+    # Set MONGODB_URL to test URL so get_db() uses correct credentials
+    monkeypatch.setenv("MONGODB_URL", test_url)
+
+    # Close any existing connection to force fresh connection with new URL
+    await close_client()
+
+    # Patch get_db to return our per-test database (which uses test URL)
+    async def mock_get_db():
+        return mongodb_database_async
+
+    # Patch get_database (used by channel tools) to return test database
+    with patch("src.presentation.mcp.tools.channels.utils.get_database", side_effect=mock_get_db), \
+         patch("src.infrastructure.database.mongo.get_db", side_effect=mock_get_db):
+        await add_channel(user_id=600, channel_username="test_channel")  # type: ignore[arg-type]
+
+        db = mongodb_database_async
+        channel_before = await db.channels.find_one(
+            {"user_id": 600, "channel_username": "test_channel"}
+        )
+        assert channel_before["last_digest"] is None
+
+        await get_channel_digest(user_id=600, hours=24)  # type: ignore[arg-type]
+
+        # Verify timestamp is updated - do this inside patch context
+        channel_after = await db.channels.find_one(
+            {"user_id": 600, "channel_username": "test_channel"}
+        )
+        assert channel_after["last_digest"] is not None
+>>>>>>> origin/master
 
     # Verify timestamp is recent (within last minute)
     last_digest_time = datetime.fromisoformat(channel_after["last_digest"])
@@ -289,6 +407,10 @@ async def test_digest_updates_last_digest_timestamp():
 
 @pytest.mark.asyncio
 @pytest.mark.integration
+<<<<<<< HEAD
+=======
+@pytest.mark.skip(reason="Requires digest_tools refactoring to use DI/test DB injection")
+>>>>>>> origin/master
 async def test_digest_handles_errors_gracefully():
     """Test that digest continues processing if one channel fails."""
     from src.presentation.mcp.tools.digest_tools import add_channel, get_channel_digest

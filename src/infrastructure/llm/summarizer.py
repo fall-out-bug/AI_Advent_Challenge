@@ -168,6 +168,7 @@ async def summarize_posts(
         channel_context = f" канала @{channel_username}"
 
     if language == "ru":
+<<<<<<< HEAD
         # Load digest summarization prompt from config (includes persona style)
         try:
             from src.application.personalization.templates import (
@@ -204,6 +205,35 @@ async def summarize_posts(
                 "Digest summarization prompt template not available. "
                 "Please ensure config/persona_templates.yaml contains digest_summarization_prompt."
             ) from e
+=======
+        prompt = f"""Суммаризируй эти посты из Telegram-канала{channel_context}{time_context}.
+
+КРИТИЧЕСКИ ВАЖНО:
+- Эти посты ВСЕ из ОДНОГО канала{channel_context}
+- НЕ смешивай информацию из других каналов или источников
+- Суммаризируй ТОЛЬКО то, что написано в этих постах
+
+Требования:
+- Напиши {max_sentences} РАЗНЫХ предложения на русском языке
+- Каждое предложение раскрывает РАЗНЫЙ аспект
+- Без повторов, без нумерации, без Markdown
+- Обычный текст, только предложения
+
+Формат ответа:
+- Верни ТОЛЬКО текст, НЕ JSON, НЕ структурированные данные
+- Только предложения на русском языке
+- Пиши ПОЛНЫЙ дайджест - используй все {max_sentences} предложений
+- Включи все важные детали из постов
+- Учитывай временной период: это посты{time_context}, сфокусируйся на актуальном контенте за этот период
+
+Пример правильного ответа:
+"Разработчики представили новую версию iOS с улучшенной производительностью на 30%. Добавлены новые функции для работы с жестами и улучшена безопасность. Обсуждаются отзывы пользователей о стабильности и совместимости."
+
+Посты из канала{channel_context}:
+{texts}
+
+Суммари (только этот канал):"""
+>>>>>>> origin/master
     else:
         channel_context = (
             f" from channel @{channel_username}" if channel_username else ""
@@ -372,6 +402,7 @@ Summary (this channel only):"""
                     )
 
                 if cleaned_summary:
+<<<<<<< HEAD
                     # Ensure summary is within 1500-2000 characters
                     if len(cleaned_summary) < 1500:
                         logger.warning(
@@ -397,6 +428,9 @@ Summary (this channel only):"""
                         f"Final summary generated: length={len(cleaned_summary)} chars, "
                         f"preview={cleaned_summary[:200]}..."
                     )
+=======
+                    logger.info(f"Final summary generated: {cleaned_summary[:200]}...")
+>>>>>>> origin/master
                     return cleaned_summary
         except Exception as e:
             logger.warning(

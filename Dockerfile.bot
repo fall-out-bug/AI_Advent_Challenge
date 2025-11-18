@@ -7,10 +7,15 @@ WORKDIR /build
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install poetry
 
+<<<<<<< HEAD
 # Copy dependency files
 COPY pyproject.toml poetry.lock* ./
 
 # Copy path dependencies (required for poetry install)
+=======
+# Copy dependency files and local dependencies
+COPY pyproject.toml poetry.lock* ./
+>>>>>>> origin/master
 COPY shared/ ./shared/
 COPY packages/multipass-reviewer/ ./packages/multipass-reviewer/
 
@@ -47,7 +52,10 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy application code
 COPY --chown=butler:butler src/ ./src/
 COPY --chown=butler:butler shared/ ./shared/
+<<<<<<< HEAD
 COPY --chown=butler:butler config/ ./config/
+=======
+>>>>>>> origin/master
 COPY --chown=butler:butler pyproject.toml ./
 
 # Install application in development mode

@@ -1,4 +1,5 @@
 """MCP client for tool discovery and execution."""
+
 import os
 from typing import Any, Dict, List, Protocol
 
@@ -94,7 +95,7 @@ class MCPClient:
                                 return result.content[0]
                         return {}
                 except Exception as e:
-                    # Check if it's an ExceptionGroup (from exceptiongroup package in Python 3.10)
+                    # Check if it's an ExceptionGroup (from exceptiongroup package)
                     if hasattr(e, "exceptions") and hasattr(e, "__class__"):
                         # It's an ExceptionGroup-like exception
                         exceptions = getattr(e, "exceptions", [])
@@ -102,9 +103,11 @@ class MCPClient:
                             # Get the first exception from the group
                             actual_exception = exceptions[0]
                             # Re-raise as a regular exception for better error handling
-                            raise Exception(
-                                f"MCP tool '{tool_name}' failed: {str(actual_exception)}"
-                            ) from actual_exception
+                            error_msg = (
+                                f"MCP tool '{tool_name}' failed: "
+                                f"{str(actual_exception)}"
+                            )
+                            raise Exception(error_msg) from actual_exception
                     # Re-raise if not ExceptionGroup or if we can't extract exception
                     raise
         except Exception as e:
@@ -113,9 +116,10 @@ class MCPClient:
                 exceptions = getattr(e, "exceptions", [])
                 if len(exceptions) > 0:
                     actual_exception = exceptions[0]
-                    raise Exception(
+                    error_msg = (
                         f"MCP tool '{tool_name}' failed: {str(actual_exception)}"
-                    ) from actual_exception
+                    )
+                    raise Exception(error_msg) from actual_exception
             raise
 
     async def interactive_mode(self) -> None:

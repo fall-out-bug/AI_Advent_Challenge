@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """LLM client Protocol interface."""
 
 from __future__ import annotations
@@ -5,12 +6,50 @@ from __future__ import annotations
 from typing import Protocol
 
 
+=======
+"""LLM client Protocol interface.
+
+This module defines the canonical LLMClient Protocol that all LLM client
+implementations must conform to. The Protocol supports both single and batch
+generation with configurable parameters.
+"""
+
+from __future__ import annotations
+
+from typing import Protocol, runtime_checkable
+
+
+@runtime_checkable
+>>>>>>> origin/master
 class LLMClient(Protocol):
     """Protocol for LLM client implementations.
 
     Purpose:
+<<<<<<< HEAD
         Defines the interface that all LLM clients must implement.
         Supports both single and batch generation.
+=======
+        Defines the canonical interface that all LLM clients must implement.
+        Supports both single and batch generation with configurable parameters.
+        This Protocol is the standard adapter interface for LLM operations.
+
+    Implementations:
+        - ResilientLLMClient: Wraps primary client with fallback and retry logic
+        - HTTPLLMClient: Direct HTTP client for Mistral/OpenAI-compatible APIs
+        - FallbackLLMClient: Trivial fallback for error scenarios
+
+    Usage:
+        Use this Protocol as a type hint for dependency injection:
+        ```python
+        def create_summarizer(llm_client: LLMClient) -> Summarizer:
+            # llm_client conforms to LLMClient Protocol
+            return Summarizer(llm_client=llm_client)
+        ```
+
+    Note:
+        This Protocol is runtime-checkable, so you can use `isinstance(client, LLMClient)`
+        to verify that an object implements the interface.
+>>>>>>> origin/master
     """
 
     async def generate(

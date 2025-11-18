@@ -35,8 +35,13 @@
 | EP05 | Stage 05_01 | Benchmark & dataset design | Completed | fall_out_bug | 2025-11-10 | – |
 | EP05 | Stage 05_02 | Automation & evaluation tooling | Completed | fall_out_bug | 2025-11-11 | Live data seeding deferred to EP23 |
 | EP05 | Stage 05_03 | Fine-tuning governance & rollout | Completed | fall_out_bug | 2025-11-12 | Pilot execution awaits EP23 tasks |
+<<<<<<< HEAD
 | EP23 | Stage 23_01 | Observability & benchmark enablement (Day 23) | Completed | fall_out_bug | 2025-11-18 | See `docs/specs/epic_23/README.md` |
 | EP24 | Stage 24_01 | Voice commands integration (Day 24) | Completed | fall_out_bug | 2025-11-18 | See `docs/specs/epic_24/README.md` |
+=======
+| EP23 | Stage 23_01 | Observability & benchmark enablement (Day 23) | Completed | fall_out_bug | 2025-11-16 | Challenge Days 1–22 gap closure completed; see `docs/specs/epic_23/acceptance_matrix.md` and `docs/specs/epic_23/epic_23_completion_summary.md` |
+| EP23 | Stage 23_02 | Repository hygiene & de-legacy (Day 24 continuation) | Planned | fall_out_bug | 2025-11-17 | Planned continuation based on `docs/specs/epic_24/epic_24.md` and `docs/specs/epic_23/legacy_refactor_proposal.md` |
+>>>>>>> origin/master
 
 ## Notes
 - Owners and dates will be filled once stakeholders are assigned.

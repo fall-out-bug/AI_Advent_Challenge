@@ -122,8 +122,31 @@ def _build_pipeline(settings):
 
 
 def _create_mongo_client(url: str, timeout_ms: int) -> MongoClient:
+<<<<<<< HEAD
     """Create MongoDB client."""
     sanitized_url = _resolve_mongo_url(url)
+=======
+    """Create MongoDB client.
+
+    Note: This function is kept for backward compatibility with embedding_index CLI.
+    New code should use MongoClientFactory instead.
+    """
+    sanitized_url = _resolve_mongo_url(url)
+    # Use MongoClientFactory if settings are available
+    try:
+        from src.infrastructure.config.settings import get_settings
+        from src.infrastructure.database.mongo_client_factory import MongoClientFactory
+
+        settings = get_settings()
+        factory = MongoClientFactory(settings)
+        # If URL matches settings, use factory
+        if url == settings.mongodb_url or url == settings.test_mongodb_url:
+            use_test_url = url == settings.test_mongodb_url
+            return factory.create_sync_client(use_test_url=use_test_url)
+    except Exception:
+        # Fallback to direct instantiation if factory fails
+        pass
+>>>>>>> origin/master
     return MongoClient(sanitized_url, serverSelectionTimeoutMS=timeout_ms)
 
 

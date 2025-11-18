@@ -67,6 +67,40 @@ class ChannelNormalizer:
 
         return normalized.strip()
 
+<<<<<<< HEAD
+=======
+    def to_canonical_form(self, channel_username: str) -> str:
+        """Convert channel username to canonical form per E.1 policy.
+
+        Purpose:
+            Ensures channel username is in canonical form: lowercase, without @ prefix.
+            This is the standard format for DB, indexes, and domain logic.
+
+        Args:
+            channel_username: Channel username (may contain @ prefix, uppercase, etc.).
+
+        Returns:
+            Canonical form: lowercase, without @ prefix.
+            Example: "onaboka" (not "@onaboka" or "Onaboka").
+
+        Example:
+            >>> normalizer = ChannelNormalizer()
+            >>> normalizer.to_canonical_form("@onaboka")
+            'onaboka'
+            >>> normalizer.to_canonical_form("Onaboka")
+            'onaboka'
+            >>> normalizer.to_canonical_form("onaboka")
+            'onaboka'
+        """
+        if not channel_username:
+            return ""
+
+        # Remove whitespace, then @ prefix, then convert to lowercase
+        canonical = channel_username.strip().lstrip("@").lower().strip()
+
+        return canonical
+
+>>>>>>> origin/master
     def tokenize(self, text: str) -> List[str]:
         """Tokenize text into words.
 

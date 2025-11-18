@@ -8,6 +8,10 @@ from typing import Any, Dict, List, Sequence
 import click
 from motor.core import AgnosticDatabase
 
+<<<<<<< HEAD
+=======
+from src.domain.services.channel_normalizer import ChannelNormalizer
+>>>>>>> origin/master
 from src.infrastructure.database.mongo import get_db
 from src.presentation.cli.backoffice.formatters import OutputFormat, format_output
 from src.presentation.cli.backoffice.formatters import OutputFormat, format_output
@@ -93,9 +97,19 @@ async def _add_channel(
     tags: Sequence[str],
     as_json: bool,
 ) -> None:
+<<<<<<< HEAD
     result = await mcp_add_channel(
         user_id=user_id,
         channel_username=channel,
+=======
+    # Normalize channel username to canonical form (lowercase, without @ prefix) per E.1 policy
+    normalizer = ChannelNormalizer()
+    channel_username = normalizer.to_canonical_form(channel)
+
+    result = await mcp_add_channel(
+        user_id=user_id,
+        channel_username=channel_username,
+>>>>>>> origin/master
         tags=list(tags),
     )
 

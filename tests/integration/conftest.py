@@ -3,6 +3,7 @@
 Following TDD principles: comprehensive fixtures for cross-layer testing.
 """
 
+<<<<<<< HEAD
 import os
 
 import pytest
@@ -12,6 +13,12 @@ from typing import Any, Dict
 
 from src.infrastructure.config.settings import get_settings
 
+=======
+import pytest
+from unittest.mock import AsyncMock, MagicMock
+from typing import Any, Dict
+
+>>>>>>> origin/master
 from tests.fixtures.butler_fixtures import (
     butler_orchestrator,
     mock_llm_client_protocol,
@@ -128,6 +135,7 @@ async def integration_mongodb(mock_mongodb):
 
 
 @pytest.fixture(scope="function")
+<<<<<<< HEAD
 async def real_mongodb():
     """Real MongoDB connection for integration tests.
 
@@ -154,3 +162,20 @@ async def real_mongodb():
     # Cleanup: drop test database
     await client.drop_database("ai_challenge_integration_test")
     client.close()
+=======
+async def real_mongodb(mongodb_database_async):
+    """Real MongoDB connection for integration tests (deprecated - use mongodb_database_async).
+
+    Purpose:
+        Legacy alias for mongodb_database_async fixture.
+        Provides per-test isolated MongoDB database.
+
+    Yields:
+        MongoDB database instance (AsyncIOMotorDatabase).
+
+    Note:
+        This fixture is kept for backward compatibility.
+        New tests should use mongodb_database_async directly.
+    """
+    yield mongodb_database_async
+>>>>>>> origin/master

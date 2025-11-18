@@ -2,12 +2,17 @@
 
 Purpose:
     Handles voice and audio messages: downloads audio, transcribes via STT,
+<<<<<<< HEAD
     processes through use case, and executes command immediately.
+=======
+    processes through use case, and sends confirmation to user.
+>>>>>>> origin/master
 """
 
 from __future__ import annotations
 
 import asyncio
+<<<<<<< HEAD
 from typing import TYPE_CHECKING, Optional
 from uuid import uuid4
 
@@ -16,6 +21,10 @@ if TYPE_CHECKING:
 else:
     Any = object
 
+=======
+from uuid import uuid4
+
+>>>>>>> origin/master
 from aiogram import F, Router
 from aiogram.types import CallbackQuery, Message
 
@@ -36,13 +45,19 @@ logger = get_logger("voice_handler")
 # Global use case instances (set by setup_voice_handler)
 _process_use_case: ProcessVoiceCommandUseCase | None = None
 _confirmation_use_case: HandleVoiceConfirmationUseCase | None = None
+<<<<<<< HEAD
 _personalized_reply_use_case: Optional[Any] = None
+=======
+>>>>>>> origin/master
 
 
 def setup_voice_handler(
     process_use_case: ProcessVoiceCommandUseCase,
     confirmation_use_case: HandleVoiceConfirmationUseCase,
+<<<<<<< HEAD
     personalized_reply_use_case: Optional[Any] = None,
+=======
+>>>>>>> origin/master
 ) -> Router:
     """Setup voice handler with use case dependencies.
 
@@ -53,7 +68,10 @@ def setup_voice_handler(
     Args:
         process_use_case: ProcessVoiceCommandUseCase instance.
         confirmation_use_case: HandleVoiceConfirmationUseCase instance.
+<<<<<<< HEAD
         personalized_reply_use_case: Optional PersonalizedReplyUseCase for personalization.
+=======
+>>>>>>> origin/master
 
     Returns:
         Configured aiogram Router with voice and callback handlers.
@@ -61,6 +79,7 @@ def setup_voice_handler(
     Example:
         >>> process_use_case = ProcessVoiceCommandUseCase(...)
         >>> confirmation_use_case = HandleVoiceConfirmationUseCase(...)
+<<<<<<< HEAD
         >>> router = setup_voice_handler(process_use_case, confirmation_use_case, personalized_reply_use_case)
         >>> dp.include_router(router)
     """
@@ -68,6 +87,14 @@ def setup_voice_handler(
     _process_use_case = process_use_case
     _confirmation_use_case = confirmation_use_case
     _personalized_reply_use_case = personalized_reply_use_case
+=======
+        >>> router = setup_voice_handler(process_use_case, confirmation_use_case)
+        >>> dp.include_router(router)
+    """
+    global _process_use_case, _confirmation_use_case
+    _process_use_case = process_use_case
+    _confirmation_use_case = confirmation_use_case
+>>>>>>> origin/master
 
     router = Router()
 
@@ -87,6 +114,7 @@ def setup_voice_handler(
 
 
 async def handle_voice_message(message: Message) -> None:
+<<<<<<< HEAD
     """Handle voice/audio message from user.
 
     Purpose:
@@ -99,11 +127,25 @@ async def handle_voice_message(message: Message) -> None:
     Example:
         >>> # Handler is registered automatically via setup_voice_handler
         >>> # No direct call needed
+=======
+    """Handle voice or audio message.
+
+    Purpose:
+        Downloads audio file from Telegram, creates ProcessVoiceCommandInput,
+        invokes ProcessVoiceCommandUseCase, and handles errors.
+
+    Args:
+        message: Telegram message with voice or audio attachment.
+
+    Example:
+        >>> await handle_voice_message(message)
+>>>>>>> origin/master
     """
     if not message.from_user:
         logger.warning("Received voice message without user")
         return
 
+<<<<<<< HEAD
     user_id = str(message.from_user.id)
     command_id = uuid4()
 
@@ -111,10 +153,22 @@ async def handle_voice_message(message: Message) -> None:
     if _process_use_case is None:
         logger.error("ProcessVoiceCommandUseCase not initialized")
         await message.answer("❌ Ошибка: сервис обработки голосовых команд недоступен.")
+=======
+    global _process_use_case
+    if _process_use_case is None:
+        logger.error("ProcessVoiceCommandUseCase not initialized")
+        try:
+            await message.answer(
+                "❌ Ошибка: сервис обработки голосовых сообщений недоступен."
+            )
+        except Exception:
+            pass
+>>>>>>> origin/master
         return
 
     process_use_case = _process_use_case
 
+<<<<<<< HEAD
     try:
         # Get audio file
         if message.voice:
@@ -138,10 +192,38 @@ async def handle_voice_message(message: Message) -> None:
             logger.warning("Downloaded audio file is None")
             await message.answer(
                 "❌ Не удалось загрузить голосовое сообщение. "
+=======
+    user_id = str(message.from_user.id)
+    command_id = uuid4()
+
+    logger.info(
+        "Processing voice message",
+        extra={
+            "user_id": user_id,
+            "command_id": str(command_id),
+            "message_id": message.message_id,
+            "content_type": message.content_type,
+        },
+    )
+
+    try:
+        # Download audio file
+        if message.voice:
+            file_id = message.voice.file_id
+            duration = message.voice.duration
+        elif message.audio:
+            file_id = message.audio.file_id
+            duration = message.audio.duration or 0
+        else:
+            logger.warning("Message has no voice or audio attachment")
+            await message.answer(
+                "❌ Не удалось распознать голосовое сообщение. "
+>>>>>>> origin/master
                 "Попробуйте отправить сообщение заново."
             )
             return
 
+<<<<<<< HEAD
         # Read audio bytes
         # In aiogram 3.x, download_file returns bytes directly or a file-like object
         if isinstance(audio_data, bytes):
@@ -175,6 +257,46 @@ async def handle_voice_message(message: Message) -> None:
         )
 
         if not audio_bytes:
+=======
+        # Get file from Telegram
+        file = await message.bot.get_file(file_id)
+
+        # Download file content
+        # aiogram returns BytesIO object (synchronous file-like object)
+        audio_file = await message.bot.download_file(file.file_path)
+
+        # Read audio bytes from BytesIO (synchronous read)
+        try:
+            if hasattr(audio_file, "read"):
+                # BytesIO.read() is synchronous, NOT async - don't use await!
+                audio_data = audio_file.read()
+                # Close file if needed
+                if hasattr(audio_file, "close"):
+                    audio_file.close()
+            elif isinstance(audio_file, bytes):
+                # Already bytes
+                audio_data = audio_file
+            else:
+                # Try to convert to bytes
+                audio_data = bytes(audio_file) if hasattr(audio_file, "__iter__") else b""
+        except Exception as e:
+            logger.error(
+                f"Failed to read audio file: {e}",
+                extra={"user_id": user_id, "command_id": str(command_id)},
+            )
+            raise
+
+        logger.debug(
+            f"Downloaded audio: {len(audio_data)} bytes",
+            extra={
+                "voice_command_id": str(command_id),
+                "user_id": user_id,
+                "file_size": len(audio_data),
+            },
+        )
+
+        if not audio_data:
+>>>>>>> origin/master
             logger.warning("Downloaded audio file is empty")
             await message.answer(
                 "❌ Не удалось загрузить голосовое сообщение. "
@@ -186,7 +308,11 @@ async def handle_voice_message(message: Message) -> None:
         input_data = ProcessVoiceCommandInput(
             command_id=command_id,
             user_id=user_id,
+<<<<<<< HEAD
             audio_bytes=audio_bytes,
+=======
+            audio_bytes=audio_data,
+>>>>>>> origin/master
             duration_seconds=float(duration),
         )
 
@@ -203,6 +329,7 @@ async def handle_voice_message(message: Message) -> None:
             },
         )
 
+<<<<<<< HEAD
         # Check if personalization is enabled
         from src.infrastructure.config.settings import get_settings
 
@@ -256,6 +383,8 @@ async def handle_voice_message(message: Message) -> None:
                 )
                 # Fall through to fallback
 
+=======
+>>>>>>> origin/master
         # Execute command immediately without confirmation
         # Send transcription result to user and execute via Butler
         try:
@@ -267,6 +396,11 @@ async def handle_voice_message(message: Message) -> None:
             # Execute command immediately via confirmation use case
             global _confirmation_use_case
             if _confirmation_use_case is not None:
+<<<<<<< HEAD
+=======
+                from src.application.voice.dtos import HandleVoiceConfirmationInput
+
+>>>>>>> origin/master
                 confirmation_input = HandleVoiceConfirmationInput(
                     command_id=command_id,
                     user_id=user_id,
@@ -339,7 +473,10 @@ async def handle_voice_message(message: Message) -> None:
                 "command_id": str(command_id),
                 "error": str(e),
             },
+<<<<<<< HEAD
             exc_info=True,
+=======
+>>>>>>> origin/master
         )
         await message.answer(
             "❌ Не удалось распознать голос. Попробуйте записать заново."
@@ -358,8 +495,12 @@ async def handle_voice_callback(callback: CallbackQuery) -> None:
         callback: Telegram callback query with voice confirmation action.
 
     Example:
+<<<<<<< HEAD
         >>> # Handler is registered automatically via setup_voice_handler
         >>> # No direct call needed
+=======
+        >>> await handle_voice_callback(callback)
+>>>>>>> origin/master
     """
     if not callback.data or not callback.from_user:
         logger.warning("Received callback without data or user")
@@ -414,12 +555,18 @@ async def handle_voice_callback(callback: CallbackQuery) -> None:
     )
 
     try:
+<<<<<<< HEAD
         confirmation_input = HandleVoiceConfirmationInput(
+=======
+        # Create input for use case
+        input_data = HandleVoiceConfirmationInput(
+>>>>>>> origin/master
             command_id=command_id,
             user_id=user_id,
             action=action,
         )
 
+<<<<<<< HEAD
         response = await confirmation_use_case.execute(confirmation_input)
 
         await callback.answer("✅ Обработано")
@@ -437,6 +584,140 @@ async def handle_voice_callback(callback: CallbackQuery) -> None:
             },
         )
         await callback.answer(f"❌ Ошибка: {str(e)}")
+=======
+        # Answer callback query IMMEDIATELY (Telegram requires response within timeout)
+        # Process command asynchronously after answering callback
+        if action == "confirm":
+            # Answer callback immediately to avoid timeout
+            try:
+                await callback.answer("✅ Команда подтверждена, выполняется...")
+            except Exception as e:
+                logger.warning(
+                    "Failed to answer callback query (may be too old)",
+                    extra={
+                        "user_id": user_id,
+                        "command_id": str(command_id),
+                        "error": str(e),
+                    },
+                )
+                # Continue anyway - we'll send response as new message
+
+        # Handle confirmation (process in background after answering callback)
+        response = await confirmation_use_case.execute(input_data)
+
+        logger.info(
+            "Confirmation use case executed",
+            extra={
+                "user_id": user_id,
+                "command_id": str(command_id),
+                "action": action,
+                "response_type": type(response).__name__,
+                "response_length": len(response) if response else 0,
+                "response_empty": not response,
+            },
+        )
+
+        # Send response to user
+        if action == "confirm":
+            # Send Butler response to user
+            logger.debug(
+                "Checking response before sending",
+                extra={
+                    "user_id": user_id,
+                    "command_id": str(command_id),
+                    "response": response[:100] if response else None,
+                    "response_bool": bool(response),
+                },
+            )
+            if response:
+                logger.info(
+                    "Sending Butler response to user",
+                    extra={
+                        "user_id": user_id,
+                        "command_id": str(command_id),
+                        "response_length": len(response),
+                    },
+                )
+                try:
+                    # Use callback.message if available, otherwise send directly
+                    if callback.message:
+                        await callback.message.answer(response)
+                    else:
+                        # Fallback: send message directly
+                        await callback.bot.send_message(
+                            chat_id=int(user_id),
+                            text=response,
+                        )
+                except Exception as e:
+                    logger.error(
+                        "Failed to send Butler response to user",
+                        extra={
+                            "user_id": user_id,
+                            "command_id": str(command_id),
+                            "error": str(e),
+                        },
+                    )
+                    # Try to notify user about error
+                    try:
+                        await callback.message.answer(
+                            "✅ Команда выполнена, но произошла ошибка при отправке ответа."
+                        )
+                    except Exception:
+                        pass
+            else:
+                logger.warning(
+                    "Empty Butler response",
+                    extra={
+                        "user_id": user_id,
+                        "command_id": str(command_id),
+                    },
+                )
+                # Send message directly since callback may be expired
+                try:
+                    if callback.message:
+                        await callback.message.answer(
+                            "✅ Команда обработана, но ответ пуст."
+                        )
+                    else:
+                        await callback.bot.send_message(
+                            chat_id=int(user_id),
+                            text="✅ Команда обработана, но ответ пуст.",
+                        )
+                except Exception as e:
+                    logger.error(
+                        "Failed to send empty response message",
+                        extra={
+                            "user_id": user_id,
+                            "command_id": str(command_id),
+                            "error": str(e),
+                        },
+                    )
+        else:
+            # Reject action - callback already answered if needed
+            try:
+                await callback.answer("🔄 Команда отклонена", show_alert=False)
+            except Exception:
+                # Callback may be expired, continue anyway
+                pass
+            # Send rejection message if available
+            if response:
+                if callback.message:
+                    await callback.message.answer(response)
+                else:
+                    await callback.bot.send_message(
+                        chat_id=int(user_id),
+                        text=response,
+                    )
+
+        logger.info(
+            "Voice confirmation processed successfully",
+            extra={
+                "user_id": user_id,
+                "command_id": str(command_id),
+                "action": action,
+            },
+        )
+>>>>>>> origin/master
 
     except Exception as e:
         logger.error(
@@ -444,8 +725,17 @@ async def handle_voice_callback(callback: CallbackQuery) -> None:
             extra={
                 "user_id": user_id,
                 "command_id": str(command_id),
+<<<<<<< HEAD
                 "error": str(e),
             },
             exc_info=True,
         )
         await callback.answer("❌ Ошибка при обработке команды.")
+=======
+                "action": action,
+                "error": str(e),
+            },
+        )
+        await callback.answer("❌ Ошибка при обработке команды.")
+
+>>>>>>> origin/master

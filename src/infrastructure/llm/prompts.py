@@ -19,6 +19,7 @@ def get_map_prompt(
         Formatted instruction prompt
     """
     if language == "ru":
+<<<<<<< HEAD
         # Load map prompt from config (includes persona)
         try:
             from src.application.personalization.templates import (
@@ -45,6 +46,13 @@ def get_map_prompt(
         return (
             f"Выдели {max_sentences} ключевых фактов из этого фрагмента. "
             f"Только текст, без нумерации и Markdown.\n\n"
+=======
+        return (
+            f"Перед тобой фрагмент постов из Telegram-канала.\n\n"
+            f"ЗАДАЧА: Выдели {max_sentences} ключевых фактов из этого фрагмента. Каждый факт — одно предложение. "
+            f"Факты должны быть РАЗНЫМИ по смыслу. Никаких повторов. Только чистый текст, без нумерации и Markdown.\n\n"
+            f"ВАЖНО: Верни ТОЛЬКО текст, НЕ JSON, НЕ структурированные данные. Только предложения на русском языке через точку.\n\n"
+>>>>>>> origin/master
             f"ФРАГМЕНТ:\n{text}\n\nКЛЮЧЕВЫЕ ФАКТЫ:"
         )
     return (
@@ -68,6 +76,7 @@ def get_reduce_prompt(
         Formatted instruction prompt
     """
     if language == "ru":
+<<<<<<< HEAD
         # Load reduce prompt from config (includes persona)
         try:
             from src.application.personalization.templates import (
@@ -94,6 +103,13 @@ def get_reduce_prompt(
         return (
             f"Объедини суммаризации в {max_sentences} итоговых предложений. "
             f"Длина: 1500-2000 символов. Только текст, без нумерации и Markdown.\n\n"
+=======
+        return (
+            f"Перед тобой несколько суммаризаций фрагментов одного Telegram-канала.\n\n"
+            f"ЗАДАЧА: Объедини их в {max_sentences} итоговых предложений, описывающих главные темы канала. "
+            f"Избегай повторов. Каждый пункт — уникальная мысль. Только текст, без нумерации и Markdown.\n\n"
+            f"ВАЖНО: Верни ТОЛЬКО текст, НЕ JSON, НЕ структурированные данные. Только предложения на русском языке через точку.\n\n"
+>>>>>>> origin/master
             f"СУММАРИЗАЦИИ ФРАГМЕНТОВ:\n{summaries}\n\nИТОГОВАЯ СУММАРИЗАЦИЯ:"
         )
     return (

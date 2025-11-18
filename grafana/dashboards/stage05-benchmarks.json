@@ -124,6 +124,46 @@
       "options": {
         "showHeader": true
       }
+<<<<<<< HEAD
+=======
+    },
+    {
+      "type": "timeseries",
+      "title": "Epic 23 Observability Metrics",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(benchmark_export_duration_seconds_bucket[5m]))",
+          "legendFormat": "Export Duration P95 ({{exporter}})",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(structured_logs_total[5m])",
+          "legendFormat": "Structured Logs Rate ({{service}}/{{level}})",
+          "refId": "B"
+        },
+        {
+          "expr": "shared_infra_bootstrap_status",
+          "legendFormat": "Bootstrap Status ({{step}})",
+          "refId": "C"
+        },
+        {
+          "expr": "rag_variance_ratio{window=\"current\"}",
+          "legendFormat": "RAG Variance Ratio",
+          "refId": "D"
+        }
+      ]
+>>>>>>> origin/master
     }
   ],
   "time": {

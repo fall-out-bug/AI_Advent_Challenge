@@ -47,6 +47,24 @@ class RerankerConfig(BaseModel):
 
     enabled: bool = False
     strategy: str = Field(default="off")
+<<<<<<< HEAD
+=======
+    seed: int | None = Field(
+        default=None,
+        ge=0,
+        description="Optional random seed for reproducible RAG++ runs.",
+    )
+    variance_window: str = Field(
+        default="current",
+        description="Window label for variance metrics (e.g. 'current', 'rolling_5m').",
+    )
+    adaptive_threshold: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="Optional upper bound for acceptable rerank variance.",
+    )
+>>>>>>> origin/master
     llm: RerankerLLMConfig = Field(default_factory=RerankerLLMConfig)
     cross_encoder: RerankerCrossEncoderConfig = Field(
         default_factory=RerankerCrossEncoderConfig

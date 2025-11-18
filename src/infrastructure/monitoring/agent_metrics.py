@@ -94,26 +94,42 @@ agent_dialog_tokens = _get_or_create_metric(
     Gauge, "agent_dialog_tokens", "Current dialog token count", ["session_id"]
 )
 
+<<<<<<< HEAD
 # MCP Client metrics
+=======
+# MCP Client metrics (aligned with mcp_metrics.py: use "tool" label for consistency)
+>>>>>>> origin/master
 mcp_client_requests_total = _get_or_create_metric(
     Counter,
     "mcp_client_requests_total",
     "Total MCP client requests",
+<<<<<<< HEAD
     ["tool_name", "status"],
+=======
+    ["tool", "status"],  # Changed from "tool_name" to "tool" for consistency
+>>>>>>> origin/master
 )
 
 mcp_client_retries_total = _get_or_create_metric(
     Counter,
     "mcp_client_retries_total",
     "Total MCP client retries",
+<<<<<<< HEAD
     ["tool_name", "reason"],
+=======
+    ["tool", "reason"],  # Changed from "tool_name" to "tool" for consistency
+>>>>>>> origin/master
 )
 
 mcp_client_request_duration = _get_or_create_metric(
     Histogram,
     "mcp_client_request_duration_seconds",
     "MCP client request duration",
+<<<<<<< HEAD
     ["tool_name"],
+=======
+    ["tool"],  # Changed from "tool_name" to "tool" for consistency
+>>>>>>> origin/master
 )
 
 # LLM metrics
@@ -202,17 +218,30 @@ class MCPClientMetrics:
         """Record MCP client request.
 
         Args:
+<<<<<<< HEAD
             tool_name: Tool name
+=======
+            tool_name: Tool name (used as "tool" label for consistency)
+>>>>>>> origin/master
             success: Whether request succeeded
             duration: Request duration in seconds
             retries: Number of retries
         """
         status = "success" if success else "error"
+<<<<<<< HEAD
         mcp_client_requests_total.labels(tool_name=tool_name, status=status).inc()
         mcp_client_request_duration.labels(tool_name=tool_name).observe(duration)
 
         if retries > 0:
             mcp_client_retries_total.labels(tool_name=tool_name, reason="timeout").inc(
+=======
+        # Use "tool" label (not "tool_name") for consistency with mcp_metrics.py
+        mcp_client_requests_total.labels(tool=tool_name, status=status).inc()
+        mcp_client_request_duration.labels(tool=tool_name).observe(duration)
+
+        if retries > 0:
+            mcp_client_retries_total.labels(tool=tool_name, reason="timeout").inc(
+>>>>>>> origin/master
                 retries
             )
 
@@ -221,10 +250,18 @@ class MCPClientMetrics:
         """Record retry.
 
         Args:
+<<<<<<< HEAD
             tool_name: Tool name
             reason: Retry reason
         """
         mcp_client_retries_total.labels(tool_name=tool_name, reason=reason).inc()
+=======
+            tool_name: Tool name (used as "tool" label for consistency)
+            reason: Retry reason
+        """
+        # Use "tool" label (not "tool_name") for consistency with mcp_metrics.py
+        mcp_client_retries_total.labels(tool=tool_name, reason=reason).inc()
+>>>>>>> origin/master
 
 
 class LLMMetrics:

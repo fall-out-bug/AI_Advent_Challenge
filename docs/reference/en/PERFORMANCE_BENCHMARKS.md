@@ -98,6 +98,7 @@ All benchmarks were conducted with:
 - Benchmark script: see inline helper in `docs/guides/en/USER_GUIDE.md` (custom `RealLLMClient` hitting OpenAI-compatible endpoint)
 - Metrics exported via Prometheus for pass/checker runtimes and LLM token usage
 
+<<<<<<< HEAD
 ## Stage 05 Benchmarks (Draft — 2025-11-10)
 
 Stage 05 introduces RU summarisation quality benchmarks driven by LLM-as-judge
@@ -108,6 +109,18 @@ baseline runs.
 |----------|---------|-------|----------|----------|-----------|-----------------|-------------|-------|
 | Channel Digest (RU) | benchmark_digest_ru_v1 | qwen-7b | 0.91 (pass) | 0.90 (warn) | 0.90 (warn) | 0.93 (pass) | 112.3s (pass) | Updated baseline (2025-11-11) after Stage 06 automation dry-run. |
 | Reviewer Summary (RU) | benchmark_review_ru_v1 | qwen-7b | TBD | TBD | TBD | TBD | TBD | Dataset export in progress. |
+=======
+## Stage 05 Benchmarks (EP23 · 2025-11-15)
+
+Stage 05 introduces RU summarisation quality benchmarks driven by LLM-as-judge
+evaluations. Latest runs:
+
+| Scenario | Dataset | Model | Coverage | Accuracy | Coherence | Informativeness | Latency (avg) | Outcome | Notes |
+|----------|---------|-------|----------|----------|-----------|-----------------|---------------|---------|-------|
+| Channel Digest (RU) – Dry-run | benchmark_digest_ru_v1 | GroundTruthJudge | 0.89 (warn) | 0.89 (warn) | 0.89 (warn) | 0.905 (pass) | 189.0s (pass) | WARN | CLI: `run_benchmark.py --scenario channel_digest_ru --dry-run` (2025-11-15). |
+| Channel Digest (RU) – Live | benchmark_digest_ru_v1 | gpt-4o (via local LLM_URL) | 0.95 (pass) | 0.95 (pass) | 0.95 (pass) | 0.85 (warn) | 189.0s (pass) | WARN | `LLM_URL=http://127.0.0.1:8000 run_benchmark.py --scenario channel_digest_ru` (Stage 05_03 pilot). |
+| Reviewer Summary (RU) | benchmark_review_ru_v1 | qwen-7b | TBD | TBD | TBD | TBD | TBD | Pending | Dataset export done; benchmark pending TL-03 follow-up. |
+>>>>>>> origin/master
 
 ## Stage 06 Calibrated MCP Latency (2025-11-11)
 

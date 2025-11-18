@@ -163,12 +163,15 @@ class ChannelScorer:
     def _score_token_overlap(self, query: str, title: str) -> float:
         """Score token overlap.
 
+<<<<<<< HEAD
         Purpose:
             Calculates overlap between query and title tokens, handling:
             - Russian declensions (Алексея vs Алексей, Гладкова vs Гладков)
             - Multi-word names (partial matches)
             - Case-insensitive matching
 
+=======
+>>>>>>> origin/master
         Args:
             query: Original query string
             title: Original title string
@@ -179,6 +182,7 @@ class ChannelScorer:
         query_tokens = set(self._normalizer.tokenize(query))
         title_tokens = set(self._normalizer.tokenize(title))
         if query_tokens and title_tokens:
+<<<<<<< HEAD
             # Exact token match (case-insensitive)
             query_tokens_lower = {t.lower() for t in query_tokens}
             title_tokens_lower = {t.lower() for t in title_tokens}
@@ -259,6 +263,38 @@ class ChannelScorer:
 
                 return self._weights["token_overlap"] * overlap
 
+=======
+            # Exact token match
+            exact_overlap = len(query_tokens & title_tokens)
+
+            # Substring match (for declensions like "Гладкову" vs "Гладков", "Набоки" vs "Набока")
+            # Check if any query token is contained in any title token
+            substring_matches = 0
+            for query_token in query_tokens:
+                for title_token in title_tokens:
+                    # Normalize for Russian declensions: remove common endings
+                    # This handles "Набоки" (множественное) vs "Набока" (единственное)
+                    query_stem = query_token.rstrip("еиыаяую")
+                    title_stem = title_token.rstrip("еиыаяую")
+
+                    # Check if query token contains title token or vice versa
+                    # (handles Russian declensions)
+                    if (
+                        query_token in title_token
+                        or title_token in query_token
+                        or query_stem in title_stem
+                        or title_stem in query_stem
+                        or (len(query_stem) >= 4 and query_stem == title_stem)
+                        or (len(title_stem) >= 4 and title_stem == query_stem)
+                    ):
+                        substring_matches += 1
+                        break
+
+            # Use best match (exact or substring)
+            total_matches = max(exact_overlap, substring_matches)
+            overlap = total_matches / len(query_tokens)
+            return self._weights["token_overlap"] * overlap
+>>>>>>> origin/master
         return 0.0
 
     def _score_levenshtein(

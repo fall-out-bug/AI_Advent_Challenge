@@ -252,4 +252,3 @@ async def transcribe(
             status_code=500,
             detail=f"Transcription failed: {str(e)}"
         )
-

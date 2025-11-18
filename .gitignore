@@ -1,6 +1,7 @@
 # Python
 __pycache__/
 .mypy_cache/
+.mypy_cache/
 *.py[cod]
 *$py.class
 *.so
@@ -55,6 +56,13 @@ reports/
 # Evaluation artefacts
 results_stage20.jsonl
 results_with_labels.jsonl
+*/archive/
+**/*/archive/
+*/reports
+
+# Evaluation artefacts
+results_stage20.jsonl
+results_with_labels.jsonl
 
 # Virtual environments
 .env
@@ -65,6 +73,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+poetry-cache/
 poetry-cache/
 
 # IDE
@@ -88,8 +97,16 @@ api_key.txt
 .env
 .env.*
 archive/legacy/local_models/.env
+.env.*
+archive/legacy/local_models/.env
 *.key
 *.pem
+
+# Pyrogram session files (contain authentication tokens)
+*.session
+*.session-journal
+sessions/
+scripts/*.session
 
 # Pyrogram session files (contain authentication tokens)
 *.session
@@ -111,6 +128,10 @@ tmp/
 *.db
 *.sqlite
 *.sqlite3
+
+# Model cache (persist across container rebuilds but don't commit)
+cache/
+data/
 
 # Model cache (persist across container rebuilds but don't commit)
 cache/

@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+<<<<<<< HEAD
+=======
+from collections.abc import Sequence
+>>>>>>> origin/master
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -13,6 +17,12 @@ from click.testing import CliRunner
 digest_module = importlib.import_module(
     "src.presentation.cli.backoffice.commands.digest"
 )
+<<<<<<< HEAD
+=======
+channels_module = importlib.import_module(
+    "src.presentation.cli.backoffice.commands.channels"
+)
+>>>>>>> origin/master
 from src.application.dtos.digest_dtos import ChannelDigest
 from src.domain.value_objects.summary_result import SummaryResult
 from src.presentation.cli.backoffice.main import cli
@@ -163,3 +173,161 @@ def test_digest_export_reports_destination(
 
     assert result.exit_code == 0
     assert f"Digest saved to {destination}" in result.output
+<<<<<<< HEAD
+=======
+
+
+def test_channels_list_command(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test channels list command."""
+    channels_data = [
+        {
+            "id": "507f1f77bcf86cd799439011",
+            "channel": "@test_channel",
+            "title": "Test Channel",
+            "tags": ["news"],
+            "active": True,
+            "subscribed_at": datetime.now(timezone.utc),
+        }
+    ]
+
+    async def fake_list_channels(user_id: int, limit: int, as_json: bool) -> None:
+        assert user_id == 201
+        assert limit == 10
+        assert as_json is False
+        if channels_data:
+            print(f"Channel: {channels_data[0]['channel']}")
+
+    monkeypatch.setattr(channels_module, "_list_channels", fake_list_channels)
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["channels", "list", "--user-id", "201", "--limit", "10"])
+
+    assert result.exit_code == 0
+
+
+def test_channels_list_json_output(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test channels list command with JSON output."""
+    async def fake_list_channels(user_id: int, limit: int, as_json: bool) -> None:
+        assert user_id == 202
+        assert as_json is True
+        print('[{"channel": "@test", "title": "Test"}]')
+
+    monkeypatch.setattr(channels_module, "_list_channels", fake_list_channels)
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["channels", "list", "--user-id", "202", "--json"])
+
+    assert result.exit_code == 0
+    assert "@test" in result.output
+
+
+def test_channels_add_command(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test channels add command."""
+    result_data = {
+        "status": "subscribed",
+        "channel": "@new_channel",
+        "channel_id": "507f1f77bcf86cd799439012",
+        "message": "Channel subscribed successfully",
+    }
+
+    async def fake_add_channel(
+        user_id: int, channel: str, tags: Sequence[str], as_json: bool
+    ) -> None:
+        assert user_id == 203
+        assert channel == "@new_channel"
+        assert list(tags) == ["tech", "news"]
+        assert as_json is False
+        print(f"Status: {result_data['status']}")
+
+    monkeypatch.setattr(channels_module, "_add_channel", fake_add_channel)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "channels",
+            "add",
+            "--user-id",
+            "203",
+            "--channel",
+            "@new_channel",
+            "--tag",
+            "tech",
+            "--tag",
+            "news",
+        ],
+    )
+
+    assert result.exit_code == 0
+
+
+def test_channels_add_json_output(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test channels add command with JSON output."""
+    async def fake_add_channel(
+        user_id: int, channel: str, tags: Sequence[str], as_json: bool
+    ) -> None:
+        assert as_json is True
+        print('{"status": "subscribed", "channel": "@test"}')
+
+    monkeypatch.setattr(channels_module, "_add_channel", fake_add_channel)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, ["channels", "add", "--user-id", "204", "--channel", "@test", "--json"]
+    )
+
+    assert result.exit_code == 0
+    assert "subscribed" in result.output
+
+
+def test_channels_remove_command(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test channels remove command."""
+    async def fake_remove_channel(user_id: int, channel_id: str, as_json: bool) -> None:
+        assert user_id == 205
+        assert channel_id == "507f1f77bcf86cd799439013"
+        assert as_json is False
+        print("Channel removed.")
+
+    monkeypatch.setattr(channels_module, "_remove_channel", fake_remove_channel)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "channels",
+            "remove",
+            "--user-id",
+            "205",
+            "--channel-id",
+            "507f1f77bcf86cd799439013",
+        ],
+    )
+
+    assert result.exit_code == 0
+
+
+def test_channels_remove_json_output(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test channels remove command with JSON output."""
+    async def fake_remove_channel(user_id: int, channel_id: str, as_json: bool) -> None:
+        assert as_json is True
+        print('{"status": "deleted"}')
+
+    monkeypatch.setattr(channels_module, "_remove_channel", fake_remove_channel)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "channels",
+            "remove",
+            "--user-id",
+            "206",
+            "--channel-id",
+            "507f1f77bcf86cd799439014",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "deleted" in result.output
+>>>>>>> origin/master
