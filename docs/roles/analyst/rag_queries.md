@@ -71,6 +71,12 @@ db.requirements.aggregate([
 - For cross-epoch analyses, mirror queries into dedicated analytics views and
   export summaries to `docs/epics/<epic>/analytics.md`.
 
+<<<<<<< HEAD
+## Additional Resources
+- Capabilities: `docs/roles/analyst/day_capabilities.md`
+- Handoff schema: `docs/operational/handoff_contracts.md`
+- Workflow context: `docs/specs/process/agent_workflow.md`
+=======
 ---
 
 ## Query Examples with Results & Costs
@@ -515,3 +521,4 @@ class QueryMetrics:
 - Handoff schema: `docs/operational/handoff_contracts.md`
 - Workflow context: `docs/specs/process/agent_workflow.md`
 - MongoDB Schema: `docs/operational/shared_infra.md#mongodb`
+>>>>>>> origin/master

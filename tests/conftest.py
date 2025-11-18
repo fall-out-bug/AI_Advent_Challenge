@@ -1,17 +1,24 @@
 """Shared pytest fixtures for testing."""
 
 import asyncio
+<<<<<<< HEAD
+=======
 import uuid
+>>>>>>> origin/master
 from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
 import httpx
+<<<<<<< HEAD
+
+=======
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo import MongoClient
 
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.database.mongo_client_factory import MongoClientFactory
+>>>>>>> origin/master
 from src.infrastructure.repositories.json_conversation_repository import (
     JsonConversationRepository,
 )
@@ -122,6 +129,21 @@ def mcp_wrapper_mock():
     return mock_wrapper
 
 
+<<<<<<< HEAD
+@pytest.fixture(scope="session")
+def event_loop():
+    """Create event loop for async tests.
+
+    Returns:
+        Event loop for the test session
+    """
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+
+=======
+>>>>>>> origin/master
 @pytest.fixture
 def temp_data_dir(tmp_path):
     """Create temporary data directory.
@@ -149,6 +171,8 @@ def cleanup_test_files(tmp_path):
     pass
 
 
+<<<<<<< HEAD
+=======
 # MongoDB fixtures (Cluster A - TL24-01)
 @pytest.fixture(scope="session")
 def mongodb_client() -> MongoClient:
@@ -262,6 +286,7 @@ async def mongodb_database_async(
         pass
 
 
+>>>>>>> origin/master
 # Import MCP fixtures
 from tests.fixtures.mcp_fixtures import (
     mock_mcp_client,

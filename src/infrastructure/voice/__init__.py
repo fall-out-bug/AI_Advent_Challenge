@@ -1,3 +1,6 @@
+<<<<<<< HEAD
+"""Voice command infrastructure adapters."""
+=======
 """Voice agent infrastructure implementations.
 
 Purpose:
@@ -16,4 +19,4 @@ __all__ = [
     "InMemoryVoiceCommandStore",
 ]
 
-
+>>>>>>> origin/master

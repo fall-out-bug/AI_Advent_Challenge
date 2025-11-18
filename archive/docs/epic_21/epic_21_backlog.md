@@ -34,6 +34,8 @@
 - **M2: Quality Gates Online** — CODE-21-01..04 delivered; lint/test pipelines green.
 - **M3: Guardrails & Ops** — SEC-21-02, TEST-21-01, OBS-21-03, OPS-21-04 closed; ops sign-off obtained.
 
+<<<<<<< HEAD
+=======
 ## Legacy Async Tests Archive (Epic 23, Task 15)
 
 | ID | Stage | Status | Title | Description | Owner | Links |
@@ -42,6 +44,7 @@
 
 **Note**: Legacy async tests were archived as part of Epic 23 (Day 23 observability & benchmark enablement). New tests should use the current Clean Architecture patterns and DI container implementations.
 
+>>>>>>> origin/master
 ## Coordination
 - Weekly sync with EP01/EP03 owners to avoid conflicting changes.
 - Bi-weekly doc review to ensure specs stay synchronized with implementation progress.

@@ -6,7 +6,10 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+<<<<<<< HEAD
+=======
 import time
+>>>>>>> origin/master
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterable
@@ -15,6 +18,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from src.infrastructure.config.settings import get_settings
 
+<<<<<<< HEAD
+=======
 try:
     from src.infrastructure.metrics.observability_metrics import (
         benchmark_export_duration_seconds,
@@ -22,6 +27,7 @@ try:
 except Exception:  # pragma: no cover - metrics optional
     benchmark_export_duration_seconds = None
 
+>>>>>>> origin/master
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Export reviewer benchmarks.")
@@ -167,6 +173,11 @@ async def main_async() -> None:
 
 
 def main() -> None:
+<<<<<<< HEAD
+    try:
+        asyncio.run(main_async())
+    except Exception as exc:  # pragma: no cover - CLI error path
+=======
     start_time = time.perf_counter()
     exporter_name = "review_reports"
     try:
@@ -180,6 +191,7 @@ def main() -> None:
             benchmark_export_duration_seconds.labels(exporter=exporter_name).observe(
                 time.perf_counter() - start_time
             )
+>>>>>>> origin/master
         raise SystemExit(f"Export failed: {exc}") from exc
 
 

@@ -1,3 +1,6 @@
+<<<<<<< HEAD
+"""Voice command domain protocols and interfaces."""
+=======
 """Domain layer for voice agent functionality.
 
 Purpose:
@@ -25,4 +28,4 @@ __all__ = [
     "InvalidVoiceCommandError",
 ]
 
-
+>>>>>>> origin/master

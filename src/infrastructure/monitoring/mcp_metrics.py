@@ -1,3 +1,6 @@
+<<<<<<< HEAD
+"""Prometheus metrics helpers for the MCP HTTP server."""
+=======
 """Prometheus metrics helpers for the MCP HTTP server.
 
 All metrics use the global Prometheus REGISTRY (default behavior).
@@ -6,6 +9,7 @@ Metrics are aligned with observability_labels.md conventions:
 - Status values: lowercase ("success", "error")
 - Tool label: "tool" (consistent across all MCP metrics)
 """
+>>>>>>> origin/master
 
 from __future__ import annotations
 
@@ -13,11 +17,14 @@ import time
 from contextlib import contextmanager
 from typing import Generator
 
+<<<<<<< HEAD
+=======
 try:
     from prometheus_client import REGISTRY  # type: ignore
 except ImportError:  # pragma: no cover - fallback
     REGISTRY = None  # type: ignore
 
+>>>>>>> origin/master
 
 class _DummyMetric:
     """Fallback metric used when prometheus_client is unavailable."""

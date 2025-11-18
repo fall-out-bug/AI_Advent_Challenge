@@ -6,9 +6,12 @@ retrieval:
 reranker:
   enabled: false
   strategy: "off"
+<<<<<<< HEAD
+=======
   seed: 42
   variance_window: "current"
   adaptive_threshold: 0.5
+>>>>>>> origin/master
   llm:
     model: "mistral:7b-instruct"
     temperature: 0.5

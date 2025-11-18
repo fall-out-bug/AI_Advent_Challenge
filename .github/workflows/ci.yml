@@ -149,6 +149,8 @@ jobs:
       - name: Run modular review service integration test
         run: |
           pytest tests/integration/test_modular_review_service.py -v
+<<<<<<< HEAD
+=======
       - name: Verify benchmark dataset coverage
         env:
           MONGODB_URL: ${{ env.MONGODB_URL }}
@@ -162,6 +164,7 @@ jobs:
         with:
           name: benchmark-dataset-audit
           path: data/benchmarks/snapshots/ci/dataset_audit.json
+>>>>>>> origin/master
 
       - name: Cleanup shared infrastructure
         if: always()
@@ -215,6 +218,8 @@ jobs:
             --cov-report=html \
             --cov-report=xml \
             --cov-fail-under=80
+<<<<<<< HEAD
+=======
       - name: Run Stage 05_03 Pilot Checks
         env:
           MONGODB_URL: ${{ env.MONGODB_URL }}
@@ -228,6 +233,7 @@ jobs:
         with:
           name: stage-05-03-pilot-audit
           path: data/benchmarks/snapshots/ci/pilot_dataset_audit.json
+>>>>>>> origin/master
 
       - name: Cleanup shared infrastructure
         if: always()

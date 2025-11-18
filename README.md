@@ -10,7 +10,11 @@ This repository contains daily challenges building AI-powered systems with langu
 
 **Updates:** Project news and daily recaps are published in the Telegram channel [Высоконагруженный кабанчик](https://t.me/data_intensive_boar).
 
+<<<<<<< HEAD
+**Current Status:** 🏆 Day 25 COMPLETED & DEPLOYED — Personalised Butler with Alfred-style дворецкий persona, user profiles, and memory management (Epic 25). Voice commands integrated (Epic 24), observability & benchmarks delivered (Epic 23).
+=======
 **Current Status:** 🏆 Day 23 COMPLETED — Observability & benchmark enablement delivered (EP23); repository refactor and RAG++ (EP21) previously completed.
+>>>>>>> origin/master
 
 ### Day 21 (Completed)
 - Summary: `docs/specs/epic_21/epic_21.md`
@@ -21,16 +25,27 @@ This repository contains daily challenges building AI-powered systems with langu
   - `make day_21_metrics` — print key rag_* metrics
 
 **Project Status:**
+<<<<<<< HEAD
+- ✅ 25 daily challenges completed
+=======
 - ✅ 18 daily challenges completed
+>>>>>>> origin/master
 - ✅ Clean Architecture fully implemented (Day 21)
 - ✅ Security hardening deployed (path traversal protection, input validation)
 - ✅ Quality automation established (pre-commit hooks, automated linting)
 - ✅ Production-ready multi-agent system with self-improvement
 - ✅ Automatic quality evaluation and fine-tuning
 - ✅ Comprehensive documentation for AI assistants
+<<<<<<< HEAD
+- ✅ **Personalised Butler** (Day 25) with user profiles, memory, and interest extraction
+
+**Key Features:**
+- ✅ 25 daily challenges from simple chat to observability, benchmarks, voice commands, and personalization
+=======
 
 **Key Features:**
 - ✅ 15 daily challenges from simple chat to self-improving AI systems
+>>>>>>> origin/master
 - ✅ Clean Architecture with SOLID principles
 - ✅ 420+ tests with 80%+ coverage
 - ✅ Multi-model support (StarCoder, Mistral, Qwen, TinyLlama)
@@ -56,6 +71,10 @@ This repository contains daily challenges building AI-powered systems with langu
 - ✅ **MCP-first Publishing** (LLM calls external HW Checker MCP tool with automatic HTTP fallback)
 - ✅ **Haiku Generation** (poetic postscript highlighting review sentiment)
 - ✅ **Integration Contracts** (OpenAPI spec, JSON schema, cURL/Python examples for partners)
+<<<<<<< HEAD
+- ✅ **Personalised Butler** (Day 25 - user profiles, memory management, "Alfred-style дворецкий" persona, automatic interest extraction)
+=======
+>>>>>>> origin/master
 
 ## Quick Start
 
@@ -104,6 +123,8 @@ poetry run python -m src.presentation.cli.backoffice.main index inspect
 See `docs/specs/epic_19/stage_19_04_runbook.md` for detailed instructions,
 troubleshooting, and maintenance guidance.
 
+<<<<<<< HEAD
+=======
 ### Large Data Files
 
 Some large JSONL files (>500KB) are stored in compressed format (.gz) to reduce repository size:
@@ -121,6 +142,7 @@ To compress new JSONL files:
 python scripts/tools/compress_jsonl.py <file.jsonl>
 ```
 
+>>>>>>> origin/master
 For detailed setup instructions, see [DEVELOPMENT.md](docs/guides/en/DEVELOPMENT.md) and the [Maintainer Playbook](docs/MAINTAINERS_GUIDE.md).
 
 ## Project Structure
@@ -163,6 +185,14 @@ AI_Challenge/
 | Day 18 | Performance Benchmarks | Prometheus, Benchmarking | ✅ Complete |
 | Day 19 | Document Embedding Index | Redis/FAISS, Mongo, LLM API | ✅ Complete |
 | Day 20 | RAG vs Non‑RAG Answering Agent | Retrieval, LLM-as-Judge | ✅ Complete |
+<<<<<<< HEAD
+| Day 21 | Repository Refactor & RAG++ | Clean Architecture, Reranking, Observability | ✅ Complete |
+| Day 22 | RAG Citations & Source Attribution | RAG, MongoDB, Vector Search | ✅ Complete |
+| Day 25 | Personalised Butler | User Profiles, Memory Management, Alfred Persona | ✅ Complete |
+| Day 23 | Observability & Benchmark Enablement | Prometheus, Grafana, Loki, Benchmarks | ✅ Complete |
+| Day 24 | Voice Commands Integration | Telegram Bot, Whisper STT, Butler Orchestrator | ✅ Complete |
+=======
+>>>>>>> origin/master
 
 ## Core Infrastructure
 
@@ -258,6 +288,17 @@ make day-11-up
 - LLM-based tool selection and execution
 - Robust retry logic with exponential backoff
 - Dialog history management with automatic compression
+<<<<<<< HEAD
+
+**Personalised Butler (Day 25):**
+- **User Profiles**: Auto-created profiles with "Alfred-style дворецкий" persona
+- **Memory Management**: Remembers last 50 messages per user with automatic compression
+- **Alfred Persona**: Witty, caring, respectful responses (English humour, Russian language)
+- **Voice Integration**: Works with voice messages via Whisper STT
+- **Privacy**: All data stored locally in MongoDB (no external SaaS)
+- See [Personalized Butler User Guide](docs/guides/personalized_butler_user_guide.md) for details
+=======
+>>>>>>> origin/master
 - Prometheus metrics integration
 
 Quick start:

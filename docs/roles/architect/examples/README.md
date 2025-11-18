@@ -1,3 +1,11 @@
+<<<<<<< HEAD
+# Architect Examples
+
+- Maintain subfolders per epic (e.g., `EP21/vision.md`, `EP21/risks.md`).
+- Include concise diagrams (PlantUML/Mermaid) and link to source files.
+- Store MADR samples showing accepted, rejected, and superseded decisions.
+- Document dependency audit snapshots and remediation notes.
+=======
 # Architect Role Examples
 
 This directory contains detailed examples demonstrating how the Architect role applies day-by-day capabilities to design Clean Architecture systems, validate decisions with CoT, and produce actionable MADRs.
@@ -138,3 +146,4 @@ Contains full Architect → Tech Lead handoff example with:
 - **2025-11-15**: Created comprehensive examples for Days 6, 11, 12, 17
 - **2025-11-15**: Enhanced rag_queries.md with example results and token costs
 - **2025-11-15**: Expanded day_capabilities.md with Days 1-22 details
+>>>>>>> origin/master

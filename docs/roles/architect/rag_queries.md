@@ -71,6 +71,10 @@ db.architecture.aggregate([
 - When exporting diagrams, store references under `docs/roles/architect/examples/`.
 - Align query outputs with Tech Lead plans for quick feasibility checks.
 
+<<<<<<< HEAD
+## Additional Resources
+- Capabilities: `docs/roles/architect/day_capabilities.md`
+=======
 ---
 
 ## Query Examples with Results & Token Costs
@@ -301,5 +305,6 @@ db.dependencies.createIndex({ epic: 1, "violations.type": 1 })
 ## Additional Resources
 - Capabilities: `docs/roles/architect/day_capabilities.md`
 - Day 20 RAG Pattern: `docs/roles/architect/examples/day_20_rag_reuse.md` (future)
+>>>>>>> origin/master
 - Handoff schema: `docs/operational/handoff_contracts.md`
 - Workflow context: `docs/specs/process/agent_workflow.md`

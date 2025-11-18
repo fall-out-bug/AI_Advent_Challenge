@@ -11,6 +11,10 @@ import sys
 import time
 from pathlib import Path
 
+<<<<<<< HEAD
+
+STATE_PATH = Path(__file__).resolve().parent / ".shared_infra_state.json"
+=======
 try:
     from src.infrastructure.metrics.observability_metrics import (
         shared_infra_bootstrap_status,
@@ -28,6 +32,7 @@ def _set_bootstrap_status(step: str, success: bool) -> None:
         shared_infra_bootstrap_status.labels(step=step).set(1 if success else 0)
     except Exception:
         pass
+>>>>>>> origin/master
 
 
 def _wait_for_port(host: str, port: int, timeout: float) -> None:
@@ -62,6 +67,29 @@ def _docker_rm(container_name: str) -> None:
 def _start_mongo(container_name: str, port: int) -> None:
     """Start a MongoDB container exposed on the given port."""
     _docker_rm(container_name)
+<<<<<<< HEAD
+    subprocess.run(
+        [
+            "docker",
+            "run",
+            "-d",
+            "--name",
+            container_name,
+            "-p",
+            f"{port}:27017",
+            "-e",
+            "MONGO_INITDB_ROOT_USERNAME=ci_admin",
+            "-e",
+            "MONGO_INITDB_ROOT_PASSWORD=ci_password",
+            "-e",
+            "MONGO_INITDB_DATABASE=butler",
+            "mongo:6.0",
+        ],
+        check=True,
+        stdout=subprocess.DEVNULL,
+    )
+    _wait_for_port("127.0.0.1", port, timeout=60.0)
+=======
     try:
         subprocess.run(
             [
@@ -88,11 +116,23 @@ def _start_mongo(container_name: str, port: int) -> None:
     except Exception:
         _set_bootstrap_status("mongo", False)
         raise
+>>>>>>> origin/master
 
 
 def _start_mock_services(port: int) -> subprocess.Popen[bytes]:
     """Start the mock LLM/Prometheus service."""
     script_path = Path(__file__).resolve().parent / "mock_shared_services.py"
+<<<<<<< HEAD
+    process = subprocess.Popen(
+        [sys.executable, str(script_path), "--port", str(port)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    _wait_for_port("127.0.0.1", port, timeout=15.0)
+    return process
+
+
+=======
     try:
         process = subprocess.Popen(
             [sys.executable, str(script_path), "--port", str(port)],
@@ -133,6 +173,7 @@ def _check_services(mongo_port: int, mock_port: int) -> bool:
     return True
 
 
+>>>>>>> origin/master
 def main() -> None:
     """Entry point for CI bootstrap script."""
     parser = argparse.ArgumentParser(
@@ -152,6 +193,10 @@ def main() -> None:
         default=STATE_PATH,
         help="Path to persist container/process metadata for cleanup.",
     )
+<<<<<<< HEAD
+    args = parser.parse_args()
+
+=======
     parser.add_argument(
         "--check",
         action="store_true",
@@ -168,6 +213,7 @@ def main() -> None:
         _set_bootstrap_status("mock_services", False)
         sys.exit(1)
 
+>>>>>>> origin/master
     mongo_container = "ai-challenge-ci-mongo"
     _start_mongo(mongo_container, args.mongo_port)
 

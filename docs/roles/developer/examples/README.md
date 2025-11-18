@@ -1,3 +1,11 @@
+<<<<<<< HEAD
+# Developer Examples
+
+- Provide TDD walkthroughs per epic/day with code+test diffs.
+- Capture coverage reports and lint summaries linked to tasks.
+- Store review feedback cases and resolution notes.
+- Include worklog snippets illustrating evidence-first updates.
+=======
 # Developer Role Examples
 
 Comprehensive examples demonstrating coding standards, TDD practices, environment setup, and quality assurance workflows.
@@ -205,3 +213,4 @@ Comprehensive examples demonstrating coding standards, TDD practices, environmen
 
 **Validated by:** Developer Role Agent
 **Validation Date:** 2025-11-15
+>>>>>>> origin/master

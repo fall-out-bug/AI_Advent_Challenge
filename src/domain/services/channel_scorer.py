@@ -163,6 +163,15 @@ class ChannelScorer:
     def _score_token_overlap(self, query: str, title: str) -> float:
         """Score token overlap.
 
+<<<<<<< HEAD
+        Purpose:
+            Calculates overlap between query and title tokens, handling:
+            - Russian declensions (Алексея vs Алексей, Гладкова vs Гладков)
+            - Multi-word names (partial matches)
+            - Case-insensitive matching
+
+=======
+>>>>>>> origin/master
         Args:
             query: Original query string
             title: Original title string
@@ -173,6 +182,88 @@ class ChannelScorer:
         query_tokens = set(self._normalizer.tokenize(query))
         title_tokens = set(self._normalizer.tokenize(title))
         if query_tokens and title_tokens:
+<<<<<<< HEAD
+            # Exact token match (case-insensitive)
+            query_tokens_lower = {t.lower() for t in query_tokens}
+            title_tokens_lower = {t.lower() for t in title_tokens}
+            exact_overlap = len(query_tokens_lower & title_tokens_lower)
+
+            # Substring match (for declensions like "Гладкову" vs "Гладков", "Набоки" vs "Набока")
+            # Also handles "Алексея" vs "Алексей", "Гладкова" vs "Гладков"
+            substring_matches = 0
+            matched_query_tokens = set()
+
+            for query_token in query_tokens:
+                query_lower = query_token.lower()
+                # Normalize for Russian declensions: remove common endings
+                # This handles "Набоки" (множественное) vs "Набока" (единственное)
+                # Also "Алексея" (родительный) vs "Алексей" (именительный)
+                # Common Russian endings: ея, ия, ова, ева, ина, ына, ая, яя
+                query_stem = query_lower.rstrip("еиыаяуюеяияоваеваинаына")
+
+                for title_token in title_tokens:
+                    title_lower = title_token.lower()
+                    title_stem = title_lower.rstrip("еиыаяуюеяияоваеваинаына")
+
+                    # Check multiple matching strategies
+                    match_found = False
+
+                    # 1. Exact match (case-insensitive)
+                    if query_lower == title_lower:
+                        match_found = True
+
+                    # 2. Substring match (one contains the other)
+                    elif query_lower in title_lower or title_lower in query_lower:
+                        match_found = True
+
+                    # 3. Stem match (after removing declension endings)
+                    elif (
+                        query_stem
+                        and title_stem
+                        and (
+                            query_stem == title_stem
+                            or query_stem in title_stem
+                            or title_stem in query_stem
+                        )
+                        and len(query_stem) >= 3  # Minimum stem length
+                    ):
+                        match_found = True
+
+                    # 4. Fuzzy match for similar stems (handles typos)
+                    elif len(query_stem) >= 4 and len(title_stem) >= 4:
+                        # Check if stems are similar (Levenshtein distance <= 1)
+                        if abs(len(query_stem) - len(title_stem)) <= 1:
+                            # Simple similarity check
+                            common_chars = len(set(query_stem) & set(title_stem))
+                            if common_chars >= min(len(query_stem), len(title_stem)) * 0.8:
+                                match_found = True
+
+                    if match_found:
+                        substring_matches += 1
+                        matched_query_tokens.add(query_token)
+                        break
+
+            # Calculate overlap: how many query tokens matched
+            # For multi-word queries, partial matches are still valuable
+            total_matches = max(exact_overlap, substring_matches)
+            if total_matches > 0:
+                # Overlap ratio: matched tokens / total query tokens
+                overlap = total_matches / len(query_tokens)
+
+                # Bonus for matching all tokens (perfect match)
+                if total_matches == len(query_tokens) and total_matches == len(
+                    title_tokens
+                ):
+                    overlap = 1.0  # Perfect match
+
+                # Bonus for matching most tokens in multi-word names
+                # (e.g., "Алексея Гладкова" matches "Алексей Гладков" even if declensions differ)
+                elif total_matches >= len(query_tokens) * 0.7:
+                    overlap = min(1.0, overlap * 1.2)  # 20% bonus
+
+                return self._weights["token_overlap"] * overlap
+
+=======
             # Exact token match
             exact_overlap = len(query_tokens & title_tokens)
 
@@ -203,6 +294,7 @@ class ChannelScorer:
             total_matches = max(exact_overlap, substring_matches)
             overlap = total_matches / len(query_tokens)
             return self._weights["token_overlap"] * overlap
+>>>>>>> origin/master
         return 0.0
 
     def _score_levenshtein(

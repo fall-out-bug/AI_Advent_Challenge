@@ -11,7 +11,11 @@ from shared_package.clients.base_client import ModelResponse
 from shared_package.exceptions.model_errors import (
     ModelConfigurationError,
     ModelConnectionError,
+<<<<<<< HEAD
+    ModelRequestError
+=======
     ModelRequestError,
+>>>>>>> origin/master
 )
 
 
@@ -23,6 +27,11 @@ class TestExternalAPIRequests:
         """Test successful Perplexity API request."""
         client = UnifiedModelClient()
 
+<<<<<<< HEAD
+        with patch('shared_package.clients.unified_client.is_api_key_configured', return_value=True), \
+             patch('shared_package.clients.unified_client.get_api_key', return_value="test_key"), \
+             patch.object(client.client, 'post') as mock_post:
+=======
         with (
             patch(
                 "shared_package.clients.unified_client.is_api_key_configured",
@@ -34,6 +43,7 @@ class TestExternalAPIRequests:
             ),
             patch.object(client.client, "post") as mock_post,
         ):
+>>>>>>> origin/master
 
             # Mock successful response
             mock_response = MagicMock()
@@ -59,6 +69,11 @@ class TestExternalAPIRequests:
         """Test successful ChadGPT API request."""
         client = UnifiedModelClient()
 
+<<<<<<< HEAD
+        with patch('shared_package.clients.unified_client.is_api_key_configured', return_value=True), \
+             patch('shared_package.clients.unified_client.get_api_key', return_value="test_key"), \
+             patch.object(client.client, 'post') as mock_post:
+=======
         with (
             patch(
                 "shared_package.clients.unified_client.is_api_key_configured",
@@ -70,6 +85,7 @@ class TestExternalAPIRequests:
             ),
             patch.object(client.client, "post") as mock_post,
         ):
+>>>>>>> origin/master
 
             # Mock successful response
             mock_response = MagicMock()
@@ -96,6 +112,11 @@ class TestExternalAPIRequests:
         """Test external API request without API key."""
         client = UnifiedModelClient()
 
+<<<<<<< HEAD
+        with patch('shared_package.clients.unified_client.is_api_key_configured', return_value=False):
+            with pytest.raises(ModelConfigurationError, match="API key not configured"):
+                await client._make_external_request("perplexity", "Test prompt", 100, 0.7)
+=======
         with patch(
             "shared_package.clients.unified_client.is_api_key_configured",
             return_value=False,
@@ -104,12 +125,17 @@ class TestExternalAPIRequests:
                 await client._make_external_request(
                     "perplexity", "Test prompt", 100, 0.7
                 )
+>>>>>>> origin/master
 
     @pytest.mark.asyncio
     async def test_make_external_request_unsupported_model(self):
         """Test external API request with unsupported model."""
         client = UnifiedModelClient()
 
+<<<<<<< HEAD
+        with patch('shared_package.clients.unified_client.is_api_key_configured', return_value=True):
+            with pytest.raises((ModelConfigurationError, ModelRequestError), match=".*unknown.*"):
+=======
         with patch(
             "shared_package.clients.unified_client.is_api_key_configured",
             return_value=True,
@@ -117,6 +143,7 @@ class TestExternalAPIRequests:
             with pytest.raises(
                 (ModelConfigurationError, ModelRequestError), match=".*unknown.*"
             ):
+>>>>>>> origin/master
                 await client._make_external_request("unknown", "Test prompt", 100, 0.7)
 
     @pytest.mark.asyncio
@@ -124,6 +151,14 @@ class TestExternalAPIRequests:
         """Test external API request with connection error."""
         client = UnifiedModelClient()
 
+<<<<<<< HEAD
+        with patch('shared_package.clients.unified_client.is_api_key_configured', return_value=True), \
+             patch('shared_package.clients.unified_client.get_api_key', return_value="test_key"), \
+             patch.object(client.client, 'post', side_effect=httpx.ConnectError("Connection failed")):
+
+            with pytest.raises(ModelConnectionError, match="Failed to connect to external API"):
+                await client._make_external_request("perplexity", "Test prompt", 100, 0.7)
+=======
         with (
             patch(
                 "shared_package.clients.unified_client.is_api_key_configured",
@@ -146,12 +181,21 @@ class TestExternalAPIRequests:
                 await client._make_external_request(
                     "perplexity", "Test prompt", 100, 0.7
                 )
+>>>>>>> origin/master
 
     @pytest.mark.asyncio
     async def test_make_external_request_http_error(self):
         """Test external API request with HTTP error."""
         client = UnifiedModelClient()
 
+<<<<<<< HEAD
+        with patch('shared_package.clients.unified_client.is_api_key_configured', return_value=True), \
+             patch('shared_package.clients.unified_client.get_api_key', return_value="test_key"), \
+             patch.object(client.client, 'post', side_effect=httpx.HTTPStatusError("HTTP Error", request=MagicMock(), response=MagicMock())):
+
+            with pytest.raises(ModelRequestError, match="HTTP error for external API"):
+                await client._make_external_request("perplexity", "Test prompt", 100, 0.7)
+=======
         with (
             patch(
                 "shared_package.clients.unified_client.is_api_key_configured",
@@ -174,12 +218,18 @@ class TestExternalAPIRequests:
                 await client._make_external_request(
                     "perplexity", "Test prompt", 100, 0.7
                 )
+>>>>>>> origin/master
 
     @pytest.mark.asyncio
     async def test_make_external_request_perplexity_invalid_response(self):
         """Test Perplexity API request with invalid response format."""
         client = UnifiedModelClient()
 
+<<<<<<< HEAD
+        with patch('shared_package.clients.unified_client.is_api_key_configured', return_value=True), \
+             patch('shared_package.clients.unified_client.get_api_key', return_value="test_key"), \
+             patch.object(client.client, 'post') as mock_post:
+=======
         with (
             patch(
                 "shared_package.clients.unified_client.is_api_key_configured",
@@ -191,6 +241,7 @@ class TestExternalAPIRequests:
             ),
             patch.object(client.client, "post") as mock_post,
         ):
+>>>>>>> origin/master
 
             # Mock invalid response
             mock_response = MagicMock()
@@ -198,6 +249,10 @@ class TestExternalAPIRequests:
             mock_response.json.return_value = {"invalid": "response"}
             mock_post.return_value = mock_response
 
+<<<<<<< HEAD
+            with pytest.raises(ModelRequestError, match="Unexpected response format from Perplexity API"):
+                await client._make_external_request("perplexity", "Test prompt", 100, 0.7)
+=======
             with pytest.raises(
                 ModelRequestError,
                 match="Unexpected response format from Perplexity API",
@@ -205,12 +260,18 @@ class TestExternalAPIRequests:
                 await client._make_external_request(
                     "perplexity", "Test prompt", 100, 0.7
                 )
+>>>>>>> origin/master
 
     @pytest.mark.asyncio
     async def test_make_external_request_chadgpt_invalid_response(self):
         """Test ChadGPT API request with invalid response format."""
         client = UnifiedModelClient()
 
+<<<<<<< HEAD
+        with patch('shared_package.clients.unified_client.is_api_key_configured', return_value=True), \
+             patch('shared_package.clients.unified_client.get_api_key', return_value="test_key"), \
+             patch.object(client.client, 'post') as mock_post:
+=======
         with (
             patch(
                 "shared_package.clients.unified_client.is_api_key_configured",
@@ -222,6 +283,7 @@ class TestExternalAPIRequests:
             ),
             patch.object(client.client, "post") as mock_post,
         ):
+>>>>>>> origin/master
 
             # Mock invalid response
             mock_response = MagicMock()
@@ -229,9 +291,13 @@ class TestExternalAPIRequests:
             mock_response.json.return_value = {"is_success": False}
             mock_post.return_value = mock_response
 
+<<<<<<< HEAD
+            with pytest.raises(ModelRequestError, match="Unexpected response format from ChadGPT API"):
+=======
             with pytest.raises(
                 ModelRequestError, match="Unexpected response format from ChadGPT API"
             ):
+>>>>>>> origin/master
                 await client._make_external_request("chadgpt", "Test prompt", 100, 0.7)
 
 
@@ -243,10 +309,14 @@ class TestExternalAPIAvailability:
         """Test external API availability check with API key."""
         client = UnifiedModelClient()
 
+<<<<<<< HEAD
+        with patch('shared_package.clients.unified_client.is_api_key_configured', return_value=True):
+=======
         with patch(
             "shared_package.clients.unified_client.is_api_key_configured",
             return_value=True,
         ):
+>>>>>>> origin/master
             result = await client._check_external_availability("perplexity")
             assert result is True
 
@@ -255,10 +325,14 @@ class TestExternalAPIAvailability:
         """Test external API availability check without API key."""
         client = UnifiedModelClient()
 
+<<<<<<< HEAD
+        with patch('shared_package.clients.unified_client.is_api_key_configured', return_value=False):
+=======
         with patch(
             "shared_package.clients.unified_client.is_api_key_configured",
             return_value=False,
         ):
+>>>>>>> origin/master
             result = await client._check_external_availability("perplexity")
             assert result is False
 
@@ -271,6 +345,11 @@ class TestExternalAPIIntegration:
         """Test make_request with external Perplexity model."""
         client = UnifiedModelClient()
 
+<<<<<<< HEAD
+        with patch('shared_package.clients.unified_client.is_api_key_configured', return_value=True), \
+             patch('shared_package.clients.unified_client.get_api_key', return_value="test_key"), \
+             patch.object(client, '_make_external_request') as mock_external:
+=======
         with (
             patch(
                 "shared_package.clients.unified_client.is_api_key_configured",
@@ -282,6 +361,7 @@ class TestExternalAPIIntegration:
             ),
             patch.object(client, "_make_external_request") as mock_external,
         ):
+>>>>>>> origin/master
 
             mock_response = ModelResponse(
                 response="Test response",
@@ -297,15 +377,24 @@ class TestExternalAPIIntegration:
 
             assert response.response == "Test response"
             assert response.model_name == "perplexity"
+<<<<<<< HEAD
+            mock_external.assert_called_once_with("perplexity", "Test prompt", 10000, 0.7)
+=======
             mock_external.assert_called_once_with(
                 "perplexity", "Test prompt", 10000, 0.7
             )
+>>>>>>> origin/master
 
     @pytest.mark.asyncio
     async def test_make_request_external_chadgpt(self):
         """Test make_request with external ChadGPT model."""
         client = UnifiedModelClient()
 
+<<<<<<< HEAD
+        with patch('shared_package.clients.unified_client.is_api_key_configured', return_value=True), \
+             patch('shared_package.clients.unified_client.get_api_key', return_value="test_key"), \
+             patch.object(client, '_make_external_request') as mock_external:
+=======
         with (
             patch(
                 "shared_package.clients.unified_client.is_api_key_configured",
@@ -317,6 +406,7 @@ class TestExternalAPIIntegration:
             ),
             patch.object(client, "_make_external_request") as mock_external,
         ):
+>>>>>>> origin/master
 
             mock_response = ModelResponse(
                 response="Test response",

@@ -47,6 +47,40 @@ groups:
           summary: "Unified worker latency exceeds 5 minutes (P95)"
           description: "95th percentile unified worker task duration is above 5 minutes for the last 10 minutes. Investigate slow tasks or external dependencies."
 
+<<<<<<< HEAD
+  - name: personalization_alerts
+    interval: 30s
+    rules:
+      # Alert: High error rate in personalized requests
+      - alert: PersonalizationHighErrorRate
+        expr: |
+          rate(personalized_requests_total{status="error"}[5m])
+          /
+          clamp_min(rate(personalized_requests_total[5m]), 1e-6) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: personalization
+        annotations:
+          summary: "High error rate in personalized requests (>10%)"
+          description: "{{ $value | humanizePercentage }} of personalized requests are failing in the last 5 minutes"
+          runbook: "Check logs for personalized_reply_use_case, verify LLM and MongoDB connectivity"
+
+      # Alert: Memory compression failures
+      - alert: MemoryCompressionFailures
+        expr: |
+          rate(user_memory_compressions_total{status="error"}[5m]) > 5
+        for: 5m
+        labels:
+          severity: critical
+          component: personalization
+        annotations:
+          summary: "Memory compression failures (>5 in 5min)"
+          description: "Memory compression is failing at {{ $value }} errors per second"
+          runbook: "Check logs for _compress_memory, verify LLM summarization working"
+
+=======
+>>>>>>> origin/master
   - name: mcp_alerts
     interval: 30s
     rules:
@@ -176,6 +210,8 @@ groups:
         annotations:
           summary: "Butler bot has not processed any messages in 10 minutes"
           description: "Butler bot has not processed any messages for more than 10 minutes. This may indicate a quiet period or connectivity issue."
+<<<<<<< HEAD
+=======
 
   - name: epic23_observability_alerts
     interval: 30s
@@ -260,3 +296,4 @@ groups:
         annotations:
           summary: "Loki ingestion backlog detected"
           description: "Loki ingestion ring shows backlog with members in JOINING state for more than 10 minutes. Check ingester capacity and storage."
+>>>>>>> origin/master

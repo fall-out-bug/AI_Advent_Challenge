@@ -1,6 +1,25 @@
 """Process voice command use case.
 
 Purpose:
+<<<<<<< HEAD
+    Handles voice command processing: transcription via STT adapter,
+    saving to store, and optionally sending confirmation.
+"""
+
+from uuid import UUID
+
+from src.application.voice.dtos import (
+    ProcessVoiceCommandInput,
+    TranscriptionOutput,
+)
+from src.domain.interfaces.voice import (
+    SpeechToTextAdapter,
+    VoiceCommandStore,
+)
+from src.infrastructure.logging import get_logger
+
+logger = get_logger("voice.process_voice_command")
+=======
     Handles voice command processing: validates audio, transcribes via STT,
     checks confidence threshold, stores command, and triggers confirmation.
 """
@@ -24,12 +43,23 @@ from src.infrastructure.logging import get_logger
 from src.infrastructure.voice.command_store import VoiceCommandStore
 
 logger = get_logger("use_cases.process_voice_command")
+>>>>>>> origin/master
 
 
 class ProcessVoiceCommandUseCase:
     """Use case for processing voice commands.
 
     Purpose:
+<<<<<<< HEAD
+        Transcribes audio via STT adapter, saves to store,
+        and returns transcription result. Note: confirmation
+        is disabled - commands are executed immediately after
+        transcription in voice_handler.py.
+
+    Args:
+        stt_adapter: Speech-to-text adapter for transcription.
+        command_store: Voice command store for saving transcripts.
+=======
         Validates audio metadata, transcribes via STT service, checks
         confidence threshold, stores command if confidence ≥ threshold,
         and triggers confirmation message to user.
@@ -39,10 +69,18 @@ class ProcessVoiceCommandUseCase:
         command_store: Voice command storage (Redis or in-memory).
         confirmation_gateway: Gateway for sending confirmation messages.
         settings: Optional settings instance (defaults to get_settings()).
+>>>>>>> origin/master
     """
 
     def __init__(
         self,
+<<<<<<< HEAD
+        stt_adapter: SpeechToTextAdapter,
+        command_store: VoiceCommandStore,
+    ) -> None:
+        self.stt_adapter = stt_adapter
+        self.command_store = command_store
+=======
         stt_service: SpeechToTextService,
         command_store: VoiceCommandStore,
         confirmation_gateway: ConfirmationGateway,
@@ -52,10 +90,34 @@ class ProcessVoiceCommandUseCase:
         self.command_store = command_store
         self.confirmation_gateway = confirmation_gateway
         self.settings = settings or get_settings()
+>>>>>>> origin/master
 
     async def execute(
         self,
         input_data: ProcessVoiceCommandInput,
+<<<<<<< HEAD
+    ) -> TranscriptionOutput:
+        """Process voice command.
+
+        Purpose:
+            Transcribes audio, saves to store, and returns result.
+
+        Args:
+            input_data: Input DTO with command ID, user ID, audio bytes, duration.
+
+        Returns:
+            TranscriptionOutput with text, confidence, language, duration.
+
+        Raises:
+            RuntimeError: If transcription or storage fails.
+
+        Example:
+            >>> use_case = ProcessVoiceCommandUseCase(stt_adapter, command_store)
+            >>> input_data = ProcessVoiceCommandInput(...)
+            >>> result = await use_case.execute(input_data)
+            >>> result.text
+            'Привет, мир!'
+=======
     ) -> TranscriptionResult:
         """Execute voice command processing.
 
@@ -85,16 +147,43 @@ class ProcessVoiceCommandUseCase:
             >>> result = await use_case.execute(input_data)
             >>> result.text
             "Сделай дайджест по каналу X"
+>>>>>>> origin/master
         """
         logger.info(
             "Processing voice command",
             extra={
+<<<<<<< HEAD
+                "command_id": str(input_data.command_id),
+=======
                 "voice_command_id": str(input_data.command_id),
+>>>>>>> origin/master
                 "user_id": input_data.user_id,
                 "duration_seconds": input_data.duration_seconds,
             },
         )
 
+<<<<<<< HEAD
+        # Transcribe audio via STT adapter
+        transcription = await self.stt_adapter.transcribe(
+            audio_bytes=input_data.audio_bytes,
+            language="ru",  # Default to Russian
+        )
+
+        # Save transcribed text to store
+        try:
+            await self.command_store.save(
+                command_id=str(input_data.command_id),
+                user_id=input_data.user_id,
+                text=transcription.text,
+                ttl_seconds=300,  # 5 minutes TTL
+            )
+
+            logger.info(
+                "Voice command saved to store",
+                extra={
+                    "command_id": str(input_data.command_id),
+                    "user_id": input_data.user_id,
+=======
         # Note: Duration validation is already done in ProcessVoiceCommandInput.__post_init__
         # But we check again for safety
         if input_data.duration_seconds > 120:
@@ -183,14 +272,21 @@ class ProcessVoiceCommandUseCase:
                     "voice_command_id": str(input_data.command_id),
                     "user_id": input_data.user_id,
                     "ttl_seconds": ttl_seconds,
+>>>>>>> origin/master
                 },
             )
 
         except Exception as e:
             logger.error(
+<<<<<<< HEAD
+                "Failed to save voice command",
+                extra={
+                    "command_id": str(input_data.command_id),
+=======
                 "Failed to store voice command",
                 extra={
                     "voice_command_id": str(input_data.command_id),
+>>>>>>> origin/master
                     "user_id": input_data.user_id,
                     "error": str(e),
                 },
@@ -201,6 +297,14 @@ class ProcessVoiceCommandUseCase:
         # after transcription in voice_handler.py
         # No need to send confirmation message with buttons
 
+<<<<<<< HEAD
+        return TranscriptionOutput(
+            text=transcription.text,
+            confidence=transcription.confidence,
+            language=transcription.language,
+            duration_ms=transcription.duration_ms,
+        )
+=======
         return transcription
 
-
+>>>>>>> origin/master

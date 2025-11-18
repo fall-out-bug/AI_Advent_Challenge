@@ -23,8 +23,16 @@
   },
   "error_scenarios": {
     "empty": "",
+<<<<<<< HEAD
+    "very_long": "x".repeat(10000),
+=======
     "very_long": "x",
+>>>>>>> origin/master
     "special_chars": "!@#$%^&*()_+-=[]{}|;':\",./<>?",
     "unicode": "Привет! Создай задачу: Купить молоко"
   }
 }
+<<<<<<< HEAD
+
+=======
+>>>>>>> origin/master

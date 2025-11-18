@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+<<<<<<< HEAD
+=======
 from collections.abc import Sequence
+>>>>>>> origin/master
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -14,9 +17,12 @@ from click.testing import CliRunner
 digest_module = importlib.import_module(
     "src.presentation.cli.backoffice.commands.digest"
 )
+<<<<<<< HEAD
+=======
 channels_module = importlib.import_module(
     "src.presentation.cli.backoffice.commands.channels"
 )
+>>>>>>> origin/master
 from src.application.dtos.digest_dtos import ChannelDigest
 from src.domain.value_objects.summary_result import SummaryResult
 from src.presentation.cli.backoffice.main import cli
@@ -167,6 +173,8 @@ def test_digest_export_reports_destination(
 
     assert result.exit_code == 0
     assert f"Digest saved to {destination}" in result.output
+<<<<<<< HEAD
+=======
 
 
 def test_channels_list_command(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -322,3 +330,4 @@ def test_channels_remove_json_output(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert result.exit_code == 0
     assert "deleted" in result.output
+>>>>>>> origin/master

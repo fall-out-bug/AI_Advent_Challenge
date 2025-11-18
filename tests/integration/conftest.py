@@ -3,10 +3,22 @@
 Following TDD principles: comprehensive fixtures for cross-layer testing.
 """
 
+<<<<<<< HEAD
+import os
+
+import pytest
+from motor.motor_asyncio import AsyncIOMotorClient
+from unittest.mock import AsyncMock, MagicMock
+from typing import Any, Dict
+
+from src.infrastructure.config.settings import get_settings
+
+=======
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from typing import Any, Dict
 
+>>>>>>> origin/master
 from tests.fixtures.butler_fixtures import (
     butler_orchestrator,
     mock_llm_client_protocol,
@@ -123,6 +135,34 @@ async def integration_mongodb(mock_mongodb):
 
 
 @pytest.fixture(scope="function")
+<<<<<<< HEAD
+async def real_mongodb():
+    """Real MongoDB connection for integration tests.
+
+    Purpose:
+        Provides connection to test MongoDB database.
+        Uses test database name to avoid conflicts with production.
+
+    Yields:
+        MongoDB database instance.
+
+    Note:
+        Requires MONGODB_URL environment variable or default localhost:27017.
+        Uses 'ai_challenge_integration_test' database.
+    """
+    settings = get_settings()
+    mongodb_url = os.getenv("TEST_MONGODB_URL", settings.mongodb_url)
+
+    # Use test database
+    client = AsyncIOMotorClient(mongodb_url)
+    db = client.get_database("ai_challenge_integration_test")
+
+    yield db
+
+    # Cleanup: drop test database
+    await client.drop_database("ai_challenge_integration_test")
+    client.close()
+=======
 async def real_mongodb(mongodb_database_async):
     """Real MongoDB connection for integration tests (deprecated - use mongodb_database_async).
 
@@ -138,3 +178,4 @@ async def real_mongodb(mongodb_database_async):
         New tests should use mongodb_database_async directly.
     """
     yield mongodb_database_async
+>>>>>>> origin/master

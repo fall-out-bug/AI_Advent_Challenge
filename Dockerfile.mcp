@@ -7,8 +7,15 @@ WORKDIR /build
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install poetry
 
+<<<<<<< HEAD
+# Copy dependency files and local packages required for poetry install
+COPY pyproject.toml poetry.lock* ./
+COPY shared/ ./shared/
+COPY packages/ ./packages/
+=======
 # Copy dependency files
 COPY pyproject.toml poetry.lock* ./
+>>>>>>> origin/master
 
 # Install dependencies using poetry with cache
 # Single source of truth: dependencies come from pyproject.toml
@@ -54,6 +61,15 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy only necessary files
 COPY shared/ /app/shared/
+<<<<<<< HEAD
+COPY src/ /app/src/
+COPY config/ /app/config/
+COPY pyproject.toml ./
+
+# Set PYTHONPATH so Python can find src module
+ENV PYTHONPATH=/app
+
+=======
 COPY src/presentation/mcp/ /app/src/presentation/mcp/
 COPY src/presentation/api/ /app/src/presentation/api/
 COPY src/domain/ /app/src/domain/
@@ -62,6 +78,7 @@ COPY src/infrastructure/ /app/src/infrastructure/
 COPY config/ /app/config/
 COPY pyproject.toml ./
 
+>>>>>>> origin/master
 # Create non-root user for security
 RUN useradd -m -u 1000 mcpuser && \
     chown -R mcpuser:mcpuser /app

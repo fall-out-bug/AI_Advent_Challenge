@@ -1,4 +1,5 @@
 """MCP client for tool discovery and execution."""
+
 import os
 from typing import Any, Dict, List, Protocol
 
@@ -70,24 +71,56 @@ class MCPClient:
 
         Returns:
             Tool execution result
-        """
-        async with stdio_client(self.server_params) as (read, write):
-            async with ClientSession(read, write) as session:
-                await session.initialize()
-                result = await session.call_tool(tool_name, arguments)
-                if result.content and len(result.content) > 0:
-                    # Handle text content
-                    if hasattr(result.content[0], "text"):
-                        import json
 
-                        try:
-                            return json.loads(result.content[0].text)
-                        except json.JSONDecodeError:
-                            return {"result": result.content[0].text}
-                    # Handle dict content
-                    elif isinstance(result.content[0], dict):
-                        return result.content[0]
-                return {}
+        Raises:
+            Exception: If tool execution fails
+        """
+        try:
+            async with stdio_client(self.server_params) as (read, write):
+                try:
+                    async with ClientSession(read, write) as session:
+                        await session.initialize()
+                        result = await session.call_tool(tool_name, arguments)
+                        if result.content and len(result.content) > 0:
+                            # Handle text content
+                            if hasattr(result.content[0], "text"):
+                                import json
+
+                                try:
+                                    return json.loads(result.content[0].text)
+                                except json.JSONDecodeError:
+                                    return {"result": result.content[0].text}
+                            # Handle dict content
+                            elif isinstance(result.content[0], dict):
+                                return result.content[0]
+                        return {}
+                except Exception as e:
+                    # Check if it's an ExceptionGroup (from exceptiongroup package)
+                    if hasattr(e, "exceptions") and hasattr(e, "__class__"):
+                        # It's an ExceptionGroup-like exception
+                        exceptions = getattr(e, "exceptions", [])
+                        if len(exceptions) > 0:
+                            # Get the first exception from the group
+                            actual_exception = exceptions[0]
+                            # Re-raise as a regular exception for better error handling
+                            error_msg = (
+                                f"MCP tool '{tool_name}' failed: "
+                                f"{str(actual_exception)}"
+                            )
+                            raise Exception(error_msg) from actual_exception
+                    # Re-raise if not ExceptionGroup or if we can't extract exception
+                    raise
+        except Exception as e:
+            # Check if it's an ExceptionGroup at outer level too
+            if hasattr(e, "exceptions") and hasattr(e, "__class__"):
+                exceptions = getattr(e, "exceptions", [])
+                if len(exceptions) > 0:
+                    actual_exception = exceptions[0]
+                    error_msg = (
+                        f"MCP tool '{tool_name}' failed: {str(actual_exception)}"
+                    )
+                    raise Exception(error_msg) from actual_exception
+            raise
 
     async def interactive_mode(self) -> None:
         """Interactive CLI for tool exploration."""

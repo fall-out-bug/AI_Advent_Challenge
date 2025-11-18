@@ -1,17 +1,35 @@
 """Shared fixtures for E2E tests."""
 
+<<<<<<< HEAD
+import asyncio
+=======
+>>>>>>> origin/master
 import os
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from pymongo.errors import OperationFailure
 
+<<<<<<< HEAD
+from src.infrastructure.database.mongo import close_client, get_db
+
+
+@pytest.fixture(scope="module")
+def event_loop():
+    """Create event loop for async tests."""
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
+
+
+=======
 # Note: Legacy tests use get_db() - consider migrating to mongodb_database_async fixture
 from src.infrastructure.database.mongo import close_client, get_db
 
 
 # Legacy event_loop fixture removed - pytest-asyncio handles event loop automatically
 # (asyncio_mode = auto in pytest.ini)
+>>>>>>> origin/master
 @pytest.fixture(autouse=True)
 def _set_test_db_env(monkeypatch):
     """Set test database environment variables."""

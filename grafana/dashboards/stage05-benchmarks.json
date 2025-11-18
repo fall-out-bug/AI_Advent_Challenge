@@ -124,6 +124,8 @@
       "options": {
         "showHeader": true
       }
+<<<<<<< HEAD
+=======
     },
     {
       "type": "timeseries",
@@ -161,6 +163,7 @@
           "refId": "D"
         }
       ]
+>>>>>>> origin/master
     }
   ],
   "time": {

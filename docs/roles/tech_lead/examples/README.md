@@ -1,3 +1,11 @@
+<<<<<<< HEAD
+# Tech Lead Examples
+
+- Store plan stage tables (`stages.md`) with DoD and evidence samples.
+- Include risk register extracts plus mitigation follow-up notes.
+- Provide CI pipeline mappings (command snippets, coverage reports).
+- Capture handoff checklists and resolved feedback summaries.
+=======
 # Tech Lead Role Examples
 
 Detailed examples demonstrating staged planning, CI/CD gates, risk management, and deployment strategies.
@@ -43,3 +51,4 @@ Detailed examples demonstrating staged planning, CI/CD gates, risk management, a
 - Capabilities: `../day_capabilities.md`
 - RAG Queries: `../rag_queries.md`
 - Handoff Contracts: `../../operational/handoff_contracts.md`
+>>>>>>> origin/master

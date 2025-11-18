@@ -1,3 +1,11 @@
+<<<<<<< HEAD
+# Analyst Examples
+
+- `EP21/` – Create subfolders per epic/day (e.g., `EP21/day_19`).
+- Include requirement snippets, acceptance matrices, and review remark samples.
+- Mirror successful RAG queries with anonymised outputs for reuse.
+- Keep artefacts ≤1 page; cross-link to `../day_capabilities.md` updates.
+=======
 # Analyst Role Examples
 
 This directory contains detailed, real-world examples demonstrating how the Analyst role applies day-by-day capabilities to gather, validate, and hand off requirements.
@@ -351,3 +359,4 @@ If you need additional examples or have questions about applying these patterns:
 3. Refer to [`../../operational/handoff_contracts.md`](../../operational/handoff_contracts.md) for handoff quality standards
 
 All examples maintain 80%+ test coverage and follow repository Clean Code practices.
+>>>>>>> origin/master

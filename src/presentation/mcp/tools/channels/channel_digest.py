@@ -47,7 +47,15 @@ async def _normalize_post_dates(posts: List[dict]) -> List[dict]:
 
 
 async def _generate_summary(
+<<<<<<< HEAD
+    posts: List[dict],
+    max_sentences: int,
+    hours: int = None,
+    channel_username: str = None,
+    channel_title: str = None,
+=======
     posts: List[dict], max_sentences: int, hours: int = None
+>>>>>>> origin/master
 ) -> str:
     """Generate summary from posts with fallback.
 
@@ -55,6 +63,11 @@ async def _generate_summary(
         posts: List of normalized post dictionaries
         max_sentences: Maximum sentences in summary
         hours: Time period in hours (for prompt context)
+<<<<<<< HEAD
+        channel_username: Channel username for context
+        channel_title: Channel title for better context
+=======
+>>>>>>> origin/master
 
     Returns:
         Summary text
@@ -70,6 +83,10 @@ async def _generate_summary(
         logger.info(
             f"Calling LLM summarizer: posts_count={len(posts)}, "
             f"max_sentences={max_sentences}, hours={hours}, "
+<<<<<<< HEAD
+            f"channel_username={channel_username}, channel_title={channel_title}, "
+=======
+>>>>>>> origin/master
             f"total_text_length={sum(len(p.get('text', '')) for p in posts)}"
         )
 
@@ -82,16 +99,31 @@ async def _generate_summary(
                 f"first_post_preview={sample_posts[0].get('text', '')[:200] if sample_posts else 'N/A'}"
             )
 
+<<<<<<< HEAD
+        # Extract channel info from first post for context isolation (fallback)
+=======
         # Extract channel info from first post for context isolation
+>>>>>>> origin/master
         channel_username_from_posts = None
         if posts and posts[0].get("channel_username"):
             channel_username_from_posts = posts[0].get("channel_username")
 
+<<<<<<< HEAD
+        # Use provided channel_username or extract from posts
+        final_channel_username = channel_username or channel_username_from_posts
+
+=======
+>>>>>>> origin/master
         summary = await summarize_posts(
             posts,
             max_sentences=max_sentences,
             time_period_hours=hours,
+<<<<<<< HEAD
+            channel_username=final_channel_username,
+            channel_title=channel_title,
+=======
             channel_username=channel_username_from_posts,
+>>>>>>> origin/master
         )
         logger.info(
             f"LLM summarizer returned summary: length={len(summary)} characters, "
@@ -158,6 +190,25 @@ async def get_channel_digest_by_name(
         f"Exact match search result: found={existing is not None}, searching for='{channel_username}'"
     )
 
+<<<<<<< HEAD
+    # If not found, try case-insensitive match immediately (before other searches)
+    # This handles cases where username might have different case
+    if not existing:
+        existing = await db.channels.find_one(
+            {
+                "user_id": user_id,
+                "channel_username": {"$regex": f"^{re.escape(channel_username)}$", "$options": "i"},
+                "active": True,
+            }
+        )
+        if existing:
+            logger.info(
+                f"Found case-insensitive match: {existing.get('channel_username')} for {channel_username}"
+            )
+            channel_username = existing.get("channel_username")  # Use exact name from DB
+
+=======
+>>>>>>> origin/master
     # If exact match not found, try case-insensitive, partial, and title-based search
     if not existing:
         all_channels = await db.channels.find(
@@ -793,8 +844,22 @@ async def get_channel_digest_by_name(
         f"Using adaptive max_sentences={max_sentences} for {post_count} posts (base={base_sentences}, hours={hours})"
     )
 
+<<<<<<< HEAD
+    # Get channel title from existing channel document
+    channel_title = existing.get("title") if existing else None
+
+    # Generate summary - ensure we pass the actual filtered posts
+    summary = await _generate_summary(
+        normalized_posts,
+        max_sentences,
+        hours=hours,
+        channel_username=channel_username,
+        channel_title=channel_title,
+    )
+=======
     # Generate summary - ensure we pass the actual filtered posts
     summary = await _generate_summary(normalized_posts, max_sentences, hours=hours)
+>>>>>>> origin/master
     logger.info(
         f"Generated summary length: {len(summary)} characters, first 200 chars: {summary[:200]}"
     )
@@ -914,8 +979,20 @@ async def get_channel_digest(user_id: int, hours: int = 24) -> Dict[str, Any]:
                 continue
 
             normalized_posts = await _normalize_post_dates(posts)
+<<<<<<< HEAD
+            # Get channel title from channel document
+            channel_title = channel.get("title") if channel else None
+
+            summary = await _generate_summary(
+                normalized_posts,
+                settings.digest_summary_sentences,
+                hours=hours,
+                channel_username=channel.get("channel_username"),
+                channel_title=channel_title,
+=======
             summary = await _generate_summary(
                 normalized_posts, settings.digest_summary_sentences, hours=hours
+>>>>>>> origin/master
             )
 
             digests.append(

@@ -8,7 +8,10 @@ from typing import Any, Dict
 
 import click
 
+<<<<<<< HEAD
+=======
 from src.domain.services.channel_normalizer import ChannelNormalizer
+>>>>>>> origin/master
 from src.presentation.cli.backoffice.formatters import OutputFormat, format_output
 from src.presentation.cli.backoffice.metrics import track_command
 from src.presentation.cli.backoffice.services.digest_exporter import (
@@ -76,6 +79,12 @@ async def _run_digest(
 
     try:
         if channel:
+<<<<<<< HEAD
+            use_case = GenerateChannelDigestByNameUseCase()
+            digests = [
+                await use_case.execute(
+                    user_id=user_id, channel_username=channel, hours=hours
+=======
             # Normalize channel username to canonical form (lowercase, without @ prefix) per E.1 policy
             normalizer = ChannelNormalizer()
             channel_username = normalizer.to_canonical_form(channel)
@@ -84,6 +93,7 @@ async def _run_digest(
             digests = [
                 await use_case.execute(
                     user_id=user_id, channel_username=channel_username, hours=hours
+>>>>>>> origin/master
                 )
             ]
         else:
