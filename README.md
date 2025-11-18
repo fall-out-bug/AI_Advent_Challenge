@@ -10,7 +10,7 @@ This repository contains daily challenges building AI-powered systems with langu
 
 **Updates:** Project news and daily recaps are published in the Telegram channel [Высоконагруженный кабанчик](https://t.me/data_intensive_boar).
 
-**Current Status:** 🏆 Day 21 COMPLETED — Repository refactor finished, Clean Architecture deployed, enterprise security implemented, quality automation active.
+**Current Status:** 🏆 Day 24 COMPLETED — Voice commands integrated into Butler (Epic 24), observability & benchmarks delivered (Epic 23), repository refactor and RAG++ in place (Epic 21).
 
 ### Day 21 (Completed)
 - Summary: `docs/specs/epic_21/epic_21.md`
@@ -21,7 +21,7 @@ This repository contains daily challenges building AI-powered systems with langu
   - `make day_21_metrics` — print key rag_* metrics
 
 **Project Status:**
-- ✅ 18 daily challenges completed
+- ✅ 24 daily challenges completed
 - ✅ Clean Architecture fully implemented (Day 21)
 - ✅ Security hardening deployed (path traversal protection, input validation)
 - ✅ Quality automation established (pre-commit hooks, automated linting)
@@ -30,7 +30,7 @@ This repository contains daily challenges building AI-powered systems with langu
 - ✅ Comprehensive documentation for AI assistants
 
 **Key Features:**
-- ✅ 15 daily challenges from simple chat to self-improving AI systems
+- ✅ 24 daily challenges from simple chat to observability, benchmarks, and voice commands
 - ✅ Clean Architecture with SOLID principles
 - ✅ 420+ tests with 80%+ coverage
 - ✅ Multi-model support (StarCoder, Mistral, Qwen, TinyLlama)
@@ -146,6 +146,10 @@ AI_Challenge/
 | Day 18 | Performance Benchmarks | Prometheus, Benchmarking | ✅ Complete |
 | Day 19 | Document Embedding Index | Redis/FAISS, Mongo, LLM API | ✅ Complete |
 | Day 20 | RAG vs Non‑RAG Answering Agent | Retrieval, LLM-as-Judge | ✅ Complete |
+| Day 21 | Repository Refactor & RAG++ | Clean Architecture, Reranking, Observability | ✅ Complete |
+| Day 22 | RAG Citations & Source Attribution | RAG, MongoDB, Vector Search | ✅ Complete |
+| Day 23 | Observability & Benchmark Enablement | Prometheus, Grafana, Loki, Benchmarks | ✅ Complete |
+| Day 24 | Voice Commands Integration | Telegram Bot, Whisper STT, Butler Orchestrator | ✅ Complete |
 
 ## Core Infrastructure
 

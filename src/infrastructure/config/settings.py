@@ -408,6 +408,41 @@ class Settings(BaseSettings):
         default="embedding:chunk:",
         description="Redis key prefix for stored embeddings",
     )
+    # Voice/STT settings
+    whisper_host: str = Field(
+        default="whisper-stt",
+        description="Whisper STT service host (default: whisper-stt)",
+    )
+    whisper_port: int = Field(
+        default=8005,
+        description="Whisper STT service port (default: 8005)",
+    )
+    stt_model: str = Field(
+        default="base",
+        description="Whisper model name (e.g., tiny, base, small, medium, large, large-v2, large-v3)",
+    )
+    voice_redis_host: str = Field(
+        default="shared-redis",
+        description="Redis host for voice command store (default: shared-redis)",
+    )
+    voice_redis_port: int = Field(
+        default=6379,
+        description="Redis port for voice command store (default: 6379)",
+    )
+    voice_redis_password: str | None = Field(
+        default=None,
+        description="Redis password for voice command store (reads from VOICE_REDIS_PASSWORD or REDIS_PASSWORD env var)",
+    )
+    
+    @field_validator("voice_redis_password", mode="before")
+    @classmethod
+    def validate_voice_redis_password(cls, v: str | None) -> str | None:
+        """Validate voice_redis_password by reading from environment if not set."""
+        import os
+        if v is None:
+            # Try VOICE_REDIS_PASSWORD first, then REDIS_PASSWORD as fallback
+            v = os.getenv("VOICE_REDIS_PASSWORD") or os.getenv("REDIS_PASSWORD")
+        return v
     # RAG retrieval settings
     rag_top_k: int = Field(
         default=5,

@@ -115,9 +115,56 @@ class ButlerBot:
             )
             await message.answer("❌ Sorry, I couldn't load the menu. Please try again.")
 
+    async def setup_voice_handler(self) -> None:
+        """Setup voice handler asynchronously.
+
+        Purpose:
+            Initialize voice agent use cases and register voice handler.
+            This is done asynchronously because use cases require async
+            initialization (Redis connection, etc.).
+
+        Example:
+            >>> bot = ButlerBot(token, orchestrator)
+            >>> await bot.setup_voice_handler()
+        """
+        if getattr(self, "_voice_handler_initialized", False):
+            logger.debug("Voice handler already initialized")
+            return
+
+        try:
+            from src.infrastructure.voice.factory import create_voice_use_cases
+            from src.presentation.bot.handlers.voice_handler import setup_voice_handler
+
+            # Create voice use cases
+            process_uc, confirmation_uc = await create_voice_use_cases(
+                orchestrator=self.orchestrator,
+                bot=self.bot,
+            )
+
+            # Setup and register voice handler
+            voice_router = setup_voice_handler(
+                process_use_case=process_uc,
+                confirmation_use_case=confirmation_uc,
+            )
+            self.dp.include_router(voice_router)
+
+            logger.info("Voice handler initialized and registered")
+            self._voice_handler_initialized = True
+
+        except Exception as e:
+            logger.error(
+                f"Failed to setup voice handler: {e}. "
+                "Bot will continue without voice support.",
+                exc_info=True,
+            )
+            # Don't raise - bot should work without voice support
+
     async def run(self) -> None:
         """Start the bot polling loop with graceful shutdown."""
         try:
+            # Setup voice handler (async initialization)
+            await self.setup_voice_handler()
+
             # Start metrics server
             await self.metrics_server.start()
 

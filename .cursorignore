@@ -47,3 +47,4 @@ shared/.venv/
 # Allow .env file to be visible in Cursor (still ignored by git)
 # Note: .env contains secrets, but we need to see it for editing
 !.env
+.whisper-cache

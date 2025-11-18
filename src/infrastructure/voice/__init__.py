@@ -1,0 +1,2 @@
+"""Voice command infrastructure adapters."""
+
