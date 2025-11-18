@@ -8,7 +8,13 @@ Purpose:
 from __future__ import annotations
 
 import asyncio
+from typing import TYPE_CHECKING, Optional
 from uuid import uuid4
+
+if TYPE_CHECKING:
+    from typing import Any
+else:
+    Any = object
 
 from aiogram import F, Router
 from aiogram.types import CallbackQuery, Message
@@ -30,11 +36,13 @@ logger = get_logger("voice_handler")
 # Global use case instances (set by setup_voice_handler)
 _process_use_case: ProcessVoiceCommandUseCase | None = None
 _confirmation_use_case: HandleVoiceConfirmationUseCase | None = None
+_personalized_reply_use_case: Optional[Any] = None
 
 
 def setup_voice_handler(
     process_use_case: ProcessVoiceCommandUseCase,
     confirmation_use_case: HandleVoiceConfirmationUseCase,
+    personalized_reply_use_case: Optional[Any] = None,
 ) -> Router:
     """Setup voice handler with use case dependencies.
 
@@ -45,6 +53,7 @@ def setup_voice_handler(
     Args:
         process_use_case: ProcessVoiceCommandUseCase instance.
         confirmation_use_case: HandleVoiceConfirmationUseCase instance.
+        personalized_reply_use_case: Optional PersonalizedReplyUseCase for personalization.
 
     Returns:
         Configured aiogram Router with voice and callback handlers.
@@ -52,12 +61,13 @@ def setup_voice_handler(
     Example:
         >>> process_use_case = ProcessVoiceCommandUseCase(...)
         >>> confirmation_use_case = HandleVoiceConfirmationUseCase(...)
-        >>> router = setup_voice_handler(process_use_case, confirmation_use_case)
+        >>> router = setup_voice_handler(process_use_case, confirmation_use_case, personalized_reply_use_case)
         >>> dp.include_router(router)
     """
-    global _process_use_case, _confirmation_use_case
+    global _process_use_case, _confirmation_use_case, _personalized_reply_use_case
     _process_use_case = process_use_case
     _confirmation_use_case = confirmation_use_case
+    _personalized_reply_use_case = personalized_reply_use_case
 
     router = Router()
 
@@ -192,6 +202,59 @@ async def handle_voice_message(message: Message) -> None:
                 "confidence": transcription.confidence,
             },
         )
+
+        # Check if personalization is enabled
+        from src.infrastructure.config.settings import get_settings
+
+        settings = get_settings()
+
+        if (
+            settings.personalization_enabled
+            and _personalized_reply_use_case is not None
+        ):
+            logger.info(
+                "Routing voice transcription through personalized reply",
+                extra={
+                    "user_id": user_id,
+                    "transcription": transcription.text[:50],
+                },
+            )
+
+            try:
+                from src.application.personalization.dtos import (
+                    PersonalizedReplyInput,
+                )
+
+                input_data = PersonalizedReplyInput(
+                    user_id=user_id,
+                    text=transcription.text,
+                    source="voice",
+                )
+
+                output = await _personalized_reply_use_case.execute(input_data)
+
+                # Send transcription + personalized reply
+                await message.answer(
+                    f"🎤 Распознала: «{transcription.text[:500]}{'...' if len(transcription.text) > 500 else ''}»\n\n"
+                    f"{output.reply}"
+                )
+
+                logger.info(
+                    "Voice command processed with personalization",
+                    extra={
+                        "user_id": user_id,
+                        "used_persona": output.used_persona,
+                    },
+                )
+                return
+
+            except Exception as e:
+                logger.error(
+                    "Personalized voice reply failed",
+                    extra={"user_id": user_id, "error": str(e)},
+                    exc_info=True,
+                )
+                # Fall through to fallback
 
         # Execute command immediately without confirmation
         # Send transcription result to user and execute via Butler

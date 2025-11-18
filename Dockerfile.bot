@@ -47,6 +47,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy application code
 COPY --chown=butler:butler src/ ./src/
 COPY --chown=butler:butler shared/ ./shared/
+COPY --chown=butler:butler config/ ./config/
 COPY --chown=butler:butler pyproject.toml ./
 
 # Install application in development mode

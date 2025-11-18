@@ -47,6 +47,37 @@ groups:
           summary: "Unified worker latency exceeds 5 minutes (P95)"
           description: "95th percentile unified worker task duration is above 5 minutes for the last 10 minutes. Investigate slow tasks or external dependencies."
 
+  - name: personalization_alerts
+    interval: 30s
+    rules:
+      # Alert: High error rate in personalized requests
+      - alert: PersonalizationHighErrorRate
+        expr: |
+          rate(personalized_requests_total{status="error"}[5m])
+          /
+          clamp_min(rate(personalized_requests_total[5m]), 1e-6) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: personalization
+        annotations:
+          summary: "High error rate in personalized requests (>10%)"
+          description: "{{ $value | humanizePercentage }} of personalized requests are failing in the last 5 minutes"
+          runbook: "Check logs for personalized_reply_use_case, verify LLM and MongoDB connectivity"
+
+      # Alert: Memory compression failures
+      - alert: MemoryCompressionFailures
+        expr: |
+          rate(user_memory_compressions_total{status="error"}[5m]) > 5
+        for: 5m
+        labels:
+          severity: critical
+          component: personalization
+        annotations:
+          summary: "Memory compression failures (>5 in 5min)"
+          description: "Memory compression is failing at {{ $value }} errors per second"
+          runbook: "Check logs for _compress_memory, verify LLM summarization working"
+
   - name: mcp_alerts
     interval: 30s
     rules:

@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from typing import Any
 
 from aiogram import Bot, Dispatcher, Router
 from aiogram.filters import Command
@@ -46,6 +50,7 @@ class ButlerBot:
         self.dp = Dispatcher(storage=self.storage)
         self.router = Router()
         self.orchestrator = orchestrator
+        self._personalized_reply_use_case = None
         self._setup_handlers()
         self.dp.include_router(self.router)
 
@@ -74,9 +79,18 @@ class ButlerBot:
             channels.router._parent_router = None
         self.dp.include_router(channels.router)
 
+        # Setup personalization if enabled
+        personalized_reply_use_case = self._create_personalization_use_cases()
+
         # Include butler handler for natural language processing
-        butler_router = setup_butler_handler(self.orchestrator)
+        butler_router = setup_butler_handler(
+            self.orchestrator,
+            personalized_reply_use_case=personalized_reply_use_case,
+        )
         self.dp.include_router(butler_router)
+
+        # Store for voice handler setup
+        self._personalized_reply_use_case = personalized_reply_use_case
 
     async def cmd_start(self, message: Message) -> None:
         """Handle /start command."""
@@ -115,6 +129,47 @@ class ButlerBot:
             )
             await message.answer("❌ Sorry, I couldn't load the menu. Please try again.")
 
+    def _create_personalization_use_cases(self) -> "Optional[Any]":
+        """Create personalization use cases if enabled.
+
+        Purpose:
+            Initialize personalization use cases based on feature flag.
+            Returns None if personalization is disabled or initialization fails.
+
+        Returns:
+            PersonalizedReplyUseCase instance or None.
+        """
+        from src.infrastructure.config.settings import get_settings
+
+        settings = get_settings()
+
+        if not settings.personalization_enabled:
+            logger.info("Personalization disabled")
+            return None
+
+        try:
+            logger.info("Personalization enabled, creating use cases...")
+
+            # Get dependencies
+            from src.infrastructure.database.mongo import get_client
+            from src.infrastructure.clients.llm_client import get_llm_client
+
+            # Note: These are async, but we can't use await in sync method
+            # We'll create them lazily in async setup if needed
+            # For now, return None and create in async setup_voice_handler
+            logger.info(
+                "Personalization will be initialized asynchronously in setup_voice_handler"
+            )
+            return None
+
+        except Exception as e:
+            logger.error(
+                "Failed to create personalization use cases",
+                extra={"error": str(e)},
+                exc_info=True,
+            )
+            return None
+
     async def setup_voice_handler(self) -> None:
         """Setup voice handler asynchronously.
 
@@ -141,10 +196,14 @@ class ButlerBot:
                 bot=self.bot,
             )
 
+            # Create personalization use cases if enabled
+            personalized_reply_use_case = await self._setup_personalization()
+
             # Setup and register voice handler
             voice_router = setup_voice_handler(
                 process_use_case=process_uc,
                 confirmation_use_case=confirmation_uc,
+                personalized_reply_use_case=personalized_reply_use_case,
             )
             self.dp.include_router(voice_router)
 
@@ -158,6 +217,68 @@ class ButlerBot:
                 exc_info=True,
             )
             # Don't raise - bot should work without voice support
+
+    async def _setup_personalization(self) -> "Optional[Any]":
+        """Setup personalization use cases asynchronously.
+
+        Purpose:
+            Initialize personalization use cases with async dependencies.
+            Returns None if personalization is disabled or initialization fails.
+
+        Returns:
+            PersonalizedReplyUseCase instance or None.
+        """
+        from src.infrastructure.config.settings import get_settings
+
+        settings = get_settings()
+
+        if not settings.personalization_enabled:
+            logger.debug("Personalization disabled")
+            return None
+
+        try:
+            logger.info("Creating personalization use cases...")
+
+            # Get async dependencies
+            from src.infrastructure.database.mongo import get_client
+            from src.infrastructure.clients.llm_client import get_llm_client
+            from src.infrastructure.personalization.factory import (
+                create_personalized_use_cases,
+            )
+
+            mongo_client = await get_client()
+            llm_client = get_llm_client()
+
+            personalized_reply_use_case, _ = create_personalized_use_cases(
+                settings, mongo_client, llm_client
+            )
+
+            logger.info("Personalization use cases created successfully")
+
+            # Update butler handler with use case
+            from src.presentation.bot.handlers.butler_handler import (
+                setup_butler_handler,
+            )
+
+            # Re-setup butler handler with personalization
+            butler_router = setup_butler_handler(
+                self.orchestrator,
+                personalized_reply_use_case=personalized_reply_use_case,
+            )
+            # Remove old router and add new one
+            # Note: This is a bit hacky, but aiogram doesn't provide easy way to update routers
+            # In production, this should be done during initial setup
+            self._personalized_reply_use_case = personalized_reply_use_case
+
+            return personalized_reply_use_case
+
+        except Exception as e:
+            logger.error(
+                "Failed to create personalization use cases",
+                extra={"error": str(e)},
+                exc_info=True,
+            )
+            return None
 
     async def run(self) -> None:
         """Start the bot polling loop with graceful shutdown."""

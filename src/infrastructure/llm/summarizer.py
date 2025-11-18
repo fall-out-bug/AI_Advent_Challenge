@@ -168,33 +168,42 @@ async def summarize_posts(
         channel_context = f" канала @{channel_username}"
 
     if language == "ru":
-        prompt = f"""Суммаризируй эти посты из Telegram-канала{channel_context}{time_context}.
-
-КРИТИЧЕСКИ ВАЖНО:
-- Эти посты ВСЕ из ОДНОГО канала{channel_context}
-- НЕ смешивай информацию из других каналов или источников
-- Суммаризируй ТОЛЬКО то, что написано в этих постах
-
-Требования:
-- Напиши {max_sentences} РАЗНЫХ предложения на русском языке
-- Каждое предложение раскрывает РАЗНЫЙ аспект
-- Без повторов, без нумерации, без Markdown
-- Обычный текст, только предложения
-
-Формат ответа:
-- Верни ТОЛЬКО текст, НЕ JSON, НЕ структурированные данные
-- Только предложения на русском языке
-- Пиши ПОЛНЫЙ дайджест - используй все {max_sentences} предложений
-- Включи все важные детали из постов
-- Учитывай временной период: это посты{time_context}, сфокусируйся на актуальном контенте за этот период
-
-Пример правильного ответа:
-"Разработчики представили новую версию iOS с улучшенной производительностью на 30%. Добавлены новые функции для работы с жестами и улучшена безопасность. Обсуждаются отзывы пользователей о стабильности и совместимости."
-
-Посты из канала{channel_context}:
-{texts}
-
-Суммари (только этот канал):"""
+        # Load digest summarization prompt from config (includes persona style)
+        try:
+            from src.application.personalization.templates import (
+                get_digest_summarization_prompt,
+                get_persona_template,
+            )
+            
+            # Get persona section (formatted with default values for digest context)
+            persona_template = get_persona_template()
+            persona_section = persona_template.format(
+                persona="персональный дворецкий",
+                tone="witty",
+                language="ru",
+                preferred_topics="general topics",
+            )
+            
+            # Get digest prompt template
+            digest_template = get_digest_summarization_prompt()
+            
+            # Format digest prompt with persona and posts
+            prompt = digest_template.format(
+                persona_section=persona_section,
+                channel_context=channel_context,
+                time_context=time_context,
+                posts_text=texts,
+            )
+        except Exception as e:
+            logger.error(
+                f"Could not load digest prompt from config: {e}",
+                exc_info=True,
+            )
+            # No fallback - raise error to ensure template is configured
+            raise RuntimeError(
+                "Digest summarization prompt template not available. "
+                "Please ensure config/persona_templates.yaml contains digest_summarization_prompt."
+            ) from e
     else:
         channel_context = (
             f" from channel @{channel_username}" if channel_username else ""
@@ -363,7 +372,31 @@ Summary (this channel only):"""
                     )
 
                 if cleaned_summary:
-                    logger.info(f"Final summary generated: {cleaned_summary[:200]}...")
+                    # Ensure summary is within 1500-2000 characters
+                    if len(cleaned_summary) < 1500:
+                        logger.warning(
+                            f"Summary too short ({len(cleaned_summary)} chars), expected 1500-2000"
+                        )
+                        # Try to expand if possible, but don't force
+                    elif len(cleaned_summary) > 2000:
+                        # Truncate to 2000 chars, but try to cut at sentence boundary
+                        truncated = cleaned_summary[:2000]
+                        last_period = truncated.rfind(".")
+                        last_exclamation = truncated.rfind("!")
+                        last_question = truncated.rfind("?")
+                        last_sentence_end = max(last_period, last_exclamation, last_question)
+                        if last_sentence_end > 1600:  # If sentence end is in last 400 chars
+                            cleaned_summary = cleaned_summary[:last_sentence_end + 1]
+                        else:
+                            cleaned_summary = truncated
+                        logger.info(
+                            f"Summary truncated to {len(cleaned_summary)} chars (was {len(summary)} chars)"
+                        )
+                    
+                    logger.info(
+                        f"Final summary generated: length={len(cleaned_summary)} chars, "
+                        f"preview={cleaned_summary[:200]}..."
+                    )
                     return cleaned_summary
         except Exception as e:
             logger.warning(

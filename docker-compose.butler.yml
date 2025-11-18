@@ -11,9 +11,11 @@ services:
     env_file:
       - .env
     environment:
-      - MONGODB_URL=${MONGODB_URL:-mongodb://shared-mongo:27017/butler?authSource=admin}
+      # MongoDB: Auto-discovered via Docker service name 'shared-mongo'
+      # Credentials loaded from shared infra (~/work/infra/.env.infra)
+      - MONGODB_URL=${MONGODB_URL:-mongodb://admin:${MONGO_PASSWORD:-secure_mongo_password_456}@shared-mongo:27017/butler?authSource=admin}
       - DB_NAME=${DB_NAME:-butler}
-      - LLM_URL=${MISTRAL_API_URL:-http://mistral-chat:8001}
+      - LLM_URL=${LLM_URL:-http://llm-api:8000}
       - PYTHONUNBUFFERED=1
       - LOG_LEVEL=INFO
       # Agent parsing and pipeline
@@ -94,27 +96,20 @@ services:
     environment:
       # Required: Telegram bot token from @BotFather
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      # Required: MongoDB connection URL
-      # Use credentials from shared MongoDB instance
+      # MongoDB: Auto-discovered via Docker service name 'shared-mongo'
+      # Credentials loaded from shared infra (~/work/infra/.env.infra)
       - MONGODB_URL=${MONGODB_URL:-mongodb://admin:${MONGO_PASSWORD:-secure_mongo_password_456}@shared-mongo:27017/butler?authSource=admin}
-      # Required: Mistral API URL
+      # LLM: Auto-discovered via Docker service name 'llm-api'
       - MISTRAL_API_URL=${MISTRAL_API_URL:-http://llm-api:8000}
-      # MCP Server URLs (supports multiple servers)
-      # Default: local MCP server
-      # Format: comma-separated URLs or JSON array
-      # Example: MCP_SERVER_URLS=http://mcp-server:8004,http://external-mcp:8005
-      # Or: MCP_SERVER_URLS='["http://mcp-server:8004", "http://external-mcp:8005"]'
+      - LLM_URL=${LLM_URL:-http://llm-api:8000}
+      # MCP Server: Auto-discovered via Docker service name 'mcp-server'
       - MCP_SERVER_URLS=${MCP_SERVER_URLS:-http://mcp-server:8004}
-      # Backward compatibility: single server
       - MCP_SERVER_URL=${MCP_SERVER_URL:-}
-      # Whisper STT configuration (separate from LLM service)
-      # LLM uses Mistral/Ollama (MISTRAL_API_URL), STT uses Whisper (WHISPER_HOST/PORT)
-      # Note: External port is 8006, internal is 8005 (for Docker network)
+      # Whisper STT: Auto-discovered via Docker service name 'whisper-stt'
       - WHISPER_HOST=${WHISPER_HOST:-whisper-stt}
       - WHISPER_PORT=${WHISPER_PORT:-8005}
       - STT_MODEL=${STT_MODEL:-base}
-      # Redis configuration for voice command store
-      # Use container name for Docker network access
+      # Redis: Auto-discovered via Docker service name 'shared-redis'
       - VOICE_REDIS_HOST=${VOICE_REDIS_HOST:-${REDIS_HOST:-shared-redis}}
       - VOICE_REDIS_PORT=${VOICE_REDIS_PORT:-${REDIS_PORT:-6379}}
       - VOICE_REDIS_PASSWORD=${VOICE_REDIS_PASSWORD:-${REDIS_PASSWORD:-secure_redis_password_789}}
@@ -167,7 +162,7 @@ services:
       # Required: Telegram bot token from @BotFather (same as bot)
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - MCP_SERVER_URL=http://mcp-server:8004
-      - LLM_URL=${MISTRAL_API_URL:-http://mistral-chat:8001}
+      - LLM_URL=${LLM_URL:-http://llm-api:8000}
       - MONGODB_URL=${MONGODB_URL:-mongodb://shared-mongo:27017/butler?authSource=admin}
       - DB_NAME=${DB_NAME:-butler}
       # Summary-specific

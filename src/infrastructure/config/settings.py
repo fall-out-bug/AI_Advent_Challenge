@@ -25,8 +25,8 @@ class Settings(BaseSettings):
     """
 
     mongodb_url: str = Field(
-        default="mongodb://localhost:27017",
-        description="MongoDB connection string",
+        default="mongodb://shared-mongo:27017/butler?authSource=admin",
+        description="MongoDB connection string (uses Docker service name 'shared-mongo' by default)",
     )
     db_name: str = Field(default="butler", description="Primary database name")
     mongo_timeout_ms: int = Field(default=10000, description="Mongo client timeout")
@@ -36,7 +36,8 @@ class Settings(BaseSettings):
     )
     # LLM settings
     llm_url: str = Field(
-        default="", description="LLM service URL (e.g., http://mistral-chat:8000)"
+        default="http://llm-api:8000",
+        description="LLM service URL (uses Docker service name 'llm-api' by default)",
     )
     llm_model: str = Field(
         default="mistral-7b-instruct-v0.2", description="LLM model name"
@@ -138,6 +139,31 @@ class Settings(BaseSettings):
             "Timeout in seconds for LLM summarization requests "
             "(longer for large texts)"
         ),
+    )
+    # Personalization settings
+    personalization_enabled: bool = Field(
+        default=True,
+        description="Enable personalized replies with Alfred persona",
+    )
+
+    # Interest extraction settings
+    interest_extraction_enabled: bool = Field(
+        default=True,
+        description="Enable automatic interest extraction from conversations",
+    )
+
+    interest_extraction_max_topics: int = Field(
+        default=7,
+        ge=3,
+        le=10,
+        description="Maximum number of topics to extract per user (3-10)",
+    )
+
+    interest_extraction_llm_temperature: float = Field(
+        default=0.3,
+        ge=0.0,
+        le=1.0,
+        description="LLM temperature for interest extraction (lower = more deterministic)",
     )
     summarizer_timeout_seconds_long: float = Field(
         default=600.0,

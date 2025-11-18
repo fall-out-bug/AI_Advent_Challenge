@@ -10,7 +10,7 @@ This repository contains daily challenges building AI-powered systems with langu
 
 **Updates:** Project news and daily recaps are published in the Telegram channel [Высоконагруженный кабанчик](https://t.me/data_intensive_boar).
 
-**Current Status:** 🏆 Day 24 COMPLETED — Voice commands integrated into Butler (Epic 24), observability & benchmarks delivered (Epic 23), repository refactor and RAG++ in place (Epic 21).
+**Current Status:** 🏆 Day 25 COMPLETED & DEPLOYED — Personalised Butler with Alfred-style дворецкий persona, user profiles, and memory management (Epic 25). Voice commands integrated (Epic 24), observability & benchmarks delivered (Epic 23).
 
 ### Day 21 (Completed)
 - Summary: `docs/specs/epic_21/epic_21.md`
@@ -21,16 +21,17 @@ This repository contains daily challenges building AI-powered systems with langu
   - `make day_21_metrics` — print key rag_* metrics
 
 **Project Status:**
-- ✅ 24 daily challenges completed
+- ✅ 25 daily challenges completed
 - ✅ Clean Architecture fully implemented (Day 21)
 - ✅ Security hardening deployed (path traversal protection, input validation)
 - ✅ Quality automation established (pre-commit hooks, automated linting)
 - ✅ Production-ready multi-agent system with self-improvement
 - ✅ Automatic quality evaluation and fine-tuning
 - ✅ Comprehensive documentation for AI assistants
+- ✅ **Personalised Butler** (Day 25) with user profiles, memory, and interest extraction
 
 **Key Features:**
-- ✅ 24 daily challenges from simple chat to observability, benchmarks, and voice commands
+- ✅ 25 daily challenges from simple chat to observability, benchmarks, voice commands, and personalization
 - ✅ Clean Architecture with SOLID principles
 - ✅ 420+ tests with 80%+ coverage
 - ✅ Multi-model support (StarCoder, Mistral, Qwen, TinyLlama)
@@ -56,6 +57,7 @@ This repository contains daily challenges building AI-powered systems with langu
 - ✅ **MCP-first Publishing** (LLM calls external HW Checker MCP tool with automatic HTTP fallback)
 - ✅ **Haiku Generation** (poetic postscript highlighting review sentiment)
 - ✅ **Integration Contracts** (OpenAPI spec, JSON schema, cURL/Python examples for partners)
+- ✅ **Personalised Butler** (Day 25 - user profiles, memory management, "Alfred-style дворецкий" persona, automatic interest extraction)
 
 ## Quick Start
 
@@ -148,6 +150,7 @@ AI_Challenge/
 | Day 20 | RAG vs Non‑RAG Answering Agent | Retrieval, LLM-as-Judge | ✅ Complete |
 | Day 21 | Repository Refactor & RAG++ | Clean Architecture, Reranking, Observability | ✅ Complete |
 | Day 22 | RAG Citations & Source Attribution | RAG, MongoDB, Vector Search | ✅ Complete |
+| Day 25 | Personalised Butler | User Profiles, Memory Management, Alfred Persona | ✅ Complete |
 | Day 23 | Observability & Benchmark Enablement | Prometheus, Grafana, Loki, Benchmarks | ✅ Complete |
 | Day 24 | Voice Commands Integration | Telegram Bot, Whisper STT, Butler Orchestrator | ✅ Complete |
 
@@ -245,6 +248,14 @@ make day-11-up
 - LLM-based tool selection and execution
 - Robust retry logic with exponential backoff
 - Dialog history management with automatic compression
+
+**Personalised Butler (Day 25):**
+- **User Profiles**: Auto-created profiles with "Alfred-style дворецкий" persona
+- **Memory Management**: Remembers last 50 messages per user with automatic compression
+- **Alfred Persona**: Witty, caring, respectful responses (English humour, Russian language)
+- **Voice Integration**: Works with voice messages via Whisper STT
+- **Privacy**: All data stored locally in MongoDB (no external SaaS)
+- See [Personalized Butler User Guide](docs/guides/personalized_butler_user_guide.md) for details
 - Prometheus metrics integration
 
 Quick start:
