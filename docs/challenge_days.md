@@ -70,4 +70,3 @@ This document provides a concise bilingual overview of all 25 daily challenges i
 
 - For detailed implementation notes per day, see the corresponding epic specs and `docs/roles/analyst/day_capabilities.md`.
 - This file is the canonical high-level overview of Days 1–25; for status and quick links also see the tables in `README.md` and `README.ru.md`.
-
