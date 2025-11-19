@@ -1,0 +1,231 @@
+# Consensus Mechanism v2.0
+# Automated decision-making with minimal token usage
+
+version: 2.0
+max_iterations: 3
+auto_escalate: true
+
+# Decision Flow
+decision_pipeline:
+  iteration_1:
+    name: initial_proposal
+    steps:
+      - analyst.propose_requirements() -> requirements.json
+      - architect.review(requirements) -> architecture.json | veto
+      - tech_lead.plan(requirements, architecture) -> plan.json | veto
+
+    outcomes:
+      all_approve: proceed_to_implementation
+      any_veto: iteration_2
+      conflict: iteration_2
+
+  iteration_2:
+    name: refinement
+    steps:
+      - collect_vetos() -> conflicts[]
+      - negotiate_changes() -> proposals[]
+      - weighted_vote() -> decision
+
+    outcomes:
+      consensus: proceed_to_implementation
+      partial_agreement: iteration_3
+      deadlock: iteration_3
+
+  iteration_3:
+    name: final_attempt
+    steps:
+      - identify_core_conflict() -> conflict_type
+      - apply_resolution_rules() -> forced_decision
+      - document_override() -> decision_log
+
+    outcomes:
+      resolved: proceed_to_implementation
+      unresolvable: escalate_to_human
+
+# Veto Resolution Rules
+veto_resolution:
+  by_type:
+    layer_violation:
+      authority: architect  # Architect has final say
+      override: impossible  # Cannot be overridden
+      resolution: refactor_required
+
+    untestable_requirement:
+      authority: tech_lead
+      override: analyst_with_justification
+      resolution: clarify_or_split
+
+    no_business_value:
+      authority: analyst
+      override: impossible
+      resolution: reject_feature
+
+    security_vulnerability:
+      authority: quality
+      override: impossible
+      resolution: fix_required
+
+    no_rollback_plan:
+      authority: devops
+      override: impossible
+      resolution: add_rollback
+
+# Conflict Resolution Matrix
+conflict_matrix:
+  analyst_vs_architect:
+    trigger: [complex_requirement_vs_clean_architecture]
+    resolution:
+      - try: simplify_requirement
+      - then: modularize_implementation
+      - else: defer_to_future_epic
+
+  architect_vs_tech_lead:
+    trigger: [perfect_design_vs_practical_stages]
+    resolution:
+      - try: compromise_on_stages
+      - then: add_refactoring_stage
+      - else: architect_decides
+
+  tech_lead_vs_developer:
+    trigger: [detailed_plan_vs_implementation_reality]
+    resolution:
+      - try: adjust_plan
+      - then: document_deviation
+      - else: tech_lead_decides
+
+  quality_vs_developer:
+    trigger: [quality_standards_vs_delivery_speed]
+    resolution:
+      - try: add_tech_debt_ticket
+      - then: increase_timeline
+      - else: quality_decides
+
+# Automated Decision Rules
+auto_decisions:
+  # Automatic approvals
+  auto_approve:
+    - condition: roi_hours < 0.5 AND no_architecture_change
+      action: approve_immediate
+
+    - condition: bug_fix AND test_coverage > 90
+      action: approve_immediate
+
+    - condition: documentation_only
+      action: approve_immediate
+
+  # Automatic rejections
+  auto_reject:
+    - condition: layer_violation
+      action: reject_with_refactor_requirement
+
+    - condition: test_coverage < 60
+      action: reject_need_more_tests
+
+    - condition: no_acceptance_criteria
+      action: reject_incomplete_requirements
+
+  # Automatic escalations
+  auto_escalate:
+    - condition: iteration = 3 AND no_consensus
+      action: escalate_to_human
+
+    - condition: critical_security_issue
+      action: escalate_immediate
+
+    - condition: production_down_risk
+      action: escalate_immediate
+
+# Weighted Voting System
+voting:
+  calculate_consensus:
+    formula: |
+      consensus_score = Σ(agent_vote * agent_weight) / Σ(agent_weight)
+      threshold = 0.65
+      result = consensus_score >= threshold ? approve : reject
+
+  domain_weights:
+    requirements_phase:
+      analyst: 0.4
+      architect: 0.3
+      tech_lead: 0.2
+      quality: 0.1
+
+    architecture_phase:
+      architect: 0.5
+      tech_lead: 0.2
+      analyst: 0.2
+      quality: 0.1
+
+    implementation_phase:
+      tech_lead: 0.3
+      developer: 0.3
+      quality: 0.3
+      architect: 0.1
+
+    deployment_phase:
+      devops: 0.4
+      quality: 0.3
+      tech_lead: 0.2
+      developer: 0.1
+
+# Consensus Metrics
+tracking:
+  per_epic:
+    - consensus_iterations: int
+    - veto_count: int
+    - auto_approvals: int
+    - escalations: int
+    - resolution_time_minutes: float
+
+  per_agent:
+    - veto_frequency: float
+    - agreement_rate: float
+    - escalation_triggers: int
+
+  patterns:
+    - common_conflicts: [type, frequency, resolution]
+    - bottleneck_agents: [agent, delay_hours]
+    - successful_patterns: [pattern, success_rate]
+
+# Escalation to Human
+human_intervention:
+  trigger_conditions:
+    - max_iterations_reached: true
+    - veto_deadlock: true
+    - critical_conflict: true
+    - time_constraint: true
+
+  package_format:
+    summary:
+      conflict: str(max:200)
+      positions: [{agent: stance}]
+      impact: hours
+      recommendation: option
+
+    options:
+      - option_a: {description, pros, cons, risk}
+      - option_b: {description, pros, cons, risk}
+      - defer: {impact, alternative}
+
+    quick_decision:
+      choose: [A, B, defer]
+      override: agent_name
+      modify: new_requirement
+
+# Learning Loop
+optimization:
+  track_decisions:
+    - decision_type: code
+    - consensus_time: minutes
+    - outcome_quality: 0-1
+    - human_override: bool
+
+  improve_weights:
+    frequency: per_10_epics
+    method: success_rate_analysis
+    adjustment: ±0.05_max
+
+  pattern_detection:
+    - identify_repeated_conflicts
+    - create_auto_resolution_rules
+    - update_veto_matrix

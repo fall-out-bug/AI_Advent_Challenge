@@ -102,13 +102,29 @@ class MCPClient:
                         if len(exceptions) > 0:
                             # Get the first exception from the group
                             actual_exception = exceptions[0]
+                            # Log full exception details for debugging
+                            from src.infrastructure.logging import get_logger
+
+                            logger = get_logger("mcp_client")
+                            logger.error(
+                                f"MCP tool '{tool_name}' failed with ExceptionGroup: "
+                                f"{type(actual_exception).__name__}: {str(actual_exception)}",
+                                exc_info=True,
+                            )
                             # Re-raise as a regular exception for better error handling
                             error_msg = (
                                 f"MCP tool '{tool_name}' failed: "
-                                f"{str(actual_exception)}"
+                                f"{type(actual_exception).__name__}: {str(actual_exception)}"
                             )
                             raise Exception(error_msg) from actual_exception
-                    # Re-raise if not ExceptionGroup or if we can't extract exception
+                    # Log and re-raise if not ExceptionGroup or if we can't extract exception
+                    from src.infrastructure.logging import get_logger
+
+                    logger = get_logger("mcp_client")
+                    logger.error(
+                        f"MCP tool '{tool_name}' failed: {type(e).__name__}: {str(e)}",
+                        exc_info=True,
+                    )
                     raise
         except Exception as e:
             # Check if it's an ExceptionGroup at outer level too
@@ -116,10 +132,28 @@ class MCPClient:
                 exceptions = getattr(e, "exceptions", [])
                 if len(exceptions) > 0:
                     actual_exception = exceptions[0]
+                    # Log full exception details for debugging
+                    from src.infrastructure.logging import get_logger
+
+                    logger = get_logger("mcp_client")
+                    logger.error(
+                        f"MCP tool '{tool_name}' failed with ExceptionGroup (outer): "
+                        f"{type(actual_exception).__name__}: {str(actual_exception)}",
+                        exc_info=True,
+                    )
                     error_msg = (
-                        f"MCP tool '{tool_name}' failed: {str(actual_exception)}"
+                        f"MCP tool '{tool_name}' failed: "
+                        f"{type(actual_exception).__name__}: {str(actual_exception)}"
                     )
                     raise Exception(error_msg) from actual_exception
+            # Log and re-raise
+            from src.infrastructure.logging import get_logger
+
+            logger = get_logger("mcp_client")
+            logger.error(
+                f"MCP tool '{tool_name}' failed (outer): {type(e).__name__}: {str(e)}",
+                exc_info=True,
+            )
             raise
 
     async def interactive_mode(self) -> None:

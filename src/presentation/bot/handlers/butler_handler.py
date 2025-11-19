@@ -4,7 +4,6 @@ Following Clean Architecture: Presentation layer delegates to domain layer.
 Following Python Zen: Simple is better than complex.
 """
 
-<<<<<<< HEAD
 import asyncio
 import base64
 import re
@@ -14,30 +13,24 @@ if TYPE_CHECKING:
     from typing import Any
 else:
     Any = object
-=======
-import base64
-import re
-from typing import Any, Optional
->>>>>>> origin/master
 
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import BufferedInputFile, Message
 
+from src.application.dtos.butler_dialog_dtos import DialogMode
 from src.application.use_cases.resolve_channel_name import ResolveChannelNameUseCase
 from src.application.use_cases.search_channel_for_subscription import (
     SearchChannelForSubscriptionUseCase,
 )
-from src.application.dtos.butler_dialog_dtos import DialogMode
-from src.presentation.bot.orchestrator import ButlerOrchestrator
 from src.infrastructure.logging import get_logger
+from src.presentation.bot.orchestrator import ButlerOrchestrator
 from src.presentation.bot.states import ChannelSearchStates
 
 logger = get_logger("butler_handler")
 
 # Global orchestrator instance (set by setup_butler_handler)
 _orchestrator: Optional[ButlerOrchestrator] = None
-<<<<<<< HEAD
 # Global personalized reply use case (set by setup_butler_handler)
 _personalized_reply_use_case: Optional[Any] = None
 
@@ -46,11 +39,6 @@ def setup_butler_handler(
     orchestrator: ButlerOrchestrator,
     personalized_reply_use_case: Optional[Any] = None,
 ) -> Router:
-=======
-
-
-def setup_butler_handler(orchestrator: ButlerOrchestrator) -> Router:
->>>>>>> origin/master
     """Setup butler handler with orchestrator dependency.
 
     Purpose:
@@ -58,30 +46,19 @@ def setup_butler_handler(orchestrator: ButlerOrchestrator) -> Router:
 
     Args:
         orchestrator: ButlerOrchestrator instance for message processing
-<<<<<<< HEAD
         personalized_reply_use_case: Optional PersonalizedReplyUseCase for personalization
-=======
->>>>>>> origin/master
 
     Returns:
         Configured aiogram Router
 
     Example:
         >>> orchestrator = await create_butler_orchestrator()
-<<<<<<< HEAD
         >>> router = setup_butler_handler(orchestrator, personalized_reply_use_case)
         >>> dp.include_router(router)
     """
     global _orchestrator, _personalized_reply_use_case
     _orchestrator = orchestrator
     _personalized_reply_use_case = personalized_reply_use_case
-=======
-        >>> router = setup_butler_handler(orchestrator)
-        >>> dp.include_router(router)
-    """
-    global _orchestrator
-    _orchestrator = orchestrator
->>>>>>> origin/master
 
     router = Router()
     # Register handler - FSMContext will be automatically injected by aiogram if available
@@ -123,7 +100,6 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
     )
 
     try:
-<<<<<<< HEAD
         # Check if personalization is enabled and message is not a special command
         # Only route through personalization for regular text messages
         from src.infrastructure.config.settings import get_settings
@@ -180,8 +156,6 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                 )
                 # Fall through to Butler fallback
 
-=======
->>>>>>> origin/master
         # Check for list channels request
         if _is_list_channels_request(text):
             logger.info(
@@ -225,7 +199,6 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
             return
 
         # Check if message contains digest request with channel name
-<<<<<<< HEAD
         # For better accuracy with multi-word names and Russian declensions, prefer LLM parsing when:
         # 1. Request contains "канала" or "канал" (indicates multi-word name likely)
         # 2. Request contains "дайджест" + "по" (indicates channel name in different case/declension)
@@ -266,7 +239,19 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                 # If so, use LLM to restore nominative case
                 name_lower = channel_name.lower()
                 # Common Russian declension endings that indicate non-nominative case
-                declension_endings = ["е", "и", "ы", "а", "у", "ой", "ей", "ом", "ем", "ах", "ях"]
+                declension_endings = [
+                    "е",
+                    "и",
+                    "ы",
+                    "а",
+                    "у",
+                    "ой",
+                    "ей",
+                    "ом",
+                    "ем",
+                    "ах",
+                    "ях",
+                ]
                 # Check if name ends with declension ending (but not if it's a common username pattern)
                 is_declension = any(
                     name_lower.endswith(ending) and len(name_lower) > len(ending)
@@ -276,7 +261,8 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                 # Also check if name is single word but request has more context
                 is_single_word = len(channel_name.split()) == 1
                 has_digest_context = any(
-                    kw in text_lower for kw in ["дайджест", "дайджет", "digest", "по", "канала", "канал"]
+                    kw in text_lower
+                    for kw in ["дайджест", "дайджет", "digest", "по", "канала", "канал"]
                 )
 
                 if is_declension or (is_single_word and has_digest_context):
@@ -305,18 +291,6 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
             logger.info(
                 f"🔍 Intercepting digest request: channel_name={channel_name}, user_id={user_id}"
             )
-=======
-        # Try regex first (fast)
-        channel_name, hours = _extract_digest_request_info(text)
-
-        # If regex failed, try LLM parsing (slower but more reliable)
-        if not channel_name:
-            logger.debug(f"Regex parsing failed, trying LLM parsing for: {text[:50]}")
-            channel_name, hours = await _parse_digest_request_with_llm(text)
-
-        if channel_name:
-            # Intercept digest request and use channel resolver
->>>>>>> origin/master
             try:
                 use_case = ResolveChannelNameUseCase(allow_telegram_search=True)
                 resolution = await use_case.execute(
@@ -325,14 +299,11 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                     allow_telegram_search=True,
                 )
 
-<<<<<<< HEAD
                 logger.info(
                     f"🔍 Resolution result: found={resolution.found}, "
                     f"username={resolution.channel_username}, source={resolution.source}"
                 )
 
-=======
->>>>>>> origin/master
                 if resolution.found and resolution.channel_username:
                     # Channel resolved, proceed with digest
                     logger.info(
@@ -344,7 +315,6 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                     # This ensures we use the correct username (onaboka) instead of title (Набока)
                     resolved_username = resolution.channel_username
 
-<<<<<<< HEAD
                     # If channel found via search (not in subscriptions), try to auto-subscribe
                     # This allows digest generation for channels found via Telegram search
                     # IMPORTANT: Check source FIRST before other conditions
@@ -390,19 +360,27 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                                 )
                                 # Small delay to ensure DB write is committed
                                 # Also verify subscription was saved
-                                await asyncio.sleep(1.0)  # Increased delay for MongoDB write
+                                await asyncio.sleep(
+                                    1.0
+                                )  # Increased delay for MongoDB write
 
                                 # Verify subscription was saved
                                 try:
                                     from src.presentation.mcp.tools.channels.channel_management import (
                                         list_channels,
                                     )
+
                                     verify_result = await list_channels(
                                         user_id=int(user_id)
                                     )
-                                    channels = verify_result.get("channels", []) if isinstance(verify_result, dict) else []
+                                    channels = (
+                                        verify_result.get("channels", [])
+                                        if isinstance(verify_result, dict)
+                                        else []
+                                    )
                                     found = any(
-                                        ch.get("channel_username", "").lower() == resolved_username.lower()
+                                        ch.get("channel_username", "").lower()
+                                        == resolved_username.lower()
                                         for ch in channels
                                     )
                                     if found:
@@ -415,6 +393,7 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                                             from src.presentation.mcp.tools.channels.posts_management import (
                                                 collect_posts,
                                             )
+
                                             logger.info(
                                                 f"🔄 Starting automatic post collection for channel: {resolved_username}"
                                             )
@@ -425,7 +404,9 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                                                 wait_for_completion=True,  # Wait for collection to finish
                                                 timeout_seconds=60,  # Allow up to 60 seconds for collection
                                             )
-                                            collected_count = collect_result.get("collected_count", 0)
+                                            collected_count = collect_result.get(
+                                                "collected_count", 0
+                                            )
                                             if collected_count > 0:
                                                 logger.info(
                                                     f"✅ Collected {collected_count} posts for channel {resolved_username}"
@@ -469,8 +450,6 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                             # Continue anyway - MCP tool will handle not_subscribed case
 
                     # After auto-subscription (if needed), proceed with digest
-=======
->>>>>>> origin/master
                     # Replace channel name in text with resolved username
                     # Also handle case where channel_name might be in different case or declension
                     text = text.replace(channel_name, resolved_username)
@@ -486,7 +465,6 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                     else:
                         # Just ensure resolved username is used
                         text = f"дайджест по {resolved_username}"
-<<<<<<< HEAD
 
                     # Check if posts exist for this channel, and collect if missing
                     # This handles cases where channel is subscribed but posts haven't been collected yet
@@ -497,6 +475,7 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                         from src.presentation.mcp.tools.channels.posts_management import (
                             get_posts,
                         )
+
                         # Quick check: are there any posts in the last 7 days?
                         logger.info(
                             f"📊 Calling get_posts for {resolved_username}, hours=168..."
@@ -509,7 +488,11 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                         logger.info(
                             f"📊 get_posts result: {posts_check}, type={type(posts_check)}"
                         )
-                        posts_count = posts_check.get("posts_count", 0) if isinstance(posts_check, dict) else 0
+                        posts_count = (
+                            posts_check.get("posts_count", 0)
+                            if isinstance(posts_check, dict)
+                            else 0
+                        )
                         logger.info(
                             f"📊 Posts count for {resolved_username}: {posts_count}"
                         )
@@ -523,6 +506,7 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                             from src.presentation.mcp.tools.channels.posts_management import (
                                 collect_posts,
                             )
+
                             logger.info(
                                 f"🔄 Calling collect_posts for {resolved_username}..."
                             )
@@ -536,7 +520,11 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                             logger.info(
                                 f"🔄 collect_posts result: {collect_result}, type={type(collect_result)}"
                             )
-                            collected_count = collect_result.get("collected_count", 0) if isinstance(collect_result, dict) else 0
+                            collected_count = (
+                                collect_result.get("collected_count", 0)
+                                if isinstance(collect_result, dict)
+                                else 0
+                            )
                             if collected_count > 0:
                                 logger.info(
                                     f"✅ Collected {collected_count} posts for channel {resolved_username}"
@@ -621,28 +609,12 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                             f"Попробуйте подписаться на канал или уточните название."
                         )
                         return
-=======
-                elif not resolution.found and resolution.source == "subscription":
-                    # Channel not found in subscriptions, try search
-                    logger.info(
-                        f"Channel not found in subscriptions: input={channel_name}, "
-                        f"top_score={resolution.confidence_score:.3f}, user_id={user_id}"
-                    )
-                    # If confidence is low, channel might not be in subscriptions
-                    # For digest requests, we can't proceed without a channel
-                    await message.answer(
-                        f"❌ Канал '{channel_name}' не найден в ваших подписках.\n\n"
-                        f"Попробуйте подписаться на канал или уточните название."
-                    )
-                    return
->>>>>>> origin/master
                 elif resolution.source == "search":
                     # Channel found via search, but we need valid username and title
                     if not resolution.channel_username or not resolution.channel_title:
                         logger.warning(
                             f"Channel search returned invalid result: "
                             f"username='{resolution.channel_username}', "
-<<<<<<< HEAD
                             f"title='{resolution.channel_title}', input='{channel_name}'. "
                             f"Trying LLM search in metadata..."
                         )
@@ -691,21 +663,6 @@ async def handle_any_message(message: Message, state: FSMContext | None = None) 
                                 f"Попробуйте подписаться на канал через команду подписки."
                             )
                             return
-=======
-                            f"title='{resolution.channel_title}', input='{channel_name}'",
-                            extra={
-                                "user_id": user_id,
-                                "input": channel_name,
-                                "username": resolution.channel_username,
-                                "title": resolution.channel_title,
-                            },
-                        )
-                        await message.answer(
-                            f"❌ Канал '{channel_name}' не найден в подписках.\n\n"
-                            f"Попробуйте подписаться на канал через команду подписки."
-                        )
-                        return
->>>>>>> origin/master
 
                     # Channel found via search, need confirmation
                     if state is None:
@@ -1060,7 +1017,6 @@ async def _parse_digest_request_with_llm(text: str) -> tuple[str | None, int | N
         llm_client = container.llm_client()
 
         prompt = f"""Ты - парсер запросов для Telegram-бота. Извлеки из запроса пользователя:
-<<<<<<< HEAD
 1. Полное название канала (если есть) - ВКЛЮЧАЯ все слова (имя, фамилию, если указаны)
 2. Период времени в днях или часах (если указан)
 
@@ -1070,20 +1026,11 @@ async def _parse_digest_request_with_llm(text: str) -> tuple[str | None, int | N
 - Если указано одно слово в падеже (например, "Набоке"), восстанови его в именительном падеже (например, "Набока")
 - Название канала должно быть в именительном падеже (как оно обычно пишется)
 
-=======
-1. Название канала (если есть)
-2. Период времени в днях или часах (если указан)
-
->>>>>>> origin/master
 Запрос пользователя: "{text}"
 
 Верни ответ ТОЛЬКО в JSON формате:
 {{
-<<<<<<< HEAD
   "channel_name": "полное_название_канала_в_именительном_падеже_или_null",
-=======
-  "channel_name": "название_канала_или_null",
->>>>>>> origin/master
   "days": число_дней_или_null,
   "hours": число_часов_или_null
 }}
@@ -1092,15 +1039,12 @@ async def _parse_digest_request_with_llm(text: str) -> tuple[str | None, int | N
 Запрос: "дай дайджет Набоки за 5 дней"
 Ответ: {{"channel_name": "Набока", "days": 5, "hours": 120}}
 
-<<<<<<< HEAD
 Запрос: "дайджест канала Алексея Гладкова"
 Ответ: {{"channel_name": "Алексей Гладков", "days": null, "hours": null}}
 
 Запрос: "Можешь ли передать мне дайджест канала Алексея Гладкова?"
 Ответ: {{"channel_name": "Алексей Гладков", "days": null, "hours": null}}
 
-=======
->>>>>>> origin/master
 Запрос: "дайджест по python за неделю"
 Ответ: {{"channel_name": "python", "days": 7, "hours": 168}}
 
@@ -1136,7 +1080,6 @@ async def _parse_digest_request_with_llm(text: str) -> tuple[str | None, int | N
         return (None, None)
 
 
-<<<<<<< HEAD
 async def _find_channel_in_metadata_with_llm(
     user_id: int,
     user_query: str,
@@ -1176,7 +1119,9 @@ async def _find_channel_in_metadata_with_llm(
         channels_list = await channels_cursor.to_list(length=100)
 
         if not channels_list:
-            logger.debug(f"No subscribed channels for LLM metadata search: user_id={user_id}")
+            logger.debug(
+                f"No subscribed channels for LLM metadata search: user_id={user_id}"
+            )
             return None
 
         # Format channels for LLM
@@ -1198,7 +1143,9 @@ async def _find_channel_in_metadata_with_llm(
         if not channels_text:
             return None
 
-        channels_list_text = "\n".join(f"{i+1}. {ch}" for i, ch in enumerate(channels_text))
+        channels_list_text = "\n".join(
+            f"{i+1}. {ch}" for i, ch in enumerate(channels_text)
+        )
 
         # Use LLM to find matching channel
         container = SummarizationContainer()
@@ -1287,8 +1234,6 @@ async def _find_channel_in_metadata_with_llm(
         return None
 
 
-=======
->>>>>>> origin/master
 def _extract_channel_name_from_digest_request(text: str) -> str | None:
     """Extract channel name from digest request (backward compatibility).
 
@@ -1580,6 +1525,40 @@ async def _handle_subscribe_request(
                 f"(например: @channel_name)."
             )
             return
+
+        # Check if user provided exact username match (case-insensitive, without @)
+        normalized_input = channel_input.lstrip("@").lower().strip()
+        normalized_username = top_result.username.lower().strip()
+        is_exact_match = normalized_input == normalized_username
+
+        logger.info(
+            f"Channel search match: input='{channel_input}', "
+            f"found_username='{top_result.username}', "
+            f"is_exact_match={is_exact_match}",
+            extra={
+                "user_id": user_id,
+                "input": channel_input,
+                "found_username": top_result.username,
+                "is_exact_match": is_exact_match,
+            },
+        )
+
+        # If exact match, subscribe directly without confirmation
+        if is_exact_match and state:
+            logger.info(
+                f"Exact username match detected, subscribing directly: "
+                f"user_id={user_id}, channel={top_result.username}"
+            )
+            from src.presentation.bot.handlers.channels import _handle_subscribe_action
+
+            await _handle_subscribe_action(
+                user_id=user_id,
+                channel_username=top_result.username,
+                state=state,
+                message=message,
+            )
+            return
+
         if state:
             # Store all candidates for cycling (convert to dict for FSM storage)
             candidates_data = [

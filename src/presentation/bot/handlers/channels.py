@@ -142,16 +142,44 @@ async def handle_channel_search_confirmation(
     # Get channel data from state
     data = await state.get_data()
     found_channel = data.get("found_channel")
+    original_input = data.get("original_input", "")
 
     if not found_channel:
         await state.clear()
         await message.answer("❌ Ошибка: данные о канале не найдены.")
         return
 
-    # Ask for action choice (subscribe or subscribe-and-digest)
     channel_username = found_channel.get("username")
     channel_title = found_channel.get("title", channel_username)
 
+    # Check if user provided exact username match - if so, subscribe directly
+    normalized_input = original_input.lstrip("@").lower().strip()
+    normalized_username = channel_username.lower().strip()
+    is_exact_match = normalized_input == normalized_username
+
+    from src.infrastructure.logging import get_logger
+
+    logger = get_logger("channels")
+    logger.info(
+        f"Confirmation received: input='{original_input}', "
+        f"found_username='{channel_username}', is_exact_match={is_exact_match}"
+    )
+
+    # If exact match, subscribe directly without asking for action choice
+    if is_exact_match:
+        logger.info(
+            f"Exact username match in confirmation, subscribing directly: "
+            f"user_id={message.from_user.id}, channel={channel_username}"
+        )
+        await _handle_subscribe_action(
+            user_id=message.from_user.id,
+            channel_username=channel_username,
+            state=state,
+            message=message,
+        )
+        return
+
+    # Ask for action choice (subscribe or subscribe-and-digest)
     keyboard = InlineKeyboardBuilder()
     keyboard.button(
         text="✅ Подписаться", callback_data=f"channel:subscribe:{channel_username}"
@@ -295,7 +323,7 @@ async def _handle_subscribe_action(
             if result.collected_count > 0:
                 collection_msg = f"\n\n📥 Собрано постов: {result.collected_count}"
             elif result.error:
-                collection_msg = f"\n\n⚠️ Посты собираются в фоне"
+                collection_msg = "\n\n⚠️ Посты собираются в фоне"
 
             if message:
                 await message.answer(
@@ -314,6 +342,13 @@ async def _handle_subscribe_action(
                 )
             await state.clear()
     except Exception as e:
+        error_msg = str(e)
+        # Extract more detailed error message if available
+        if "MCP tool" in error_msg:
+            # Try to extract the actual error from the message
+            if ":" in error_msg:
+                error_msg = error_msg.split(":", 1)[-1].strip()
+
         logger.error(
             f"Error subscribing to channel: user_id={user_id}, "
             f"channel={channel_username}, error={e}",
@@ -323,7 +358,10 @@ async def _handle_subscribe_action(
             data = await state.get_data()
             message = data.get("original_message") or data.get("message")
         if message:
-            await message.answer(f"❌ Ошибка при подписке на @{channel_username}")
+            await message.answer(
+                f"❌ Не удалось подписаться на @{channel_username}\n\n"
+                f"Ошибка: {error_msg}"
+            )
         await state.clear()
 
 
@@ -396,7 +434,7 @@ async def _handle_subscribe_and_digest_action(
             data = await state.get_data()
             message = data.get("original_message") or data.get("message")
         if message:
-            await message.answer(f"❌ Ошибка при генерации дайджеста")
+            await message.answer("❌ Ошибка при генерации дайджеста")
         await state.clear()
 
 
