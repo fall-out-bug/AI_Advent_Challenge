@@ -3,17 +3,17 @@
 Following TDD approach with comprehensive test coverage.
 """
 
-import pytest
+from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock, patch
-from typing import Dict, Any
 
 import httpx
+import pytest
 
 from src.infrastructure.llm.mistral_client import (
     MistralClient,
     MistralClientError,
-    MistralTimeoutError,
     MistralConnectionError,
+    MistralTimeoutError,
 )
 
 

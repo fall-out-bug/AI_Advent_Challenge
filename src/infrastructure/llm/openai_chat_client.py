@@ -96,9 +96,9 @@ class OpenAIChatClient:
             "object": data.get("object"),
             "model": data.get("model"),
             "message": message,
-            "tool_calls": message.get("tool_calls", [])
-            if isinstance(message, dict)
-            else [],
+            "tool_calls": (
+                message.get("tool_calls", []) if isinstance(message, dict) else []
+            ),
             "usage": data.get("usage", {}),
             "raw": data,
         }

@@ -154,7 +154,9 @@ class ChunkingSettings:
         if self.chunk_overlap_tokens < 0:
             raise ValueError("chunk_overlap_tokens must be non-negative.")
         if self.chunk_overlap_tokens >= self.chunk_size_tokens:
-            raise ValueError("chunk_overlap_tokens must be smaller than chunk_size_tokens.")
+            raise ValueError(
+                "chunk_overlap_tokens must be smaller than chunk_size_tokens."
+            )
         if self.min_chunk_tokens <= 0:
             raise ValueError("min_chunk_tokens must be positive.")
         if self.min_chunk_tokens > self.chunk_size_tokens:

@@ -3,14 +3,11 @@
 Following TDD principles: tests written before implementation.
 """
 
-import pytest
 from datetime import datetime
 
-from src.domain.value_objects.log_analysis import (
-    LogEntry,
-    LogGroup,
-    LogAnalysisResult,
-)
+import pytest
+
+from src.domain.value_objects.log_analysis import LogAnalysisResult, LogEntry, LogGroup
 
 
 class TestLogEntry:

@@ -10,14 +10,17 @@ from typing import Sequence
 
 from src.domain.rag import RerankResult, RetrievedChunk
 from src.infrastructure.logging import get_logger
+
 <<<<<<< HEAD
 from src.infrastructure.metrics import rag_metrics
+
 =======
 from src.infrastructure.metrics import (
+    rag_fallback_reason_total,
     rag_metrics,
     rag_variance_ratio,
-    rag_fallback_reason_total,
 )
+
 >>>>>>> origin/master
 
 

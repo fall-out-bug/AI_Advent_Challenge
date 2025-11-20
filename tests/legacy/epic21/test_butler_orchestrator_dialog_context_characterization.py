@@ -40,6 +40,7 @@ class TestButlerOrchestratorDialogContextCharacterization:
         Captures current behavior: when a session doesn't exist,
         a new context is created with IDLE state.
         """
+
         # Create a mock dialog context repository that uses the mock mongodb
         class MockDialogContextRepository:
             def __init__(self, mongodb):
@@ -47,6 +48,7 @@ class TestButlerOrchestratorDialogContextCharacterization:
 
             async def get_by_session(self, session_id: str):
                 from src.domain.agents.state_machine import DialogContext, DialogState
+
                 doc = await self.collection.find_one({"session_id": session_id})
                 if doc:
                     return DialogContext(
@@ -105,6 +107,7 @@ class TestButlerOrchestratorDialogContextCharacterization:
         Captures current behavior: when a session exists in DB,
         its context is loaded and deserialized correctly.
         """
+
         # Create a mock dialog context repository that uses the mock mongodb
         class MockDialogContextRepository:
             def __init__(self, mongodb):
@@ -112,6 +115,7 @@ class TestButlerOrchestratorDialogContextCharacterization:
 
             async def get_by_session(self, session_id: str):
                 from src.domain.agents.state_machine import DialogContext, DialogState
+
                 doc = await self.collection.find_one({"session_id": session_id})
                 if doc:
                     return DialogContext(
@@ -180,6 +184,7 @@ class TestButlerOrchestratorDialogContextCharacterization:
         Captures current behavior: saving a context creates/updates
         the MongoDB document with serialized data.
         """
+
         # Create a mock dialog context repository that uses the mock mongodb
         class MockDialogContextRepository:
             def __init__(self, mongodb):
@@ -187,6 +192,7 @@ class TestButlerOrchestratorDialogContextCharacterization:
 
             async def get_by_session(self, session_id: str):
                 from src.domain.agents.state_machine import DialogContext, DialogState
+
                 doc = await self.collection.find_one({"session_id": session_id})
                 if doc:
                     return DialogContext(
@@ -238,7 +244,9 @@ class TestButlerOrchestratorDialogContextCharacterization:
         await orchestrator._save_context(context)
 
         # Assert: Document exists in MongoDB with correct data
-        doc = await butler_mock_mongodb.dialog_contexts.find_one({"session_id": "save_test_789"})
+        doc = await butler_mock_mongodb.dialog_contexts.find_one(
+            {"session_id": "save_test_789"}
+        )
         assert doc is not None
         assert doc["user_id"] == "charlie"
         assert doc["session_id"] == "save_test_789"
@@ -254,6 +262,7 @@ class TestButlerOrchestratorDialogContextCharacterization:
         Captures current behavior: saving updated context replaces
         the existing MongoDB document entirely.
         """
+
         # Create a mock dialog context repository that uses the mock mongodb
         class MockDialogContextRepository:
             def __init__(self, mongodb):
@@ -261,6 +270,7 @@ class TestButlerOrchestratorDialogContextCharacterization:
 
             async def get_by_session(self, session_id: str):
                 from src.domain.agents.state_machine import DialogContext, DialogState
+
                 doc = await self.collection.find_one({"session_id": session_id})
                 if doc:
                     return DialogContext(
@@ -310,7 +320,9 @@ class TestButlerOrchestratorDialogContextCharacterization:
         await orchestrator._save_context(initial_context)
 
         # Verify initial save
-        doc = await butler_mock_mongodb.dialog_contexts.find_one({"session_id": "update_test_999"})
+        doc = await butler_mock_mongodb.dialog_contexts.find_one(
+            {"session_id": "update_test_999"}
+        )
         assert doc["state"] == "idle"
         assert doc["step_count"] == 0
 
@@ -325,13 +337,17 @@ class TestButlerOrchestratorDialogContextCharacterization:
         await orchestrator._save_context(updated_context)
 
         # Assert: Document updated with new values
-        updated_doc = await butler_mock_mongodb.dialog_contexts.find_one({"session_id": "update_test_999"})
+        updated_doc = await butler_mock_mongodb.dialog_contexts.find_one(
+            {"session_id": "update_test_999"}
+        )
         assert updated_doc["state"] == "task_create_title"
         assert updated_doc["data"] == {"task": "Write code"}
         assert updated_doc["step_count"] == 3
 
         # Verify only one document exists (not duplicated)
-        count = await butler_mock_mongodb.dialog_contexts.count_documents({"session_id": "update_test_999"})
+        count = await butler_mock_mongodb.dialog_contexts.count_documents(
+            {"session_id": "update_test_999"}
+        )
         assert count == 1
 
     async def test_full_message_handling_cycle_preserves_context(
@@ -342,6 +358,7 @@ class TestButlerOrchestratorDialogContextCharacterization:
         Captures current behavior: complete message handling cycle
         (load → process → save) maintains context integrity.
         """
+
         # Create a mock dialog context repository that uses the mock mongodb
         class MockDialogContextRepository:
             def __init__(self, mongodb):
@@ -349,6 +366,7 @@ class TestButlerOrchestratorDialogContextCharacterization:
 
             async def get_by_session(self, session_id: str):
                 from src.domain.agents.state_machine import DialogContext, DialogState
+
                 doc = await self.collection.find_one({"session_id": session_id})
                 if doc:
                     return DialogContext(
@@ -402,12 +420,16 @@ class TestButlerOrchestratorDialogContextCharacterization:
         assert "Hello! How can I help?" in response1
 
         # Verify context was saved
-        doc1 = await butler_mock_mongodb.dialog_contexts.find_one({"session_id": "cycle_test_111"})
+        doc1 = await butler_mock_mongodb.dialog_contexts.find_one(
+            {"session_id": "cycle_test_111"}
+        )
         assert doc1["user_id"] == "eve"
         assert doc1["state"] == "idle"
 
         # Act: Handle second message (loads existing context)
-        sample_handlers["chat_handler"].handle.return_value = "I remember you from before!"
+        sample_handlers["chat_handler"].handle.return_value = (
+            "I remember you from before!"
+        )
         response2 = await orchestrator.handle_user_message(
             user_id="eve", message="How are you?", session_id="cycle_test_111"
         )
@@ -416,7 +438,9 @@ class TestButlerOrchestratorDialogContextCharacterization:
         assert "I remember you from before!" in response2
 
         # Verify context still exists and unchanged
-        doc2 = await butler_mock_mongodb.dialog_contexts.find_one({"session_id": "cycle_test_111"})
+        doc2 = await butler_mock_mongodb.dialog_contexts.find_one(
+            {"session_id": "cycle_test_111"}
+        )
         assert doc2["user_id"] == "eve"
         assert doc2["state"] == "idle"
         assert doc2["session_id"] == "cycle_test_111"
@@ -429,6 +453,7 @@ class TestButlerOrchestratorDialogContextCharacterization:
         Captures current behavior: how DialogContext is converted
         to MongoDB document format.
         """
+
         # Create a mock dialog context repository that uses the mock mongodb
         class MockDialogContextRepository:
             def __init__(self, mongodb):
@@ -436,6 +461,7 @@ class TestButlerOrchestratorDialogContextCharacterization:
 
             async def get_by_session(self, session_id: str):
                 from src.domain.agents.state_machine import DialogContext, DialogState
+
                 doc = await self.collection.find_one({"session_id": session_id})
                 if doc:
                     return DialogContext(
@@ -503,6 +529,7 @@ class TestButlerOrchestratorDialogContextCharacterization:
         Captures current behavior: how MongoDB document is converted
         back to DialogContext object.
         """
+
         # Create a mock dialog context repository that uses the mock mongodb
         class MockDialogContextRepository:
             def __init__(self, mongodb):
@@ -510,6 +537,7 @@ class TestButlerOrchestratorDialogContextCharacterization:
 
             async def get_by_session(self, session_id: str):
                 from src.domain.agents.state_machine import DialogContext, DialogState
+
                 doc = await self.collection.find_one({"session_id": session_id})
                 if doc:
                     return DialogContext(
@@ -577,6 +605,7 @@ class TestButlerOrchestratorDialogContextCharacterization:
         Captures current behavior: when MongoDB document lacks
         optional fields, deserialization uses sensible defaults.
         """
+
         # Create a mock dialog context repository that uses the mock mongodb
         class MockDialogContextRepository:
             def __init__(self, mongodb):
@@ -584,6 +613,7 @@ class TestButlerOrchestratorDialogContextCharacterization:
 
             async def get_by_session(self, session_id: str):
                 from src.domain.agents.state_machine import DialogContext, DialogState
+
                 doc = await self.collection.find_one({"session_id": session_id})
                 if doc:
                     return DialogContext(

@@ -1,9 +1,11 @@
 """Unit tests for TestGenerationAdapter."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
 from src.presentation.mcp.adapters.test_generation_adapter import TestGenerationAdapter
-from src.presentation.mcp.exceptions import MCPValidationError, MCPAgentError
+from src.presentation.mcp.exceptions import MCPAgentError, MCPValidationError
 
 
 class TestTestGenerationAdapter:
@@ -105,7 +107,9 @@ def test_add_negative():
             mock_adapter_class = MagicMock()
             mock_adapter = MagicMock()
             mock_adapter.generate = AsyncMock(
-                return_value={"response": "class TestMultiply(unittest.TestCase):\n    pass"}
+                return_value={
+                    "response": "class TestMultiply(unittest.TestCase):\n    pass"
+                }
             )
             mock_adapter_class.return_value = mock_adapter
             mock_get_adapter.return_value = mock_adapter_class

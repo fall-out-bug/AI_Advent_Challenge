@@ -4,8 +4,9 @@ Following TDD principles: test factory pattern implementation.
 """
 
 import os
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from src.presentation.bot.factory import create_butler_orchestrator

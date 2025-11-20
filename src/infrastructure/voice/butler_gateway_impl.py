@@ -14,11 +14,13 @@ from __future__ import annotations
 <<<<<<< HEAD
 from src.domain.agents.butler_orchestrator import ButlerOrchestrator
 from src.domain.interfaces.voice import ButlerGateway
+
 =======
 from typing import Optional
 
-from src.domain.interfaces import ButlerGateway
 from src.domain.agents.butler_orchestrator import ButlerOrchestrator
+from src.domain.interfaces import ButlerGateway
+
 >>>>>>> origin/master
 from src.infrastructure.logging import get_logger
 

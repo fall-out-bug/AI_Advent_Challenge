@@ -63,7 +63,9 @@ class TestReviewHomeworkUseCaseCharacterization:
             cleanup_timeout=0.5,
         )
 
-    async def test_execute_successful_review_flow(self, use_case, mock_homework_checker, mock_tool_client):
+    async def test_execute_successful_review_flow(
+        self, use_case, mock_homework_checker, mock_tool_client
+    ):
         """Characterization: execute handles successful review flow."""
         # Act
         result = await use_case.execute("abc123def456")
@@ -92,7 +94,9 @@ class TestReviewHomeworkUseCaseCharacterization:
         assert "archive_path" in tool_params
         assert tool_params["archive_path"].endswith(".zip")
 
-    async def test_execute_with_default_parameters(self, mock_homework_checker, mock_tool_client):
+    async def test_execute_with_default_parameters(
+        self, mock_homework_checker, mock_tool_client
+    ):
         """Characterization: execute uses default parameters when not specified."""
         # Create use case with minimal config
         use_case = ReviewHomeworkUseCase(
@@ -113,20 +117,26 @@ class TestReviewHomeworkUseCaseCharacterization:
         assert tool_params["token_budget"] == 8000
         assert tool_params["model_name"] == "mistral"
 
-    async def test_execute_temp_file_creation_and_cleanup(self, use_case, mock_homework_checker):
+    async def test_execute_temp_file_creation_and_cleanup(
+        self, use_case, mock_homework_checker
+    ):
         """Characterization: execute creates and cleans up temp files."""
         temp_files_created = []
         temp_files_cleaned = []
 
         def mock_write_bytes(data):
-            temp_files_created.append(self._temp_directory / f"homework_{uuid.uuid4().hex}.zip")
+            temp_files_created.append(
+                self._temp_directory / f"homework_{uuid.uuid4().hex}.zip"
+            )
 
         def mock_unlink(missing_ok=True):
             temp_files_cleaned.append(True)
 
-        with patch.object(Path, 'write_bytes', side_effect=mock_write_bytes), \
-             patch.object(Path, 'unlink', side_effect=mock_unlink), \
-             patch.object(Path, 'mkdir'):
+        with (
+            patch.object(Path, "write_bytes", side_effect=mock_write_bytes),
+            patch.object(Path, "unlink", side_effect=mock_unlink),
+            patch.object(Path, "mkdir"),
+        ):
 
             # Act
             result = await use_case.execute("test_commit")
@@ -136,12 +146,14 @@ class TestReviewHomeworkUseCaseCharacterization:
             assert len(temp_files_created) == 1
             assert len(temp_files_cleaned) == 1
 
-    async def test_execute_tool_failure_raises_exception(self, use_case, mock_tool_client):
+    async def test_execute_tool_failure_raises_exception(
+        self, use_case, mock_tool_client
+    ):
         """Characterization: execute raises exception when tool fails."""
         # Mock tool failure
         mock_tool_client.call_tool.return_value = {
             "success": False,
-            "error": "Tool execution failed: model timeout"
+            "error": "Tool execution failed: model timeout",
         }
 
         # Act & Assert
@@ -151,7 +163,9 @@ class TestReviewHomeworkUseCaseCharacterization:
         assert "Review tool returned failure" in str(exc_info.value)
         assert "model timeout" in str(exc_info.value)
 
-    async def test_execute_archive_download_failure_propagates(self, use_case, mock_homework_checker):
+    async def test_execute_archive_download_failure_propagates(
+        self, use_case, mock_homework_checker
+    ):
         """Characterization: execute propagates archive download failures."""
         # Mock download failure
         mock_homework_checker.download_archive.side_effect = Exception("404 Not Found")
@@ -162,7 +176,9 @@ class TestReviewHomeworkUseCaseCharacterization:
 
         assert "404 Not Found" in str(exc_info.value)
 
-    async def test_execute_missing_success_field_defaults_to_failure(self, mock_homework_checker, mock_tool_client):
+    async def test_execute_missing_success_field_defaults_to_failure(
+        self, mock_homework_checker, mock_tool_client
+    ):
         """Characterization: execute treats missing success field as failure."""
         # Mock tool response without success field
         mock_tool_client.call_tool.return_value = {
@@ -181,7 +197,9 @@ class TestReviewHomeworkUseCaseCharacterization:
 
         assert "Review tool returned failure" in str(exc_info.value)
 
-    async def test_execute_empty_markdown_report_handled(self, mock_homework_checker, mock_tool_client):
+    async def test_execute_empty_markdown_report_handled(
+        self, mock_homework_checker, mock_tool_client
+    ):
         """Characterization: execute handles empty markdown report."""
         # Mock tool response with empty report
         mock_tool_client.call_tool.return_value = {
@@ -205,7 +223,9 @@ class TestReviewHomeworkUseCaseCharacterization:
         assert result.markdown_report == ""
         assert result.total_findings == 0
 
-    async def test_execute_with_custom_temp_directory(self, mock_homework_checker, mock_tool_client):
+    async def test_execute_with_custom_temp_directory(
+        self, mock_homework_checker, mock_tool_client
+    ):
         """Characterization: execute respects custom temp directory."""
         custom_temp_dir = Path("/custom/archive/path")
 
@@ -220,9 +240,11 @@ class TestReviewHomeworkUseCaseCharacterization:
         def mock_mkdir(parents=True, exist_ok=True):
             mkdir_calls.append((self, parents, exist_ok))
 
-        with patch.object(Path, 'mkdir', side_effect=mock_mkdir), \
-             patch.object(Path, 'write_bytes'), \
-             patch.object(Path, 'unlink'):
+        with (
+            patch.object(Path, "mkdir", side_effect=mock_mkdir),
+            patch.object(Path, "write_bytes"),
+            patch.object(Path, "unlink"),
+        ):
 
             # Act
             result = await use_case.execute("custom_dir_commit")
@@ -237,15 +259,20 @@ class TestReviewHomeworkUseCaseCharacterization:
         cleanup_timeout_calls = []
 
         async def mock_wait_for(coro, timeout):
-            if str(coro).find('unlink') >= 0:
+            if str(coro).find("unlink") >= 0:
                 cleanup_timeout_calls.append(timeout)
                 raise asyncio.TimeoutError()
             return await coro
 
-        with patch('asyncio.wait_for', side_effect=mock_wait_for), \
-             patch.object(Path, 'write_bytes'), \
-             patch.object(Path, 'mkdir'), \
-             patch('uuid.uuid4', return_value=type('MockUUID', (), {'hex': 'testuuid123'})()):
+        with (
+            patch("asyncio.wait_for", side_effect=mock_wait_for),
+            patch.object(Path, "write_bytes"),
+            patch.object(Path, "mkdir"),
+            patch(
+                "uuid.uuid4",
+                return_value=type("MockUUID", (), {"hex": "testuuid123"})(),
+            ),
+        ):
 
             # Act - should not raise exception despite cleanup timeout
             result = await use_case.execute("timeout_commit")
@@ -255,7 +282,9 @@ class TestReviewHomeworkUseCaseCharacterization:
             assert len(cleanup_timeout_calls) == 1
             assert cleanup_timeout_calls[0] == 0.5  # cleanup_timeout
 
-    async def test_write_archive_creates_unique_filename(self, mock_homework_checker, mock_tool_client):
+    async def test_write_archive_creates_unique_filename(
+        self, mock_homework_checker, mock_tool_client
+    ):
         """Characterization: _write_archive creates unique filenames."""
         use_case = ReviewHomeworkUseCase(
             homework_checker=mock_homework_checker,
@@ -270,8 +299,10 @@ class TestReviewHomeworkUseCaseCharacterization:
             filename = f"homework_{uuid.uuid4().hex}.zip"
             created_files.append(filename)
 
-        with patch.object(Path, 'write_bytes', side_effect=mock_write_bytes), \
-             patch.object(Path, 'mkdir'):
+        with (
+            patch.object(Path, "write_bytes", side_effect=mock_write_bytes),
+            patch.object(Path, "mkdir"),
+        ):
 
             # Act - call multiple times
             await use_case._write_archive(b"data1")
@@ -306,19 +337,23 @@ class TestReviewHomeworkUseCaseCharacterization:
             timeout_calls.append(timeout)
             return None
 
-        with patch('asyncio.wait_for', side_effect=mock_wait_for):
+        with patch("asyncio.wait_for", side_effect=mock_wait_for):
             # Act
             await use_case._cleanup_file(Path("/tmp/test.zip"))
 
             # Assert
             assert timeout_calls == [2.0]
 
-    async def test_execute_with_environment_temp_dir(self, mock_homework_checker, mock_tool_client):
+    async def test_execute_with_environment_temp_dir(
+        self, mock_homework_checker, mock_tool_client
+    ):
         """Characterization: execute uses BUTLER_ARCHIVE_DIR environment variable."""
-        with patch.dict('os.environ', {'BUTLER_ARCHIVE_DIR': '/env/archive/dir'}), \
-             patch.object(Path, 'mkdir'), \
-             patch.object(Path, 'write_bytes'), \
-             patch.object(Path, 'unlink'):
+        with (
+            patch.dict("os.environ", {"BUTLER_ARCHIVE_DIR": "/env/archive/dir"}),
+            patch.object(Path, "mkdir"),
+            patch.object(Path, "write_bytes"),
+            patch.object(Path, "unlink"),
+        ):
 
             use_case = ReviewHomeworkUseCase(
                 homework_checker=mock_homework_checker,
@@ -333,6 +368,8 @@ class TestReviewHomeworkUseCaseCharacterization:
             assert result.success == True
             # Should use env var directory
             mkdir_calls = []
+
             def capture_mkdir(*args, **kwargs):
                 mkdir_calls.append(self)
+
             # Note: This is hard to test precisely without more complex mocking

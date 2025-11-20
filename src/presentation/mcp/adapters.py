@@ -13,9 +13,7 @@ from src.presentation.mcp.adapters.format_adapter import FormatAdapter
 from src.presentation.mcp.adapters.generation_adapter import GenerationAdapter
 from src.presentation.mcp.adapters.model_adapter import ModelAdapter
 from src.presentation.mcp.adapters.review_adapter import ReviewAdapter
-from src.presentation.mcp.adapters.test_generation_adapter import (
-    TestGenerationAdapter,
-)
+from src.presentation.mcp.adapters.test_generation_adapter import TestGenerationAdapter
 from src.presentation.mcp.adapters.token_adapter import TokenAdapter
 from src.presentation.mcp.exceptions import MCPValidationError
 
@@ -148,9 +146,7 @@ class MCPApplicationAdapter:
         """Ensure orchestration inputs are non-empty."""
 
         if not description or not description.strip():
-            raise MCPValidationError(
-                "Description cannot be empty", field="description"
-            )
+            raise MCPValidationError("Description cannot be empty", field="description")
         if not gen_model or not gen_model.strip():
             raise MCPValidationError(
                 "Generation model cannot be empty", field="gen_model"

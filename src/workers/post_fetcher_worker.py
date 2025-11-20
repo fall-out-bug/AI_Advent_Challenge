@@ -16,9 +16,11 @@ from typing import Optional
 
 <<<<<<< HEAD
 from src.infrastructure.clients.telegram_utils import fetch_channel_posts
+
 =======
 from src.domain.interfaces.telegram_adapter import TelegramAdapter
 from src.infrastructure.clients.telegram_adapter_impl import TelegramAdapterImpl
+
 >>>>>>> origin/master
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.database.mongo import get_db

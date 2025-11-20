@@ -13,7 +13,9 @@ from datetime import datetime
 from typing import List
 
 from src.domain.interfaces.telegram_adapter import TelegramAdapter
-from src.infrastructure.clients.telegram_utils import fetch_channel_posts as _fetch_channel_posts
+from src.infrastructure.clients.telegram_utils import (
+    fetch_channel_posts as _fetch_channel_posts,
+)
 
 
 class TelegramAdapterImpl(TelegramAdapter):

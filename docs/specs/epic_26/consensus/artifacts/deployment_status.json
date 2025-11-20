@@ -1,0 +1,66 @@
+{
+  "epic_id": "epic_26",
+  "deployment_id": "deploy_2025_11_19_19_56_00",
+  "timestamp": "2025_11_19_19_56_00",
+  "status": "deployed",
+  "deployment_path": "direct_to_production",
+  "stages_skipped": ["dev", "staging"],
+  "current_stage": "canary_5pct",
+  "deployment_method": "docker_compose",
+  "container_status": "running",
+  "stages": {
+    "canary_5pct": {
+      "status": "in_progress",
+      "started_at": "2025_11_19_19_56_00",
+      "traffic_percentage": 5,
+      "duration_hours": 2,
+      "monitoring_interval_seconds": 60,
+      "metrics": {
+        "error_rate": 0.0,
+        "latency_p99_ms": 0,
+        "health_check_status": "checking",
+        "coverage_percentage": null
+      },
+      "rollback_triggered": false
+    },
+    "rollout_25pct": {
+      "status": "pending",
+      "started_at": null,
+      "traffic_percentage": 25,
+      "duration_minutes": 5
+    },
+    "rollout_50pct": {
+      "status": "pending",
+      "started_at": null,
+      "traffic_percentage": 50,
+      "duration_minutes": 5
+    },
+    "rollout_100pct": {
+      "status": "pending",
+      "started_at": null,
+      "traffic_percentage": 100
+    }
+  },
+  "rollback_triggers": {
+    "error_rate_threshold": 0.005,
+    "latency_p99_threshold_ms": 60000,
+    "health_check_failure_threshold": 1,
+    "coverage_threshold": 80
+  },
+  "monitoring": {
+    "enabled": true,
+    "interval_seconds": 60,
+    "checks": [
+      "error_rate",
+      "latency_p99",
+      "health_check_status",
+      "coverage_percentage",
+      "resource_utilization"
+    ]
+  },
+  "rollback": {
+    "ready": true,
+    "automatic": true,
+    "time_to_rollback_seconds": 30
+  }
+}

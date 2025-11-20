@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import os
 import signal
 from datetime import datetime, time
-import inspect
 from typing import Any, Callable, Optional, Union
 
 from aiogram import Bot
@@ -594,7 +594,9 @@ async def send_with_retry(
                 text = text[:3950] + "\n...message truncated..."
 
             use_markdown = not is_digest and notification_type != "debug summary"
-            await _send_message_safe(bot, user_id, text, use_markdown, notification_type)
+            await _send_message_safe(
+                bot, user_id, text, use_markdown, notification_type
+            )
 
             log_message = (
                 "Successfully sent after retry"

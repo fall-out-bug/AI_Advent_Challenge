@@ -33,12 +33,15 @@ try:
     # Load environment variables from .env file
     try:
         from dotenv import load_dotenv
+
         load_dotenv(project_root / ".env")
     except ImportError:
         pass  # dotenv not available, rely on system env vars
 
-    from src.presentation.mcp.tools.digest_tools import get_channel_digest, list_channels
-
+    from src.presentation.mcp.tools.digest_tools import (
+        get_channel_digest,
+        list_channels,
+    )
 
     def format_digest(digest_data: dict) -> str:
         """Format digest data for display."""
@@ -72,7 +75,6 @@ try:
         output.append("=" * 60)
         return "\n".join(output)
 
-
     async def main() -> None:
         """Main function to get and display digest."""
         if len(sys.argv) < 2:
@@ -103,7 +105,9 @@ try:
             if not subscribed_channels:
                 print(f"⚠️  No subscribed channels found for user {user_id}.")
                 print("\nTo subscribe to a channel, use:")
-                print("  python scripts/subscribe_channel.py <user_id> <channel_username>")
+                print(
+                    "  python scripts/subscribe_channel.py <user_id> <channel_username>"
+                )
                 sys.exit(0)
 
             print(f"📋 Found {len(subscribed_channels)} subscribed channel(s):")
@@ -121,9 +125,9 @@ try:
         except Exception as e:
             print(f"❌ Error generating digest: {e}")
             import traceback
+
             traceback.print_exc()
             sys.exit(1)
-
 
     if __name__ == "__main__":
         asyncio.run(main())

@@ -5,13 +5,13 @@ from __future__ import annotations
 <<<<<<< HEAD
 =======
 from collections.abc import Sequence
+
 >>>>>>> origin/master
+import importlib
 from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
-import importlib
-
 from click.testing import CliRunner
 
 digest_module = importlib.import_module(

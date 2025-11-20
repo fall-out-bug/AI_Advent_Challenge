@@ -8,6 +8,7 @@ import json
 from typing import Optional
 
 import redis.asyncio as redis
+
 from src.domain.interfaces.voice import VoiceCommandStore
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.logging import get_logger
@@ -74,7 +75,7 @@ class RedisVoiceCommandStore:
                     "has_password": self.password is not None,
                 },
             )
-            
+
             self._client = redis.Redis(
                 host=self.host,
                 port=self.port,
@@ -319,4 +320,3 @@ class RedisVoiceCommandStore:
                 },
                 exc_info=True,
             )
-

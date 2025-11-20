@@ -1,0 +1,240 @@
+{
+  "epic_id": "epic_26",
+  "iteration": 1,
+  "timestamp": "2025_11_19_16_35_17",
+  "components": [
+    {
+      "name": "TestCase",
+      "layer": "domain",
+      "purpose": "Domain entity representing a test case with test name, code, and metadata",
+      "interfaces": [],
+      "dependencies": [],
+      "location": "src/domain/test_agent/entities/test_case.py"
+    },
+    {
+      "name": "TestResult",
+      "layer": "domain",
+      "purpose": "Domain entity representing test execution results (pass/fail, coverage, errors)",
+      "interfaces": [],
+      "dependencies": [],
+      "location": "src/domain/test_agent/entities/test_result.py"
+    },
+    {
+      "name": "CodeFile",
+      "layer": "domain",
+      "purpose": "Domain entity representing source code file with path, content, and metadata",
+      "interfaces": [],
+      "dependencies": [],
+      "location": "src/domain/test_agent/entities/code_file.py"
+    },
+    {
+      "name": "TestGenerationRequest",
+      "layer": "domain",
+      "purpose": "Value object representing request for test generation",
+      "interfaces": [],
+      "dependencies": [],
+      "location": "src/domain/test_agent/value_objects/test_generation_request.py"
+    },
+    {
+      "name": "TestAgentOrchestrator",
+      "layer": "application",
+      "purpose": "Orchestrates the test agent workflow: test generation, code generation, test execution, and reporting",
+      "interfaces": [
+        {
+          "name": "ITestAgentOrchestrator",
+          "methods": ["orchestrate_test_workflow(code_file: CodeFile) -> TestResult"]
+        }
+      ],
+      "dependencies": ["domain entities", "use cases"],
+      "location": "src/application/test_agent/orchestrators/test_agent_orchestrator.py"
+    },
+    {
+      "name": "GenerateTestsUseCase",
+      "layer": "application",
+      "purpose": "Use case for generating test cases from code analysis using LLM",
+      "interfaces": [
+        {
+          "name": "IGenerateTestsUseCase",
+          "methods": ["generate_tests(code_file: CodeFile) -> list[TestCase]"]
+        }
+      ],
+      "dependencies": ["domain entities", "LLMClient interface"],
+      "location": "src/application/test_agent/use_cases/generate_tests_use_case.py"
+    },
+    {
+      "name": "GenerateCodeUseCase",
+      "layer": "application",
+      "purpose": "Use case for generating implementation code based on requirements and test cases",
+      "interfaces": [
+        {
+          "name": "IGenerateCodeUseCase",
+          "methods": ["generate_code(requirements: str, test_cases: list[TestCase]) -> CodeFile"]
+        }
+      ],
+      "dependencies": ["domain entities", "LLMClient interface"],
+      "location": "src/application/test_agent/use_cases/generate_code_use_case.py"
+    },
+    {
+      "name": "ExecuteTestsUseCase",
+      "layer": "application",
+      "purpose": "Use case for orchestrating test execution and collecting results",
+      "interfaces": [
+        {
+          "name": "IExecuteTestsUseCase",
+          "methods": ["execute_tests(test_cases: list[TestCase], code_file: CodeFile) -> TestResult"]
+        }
+      ],
+      "dependencies": ["domain entities", "ITestExecutor interface"],
+      "location": "src/application/test_agent/use_cases/execute_tests_use_case.py"
+    },
+    {
+      "name": "TestExecutor",
+      "layer": "infrastructure",
+      "purpose": "Adapter for executing pytest tests and collecting results",
+      "interfaces": [
+        {
+          "name": "ITestExecutor",
+          "methods": ["execute(test_file_path: str) -> TestResult", "get_coverage(test_file_path: str) -> float"]
+        }
+      ],
+      "dependencies": ["domain entities"],
+      "location": "src/infrastructure/test_agent/adapters/pytest_executor.py"
+    },
+    {
+      "name": "TestAgentLLMService",
+      "layer": "infrastructure",
+      "purpose": "Service adapter that wraps LLMClient for test agent operations (test generation, code generation)",
+      "interfaces": [
+        {
+          "name": "ITestAgentLLMService",
+          "methods": ["generate_tests_prompt(code: str) -> str", "generate_code_prompt(requirements: str, tests: str) -> str"]
+        }
+      ],
+      "dependencies": ["LLMClient Protocol from infrastructure.llm.clients"],
+      "location": "src/infrastructure/test_agent/services/llm_service.py"
+    },
+    {
+      "name": "TestResultReporter",
+      "layer": "infrastructure",
+      "purpose": "Adapter for formatting and reporting test results (console, JSON, etc.)",
+      "interfaces": [
+        {
+          "name": "ITestResultReporter",
+          "methods": ["report(test_result: TestResult) -> str", "report_coverage(coverage: float) -> str"]
+        }
+      ],
+      "dependencies": ["domain entities"],
+      "location": "src/infrastructure/test_agent/reporting/test_result_reporter.py"
+    },
+    {
+      "name": "TestAgentCLI",
+      "layer": "presentation",
+      "purpose": "CLI interface for running the test agent (entry point)",
+      "interfaces": [],
+      "dependencies": ["TestAgentOrchestrator from application layer"],
+      "location": "src/presentation/cli/test_agent/main.py"
+    }
+  ],
+  "boundaries": [
+    {
+      "from_layer": "presentation",
+      "to_layer": "application",
+      "allowed": true,
+      "via_interface": "TestAgentOrchestrator orchestrates workflow"
+    },
+    {
+      "from_layer": "application",
+      "to_layer": "domain",
+      "allowed": true,
+      "via_interface": "Direct dependency on domain entities (allowed)"
+    },
+    {
+      "from_layer": "application",
+      "to_layer": "infrastructure",
+      "allowed": true,
+      "via_interface": "ITestExecutor, ITestAgentLLMService (dependency inversion)"
+    },
+    {
+      "from_layer": "infrastructure",
+      "to_layer": "domain",
+      "allowed": true,
+      "via_interface": "Infrastructure adapters depend on domain entities"
+    },
+    {
+      "from_layer": "infrastructure",
+      "to_layer": "infrastructure",
+      "allowed": true,
+      "via_interface": "TestAgentLLMService uses existing LLMClient Protocol"
+    }
+  ],
+  "contracts": [
+    {
+      "name": "LLMClient Protocol Contract",
+      "provider": "infrastructure.llm.clients.llm_client.LLMClient",
+      "consumer": "TestAgentLLMService",
+      "interface": "Protocol with generate() and batch_generate() methods - existing infrastructure"
+    },
+    {
+      "name": "ITestExecutor Contract",
+      "provider": "TestExecutor (infrastructure)",
+      "consumer": "ExecuteTestsUseCase (application)",
+      "interface": "execute(test_file_path: str) -> TestResult, get_coverage(test_file_path: str) -> float"
+    },
+    {
+      "name": "ITestAgentLLMService Contract",
+      "provider": "TestAgentLLMService (infrastructure)",
+      "consumer": "GenerateTestsUseCase, GenerateCodeUseCase (application)",
+      "interface": "generate_tests_prompt(code: str) -> str, generate_code_prompt(requirements: str, tests: str) -> str"
+    }
+  ],
+  "decisions": [
+    {
+      "decision": "Test Agent placed in application layer for orchestration",
+      "rationale": "Test agent orchestrates multiple use cases (test generation, code generation, execution) - fits application layer pattern",
+      "alternatives_considered": ["Infrastructure layer (rejected - contains business logic)", "Domain layer (rejected - depends on external services)"],
+      "consequences": ["TestAgentOrchestrator coordinates use cases", "Use cases can be tested independently"]
+    },
+    {
+      "decision": "Use existing LLMClient Protocol for Qwen integration",
+      "rationale": "Reuse existing infrastructure.llm.clients.LLMClient Protocol - no need to create new LLM interface",
+      "alternatives_considered": ["Create new LLM interface (rejected - violates DRY)", "Direct Qwen client (rejected - breaks abstraction)"],
+      "consequences": ["TestAgentLLMService wraps LLMClient Protocol", "Can use any LLM client implementation (Qwen, Mistral, etc.)"]
+    },
+    {
+      "decision": "Test execution via infrastructure adapter (pytest)",
+      "rationale": "Test execution is external tool integration - belongs in infrastructure layer",
+      "alternatives_considered": ["Application layer (rejected - external tool dependency)", "Domain layer (rejected - no business logic)"],
+      "consequences": ["ITestExecutor interface for dependency inversion", "Easy to swap test frameworks if needed"]
+    },
+    {
+      "decision": "Domain entities for TestCase, TestResult, CodeFile",
+      "rationale": "Core business concepts - test cases, results, and code files are domain entities",
+      "alternatives_considered": ["DTOs only (rejected - loses domain semantics)", "Infrastructure models (rejected - violates Clean Architecture)"],
+      "consequences": ["Rich domain model with business logic", "Entities can be used across layers"]
+    },
+    {
+      "decision": "Separate use cases for test generation, code generation, and execution",
+      "rationale": "Single Responsibility Principle - each use case has one clear purpose",
+      "alternatives_considered": ["Monolithic use case (rejected - too complex)", "Single use case with flags (rejected - violates SRP)"],
+      "consequences": ["Each use case can be tested independently", "Easy to extend with new capabilities"]
+    }
+  ],
+  "risks": [
+    {
+      "risk": "LLM prompt engineering for test generation may produce invalid pytest code",
+      "mitigation": "Add validation layer in GenerateTestsUseCase to verify pytest syntax before returning test cases"
+    },
+    {
+      "risk": "Test execution may fail due to missing dependencies or environment issues",
+      "mitigation": "TestExecutor should handle errors gracefully and report detailed failure information"
+    },
+    {
+      "risk": "Code generation may violate Clean Architecture boundaries",
+      "mitigation": "GenerateCodeUseCase should validate generated code structure and enforce layer boundaries"
+    },
+    {
+      "risk": "Integration with existing LLMClient may require configuration changes",
+      "mitigation": "TestAgentLLMService should use dependency injection to accept LLMClient, allowing easy configuration"
+    }
+  ]
+}

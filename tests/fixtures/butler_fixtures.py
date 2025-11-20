@@ -6,28 +6,28 @@ Following TDD principles and Python Zen:
 - Readability counts
 """
 
+from datetime import datetime
 from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock
-from datetime import datetime
 
 import pytest
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from src.presentation.bot.orchestrator import ButlerOrchestrator
-from src.application.services.mode_classifier import ModeClassifier
-from src.presentation.bot.handlers.task import TaskHandler
-from src.presentation.bot.handlers.data import DataHandler
-from src.presentation.bot.handlers.chat import ChatHandler
 from src.application.dtos.butler_dialog_dtos import (
     DialogContext,
     DialogMode,
     DialogState,
 )
+from src.application.orchestration.intent_orchestrator import IntentOrchestrator
+from src.application.services.mode_classifier import ModeClassifier
+from src.application.use_cases.collect_data_use_case import CollectDataUseCase
+from src.application.use_cases.create_task_use_case import CreateTaskUseCase
 from src.domain.interfaces.llm_client import LLMClientProtocol
 from src.domain.interfaces.tool_client import ToolClientProtocol
-from src.application.orchestration.intent_orchestrator import IntentOrchestrator
-from src.application.use_cases.create_task_use_case import CreateTaskUseCase
-from src.application.use_cases.collect_data_use_case import CollectDataUseCase
+from src.presentation.bot.handlers.chat import ChatHandler
+from src.presentation.bot.handlers.data import DataHandler
+from src.presentation.bot.handlers.task import TaskHandler
+from src.presentation.bot.orchestrator import ButlerOrchestrator
 
 
 @pytest.fixture

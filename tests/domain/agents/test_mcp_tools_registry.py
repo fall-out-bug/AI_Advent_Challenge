@@ -3,12 +3,13 @@
 Following TDD approach: tests written BEFORE implementation (Red phase).
 """
 
-import pytest
+from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock, patch
-from typing import List, Dict, Any
 
-from src.presentation.mcp.tools_registry import MCPToolsRegistry
+import pytest
+
 from src.domain.agents.schemas import ToolMetadata
+from src.presentation.mcp.tools_registry import MCPToolsRegistry
 
 
 @pytest.mark.asyncio

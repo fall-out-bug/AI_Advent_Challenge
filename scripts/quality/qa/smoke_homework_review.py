@@ -13,7 +13,6 @@ shared_path = _root / "shared"
 sys.path.insert(0, str(shared_path))
 
 from multipass_reviewer.application.config import ReviewConfig
-
 from shared_package.clients.unified_client import UnifiedModelClient
 
 from src.application.services.modular_review_service import ModularReviewService

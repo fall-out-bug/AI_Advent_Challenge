@@ -14,8 +14,8 @@ from src.application.benchmarking.models import (
     BenchmarkDirection,
     BenchmarkJudgeResult,
     BenchmarkMetricRule,
-    BenchmarkScenarioConfig,
     BenchmarkSample,
+    BenchmarkScenarioConfig,
 )
 from src.application.benchmarking.protocols import BenchmarkJudge
 from src.application.benchmarking.runner import BenchmarkEvaluationRunner
@@ -23,11 +23,8 @@ from src.infrastructure.benchmarking.factory import create_benchmark_runner
 from src.infrastructure.benchmarking.jsonl_dataset_provider import (
     JsonlBenchmarkDatasetProvider,
 )
-from src.infrastructure.benchmarking.metrics_recorder import (
-    PrometheusBenchmarkRecorder,
-)
+from src.infrastructure.benchmarking.metrics_recorder import PrometheusBenchmarkRecorder
 from src.infrastructure.config.settings import get_settings
-
 
 SCENARIO_REGISTRY: Mapping[str, dict[str, object]] = {
     "channel_digest_ru": {
@@ -174,10 +171,10 @@ def build_scenario_config(
     resolved_path = dataset_path or default_path
     if not resolved_path.exists():
         if dataset_path is not None:
-            raise FileNotFoundError(
-                f"Dataset file not found: {resolved_path}."
-            )
-        candidates = sorted((settings.benchmark_dataset_dir / dataset_id).glob("*.jsonl"))
+            raise FileNotFoundError(f"Dataset file not found: {resolved_path}.")
+        candidates = sorted(
+            (settings.benchmark_dataset_dir / dataset_id).glob("*.jsonl")
+        )
         if not candidates:
             raise FileNotFoundError(
                 "No dataset files found. Generate datasets via export scripts or "
@@ -202,7 +199,11 @@ def serialise_result(run_result) -> dict:
         "dataset_id": run_result.dataset_id,
         "overall": run_result.overall.value,
         "metrics": [
-            {"name": metric.name, "value": metric.value, "outcome": metric.outcome.value}
+            {
+                "name": metric.name,
+                "value": metric.value,
+                "outcome": metric.outcome.value,
+            }
             for metric in run_result.metrics
         ],
         "samples": [

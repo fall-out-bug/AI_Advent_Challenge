@@ -1,4 +1,5 @@
 """Performance and latency tests for MCP operations."""
+
 import os
 import time
 
@@ -6,21 +7,14 @@ import pytest
 
 from src.presentation.mcp.client import MCPClient
 
-
-DISCOVERY_LATENCY_THRESHOLD = float(
-    os.getenv("MCP_DISCOVERY_LATENCY_SEC", "1.5")
-)
-CALCULATOR_LATENCY_THRESHOLD = float(
-    os.getenv("MCP_CALCULATOR_LATENCY_P95_SEC", "1.2")
-)
+DISCOVERY_LATENCY_THRESHOLD = float(os.getenv("MCP_DISCOVERY_LATENCY_SEC", "1.5"))
+CALCULATOR_LATENCY_THRESHOLD = float(os.getenv("MCP_CALCULATOR_LATENCY_P95_SEC", "1.2"))
 TOKEN_LATENCY_THRESHOLDS = {
     "small": float(os.getenv("MCP_TOKEN_LATENCY_SMALL_SEC", "1.10")),
     "medium": float(os.getenv("MCP_TOKEN_LATENCY_MEDIUM_SEC", "1.30")),
     "large": float(os.getenv("MCP_TOKEN_LATENCY_LARGE_SEC", "1.60")),
 }
-LARGE_TEXT_LATENCY_THRESHOLD = float(
-    os.getenv("MCP_LARGE_TEXT_LATENCY_SEC", "1.30")
-)
+LARGE_TEXT_LATENCY_THRESHOLD = float(os.getenv("MCP_LARGE_TEXT_LATENCY_SEC", "1.30"))
 MODEL_LISTING_LATENCY_THRESHOLD = float(
     os.getenv("MCP_MODEL_LISTING_LATENCY_SEC", "1.20")
 )

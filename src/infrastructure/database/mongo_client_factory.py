@@ -57,9 +57,7 @@ class MongoClientFactory:
             connectTimeoutMS=self.settings.mongo_timeout_ms,
         )
 
-    def create_async_client(
-        self, use_test_url: bool = False
-    ) -> AsyncIOMotorClient:
+    def create_async_client(self, use_test_url: bool = False) -> AsyncIOMotorClient:
         """Create an asynchronous MongoDB client.
 
         Args:

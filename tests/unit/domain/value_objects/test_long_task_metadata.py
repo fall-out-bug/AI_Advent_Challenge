@@ -3,12 +3,13 @@
 Following TDD principles.
 """
 
-import pytest
 from datetime import datetime
 
+import pytest
+
 from src.domain.value_objects.long_summarization_task import LongTask
-from src.domain.value_objects.task_type import TaskType
 from src.domain.value_objects.task_status import TaskStatus
+from src.domain.value_objects.task_type import TaskType
 
 
 class TestLongTaskMetadata:

@@ -66,6 +66,7 @@ def list():
     Example:
         python scripts/tools/profile_admin.py list
     """
+
     async def _list():
         settings = get_settings()
         client = AsyncIOMotorClient(settings.mongodb_url)
@@ -121,6 +122,7 @@ def show(user_id):
     Example:
         python scripts/tools/profile_admin.py show 123456789
     """
+
     async def _show():
         settings = get_settings()
         client = AsyncIOMotorClient(settings.mongodb_url)
@@ -132,15 +134,11 @@ def show(user_id):
             profile = await db.user_profiles.find_one({"user_id": user_id})
 
             if not profile:
-                console.print(
-                    f"[red]Profile not found for user_id: {user_id}[/red]"
-                )
+                console.print(f"[red]Profile not found for user_id: {user_id}[/red]")
                 return
 
             # Get memory stats
-            event_count = await db.user_memory.count_documents(
-                {"user_id": user_id}
-            )
+            event_count = await db.user_memory.count_documents({"user_id": user_id})
 
             # Get recent events
             recent_events = (
@@ -151,15 +149,11 @@ def show(user_id):
             )
 
             # Display profile
-            console.print(
-                f"\n[bold cyan]Profile for user_id: {user_id}[/bold cyan]"
-            )
+            console.print(f"\n[bold cyan]Profile for user_id: {user_id}[/bold cyan]")
             console.print(f"Persona: [green]{profile['persona']}[/green]")
             console.print(f"Language: [blue]{profile['language']}[/blue]")
             console.print(f"Tone: [magenta]{profile['tone']}[/magenta]")
-            preferred_topics = ", ".join(
-                profile.get("preferred_topics", [])
-            )
+            preferred_topics = ", ".join(profile.get("preferred_topics", []))
             console.print(f"Preferred topics: {preferred_topics}")
 
             if profile.get("memory_summary"):
@@ -177,9 +171,7 @@ def show(user_id):
                     role = event["role"]
                     content = event["content"][:100]
                     created_at = event.get("created_at", "N/A")
-                    console.print(
-                        f"  [{role}] {content}... ({created_at})"
-                    )
+                    console.print(f"  [{role}] {content}... ({created_at})")
 
         except Exception as e:
             console.print(f"[red]Error: {str(e)}[/red]")
@@ -195,9 +187,7 @@ def show(user_id):
 
 @cli.command()
 @click.argument("user_id")
-@click.confirmation_option(
-    prompt="Are you sure you want to reset this user?"
-)
+@click.confirmation_option(prompt="Are you sure you want to reset this user?")
 def reset(user_id):
     """Reset profile and memory for user.
 
@@ -211,18 +201,15 @@ def reset(user_id):
     Example:
         python scripts/tools/profile_admin.py reset 123456789
     """
+
     async def _reset():
         settings = get_settings()
         client = AsyncIOMotorClient(settings.mongodb_url)
 
         try:
             # Use reset use case
-            profile_repo = MongoUserProfileRepository(
-                client, settings.db_name
-            )
-            memory_repo = MongoUserMemoryRepository(
-                client, settings.db_name
-            )
+            profile_repo = MongoUserProfileRepository(client, settings.db_name)
+            memory_repo = MongoUserMemoryRepository(client, settings.db_name)
 
             reset_use_case = ResetPersonalizationUseCase(
                 profile_repo=profile_repo,
@@ -233,17 +220,11 @@ def reset(user_id):
             output = await reset_use_case.execute(input_data)
 
             if output.success:
-                console.print(
-                    f"[green]✓ Reset complete for user_id: {user_id}[/green]"
-                )
+                console.print(f"[green]✓ Reset complete for user_id: {user_id}[/green]")
                 console.print(f"  Profile reset: {output.profile_reset}")
-                console.print(
-                    f"  Memory deleted: {output.memory_deleted_count} events"
-                )
+                console.print(f"  Memory deleted: {output.memory_deleted_count} events")
             else:
-                console.print(
-                    f"[red]✗ Reset failed for user_id: {user_id}[/red]"
-                )
+                console.print(f"[red]✗ Reset failed for user_id: {user_id}[/red]")
 
         except Exception as e:
             console.print(f"[red]Error: {str(e)}[/red]")
@@ -277,6 +258,7 @@ def update(user_id, persona, tone, language):
     Example:
         python scripts/tools/profile_admin.py update 123 --tone formal
     """
+
     async def _update():
         settings = get_settings()
         client = AsyncIOMotorClient(settings.mongodb_url)
@@ -288,9 +270,7 @@ def update(user_id, persona, tone, language):
             profile_doc = await db.user_profiles.find_one({"user_id": user_id})
 
             if not profile_doc:
-                console.print(
-                    f"[red]Profile not found for user_id: {user_id}[/red]"
-                )
+                console.print(f"[red]Profile not found for user_id: {user_id}[/red]")
                 return
 
             # Build update
@@ -309,13 +289,9 @@ def update(user_id, persona, tone, language):
             # Update profile
             updates["updated_at"] = datetime.utcnow()
 
-            await db.user_profiles.update_one(
-                {"user_id": user_id}, {"$set": updates}
-            )
+            await db.user_profiles.update_one({"user_id": user_id}, {"$set": updates})
 
-            console.print(
-                f"[green]✓ Profile updated for user_id: {user_id}[/green]"
-            )
+            console.print(f"[green]✓ Profile updated for user_id: {user_id}[/green]")
             for key, value in updates.items():
                 if key != "updated_at":
                     console.print(f"  {key}: {value}")

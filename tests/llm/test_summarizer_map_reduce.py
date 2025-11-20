@@ -1,10 +1,11 @@
 import asyncio
+
 import pytest
 
-from src.infrastructure.llm.token_counter import TokenCounter
 from src.infrastructure.llm.chunker import SemanticChunker
 from src.infrastructure.llm.prompts import get_map_prompt, get_reduce_prompt
 from src.infrastructure.llm.summarizer import MapReduceSummarizer
+from src.infrastructure.llm.token_counter import TokenCounter
 
 
 class _FakeLLM:

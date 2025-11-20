@@ -45,4 +45,3 @@ __all__ = [
     "voice_transcriptions_total",
     "voice_transcription_duration_seconds",
 ]
-

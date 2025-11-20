@@ -7,9 +7,9 @@ match the JSON schema specification.
 import json
 from pathlib import Path
 
-import pytest
 import jsonschema
-from jsonschema import validate, ValidationError
+import pytest
+from jsonschema import ValidationError, validate
 
 
 @pytest.fixture

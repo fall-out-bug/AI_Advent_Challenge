@@ -29,10 +29,13 @@ def test_list_channels_outputs_table() -> None:
         }
     ]
 
-    with patch.object(
-        channels_module, "get_db", new=AsyncMock(return_value=db_stub)
-    ), patch.object(
-        channels_module, "_fetch_channels", new=AsyncMock(return_value=channels_payload)
+    with (
+        patch.object(channels_module, "get_db", new=AsyncMock(return_value=db_stub)),
+        patch.object(
+            channels_module,
+            "_fetch_channels",
+            new=AsyncMock(return_value=channels_payload),
+        ),
     ):
         result = runner.invoke(channels, ["list", "--user-id", "42"])
 
@@ -44,10 +47,13 @@ def test_list_channels_outputs_json() -> None:
     """`channels list --json` should return JSON array."""
     runner = CliRunner()
 
-    with patch.object(channels_module, "get_db", new=AsyncMock()), patch.object(
-        channels_module,
-        "_fetch_channels",
-        new=AsyncMock(return_value=[{"channel": "tech", "id": "123"}]),
+    with (
+        patch.object(channels_module, "get_db", new=AsyncMock()),
+        patch.object(
+            channels_module,
+            "_fetch_channels",
+            new=AsyncMock(return_value=[{"channel": "tech", "id": "123"}]),
+        ),
     ):
         result = runner.invoke(channels, ["list", "--user-id", "42", "--json"])
 

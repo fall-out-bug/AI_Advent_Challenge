@@ -68,9 +68,7 @@ class JsonlBenchmarkDatasetProvider(BenchmarkDatasetProvider):
             samples.append(self._build_sample(data))
         return samples
 
-    def _parse_line(
-        self, line: str, path: Path, line_number: int
-    ) -> dict[str, Any]:
+    def _parse_line(self, line: str, path: Path, line_number: int) -> dict[str, Any]:
         try:
             return json.loads(line)
         except json.JSONDecodeError as error:

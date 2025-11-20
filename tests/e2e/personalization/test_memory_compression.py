@@ -4,16 +4,12 @@ import pytest
 
 from src.application.personalization.dtos import PersonalizedReplyInput
 from src.infrastructure.config.settings import get_settings
-from src.infrastructure.personalization.factory import (
-    create_personalized_use_cases,
-)
+from src.infrastructure.personalization.factory import create_personalized_use_cases
 
 
 @pytest.mark.e2e
 @pytest.mark.asyncio
-async def test_memory_compression_trigger(
-    real_mongodb, llm_client
-):
+async def test_memory_compression_trigger(real_mongodb, llm_client):
     """Test that memory compression triggers at threshold.
 
     Purpose:

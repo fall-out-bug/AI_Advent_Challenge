@@ -1,6 +1,7 @@
 """Unit tests for FormatAdapter."""
 
 import pytest
+
 from src.presentation.mcp.adapters.format_adapter import FormatAdapter
 from src.presentation.mcp.exceptions import MCPValidationError
 

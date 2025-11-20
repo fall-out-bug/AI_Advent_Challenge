@@ -107,6 +107,7 @@ def test_agent_checks_correctness() -> None:
 
 def test_agent_compares_cot() -> None:
     """Test that agent compares direct vs CoT responses."""
+
     def mock_post_side_effect(*args: any, **kwargs: any) -> Mock:
         messages = kwargs.get("json", {}).get("messages", [])
         use_cot = "step by step" in messages[0]["content"].lower()
@@ -135,7 +136,10 @@ def test_agent_compares_cot() -> None:
 
         assert comparison.problem == "2x + 6 = 14"
         assert comparison.direct_response == "x = 4"
-        assert "Step 1" in comparison.cot_response or "Answer: x = 4" in comparison.cot_response
+        assert (
+            "Step 1" in comparison.cot_response
+            or "Answer: x = 4" in comparison.cot_response
+        )
         assert "4" in comparison.direct_answer or comparison.direct_answer == "4"
         assert "4" in comparison.cot_answer or comparison.cot_answer == "4"
         assert comparison.is_correct_direct is True

@@ -23,9 +23,12 @@ def _register_all_tools() -> None:
     from src.infrastructure.logging import get_logger
     from src.infrastructure.monitoring.mcp_metrics import set_registered_tools
 
-    include_deprecated = os.getenv(
-        "MCP_INCLUDE_DEPRECATED_TOOLS", "0"
-    ).lower() not in {"", "0", "false", "no"}
+    include_deprecated = os.getenv("MCP_INCLUDE_DEPRECATED_TOOLS", "0").lower() not in {
+        "",
+        "0",
+        "false",
+        "no",
+    }
 
     tool_modules = [
         ("nlp_tools", "src.presentation.mcp.tools.nlp_tools", "supported", ""),
@@ -78,6 +81,7 @@ def _register_all_tools() -> None:
     except AttributeError:
         tools_registered = 0
     set_registered_tools(tools_registered)
+
 
 # Register tools immediately when module loads
 _register_all_tools()

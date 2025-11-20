@@ -6,7 +6,6 @@ Following TDD approach:
 - Refactor for clarity (refactor)
 """
 
-
 from src.domain.services.compression.strategies.keyword_compressor import (
     KeywordCompressor,
 )

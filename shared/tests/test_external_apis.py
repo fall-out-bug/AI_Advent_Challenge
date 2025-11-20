@@ -2,20 +2,21 @@
 Tests for external API functionality in UnifiedModelClient.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-import httpx
 
-from shared_package.clients.unified_client import UnifiedModelClient
+import httpx
+import pytest
 from shared_package.clients.base_client import ModelResponse
+from shared_package.clients.unified_client import UnifiedModelClient
 from shared_package.exceptions.model_errors import (
+    HEAD,
     ModelConfigurationError,
     ModelConnectionError,
-<<<<<<< HEAD
-    ModelRequestError
-=======
     ModelRequestError,
->>>>>>> origin/master
+    <<<<<<<,
+    =======,
+    >>>>>>>,
+    origin/master,
 )
 
 

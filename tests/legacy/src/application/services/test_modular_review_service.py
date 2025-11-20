@@ -8,19 +8,21 @@ from types import SimpleNamespace
 from typing import Any, Dict
 
 import pytest
-
 from multipass_reviewer.domain.models.review_models import (
     MultiPassReport as PackageReport,
+)
+from multipass_reviewer.domain.models.review_models import (
     PassFindings as PackagePassFindings,
 )
+
 from src.application.services.modular_review_service import (
     ModularReviewService,
     _LLMClientAliasAdapter,
     _ZipArchiveReaderAdapter,
 )
+from src.infrastructure.archive.archive_service import ZipArchiveService
 from src.infrastructure.config.settings import Settings
 from src.infrastructure.monitoring import checker_metrics, review_metrics
-from src.infrastructure.archive.archive_service import ZipArchiveService
 
 
 class _DummyZipArchiveService(ZipArchiveService):
@@ -48,7 +50,9 @@ async def test_review_submission_converts_package_report(
     diff_analyzer = SimpleNamespace()
 
     class _StubLLMClient:
-        async def make_request(self, model_name: str, prompt: str, **kwargs: Any) -> str:
+        async def make_request(
+            self, model_name: str, prompt: str, **kwargs: Any
+        ) -> str:
             return "ok"
 
     service = ModularReviewService(

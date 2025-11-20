@@ -248,4 +248,3 @@ class VoskSpeechToTextAdapter:
                         f"Failed to delete temp file {temp_file_path}: {e}",
                         extra={"temp_file": str(temp_file_path)},
                     )
-

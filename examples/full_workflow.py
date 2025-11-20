@@ -33,7 +33,10 @@ async def demo_mcp_workflow():
         print("\n1. Formalizing Task")
         result = await client.call_tool(
             "formalize_task",
-            {"informal_request": "Create a REST API for authentication", "context": "FastAPI"}
+            {
+                "informal_request": "Create a REST API for authentication",
+                "context": "FastAPI",
+            },
         )
         print(f"Result: {result.get('plan', {}).get('requirements', [])[:3]}...")
 
@@ -41,7 +44,7 @@ async def demo_mcp_workflow():
         print("\n2. Generating Code")
         result = await client.call_tool(
             "generate_code",
-            {"description": "Create a fibonacci function", "model": "starcoder"}
+            {"description": "Create a fibonacci function", "model": "starcoder"},
         )
         print(f"Generated: {result.get('code', '')[:100]}...")
 
@@ -53,8 +56,7 @@ async def demo_mcp_workflow():
     return fib(n-1) + fib(n-2)
 """
         result = await client.call_tool(
-            "review_code",
-            {"code": test_code, "model": "starcoder"}
+            "review_code", {"code": test_code, "model": "starcoder"}
         )
         print(f"Quality Score: {result.get('quality_score', 0)}/10")
 

@@ -63,9 +63,9 @@ class CodeQualityChecker:
                                     "file": parts[0],
                                     "line": parts[1],
                                     "column": parts[2],
-                                    "code": parts[3].split()[0]
-                                    if parts[3].split()
-                                    else "",
+                                    "code": (
+                                        parts[3].split()[0] if parts[3].split() else ""
+                                    ),
                                     "message": parts[3].strip() if parts[3] else "",
                                 }
                             )

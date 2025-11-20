@@ -8,9 +8,9 @@ from typing import Iterable, Sequence
 from src.domain.embedding_index import EmbeddingVector
 from src.domain.rag import (
     FilterConfig,
-    RetrievedChunk,
     RelevanceFilterService,
     RerankerService,
+    RetrievedChunk,
     VectorSearchService,
 )
 from src.infrastructure.logging import get_logger
@@ -93,11 +93,7 @@ class RetrievalService:
         filter_config: FilterConfig,
     ) -> list[RetrievedChunk]:
         chunk_list = list(chunks)
-        if not (
-            self._reranker
-            and filter_config.reranker_enabled
-            and chunk_list
-        ):
+        if not (self._reranker and filter_config.reranker_enabled and chunk_list):
             return chunk_list
         try:
             result = await self._reranker.rerank(query_text, chunk_list)

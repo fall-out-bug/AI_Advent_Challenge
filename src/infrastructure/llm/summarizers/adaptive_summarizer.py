@@ -140,9 +140,11 @@ class AdaptiveSummarizer:
 
         if not cleaned_posts:
             return SummaryResult(
-                text="Нет пригодных постов для суммаризации."
-                if language == "ru"
-                else "No suitable posts.",
+                text=(
+                    "Нет пригодных постов для суммаризации."
+                    if language == "ru"
+                    else "No suitable posts."
+                ),
                 sentences_count=0,
                 method="direct",
                 confidence=0.0,

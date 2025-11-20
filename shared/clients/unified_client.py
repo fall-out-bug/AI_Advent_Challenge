@@ -7,49 +7,69 @@ and "Explicit is better than implicit".
 
 import asyncio
 from typing import Dict, List, Optional
+
 import httpx
 
 try:
     from shared_package.clients.base_client import BaseModelClient, ModelResponse
-    from shared_package.config.models import MODEL_CONFIGS, ModelType, get_model_config, is_local_model
+    from shared_package.config.api_keys import get_api_key, is_api_key_configured
     from shared_package.config.constants import (
-        DEFAULT_TIMEOUT,
         DEFAULT_MAX_TOKENS,
         DEFAULT_TEMPERATURE,
-        TEST_MAX_TOKENS
+        DEFAULT_TIMEOUT,
+        TEST_MAX_TOKENS,
     )
-    from shared_package.config.api_keys import get_api_key, is_api_key_configured
-    from shared_package.validation.models import ModelRequest, ValidationError, sanitize_input
+    from shared_package.config.models import (
+        MODEL_CONFIGS,
+        ModelType,
+        get_model_config,
+        is_local_model,
+    )
     from shared_package.exceptions.model_errors import (
+        ModelConfigurationError,
         ModelConnectionError,
         ModelRequestError,
         ModelTimeoutError,
-        ModelConfigurationError,
+    )
+    from shared_package.validation.models import (
+        ModelRequest,
+        ValidationError,
+        sanitize_input,
     )
 except ImportError:
     # Fallback for different import paths
     import sys
     from pathlib import Path
+
     _root = Path(__file__).parent.parent
     _shared_package = _root / "shared_package"
     if _shared_package.exists():
         sys.path.insert(0, str(_root))
         from shared_package.clients.base_client import BaseModelClient, ModelResponse
-        from shared_package.config.models import MODEL_CONFIGS, ModelType, get_model_config, is_local_model
+        from shared_package.config.api_keys import get_api_key, is_api_key_configured
         from shared_package.config.constants import (
-            DEFAULT_TIMEOUT,
             DEFAULT_MAX_TOKENS,
             DEFAULT_TEMPERATURE,
-            TEST_MAX_TOKENS
+            DEFAULT_TIMEOUT,
+            TEST_MAX_TOKENS,
         )
-        from shared_package.config.api_keys import get_api_key, is_api_key_configured
-        from shared_package.validation.models import ModelRequest, ValidationError, sanitize_input
+        from shared_package.config.models import (
+            MODEL_CONFIGS,
+            ModelType,
+            get_model_config,
+            is_local_model,
+        )
         from shared_package.exceptions.model_errors import (
+            ModelConfigurationError,
             ModelConnectionError,
+            ModelNotAvailableError,
             ModelRequestError,
             ModelTimeoutError,
-            ModelConfigurationError,
-            ModelNotAvailableError
+        )
+        from shared_package.validation.models import (
+            ModelRequest,
+            ValidationError,
+            sanitize_input,
         )
     else:
         # For base_client, we still need shared_package
@@ -87,7 +107,7 @@ class UnifiedModelClient(BaseModelClient):
         model_name: str,
         prompt: str,
         max_tokens: Optional[int] = None,
-        temperature: Optional[float] = None
+        temperature: Optional[float] = None,
     ) -> ModelResponse:
         """
         Make request to any model type with input validation.
@@ -114,7 +134,7 @@ class UnifiedModelClient(BaseModelClient):
                 model_name=model_name,
                 prompt=sanitize_input(prompt),
                 max_tokens=max_tokens,
-                temperature=temperature
+                temperature=temperature,
             )
         except Exception as e:
             raise ValidationError(f"Input validation failed: {str(e)}")
@@ -129,16 +149,16 @@ class UnifiedModelClient(BaseModelClient):
             raise ModelConfigurationError(f"Unknown model: {model_name}")
 
         if is_local_model(model_name):
-            return await self._make_local_request(model_name, prompt, max_tokens, temperature)
+            return await self._make_local_request(
+                model_name, prompt, max_tokens, temperature
+            )
         else:
-            return await self._make_external_request(model_name, prompt, max_tokens, temperature)
+            return await self._make_external_request(
+                model_name, prompt, max_tokens, temperature
+            )
 
     async def _make_local_request(
-        self,
-        model_name: str,
-        prompt: str,
-        max_tokens: int,
-        temperature: float
+        self, model_name: str, prompt: str, max_tokens: int, temperature: float
     ) -> ModelResponse:
         """Make request to local model."""
         config = get_model_config(model_name)
@@ -147,7 +167,7 @@ class UnifiedModelClient(BaseModelClient):
         payload = {
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": max_tokens,
-            "temperature": temperature
+            "temperature": temperature,
         }
 
         start_time = asyncio.get_event_loop().time()
@@ -167,24 +187,26 @@ class UnifiedModelClient(BaseModelClient):
                 input_tokens=data["input_tokens"],
                 total_tokens=data["total_tokens"],
                 model_name=model_name,
-                response_time=response_time
+                response_time=response_time,
             )
 
         except httpx.ConnectError as e:
-            raise ModelConnectionError(f"Failed to connect to local model {model_name}: {e}")
+            raise ModelConnectionError(
+                f"Failed to connect to local model {model_name}: {e}"
+            )
         except httpx.TimeoutException as e:
-            raise ModelTimeoutError(f"Request to local model {model_name} timed out: {e}")
+            raise ModelTimeoutError(
+                f"Request to local model {model_name} timed out: {e}"
+            )
         except httpx.HTTPStatusError as e:
             raise ModelRequestError(f"HTTP error for local model {model_name}: {e}")
         except Exception as e:
-            raise ModelRequestError(f"Unexpected error with local model {model_name}: {e}")
+            raise ModelRequestError(
+                f"Unexpected error with local model {model_name}: {e}"
+            )
 
     async def _make_external_request(
-        self,
-        model_name: str,
-        prompt: str,
-        max_tokens: int,
-        temperature: float
+        self, model_name: str, prompt: str, max_tokens: int, temperature: float
     ) -> ModelResponse:
         """
         Make request to external API.
@@ -224,16 +246,24 @@ class UnifiedModelClient(BaseModelClient):
                     prompt, max_tokens, temperature, api_key, start_time
                 )
             else:
-                raise ModelConfigurationError(f"Unsupported external model: {model_name}")
+                raise ModelConfigurationError(
+                    f"Unsupported external model: {model_name}"
+                )
 
         except httpx.ConnectError as e:
-            raise ModelConnectionError(f"Failed to connect to external API {model_name}: {e}")
+            raise ModelConnectionError(
+                f"Failed to connect to external API {model_name}: {e}"
+            )
         except httpx.TimeoutException as e:
-            raise ModelTimeoutError(f"Request to external API {model_name} timed out: {e}")
+            raise ModelTimeoutError(
+                f"Request to external API {model_name} timed out: {e}"
+            )
         except httpx.HTTPStatusError as e:
             raise ModelRequestError(f"HTTP error for external API {model_name}: {e}")
         except Exception as e:
-            raise ModelRequestError(f"Unexpected error with external API {model_name}: {e}")
+            raise ModelRequestError(
+                f"Unexpected error with external API {model_name}: {e}"
+            )
 
     async def _make_perplexity_request(
         self,
@@ -241,23 +271,21 @@ class UnifiedModelClient(BaseModelClient):
         max_tokens: int,
         temperature: float,
         api_key: str,
-        start_time: float
+        start_time: float,
     ) -> ModelResponse:
         """Make request to Perplexity API."""
         url = "https://api.perplexity.ai/chat/completions"
 
         payload = {
             "model": "sonar-pro",
-            "messages": [
-                {"role": "user", "content": prompt}
-            ],
+            "messages": [{"role": "user", "content": prompt}],
             "max_tokens": max_tokens,
-            "temperature": temperature
+            "temperature": temperature,
         }
 
         headers = {
             "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         response = await self.client.post(url, json=payload, headers=headers)
@@ -282,7 +310,7 @@ class UnifiedModelClient(BaseModelClient):
             input_tokens=int(estimated_input_tokens),
             total_tokens=int(estimated_input_tokens + estimated_response_tokens),
             model_name="perplexity",
-            response_time=response_time
+            response_time=response_time,
         )
 
     async def _make_chadgpt_request(
@@ -291,7 +319,7 @@ class UnifiedModelClient(BaseModelClient):
         max_tokens: int,
         temperature: float,
         api_key: str,
-        start_time: float
+        start_time: float,
     ) -> ModelResponse:
         """Make request to ChadGPT API."""
         url = "https://ask.chadgpt.ru/api/public/gpt-5-mini"
@@ -300,7 +328,7 @@ class UnifiedModelClient(BaseModelClient):
             "message": prompt,
             "api_key": api_key,
             "temperature": temperature,
-            "max_tokens": max_tokens
+            "max_tokens": max_tokens,
         }
 
         response = await self.client.post(url, json=payload)
@@ -311,10 +339,10 @@ class UnifiedModelClient(BaseModelClient):
 
         data = response.json()
 
-        if not data.get('is_success') or not isinstance(data.get('response'), str):
+        if not data.get("is_success") or not isinstance(data.get("response"), str):
             raise ModelRequestError("Unexpected response format from ChadGPT API")
 
-        response_text = data['response']
+        response_text = data["response"]
 
         # Estimate tokens (ChadGPT doesn't provide exact counts)
         estimated_input_tokens = len(prompt.split()) * 1.3
@@ -326,7 +354,7 @@ class UnifiedModelClient(BaseModelClient):
             input_tokens=int(estimated_input_tokens),
             total_tokens=int(estimated_input_tokens + estimated_response_tokens),
             model_name="chadgpt",
-            response_time=response_time
+            response_time=response_time,
         )
 
     async def check_availability(self, model_name: str) -> bool:
@@ -357,8 +385,8 @@ class UnifiedModelClient(BaseModelClient):
                 url,
                 json={
                     "messages": [{"role": "user", "content": "test"}],
-                    "max_tokens": TEST_MAX_TOKENS
-                }
+                    "max_tokens": TEST_MAX_TOKENS,
+                },
             )
             return response.status_code == 200
         except (httpx.HTTPError, httpx.ConnectError, httpx.TimeoutException):

@@ -201,7 +201,9 @@ class TokenHandlingAgent:
         print("=" * 60)
         print(f"Token limit: {self._token_limit}")
         print(f"Short request: {short_analysis.token_count} tokens (OK)")
-        print(f"Long request: {long_analysis.token_count} tokens ({'OK' if not long_analysis.exceeds_limit else 'EXCEEDS'})")
+        print(
+            f"Long request: {long_analysis.token_count} tokens ({'OK' if not long_analysis.exceeds_limit else 'EXCEEDS'})"
+        )
         print(f"Overflow request: {overflow_analysis.token_count} tokens (EXCEEDS)")
         if overflow_analysis.exceeds_limit:
             print("\nWhen text exceeds limit:")
@@ -224,7 +226,8 @@ def main(argv: list[str] | None = None) -> int:
     The primary aim is to allow the computers to learn automatically without human intervention
     or assistance and adjust actions accordingly."""
 
-    overflow_text = """Machine learning is a subset of artificial intelligence that enables
+    overflow_text = (
+        """Machine learning is a subset of artificial intelligence that enables
     systems to learn and improve from experience without being explicitly programmed.
     It focuses on the development of computer programs that can access data and use it
     to learn for themselves. The process of learning begins with observations or data,
@@ -239,7 +242,9 @@ def main(argv: list[str] | None = None) -> int:
     where the algorithm learns through interaction with an environment. Deep learning, a subset
     of machine learning, uses neural networks with multiple layers to model and understand
     complex patterns in data. This approach has been particularly successful in image recognition,
-    natural language processing, and speech recognition tasks. """ * 5  # Repeat to ensure overflow
+    natural language processing, and speech recognition tasks. """
+        * 5
+    )  # Repeat to ensure overflow
 
     agent = TokenHandlingAgent(token_limit=1000)
 

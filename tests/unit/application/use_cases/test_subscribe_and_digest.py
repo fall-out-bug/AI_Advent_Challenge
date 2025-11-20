@@ -1,11 +1,12 @@
 """Tests for SubscribeAndGenerateDigestUseCase."""
 
-import pytest
 from unittest.mock import AsyncMock, patch
 
+import pytest
+
 from src.application.use_cases.subscribe_and_generate_digest import (
-    SubscribeAndGenerateDigestUseCase,
     DigestResult,
+    SubscribeAndGenerateDigestUseCase,
 )
 from src.application.use_cases.subscribe_with_collection import (
     SubscribeWithCollectionResult,

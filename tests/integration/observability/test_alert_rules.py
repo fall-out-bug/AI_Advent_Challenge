@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import yaml
-
 from pathlib import Path
+
+import yaml
 
 ALERTS_FILE = Path("prometheus/alerts.yml")
 

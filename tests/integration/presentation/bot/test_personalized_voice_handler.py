@@ -1,7 +1,8 @@
 """Integration tests for personalized voice handler."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from src.application.personalization.dtos import PersonalizedReplyOutput
 

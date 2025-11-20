@@ -55,7 +55,7 @@ def main(argv: list[str] | None = None) -> int:
     """Entry point for Day 1 demo."""
     args = sys.argv[1:] if argv is None else argv
     if not args:
-        print("Usage: day01_basic_agent.py \"your question\"")
+        print('Usage: day01_basic_agent.py "your question"')
         return 1
 
     question = " ".join(args)

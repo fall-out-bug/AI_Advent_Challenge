@@ -30,9 +30,9 @@ async def test_summarizer_service_protocol_implementation():
     summarizer = create_adaptive_summarizer()
 
     # Verify it's an instance of AdaptiveSummarizer
-    assert isinstance(summarizer, AdaptiveSummarizer), (
-        "Factory should return AdaptiveSummarizer instance"
-    )
+    assert isinstance(
+        summarizer, AdaptiveSummarizer
+    ), "Factory should return AdaptiveSummarizer instance"
 
     # Verify it implements SummarizerService protocol
     # (Protocol checking is structural - if methods exist, it conforms)
@@ -221,7 +221,9 @@ async def test_summarizer_service_empty_input_handling():
         context=context,
     )
 
-    assert isinstance(result, SummaryResult), "Should return SummaryResult even for empty text"
+    assert isinstance(
+        result, SummaryResult
+    ), "Should return SummaryResult even for empty text"
     assert isinstance(result.text, str), "Should have text (fallback message)"
 
     # Empty posts list should return fallback summary
@@ -232,5 +234,7 @@ async def test_summarizer_service_empty_input_handling():
         context=context,
     )
 
-    assert isinstance(result_posts, SummaryResult), "Should return SummaryResult even for empty posts"
+    assert isinstance(
+        result_posts, SummaryResult
+    ), "Should return SummaryResult even for empty posts"
     assert isinstance(result_posts.text, str), "Should have text (fallback message)"

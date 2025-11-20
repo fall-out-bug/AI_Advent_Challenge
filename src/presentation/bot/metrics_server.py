@@ -17,10 +17,13 @@ from typing import Optional
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from src.infrastructure.logging import get_logger
+
 <<<<<<< HEAD
 from src.infrastructure.metrics import get_butler_metrics
+
 =======
 from src.infrastructure.monitoring.prometheus_metrics import get_metrics_registry
+
 >>>>>>> origin/master
 
 logger = get_logger("metrics_server")

@@ -10,9 +10,10 @@ tests will be skipped automatically.
 """
 
 import os
-import pytest
 from datetime import datetime, timedelta
 from unittest.mock import patch
+
+import pytest
 
 
 @pytest.fixture(autouse=True)
@@ -29,7 +30,7 @@ def _set_test_db_env(monkeypatch):
 async def _cleanup_db():
     """Cleanup database before and after tests."""
     try:
-        from src.infrastructure.database.mongo import get_db, close_client
+        from src.infrastructure.database.mongo import close_client, get_db
 
         db = await get_db()
         await db.channels.delete_many({})
@@ -60,10 +61,10 @@ async def _patch_db_for_digest_tools(mongodb_database_async, monkeypatch):
         mongodb_database_async: Per-test async MongoDB database fixture.
         monkeypatch: Pytest monkeypatch fixture.
     """
-    from src.infrastructure.database.mongo import close_client
-    from src.infrastructure.config.settings import get_settings
     import src.infrastructure.database.mongo as mongo_module
     import src.presentation.mcp.tools.channels.utils as utils_module
+    from src.infrastructure.config.settings import get_settings
+    from src.infrastructure.database.mongo import close_client
 
     # Close existing connection
     await close_client()
@@ -319,8 +320,8 @@ async def test_digest_filters_only_recent_posts_correctly(mock_channel_posts):
 <<<<<<< HEAD
 async def test_digest_updates_last_digest_timestamp():
     """Test that digest updates last_digest timestamp."""
-    from src.presentation.mcp.tools.digest_tools import add_channel, get_channel_digest
     from src.infrastructure.database.mongo import get_db
+    from src.presentation.mcp.tools.digest_tools import add_channel, get_channel_digest
 
     await add_channel(user_id=600, channel_username="test_channel")  # type: ignore[arg-type]
 
@@ -361,10 +362,11 @@ async def test_digest_updates_last_digest_timestamp(mongodb_database_async, monk
         mongodb_database_async: Per-test async MongoDB database fixture.
         monkeypatch: Pytest monkeypatch fixture for environment variables.
     """
-    from src.presentation.mcp.tools.digest_tools import add_channel, get_channel_digest
-    from src.infrastructure.database.mongo import close_client, get_db
-    from src.infrastructure.config.settings import get_settings
     from unittest.mock import patch
+
+    from src.infrastructure.config.settings import get_settings
+    from src.infrastructure.database.mongo import close_client, get_db
+    from src.presentation.mcp.tools.digest_tools import add_channel, get_channel_digest
 
     # Get test MongoDB URL from settings
     settings = get_settings()

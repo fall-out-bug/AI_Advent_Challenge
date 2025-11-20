@@ -1,4 +1,4 @@
-# Epic 24 · Tech Lead Implementation Plan  
+# Epic 24 · Tech Lead Implementation Plan
 _Day 24 · Voice Agent (Speech → LLM → Text)_
 
 ## 1. Metadata & Inputs
@@ -150,4 +150,3 @@ Parallelisation note: TL-01 and TL-02 can overlap partially (adapter scaffold mo
 - [ ] Use cases & gateways implemented with structured logging.
 - [ ] Telegram handlers wired with manual and automated tests.
 - [ ] Metrics + Loki alerts updated; docs & acceptance matrix signed.
-

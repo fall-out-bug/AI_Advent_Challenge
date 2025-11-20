@@ -1,0 +1,50 @@
+from: tech_lead
+to: developer
+timestamp: "2025_11_19_20_05_02"
+epic_id: "epic_26"
+iteration: 2
+
+type: request
+subject: implement_verification_scripts
+
+content:
+  summary: "Test samples validated and approved - Ready for verification script implementation"
+  validation_status: "approved"
+  samples_approved: 4
+  samples_location: "docs/specs/epic_26/test_samples/"
+  approved_samples:
+    - "01_simple_functions.py - Level 1 (Simple functions)"
+    - "02_calculator.py - Level 2 (Calculator with edge cases)"
+    - "03_shopping_cart.py - Level 3 (Class with methods)"
+    - "04_data_processor.py - Level 4 (Complex data processing)"
+  verification_script_requirements:
+    script_location: "scripts/verify_test_agent.py or tests/e2e/test_agent/verify_samples.py"
+    functionality:
+      - "Iterate over all 4 sample files"
+      - "Run Test Agent CLI for each file: python -m src.presentation.cli.test_agent.main <file_path>"
+      - "Collect results: test status (pass/fail), coverage percentage, errors"
+      - "Verify coverage ≥80% for each sample"
+      - "Verify all tests pass"
+      - "Generate summary report (JSON or text)"
+      - "Exit with code 0 if all pass, 1 if any fail"
+    output_format:
+      - "Summary report showing results for each sample"
+      - "Overall status (PASS/FAIL)"
+      - "Coverage verification (≥80% for each sample)"
+      - "Error details if any failures"
+  acceptance_criteria_verification:
+    AC1: "Verify Test Agent generates pytest tests for all samples"
+    AC3: "Verify Test Agent executes tests and reports coverage"
+    AC4: "Verify Test Agent uses local Qwen model (no external APIs)"
+    AC5: "Verify coverage ≥80% for each sample"
+  test_requirements:
+    - "Verification script itself must have ≥80% test coverage"
+    - "Script must follow project code standards (PEP 8, type hints, docstrings)"
+    - "Script must be executable standalone"
+  time_constraint: "Script implementation should complete within 2 hours"
+  artifacts_created:
+    - "test_samples_validation.json - Validation report (for reference)"
+  notes: "All test samples validated and approved. Verification scripts should automate testing of Test Agent against all 4 samples to verify production readiness."
+
+action_needed: "implement_verification_scripts"
+notes: "Test samples approved. Implement verification scripts that run Test Agent against all 4 samples and verify results meet acceptance criteria."

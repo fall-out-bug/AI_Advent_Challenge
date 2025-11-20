@@ -3,8 +3,9 @@
 Following TDD principles: test switching between modes in single session.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 <<<<<<< HEAD
 from src.domain.agents.services.mode_classifier import DialogMode
@@ -17,12 +18,12 @@ async def test_mode_switch_task_to_data(butler_orchestrator):
 from src.application.dtos.butler_dialog_dtos import DialogMode
 from tests.fixtures.butler_fixtures import (
     butler_orchestrator,
-    mock_task_handler,
-    mock_data_handler,
     mock_chat_handler,
-    mock_tool_client_protocol,
-    mock_llm_client_protocol,
+    mock_data_handler,
     mock_intent_orchestrator,
+    mock_llm_client_protocol,
+    mock_task_handler,
+    mock_tool_client_protocol,
 )
 
 

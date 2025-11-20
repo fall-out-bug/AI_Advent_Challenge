@@ -5,8 +5,9 @@ Tests the full Clean Architecture integration from use case to domain services.
 Epic 21 · Stage 21_01d · Use Case Decomposition
 """
 
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
 
 from src.infrastructure.di.container import DIContainer, Settings
 
@@ -21,6 +22,7 @@ class TestUseCaseDecompositionIntegration:
     @pytest.fixture
     async def di_container(self):
         """Create DI container with test settings."""
+
         # Create minimal settings to avoid pydantic validation issues
         class TestSettings:
             def __init__(self):
@@ -36,7 +38,7 @@ class TestUseCaseDecompositionIntegration:
         mock_hw_checker = AsyncMock()
         mock_hw_checker.get_recent_commits.return_value = {
             "total": 1,
-            "commits": [{"commit_hash": "test123", "assignment": "Test"}]
+            "commits": [{"commit_hash": "test123", "assignment": "Test"}],
         }
         mock_hw_checker.download_archive.return_value = b"test_archive_data"
 
@@ -96,8 +98,8 @@ class TestUseCaseDecompositionIntegration:
 
         # Verify storage service is available and secure
         storage_service = di_container.storage_service
-        assert hasattr(storage_service, 'validate_path_safe')
-        assert hasattr(storage_service, 'create_temp_file')
+        assert hasattr(storage_service, "validate_path_safe")
+        assert hasattr(storage_service, "create_temp_file")
 
     async def test_legacy_vs_clean_use_case_coexistence(self, di_container):
         """Integration: Both legacy and clean use cases can coexist."""
@@ -120,7 +122,9 @@ class TestUseCaseDecompositionIntegration:
         """Integration: Use case error handling works end-to-end."""
         # Setup service to fail
         homework_service = di_container.homework_review_service
-        homework_service.review_homework.side_effect = Exception("Integration test error")
+        homework_service.review_homework.side_effect = Exception(
+            "Integration test error"
+        )
 
         # Act & Assert
         use_case = di_container.review_homework_clean_use_case

@@ -96,7 +96,9 @@ class TestChannelNormalizerCharacterization:
 
         for input_text, expected in test_cases:
             result = normalizer.normalize(input_text)
-            assert result == expected, f"Input: {input_text}, Expected: {expected}, Got: {result}"
+            assert (
+                result == expected
+            ), f"Input: {input_text}, Expected: {expected}, Got: {result}"
 
     def test_transliterate_ru_to_lat_characterization(
         self, normalizer: ChannelNormalizer
@@ -130,9 +132,7 @@ class TestPostFetcherWorkerCharacterization:
         worker2 = PostFetcherWorker(mcp_url="http://test:8000")
         assert worker2 is not None
 
-    def test_worker_looks_like_title_characterization(
-        self, worker: PostFetcherWorker
-    ):
+    def test_worker_looks_like_title_characterization(self, worker: PostFetcherWorker):
         """Characterize _looks_like_title() detection logic."""
         # Test Cyrillic detection
         assert worker._looks_like_title("Набока") is True
@@ -182,9 +182,9 @@ class TestTelegramUtilsCharacterization:
         Purpose:
             Document current signature before introducing adapter interface in E.2.
         """
-        from src.infrastructure.clients.telegram_utils import fetch_channel_posts
-
         import inspect
+
+        from src.infrastructure.clients.telegram_utils import fetch_channel_posts
 
         sig = inspect.signature(fetch_channel_posts)
         params = list(sig.parameters.keys())

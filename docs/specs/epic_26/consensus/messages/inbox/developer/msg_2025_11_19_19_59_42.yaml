@@ -1,0 +1,47 @@
+from: analyst
+to: developer
+timestamp: "2025_11_19_19_59_42"
+epic_id: "epic_26"
+iteration: 2
+
+type: request
+subject: implement_verification_scripts
+
+content:
+  summary: "Implement verification scripts for Test Agent production validation"
+  context: "Epic 26 (Test Agent) is complete. Sample test files were created for production validation. After Tech Lead validation, Developer needs to implement scripts that run Test Agent against these samples and verify results."
+  requirements:
+    - "Create verification script (e.g., scripts/verify_test_agent.py)"
+    - "Script should iterate over all sample files in docs/specs/epic_26/test_samples/"
+    - "Run Test Agent CLI for each file: python -m src.presentation.cli.test_agent.main <file>"
+    - "Collect results (test status, coverage, errors)"
+    - "Verify acceptance criteria from Epic 26 are met (test generation, execution, coverage ≥80%)"
+    - "Generate summary report with pass/fail status for each sample"
+    - "Exit with code 0 if all pass, 1 if any fail"
+  sample_files:
+    - "01_simple_functions.py"
+    - "02_calculator.py"
+    - "03_shopping_cart.py"
+    - "04_data_processor.py"
+  constraints:
+    - "Must use existing Test Agent CLI (src.presentation.cli.test_agent.main)"
+    - "Must follow project code standards (PEP 8, type hints, docstrings)"
+    - "Must maintain ≥80% test coverage for scripts themselves"
+    - "Must complete all samples within 5 minutes"
+  deliverables:
+    - "Verification script that runs Test Agent against all samples"
+    - "Script should be executable standalone"
+    - "Documentation on how to run the script"
+  dependencies:
+    - "Wait for Tech Lead validation of sample files"
+    - "Use existing Test Agent implementation from Epic 26"
+  acceptance_criteria:
+    - "Script processes all 4 sample files"
+    - "Script verifies test generation works"
+    - "Script verifies test execution works"
+    - "Script verifies coverage ≥80% for each sample"
+    - "Script generates summary report"
+    - "Script exits with appropriate status codes"
+
+action_needed: "wait_for_tech_lead_validation_then_implement"
+notes: "Wait for Tech Lead to validate sample files first. Then implement verification scripts as specified."

@@ -1,8 +1,8 @@
 """Tests for error handling scenarios."""
 
 from src.presentation.mcp.exceptions import (
-    MCPBaseException,
     MCPAgentError,
+    MCPBaseException,
     MCPModelError,
     MCPOrchestrationError,
     MCPValidationError,

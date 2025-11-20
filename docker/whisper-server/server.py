@@ -5,12 +5,12 @@ Purpose:
     Supports async model loading to prevent blocking server startup.
 """
 
+import asyncio
 import os
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
-import asyncio
 import whisper
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
@@ -137,12 +137,12 @@ async def transcribe(
             if _model_loading:
                 raise HTTPException(
                     status_code=503,
-                    detail="Model is still loading. Please try again in a few moments."
+                    detail="Model is still loading. Please try again in a few moments.",
                 )
             else:
                 raise HTTPException(
                     status_code=503,
-                    detail="Model is not available. Please check server logs."
+                    detail="Model is not available. Please check server logs.",
                 )
 
         # Use the already loaded model
@@ -154,7 +154,7 @@ async def transcribe(
         # Save to temp file
         with tempfile.NamedTemporaryFile(
             delete=False,
-            suffix=f".{file.filename.split('.')[-1] if file.filename else '.wav'}"
+            suffix=f".{file.filename.split('.')[-1] if file.filename else '.wav'}",
         ) as tmp_file:
             tmp_file.write(content)
             tmp_path = tmp_file.name
@@ -177,7 +177,9 @@ async def transcribe(
             if initial_prompt:
                 transcribe_kwargs["initial_prompt"] = initial_prompt
             elif language == "ru":
-                transcribe_kwargs["initial_prompt"] = "Это голосовое сообщение на русском языке."
+                transcribe_kwargs[
+                    "initial_prompt"
+                ] = "Это голосовое сообщение на русском языке."
 
             result = whisper_model.transcribe(tmp_path, **transcribe_kwargs)
 
@@ -229,26 +231,24 @@ async def transcribe(
 
         except Exception as e:
             import traceback
+
             error_trace = traceback.format_exc()
             print(f"Transcription error: {str(e)}")
             print(f"Traceback: {error_trace}")
             raise HTTPException(
-                status_code=500,
-                detail=f"Transcription failed: {str(e)}"
+                status_code=500, detail=f"Transcription failed: {str(e)}"
             )
         finally:
             # Cleanup temp file
-            if 'tmp_path' in locals() and os.path.exists(tmp_path):
+            if "tmp_path" in locals() and os.path.exists(tmp_path):
                 os.unlink(tmp_path)
 
     except HTTPException:
         raise
     except Exception as e:
         import traceback
+
         error_trace = traceback.format_exc()
         print(f"Unexpected error in transcribe endpoint: {str(e)}")
         print(f"Traceback: {error_trace}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Transcription failed: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")

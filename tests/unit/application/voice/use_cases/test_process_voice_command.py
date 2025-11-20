@@ -226,4 +226,3 @@ class TestProcessVoiceCommandUseCase:
 
         # Verify confirmation not sent
         use_case.confirmation_gateway.send_confirmation.assert_not_called()
-

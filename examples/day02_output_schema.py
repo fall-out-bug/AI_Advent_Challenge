@@ -41,9 +41,7 @@ class StructuredAgent:
             llm_url: Base URL for LLM API. Defaults to env or localhost.
         """
         self._llm_url = (
-            llm_url
-            or os.environ.get("LLM_URL")
-            or "http://localhost:8000/v1"
+            llm_url or os.environ.get("LLM_URL") or "http://localhost:8000/v1"
         ).rstrip("/")
         self._client = httpx.Client(timeout=30.0)
 
@@ -133,7 +131,7 @@ def main(argv: list[str] | None = None) -> int:
     """Entry point for Day 2 demo."""
     args = sys.argv[1:] if argv is None else argv
     if not args:
-        print("Usage: day02_output_schema.py \"your question\"")
+        print('Usage: day02_output_schema.py "your question"')
         return 1
 
     question = " ".join(args)

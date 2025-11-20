@@ -1,4 +1,5 @@
 import os
+
 import pytest
 
 from src.infrastructure.llm.token_counter import TokenCounter

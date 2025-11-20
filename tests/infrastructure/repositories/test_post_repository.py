@@ -1,19 +1,22 @@
 """Tests for PostRepository with hybrid deduplication (message_id + content_hash)."""
 
 <<<<<<< HEAD
-import os
 import asyncio
+import hashlib
+import os
+from datetime import datetime, timedelta
+
 import pytest
+
+=======
 import hashlib
 from datetime import datetime, timedelta
 
-=======
 import pytest
-import hashlib
-from datetime import datetime, timedelta
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from src.infrastructure.repositories.post_repository import PostRepository
+
 >>>>>>> origin/master
 
 pytestmark = pytest.mark.asyncio
@@ -40,7 +43,7 @@ def _set_test_db_env(monkeypatch):
 @pytest.fixture
 async def repo():
     """Create PostRepository instance with test database."""
-    from src.infrastructure.database.mongo import get_db, close_client
+    from src.infrastructure.database.mongo import close_client, get_db
     from src.infrastructure.repositories.post_repository import PostRepository
 
     db = await get_db()

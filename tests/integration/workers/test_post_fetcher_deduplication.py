@@ -14,6 +14,7 @@ import pytest
 
 <<<<<<< HEAD
 from src.infrastructure.database.mongo import get_db
+
 =======
 >>>>>>> origin/master
 from src.infrastructure.repositories.post_repository import PostRepository

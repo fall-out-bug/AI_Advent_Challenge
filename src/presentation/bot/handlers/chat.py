@@ -55,7 +55,9 @@ Just respond naturally to what the user said. Be brief and helpful.
             return self._clean_response(response)
         except Exception as exc:  # noqa: BLE001
             logger.error("Chat handling failed: %s", exc, exc_info=True)
-            return "Я здесь, чтобы помочь! Попробуйте создать задачу или запросить данные."
+            return (
+                "Я здесь, чтобы помочь! Попробуйте создать задачу или запросить данные."
+            )
 
     async def _log_intent(self, message: str) -> None:
         """Run hybrid classifier to confirm idle intent."""
@@ -120,7 +122,11 @@ Just respond naturally to what the user said. Be brief and helpful.
                 second = rest[0]
                 first_has_ru = bool(re.search(r"[а-яА-Я]", first))
                 second_has_ru = bool(re.search(r"[а-яА-Я]", second))
-                if first_has_ru and not second_has_ru and len(second) < len(first) * 1.5:
+                if (
+                    first_has_ru
+                    and not second_has_ru
+                    and len(second) < len(first) * 1.5
+                ):
                     text = first
                 elif not first_has_ru and second_has_ru:
                     text = second

@@ -1,7 +1,8 @@
 """Tests for channel_metadata guard fixes."""
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from src.presentation.mcp.tools.channels.channel_metadata import get_channel_metadata
 

@@ -3,9 +3,10 @@
 Following TDD approach with comprehensive test coverage.
 """
 
-import pytest
+from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock
-from typing import Dict, Any, List
+
+import pytest
 
 from src.infrastructure.clients.mcp_client_adapter import MCPToolClientAdapter
 from src.infrastructure.clients.mcp_client_robust import RobustMCPClient

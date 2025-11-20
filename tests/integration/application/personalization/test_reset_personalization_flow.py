@@ -7,9 +7,7 @@ from src.domain.personalization.user_memory_event import UserMemoryEvent
 
 
 @pytest.mark.asyncio
-async def test_reset_personalization_flow(
-    reset_use_case, profile_repo, memory_repo
-):
+async def test_reset_personalization_flow(reset_use_case, profile_repo, memory_repo):
     """Test reset clears profile and memory."""
     user_id = "test_user_reset_123"
 

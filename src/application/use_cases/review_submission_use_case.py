@@ -5,13 +5,17 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass
-from typing import Any, Optional, cast, Callable
+from typing import Any, Callable, Optional, cast
 
 try:
-    from shared_package.clients.unified_client import UnifiedModelClient  # type: ignore[import-not-found]
+    from shared_package.clients.unified_client import (
+        UnifiedModelClient,  # type: ignore[import-not-found]
+    )
 except ImportError:
     try:
-        from shared.clients.unified_client import UnifiedModelClient  # type: ignore[import-not-found]
+        from shared.clients.unified_client import (
+            UnifiedModelClient,  # type: ignore[import-not-found]
+        )
     except ImportError as exc:  # pragma: no cover - defensive guard
         raise RuntimeError(
             "UnifiedModelClient not available. Shared SDK is not installed."
@@ -31,9 +35,9 @@ from src.domain.interfaces.log_analyzer import LogAnalyzer
 from src.domain.interfaces.log_parser import LogParser
 from src.domain.interfaces.review_publisher import ReviewPublisher
 from src.domain.interfaces.tool_client import ToolClientProtocol
+from src.domain.models.code_review_models import MultiPassReport
 from src.domain.services.diff_analyzer import DiffAnalyzer
 from src.domain.value_objects.long_summarization_task import LongTask
-from src.domain.models.code_review_models import MultiPassReport
 from src.infrastructure.archive.archive_service import ZipArchiveService
 from src.infrastructure.config.settings import Settings, get_settings
 from src.infrastructure.logging.review_logger import ReviewLogger

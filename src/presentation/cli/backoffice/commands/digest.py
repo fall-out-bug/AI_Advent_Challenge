@@ -11,6 +11,7 @@ import click
 <<<<<<< HEAD
 =======
 from src.domain.services.channel_normalizer import ChannelNormalizer
+
 >>>>>>> origin/master
 from src.presentation.cli.backoffice.formatters import OutputFormat, format_output
 from src.presentation.cli.backoffice.metrics import track_command

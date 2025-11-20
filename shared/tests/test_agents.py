@@ -13,25 +13,25 @@ Comprehensive test suite covering:
 - Agent registry and convenience functions
 """
 
-import pytest
 import asyncio
-from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from shared_package.agents import (
-    CodeGeneratorAgent,
-    CodeReviewerAgent,
+    AGENT_REGISTRY,
     AgentRequest,
     AgentResponse,
-    TaskMetadata,
+    CodeGeneratorAgent,
+    CodeReviewerAgent,
     QualityMetrics,
+    TaskMetadata,
+    create_agent,
     get_agent_class,
     list_available_agents,
-    create_agent,
-    AGENT_REGISTRY,
 )
-from shared_package.clients.unified_client import UnifiedModelClient
 from shared_package.clients.base_client import ModelResponse
+from shared_package.clients.unified_client import UnifiedModelClient
 from shared_package.exceptions.model_errors import ModelConnectionError
 
 

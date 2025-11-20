@@ -7,7 +7,6 @@ from pathlib import Path
 
 from src.infrastructure.logging import get_logger
 
-
 _FRONT_MATTER_PATTERN = re.compile(r"^---\s*\n.*?\n---\s*\n", re.DOTALL)
 
 

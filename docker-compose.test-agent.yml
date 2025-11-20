@@ -1,0 +1,59 @@
+services:
+  # =============================================
+  # Test Agent CLI Service (Epic 26)
+  # =============================================
+  test-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.test-agent
+    image: ai-challenge-test-agent:latest
+    container_name: test-agent
+    env_file:
+      - .env
+    environment:
+      # LLM Client configuration (uses existing LLM infrastructure)
+      - LLM_URL=${LLM_URL:-http://llm-api:8000}
+      - MISTRAL_API_URL=${MISTRAL_API_URL:-http://llm-api:8000}
+      - LLM_MODEL=qwen2.5:7b
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      # Mount workspace for processing files
+      - ./workspace:/app/workspace:rw
+      # Mount test samples directly
+      - ./docs/specs/epic_26/test_samples:/app/test_samples:ro
+      # Mount source code for development (optional)
+      # - ./src:/app/src:ro
+    # Test Agent is CLI tool - no HTTP port needed
+    # But we can expose metrics port if needed
+    # ports:
+    #   - "9092:9092"  # Metrics endpoint (if implemented)
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - butler-network
+      - infra_app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 256M
+    labels:
+      - "service=test-agent"
+      - "layer=presentation"
+      - "component=test-agent-cli"
+      - "epic=epic_26"
+
+networks:
+  butler-network:
+    driver: bridge
+  infra_app-network:
+    external: true
+    name: infra_infra_app-network

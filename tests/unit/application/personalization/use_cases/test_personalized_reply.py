@@ -1,7 +1,8 @@
 """Tests for PersonalizedReplyUseCase."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from src.application.personalization.dtos import PersonalizedReplyInput
 from src.application.personalization.use_cases.personalized_reply import (
@@ -79,9 +80,7 @@ async def test_execute_generates_reply(
         new_message="Hello",
         full_prompt="You are Alfred\n\nUser: Hello\nButler:",
     )
-    mock_personalization_service.build_personalized_prompt.return_value = (
-        prompt
-    )
+    mock_personalization_service.build_personalized_prompt.return_value = prompt
 
     input_data = PersonalizedReplyInput(user_id="123", text="Hello")
     output = await use_case.execute(input_data)
@@ -112,9 +111,7 @@ async def test_execute_compresses_memory_when_exceeds_cap(
     mock_profile_repo.get.return_value = profile
 
     prompt = PersonalizedPrompt("", "", "Hi", "Hi")
-    mock_personalization_service.build_personalized_prompt.return_value = (
-        prompt
-    )
+    mock_personalization_service.build_personalized_prompt.return_value = prompt
 
     # Mock compression summary generation
     mock_llm_client.generate.side_effect = [
@@ -137,9 +134,7 @@ async def test_execute_handles_errors_gracefully(
 ):
     """Test graceful error handling."""
     # Simulate error
-    mock_personalization_service.load_profile.side_effect = Exception(
-        "DB error"
-    )
+    mock_personalization_service.load_profile.side_effect = Exception("DB error")
 
     input_data = PersonalizedReplyInput(user_id="123", text="Hello")
     output = await use_case.execute(input_data)
@@ -159,9 +154,7 @@ async def test_execute_saves_interaction_to_memory(
     mock_personalization_service.load_profile.return_value = profile
 
     prompt = PersonalizedPrompt("", "", "Test", "Test")
-    mock_personalization_service.build_personalized_prompt.return_value = (
-        prompt
-    )
+    mock_personalization_service.build_personalized_prompt.return_value = prompt
 
     input_data = PersonalizedReplyInput(user_id="123", text="Test message")
     await use_case.execute(input_data)
@@ -176,17 +169,13 @@ async def test_execute_saves_interaction_to_memory(
 
 
 @pytest.mark.asyncio
-async def test_execute_with_voice_source(
-    use_case, mock_personalization_service
-):
+async def test_execute_with_voice_source(use_case, mock_personalization_service):
     """Test execution with voice source."""
     profile = UserProfile.create_default_profile("123")
     mock_personalization_service.load_profile.return_value = profile
 
     prompt = PersonalizedPrompt("", "", "Voice test", "Voice test")
-    mock_personalization_service.build_personalized_prompt.return_value = (
-        prompt
-    )
+    mock_personalization_service.build_personalized_prompt.return_value = prompt
 
     input_data = PersonalizedReplyInput(
         user_id="123", text="Voice message", source="voice"
@@ -212,9 +201,7 @@ async def test_execute_with_memory_events(
     mock_memory_repo.get_recent_events.return_value = events
 
     prompt = PersonalizedPrompt("", "", "New message", "New message")
-    mock_personalization_service.build_personalized_prompt.return_value = (
-        prompt
-    )
+    mock_personalization_service.build_personalized_prompt.return_value = prompt
 
     input_data = PersonalizedReplyInput(user_id="123", text="New message")
     output = await use_case.execute(input_data)
@@ -241,9 +228,7 @@ async def test_compress_memory_handles_llm_failure(
     mock_profile_repo.get.return_value = profile
 
     prompt = PersonalizedPrompt("", "", "Test", "Test")
-    mock_personalization_service.build_personalized_prompt.return_value = (
-        prompt
-    )
+    mock_personalization_service.build_personalized_prompt.return_value = prompt
 
     # Simulate LLM failure during compression
     mock_llm_client.generate.side_effect = [

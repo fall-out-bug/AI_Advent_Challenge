@@ -1,4 +1,5 @@
 """Adapter for test generation."""
+
 import re
 from typing import Any, Dict
 

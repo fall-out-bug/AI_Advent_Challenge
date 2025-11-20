@@ -326,9 +326,7 @@ class RerankResult:
     def _validate_strategy(self) -> None:
         allowed = ("llm", "cross_encoder", "threshold")
         if self.strategy not in allowed:
-            raise ValueError(
-                "strategy must be one of llm|cross_encoder|threshold."
-            )
+            raise ValueError("strategy must be one of llm|cross_encoder|threshold.")
 
     def _validate_latency(self) -> None:
         if self.latency_ms < 0:
@@ -339,21 +337,15 @@ class RerankResult:
         score_keys = set(self.rerank_scores)
         missing = [chunk_id for chunk_id in chunk_ids if chunk_id not in score_keys]
         if missing:
-            raise ValueError(
-                f"Missing rerank_score for chunk_id={missing[0]}."
-            )
+            raise ValueError(f"Missing rerank_score for chunk_id={missing[0]}.")
         extras = [key for key in score_keys if key not in chunk_ids]
         if extras:
-            raise ValueError(
-                f"Unexpected rerank_score for chunk_id={extras[0]}."
-            )
+            raise ValueError(f"Unexpected rerank_score for chunk_id={extras[0]}.")
         previous_score = float("inf")
         for chunk_id in chunk_ids:
             score = self.rerank_scores[chunk_id]
             if not 0.0 <= score <= 1.0:
                 raise ValueError("rerank_scores must be between 0.0 and 1.0.")
             if score > previous_score:
-                raise ValueError(
-                    "chunks must be ordered by descending rerank score."
-                )
+                raise ValueError("chunks must be ordered by descending rerank score.")
             previous_score = score

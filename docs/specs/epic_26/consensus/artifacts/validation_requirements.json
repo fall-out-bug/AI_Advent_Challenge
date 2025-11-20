@@ -1,0 +1,49 @@
+{
+  "epic_id": "epic_26",
+  "iteration": 2,
+  "timestamp": "2025_11_19_19_59_42",
+  "user_story": "As a QA engineer, I want automated verification scripts that test Test Agent with production-ready sample files, so that I can verify Test Agent works correctly in production environment after deployment.",
+  "acceptance_criteria": [
+    "GIVEN Tech Lead reviews test samples, WHEN validation is complete, THEN test samples are approved for production use",
+    "GIVEN Developer creates verification scripts, WHEN scripts are executed, THEN Test Agent processes all sample files and reports results",
+    "GIVEN verification scripts run, WHEN Test Agent processes samples, THEN all acceptance criteria from Epic 26 are verified (test generation, execution, coverage ≥80%)",
+    "GIVEN verification scripts run in production, WHEN results are collected, THEN scripts report pass/fail status for each sample file",
+    "GIVEN verification scripts complete, WHEN results are generated, THEN scripts output summary report with overall status"
+  ],
+  "out_of_scope": [
+    "Modifying existing Test Agent implementation",
+    "Creating new sample files (use existing ones)",
+    "Complex multi-file test scenarios",
+    "Performance/load testing scripts",
+    "Integration with CI/CD (separate epic)"
+  ],
+  "metrics": {
+    "technical_metrics": [
+      "Validation Time: Tech Lead validation should complete within 1 hour",
+      "Script Execution Time: Verification scripts should complete all samples within 5 minutes",
+      "Coverage Verification: Scripts must verify coverage ≥80% for each sample file",
+      "Success Rate: Scripts must pass 100% when Test Agent is working correctly"
+    ],
+    "customer_estimates": [
+      "To be provided by customer via explicit chat request"
+    ]
+  },
+  "constraints": [
+    "Must use existing sample files from docs/specs/epic_26/test_samples/",
+    "Must work with existing Test Agent CLI (src.presentation.cli.test_agent.main)",
+    "Must use existing Qwen model (local infrastructure only)",
+    "Must follow project code standards (PEP 8, type hints, docstrings)",
+    "Must maintain ≥80% test coverage for scripts themselves"
+  ],
+  "context": {
+    "related_epic": "epic_26",
+    "epic_status": "complete",
+    "sample_files": [
+      "docs/specs/epic_26/test_samples/01_simple_functions.py",
+      "docs/specs/epic_26/test_samples/02_calculator.py",
+      "docs/specs/epic_26/test_samples/03_shopping_cart.py",
+      "docs/specs/epic_26/test_samples/04_data_processor.py"
+    ],
+    "purpose": "Create production verification scripts for Test Agent using existing sample files"
+  }
+}

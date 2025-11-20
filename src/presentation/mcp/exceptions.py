@@ -1,4 +1,5 @@
 """Domain-specific exceptions for MCP operations."""
+
 from typing import Any, Optional
 
 

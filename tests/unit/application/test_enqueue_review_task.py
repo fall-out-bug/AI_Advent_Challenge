@@ -1,7 +1,8 @@
 """Tests for EnqueueReviewTaskUseCase."""
 
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
 
 from src.application.use_cases.enqueue_review_task_use_case import (
     EnqueueReviewTaskUseCase,

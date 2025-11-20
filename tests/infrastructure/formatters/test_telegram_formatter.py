@@ -1,6 +1,7 @@
-from src.infrastructure.formatters.telegram_formatter import TelegramFormatter
-from src.domain.value_objects.task_summary import TaskSummary, DigestMessage, DigestItem
 import pytest
+
+from src.domain.value_objects.task_summary import DigestItem, DigestMessage, TaskSummary
+from src.infrastructure.formatters.telegram_formatter import TelegramFormatter
 
 
 def test_format_task_summary_basic() -> None:

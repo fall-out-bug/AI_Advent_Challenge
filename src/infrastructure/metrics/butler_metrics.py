@@ -29,7 +29,7 @@ from src.infrastructure.monitoring.prometheus_metrics import get_metrics_registr
 logger = get_logger("butler_metrics")
 
 try:
-    from prometheus_client import Counter, Gauge, Histogram, REGISTRY
+    from prometheus_client import REGISTRY, Counter, Gauge, Histogram
 
     _butler_registry = REGISTRY
 except ImportError:  # pragma: no cover - metrics are optional

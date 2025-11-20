@@ -7,8 +7,8 @@ from typing import Sequence
 from prometheus_client import REGISTRY
 
 from src.domain.rag import RetrievedChunk
+from src.infrastructure.metrics import rag_fallback_reason_total, rag_variance_ratio
 from src.infrastructure.rag import LLMRerankerAdapter
-from src.infrastructure.metrics import rag_variance_ratio, rag_fallback_reason_total
 
 
 class _DummyLLMClient:

@@ -3,16 +3,17 @@
 Following TDD principles: test use cases integrated with real orchestrator.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from src.application.use_cases.create_task_use_case import CreateTaskUseCase
-from src.application.use_cases.collect_data_use_case import CollectDataUseCase
+import pytest
+
 from src.application.orchestration.intent_orchestrator import IntentOrchestrator
+from src.application.use_cases.collect_data_use_case import CollectDataUseCase
+from src.application.use_cases.create_task_use_case import CreateTaskUseCase
 from tests.fixtures.butler_fixtures import (
-    mock_tool_client_protocol,
     mock_llm_client_protocol,
     mock_mongodb,
+    mock_tool_client_protocol,
 )
 
 

@@ -11,9 +11,9 @@ from motor.core import AgnosticDatabase
 <<<<<<< HEAD
 =======
 from src.domain.services.channel_normalizer import ChannelNormalizer
+
 >>>>>>> origin/master
 from src.infrastructure.database.mongo import get_db
-from src.presentation.cli.backoffice.formatters import OutputFormat, format_output
 from src.presentation.cli.backoffice.formatters import OutputFormat, format_output
 from src.presentation.cli.backoffice.metrics import track_command
 from src.presentation.mcp.tools.channels.channel_management import (

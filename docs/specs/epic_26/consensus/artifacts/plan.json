@@ -1,0 +1,473 @@
+{
+  "epic_id": "epic_26",
+  "iteration": 3,
+  "timestamp": "2025_11_20_00_01_22",
+  "stages": [
+    {
+      "stage_id": "S1",
+      "name": "Debug Logging and Diagnostics",
+      "duration_hours": 2,
+      "tasks": [
+        {
+          "task_id": "T1.1",
+          "description": "Add comprehensive debug logging to LLM service",
+          "duration_hours": 0.5,
+          "type": "implementation",
+          "files_to_modify": [
+            "src/infrastructure/test_agent/services/llm_service.py"
+          ],
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Log raw LLM response to debug file",
+            "Log prompt sent to LLM",
+            "Enable via TEST_AGENT_DEBUG_LLM environment variable",
+            "Log file location: /tmp/llm_response.txt"
+          ]
+        },
+        {
+          "task_id": "T1.2",
+          "description": "Add debug logging to GenerateTestsUseCase",
+          "duration_hours": 0.5,
+          "type": "implementation",
+          "files_to_modify": [
+            "src/application/test_agent/use_cases/generate_tests_use_case.py"
+          ],
+          "dependencies": ["T1.1"],
+          "acceptance_criteria": [
+            "Log raw LLM response before parsing",
+            "Log parsed test cases before validation",
+            "Log validated test cases after cleaning",
+            "Log source function names extracted",
+            "Enable via TEST_AGENT_DEBUG_GENERATION environment variable"
+          ]
+        },
+        {
+          "task_id": "T1.3",
+          "description": "Add debug logging to ExecuteTestsUseCase",
+          "duration_hours": 0.5,
+          "type": "implementation",
+          "files_to_modify": [
+            "src/application/test_agent/use_cases/execute_tests_use_case.py"
+          ],
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Log final test file content before execution",
+            "Log source code section separately",
+            "Log test cases section separately",
+            "Log any filtering/cleaning operations",
+            "Enable via TEST_AGENT_DEBUG_FILE environment variable",
+            "Save to /tmp/test_agent_debug.py"
+          ]
+        },
+        {
+          "task_id": "T1.4",
+          "description": "Write unit tests for debug logging",
+          "duration_hours": 0.5,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/unit/infrastructure/test_agent/services/test_llm_service_debug.py",
+            "test_cases": [
+              "test_debug_logging_writes_to_file_when_enabled",
+              "test_debug_logging_skips_when_disabled",
+              "test_debug_logging_includes_prompt_and_response"
+            ]
+          },
+          "dependencies": ["T1.1", "T1.2", "T1.3"],
+          "acceptance_criteria": [
+            "All tests written",
+            "Tests verify debug files are created",
+            "Tests verify debug files contain expected content"
+          ]
+        }
+      ],
+      "ci_gates": {
+        "test_coverage": 80,
+        "linting": "black --check",
+        "type_check": "mypy --strict",
+        "security_scan": "bandit"
+      }
+    },
+    {
+      "stage_id": "S2",
+      "name": "Strengthen Source Code Protection",
+      "duration_hours": 3,
+      "tasks": [
+        {
+          "task_id": "T2.1",
+          "description": "Implement immutable source code section in ExecuteTestsUseCase",
+          "duration_hours": 1,
+          "type": "implementation",
+          "files_to_modify": [
+            "src/application/test_agent/use_cases/execute_tests_use_case.py"
+          ],
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Source code section is stored separately and never modified",
+            "Source code is validated once at start and never touched again",
+            "Test cases are merged with source using immutable concatenation",
+            "No string operations on source code after initial validation"
+          ]
+        },
+        {
+          "task_id": "T2.2",
+          "description": "Add AST-based source code validation before merge",
+          "duration_hours": 0.5,
+          "type": "implementation",
+          "files_to_modify": [
+            "src/application/test_agent/use_cases/execute_tests_use_case.py"
+          ],
+          "dependencies": ["T2.1"],
+          "acceptance_criteria": [
+            "Source code is parsed with AST before any operations",
+            "Source function names are extracted and stored",
+            "Validation errors are raised immediately if source is invalid",
+            "Source AST is stored for later comparison"
+          ]
+        },
+        {
+          "task_id": "T2.3",
+          "description": "Add source code integrity check after merge",
+          "duration_hours": 0.5,
+          "type": "implementation",
+          "files_to_modify": [
+            "src/application/test_agent/use_cases/execute_tests_use_case.py"
+          ],
+          "dependencies": ["T2.1", "T2.2"],
+          "acceptance_criteria": [
+            "After merging tests with source, verify source section unchanged",
+            "Compare source AST before and after merge",
+            "Raise exception if source code was modified",
+            "Log warning if source section appears corrupted"
+          ]
+        },
+        {
+          "task_id": "T2.4",
+          "description": "Write unit tests for source code protection",
+          "duration_hours": 1,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/unit/application/test_agent/use_cases/test_execute_tests_source_protection.py",
+            "test_cases": [
+              "test_source_code_never_modified_during_merge",
+              "test_source_code_validation_before_merge",
+              "test_source_code_integrity_check_after_merge",
+              "test_exception_raised_if_source_modified",
+              "test_source_ast_preserved_after_merge"
+            ]
+          },
+          "dependencies": ["T2.1", "T2.2", "T2.3"],
+          "acceptance_criteria": [
+            "All tests written",
+            "Tests verify source code immutability",
+            "Tests verify integrity checks work"
+          ]
+        }
+      ],
+      "ci_gates": {
+        "test_coverage": 80,
+        "linting": "black --check",
+        "type_check": "mypy --strict",
+        "security_scan": "bandit"
+      }
+    },
+    {
+      "stage_id": "S3",
+      "name": "Enhanced AST-Based Validation",
+      "duration_hours": 3,
+      "tasks": [
+        {
+          "task_id": "T3.1",
+          "description": "Improve _is_valid_test_code with comprehensive AST checks",
+          "duration_hours": 1,
+          "type": "implementation",
+          "files_to_modify": [
+            "src/application/test_agent/use_cases/generate_tests_use_case.py"
+          ],
+          "dependencies": [],
+          "acceptance_criteria": [
+            "AST validation checks for all function definitions",
+            "AST validation checks for source function name matches",
+            "AST validation checks for non-test function definitions",
+            "AST validation provides detailed error messages",
+            "AST validation handles edge cases (nested functions, classes)"
+          ]
+        },
+        {
+          "task_id": "T3.2",
+          "description": "Add per-test-case AST validation before adding to list",
+          "duration_hours": 1,
+          "type": "implementation",
+          "files_to_modify": [
+            "src/application/test_agent/use_cases/generate_tests_use_case.py"
+          ],
+          "dependencies": ["T3.1"],
+          "acceptance_criteria": [
+            "Each test case is validated with AST before being added",
+            "Validation happens in _parse_test_cases for each test",
+            "Invalid tests are skipped with debug logging",
+            "Only valid tests are added to the result list"
+          ]
+        },
+        {
+          "task_id": "T3.3",
+          "description": "Add AST-based validation in ExecuteTestsUseCase before merge",
+          "duration_hours": 0.5,
+          "type": "implementation",
+          "files_to_modify": [
+            "src/application/test_agent/use_cases/execute_tests_use_case.py"
+          ],
+          "dependencies": ["T3.1"],
+          "acceptance_criteria": [
+            "Each test case is validated with AST before merging",
+            "Test cases with redefinitions are filtered out",
+            "Test cases with non-test functions are filtered out",
+            "Validation errors are logged for debugging"
+          ]
+        },
+        {
+          "task_id": "T3.4",
+          "description": "Write unit tests for enhanced AST validation",
+          "duration_hours": 0.5,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/unit/application/test_agent/use_cases/test_ast_validation.py",
+            "test_cases": [
+              "test_ast_validation_catches_function_redefinitions",
+              "test_ast_validation_catches_non_test_functions",
+              "test_ast_validation_allows_valid_test_functions",
+              "test_ast_validation_handles_nested_functions",
+              "test_ast_validation_provides_detailed_errors"
+            ]
+          },
+          "dependencies": ["T3.1", "T3.2", "T3.3"],
+          "acceptance_criteria": [
+            "All tests written",
+            "Tests verify AST validation catches all redefinition patterns",
+            "Tests verify AST validation allows valid tests"
+          ]
+        }
+      ],
+      "ci_gates": {
+        "test_coverage": 80,
+        "linting": "black --check",
+        "type_check": "mypy --strict",
+        "security_scan": "bandit"
+      }
+    },
+    {
+      "stage_id": "S4",
+      "name": "Improved Filtering and Cleaning",
+      "duration_hours": 2,
+      "tasks": [
+        {
+          "task_id": "T4.1",
+          "description": "Enhance _clean_test_code to catch all redefinition patterns",
+          "duration_hours": 1,
+          "type": "implementation",
+          "files_to_modify": [
+            "src/application/test_agent/use_cases/generate_tests_use_case.py"
+          ],
+          "dependencies": ["T3.1"],
+          "acceptance_criteria": [
+            "Filter catches function definitions matching source function names",
+            "Filter catches incomplete function definitions",
+            "Filter catches function definitions without docstrings that match source",
+            "Filter uses AST for accurate detection",
+            "Filter logs what was removed for debugging"
+          ]
+        },
+        {
+          "task_id": "T4.2",
+          "description": "Improve test case parsing to skip redefinitions earlier",
+          "duration_hours": 0.5,
+          "type": "implementation",
+          "files_to_modify": [
+            "src/application/test_agent/use_cases/generate_tests_use_case.py"
+          ],
+          "dependencies": ["T4.1"],
+          "acceptance_criteria": [
+            "Non-test function definitions are skipped during parsing",
+            "Skipping happens before test case creation",
+            "Debug logging shows what was skipped",
+            "Only test functions are parsed into TestCase entities"
+          ]
+        },
+        {
+          "task_id": "T4.3",
+          "description": "Write unit tests for improved filtering",
+          "duration_hours": 0.5,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/unit/application/test_agent/use_cases/test_filtering.py",
+            "test_cases": [
+              "test_filter_removes_function_redefinitions",
+              "test_filter_removes_incomplete_functions",
+              "test_filter_keeps_valid_test_functions",
+              "test_filter_logs_removed_content",
+              "test_filter_handles_edge_cases"
+            ]
+          },
+          "dependencies": ["T4.1", "T4.2"],
+          "acceptance_criteria": [
+            "All tests written",
+            "Tests verify filtering removes all redefinition patterns",
+            "Tests verify filtering preserves valid tests"
+          ]
+        }
+      ],
+      "ci_gates": {
+        "test_coverage": 80,
+        "linting": "black --check",
+        "type_check": "mypy --strict",
+        "security_scan": "bandit"
+      }
+    },
+    {
+      "stage_id": "S5",
+      "name": "E2E Testing and Validation",
+      "duration_hours": 2,
+      "tasks": [
+        {
+          "task_id": "T5.1",
+          "description": "Create E2E test with debug logging enabled",
+          "duration_hours": 0.5,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/e2e/test_agent/test_debug_generation.py",
+            "test_cases": [
+              "test_e2e_generation_with_debug_logging",
+              "test_e2e_verifies_no_function_redefinitions",
+              "test_e2e_verifies_source_code_integrity",
+              "test_e2e_validates_generated_tests_with_ast"
+            ]
+          },
+          "dependencies": ["S1", "S2", "S3", "S4"],
+          "acceptance_criteria": [
+            "E2E test runs with debug logging enabled",
+            "E2E test verifies debug files are created",
+            "E2E test verifies no redefinitions in generated tests",
+            "E2E test verifies source code integrity"
+          ]
+        },
+        {
+          "task_id": "T5.2",
+          "description": "Run E2E tests and analyze debug output",
+          "duration_hours": 1,
+          "type": "validation",
+          "dependencies": ["T5.1"],
+          "acceptance_criteria": [
+            "E2E tests pass without syntax errors",
+            "Debug files show LLM response structure",
+            "Debug files show filtering operations",
+            "Debug files show final test file content",
+            "No function redefinitions found in debug output"
+          ]
+        },
+        {
+          "task_id": "T5.3",
+          "description": "Document debug logging usage and troubleshooting",
+          "duration_hours": 0.5,
+          "type": "documentation",
+          "files_to_modify": [
+            "docs/specs/epic_26/TESTING_GUIDE.md"
+          ],
+          "dependencies": ["T5.2"],
+          "acceptance_criteria": [
+            "Document how to enable debug logging",
+            "Document debug file locations",
+            "Document how to interpret debug output",
+            "Document troubleshooting steps for common issues"
+          ]
+        }
+      ],
+      "ci_gates": {
+        "test_coverage": 80,
+        "linting": "black --check",
+        "type_check": "mypy --strict",
+        "e2e_tests": "pytest tests/e2e/test_agent/ -v"
+      }
+    }
+  ],
+  "test_strategy": {
+    "unit_tests": {
+      "coverage_target": 80,
+      "framework": "pytest"
+    },
+    "integration_tests": {
+      "coverage_target": 60,
+      "framework": "pytest + docker"
+    },
+    "e2e_tests": {
+      "required": true,
+      "reason": "Validate that function redefinitions are eliminated and source code protection works",
+      "user_action_simulation": true,
+      "scripts_location": "tests/e2e/test_agent/",
+      "simulation_scenarios": [
+        {
+          "scenario": "Scenario 1: Generate tests for simple function",
+          "steps": [
+            "Step 1: Run test agent on simple function code",
+            "Step 2: Enable debug logging (TEST_AGENT_DEBUG_LLM, TEST_AGENT_DEBUG_FILE)",
+            "Step 3: Verify generated tests have no function redefinitions",
+            "Step 4: Verify source code section is unchanged",
+            "Step 5: Verify tests execute without syntax errors"
+          ],
+          "expected_result": "Tests generated successfully, no redefinitions, source code intact, tests pass"
+        },
+        {
+          "scenario": "Scenario 2: Generate tests for complex code with multiple functions",
+          "steps": [
+            "Step 1: Run test agent on complex code",
+            "Step 2: Check debug output for filtering operations",
+            "Step 3: Verify AST validation catches any redefinitions",
+            "Step 4: Verify final test file is syntactically valid",
+            "Step 5: Verify all tests execute successfully"
+          ],
+          "expected_result": "Complex code handled correctly, all redefinitions filtered, tests valid and passing"
+        }
+      ]
+    }
+  },
+  "rollback_plan": {
+    "trigger_conditions": [
+      "E2E tests still fail with syntax errors",
+      "Debug logging shows redefinitions still present",
+      "Source code integrity check fails",
+      "Test coverage drops below 80%"
+    ],
+    "procedure": [
+      "1. Review debug output to identify root cause",
+      "2. Revert changes to failing stage",
+      "3. Add additional validation based on debug findings",
+      "4. Re-test with debug logging enabled",
+      "5. Iterate until issue resolved"
+    ],
+    "time_to_rollback": "< 10 minutes per stage"
+  },
+  "risks": [
+    {
+      "risk": "Debug logging may reveal LLM generates redefinitions in unexpected formats",
+      "likelihood": "high",
+      "impact": "medium",
+      "mitigation": "Use debug output to improve filtering patterns, add more AST-based validation"
+    },
+    {
+      "risk": "Source code protection may be too aggressive and remove valid code",
+      "likelihood": "low",
+      "impact": "high",
+      "mitigation": "Use AST comparison to ensure source code is never modified, test with various code samples"
+    },
+    {
+      "risk": "AST validation may be too slow for large test suites",
+      "likelihood": "low",
+      "impact": "low",
+      "mitigation": "Profile AST operations, optimize if needed, but prioritize correctness over speed"
+    },
+    {
+      "risk": "Multiple validation passes may still miss edge cases",
+      "likelihood": "medium",
+      "impact": "medium",
+      "mitigation": "Use comprehensive E2E tests with various code samples, iterate based on findings"
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 """Tests for MCP server tools."""
+
 import pytest
 
 from src.presentation.mcp.server import add, count_tokens, list_models, multiply

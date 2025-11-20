@@ -17,10 +17,11 @@ import pytest
 
 <<<<<<< HEAD
 from src.infrastructure.database.mongo import get_db
+
 =======
 >>>>>>> origin/master
-from src.infrastructure.repositories.post_repository import PostRepository
 from src.infrastructure.di.factories import create_channel_digest_by_name_use_case
+from src.infrastructure.repositories.post_repository import PostRepository
 
 
 @pytest.fixture

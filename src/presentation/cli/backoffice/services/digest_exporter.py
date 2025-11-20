@@ -9,7 +9,9 @@ from pathlib import Path
 from typing import Awaitable, Callable, Sequence
 
 from src.application.dtos.digest_dtos import ChannelDigest
-from src.application.use_cases.generate_channel_digest import GenerateChannelDigestUseCase
+from src.application.use_cases.generate_channel_digest import (
+    GenerateChannelDigestUseCase,
+)
 from src.application.use_cases.generate_channel_digest_by_name import (
     GenerateChannelDigestByNameUseCase,
 )
@@ -249,7 +251,9 @@ _HTML_TEMPLATE = """
     {content}
 </body>
 </html>
-""".format(css=_DEFAULT_CSS, content="{content}")
+""".format(
+    css=_DEFAULT_CSS, content="{content}"
+)
 
 
 __all__ = [

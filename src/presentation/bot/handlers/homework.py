@@ -82,7 +82,9 @@ class HomeworkHandler(Handler):
             result = await self._review_use_case.execute(commit_hash=commit_hash)
             return self._format_review_response(commit_hash, result)
         except Exception as exc:  # noqa: BLE001
-            logger.error("Failed to review homework %s: %s", commit_hash, exc, exc_info=True)
+            logger.error(
+                "Failed to review homework %s: %s", commit_hash, exc, exc_info=True
+            )
             return f"❌ Ошибка при ревью домашней работы: {str(exc)[:120]}"
 
     def _format_list_response(self, days: int, result: HomeworkListResult) -> str:

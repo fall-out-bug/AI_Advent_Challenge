@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-"""LLM client Protocol interface."""
-
-from __future__ import annotations
-
-from typing import Protocol
-
-
-=======
 """LLM client Protocol interface.
 
 This module defines the canonical LLMClient Protocol that all LLM client
@@ -20,15 +11,10 @@ from typing import Protocol, runtime_checkable
 
 
 @runtime_checkable
->>>>>>> origin/master
 class LLMClient(Protocol):
     """Protocol for LLM client implementations.
 
     Purpose:
-<<<<<<< HEAD
-        Defines the interface that all LLM clients must implement.
-        Supports both single and batch generation.
-=======
         Defines the canonical interface that all LLM clients must implement.
         Supports both single and batch generation with configurable parameters.
         This Protocol is the standard adapter interface for LLM operations.
@@ -49,7 +35,6 @@ class LLMClient(Protocol):
     Note:
         This Protocol is runtime-checkable, so you can use `isinstance(client, LLMClient)`
         to verify that an object implements the interface.
->>>>>>> origin/master
     """
 
     async def generate(

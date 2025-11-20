@@ -6,7 +6,6 @@ Following TDD approach:
 - Refactor for clarity (refactor)
 """
 
-
 from src.infrastructure.clients.multi_model_client import MultiModelSupport
 
 

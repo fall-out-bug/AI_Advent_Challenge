@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-import zipfile
 import re
+import zipfile
 from pathlib import Path
 from typing import Any
+
+
 def _normalise_model_name(model_name: str) -> str:
     candidate = model_name.lower()
     slug = re.sub(r"[^a-z0-9]+", " ", candidate)

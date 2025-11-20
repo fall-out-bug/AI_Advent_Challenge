@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-from examples.day08_token_handling import (
-    TokenAnalysis,
-    TokenHandlingAgent,
-)
+from examples.day08_token_handling import TokenAnalysis, TokenHandlingAgent
 
 
 def test_agent_analyzes_text() -> None:
@@ -90,8 +87,13 @@ def test_agent_compares_requests() -> None:
     agent = TokenHandlingAgent(token_limit=100)
 
     short = "Hello"
-    long_text = "This is a longer text with more content that should still be within limits."
-    overflow = "This is a very long text that definitely exceeds the token limit and needs to be handled properly." * 10
+    long_text = (
+        "This is a longer text with more content that should still be within limits."
+    )
+    overflow = (
+        "This is a very long text that definitely exceeds the token limit and needs to be handled properly."
+        * 10
+    )
 
     # Verify analysis works for all sizes
     short_analysis = agent.analyze_text(short)

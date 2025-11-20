@@ -6,8 +6,9 @@ Uses mocks for all external dependencies.
 Epic 21 · Stage 21_01a · Dialog Context Repository
 """
 
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
 
 from src.domain.agents.butler_orchestrator import ButlerOrchestrator
 from src.domain.agents.services.mode_classifier import DialogMode
@@ -174,7 +175,9 @@ class TestButlerOrchestratorWithRepository:
         assert saved_context is existing_context  # Same object
 
         # Verify handlers were called with existing context
-        mock_handlers["mode_classifier"].classify.assert_called_once_with("Add description")
+        mock_handlers["mode_classifier"].classify.assert_called_once_with(
+            "Add description"
+        )
         mock_handlers["task_handler"].handle.assert_called_once()
         call_args = mock_handlers["task_handler"].handle.call_args
         assert call_args[0][0] is existing_context  # First arg is context
@@ -193,7 +196,7 @@ class TestButlerOrchestratorWithRepository:
             user_id="frank",
             message="Some message",
             session_id="session_force",
-            force_mode=DialogMode.DATA
+            force_mode=DialogMode.DATA,
         )
 
         # Assert
@@ -212,7 +215,9 @@ class TestButlerOrchestratorWithRepository:
         """Unit: Unknown mode falls back to chat handler."""
         # Arrange
         mock_repository.get_by_session.return_value = None
-        mock_handlers["mode_classifier"].classify.return_value = "UNKNOWN_MODE"  # Invalid
+        mock_handlers["mode_classifier"].classify.return_value = (
+            "UNKNOWN_MODE"  # Invalid
+        )
         mock_handlers["chat_handler"].handle.return_value = "Fallback response"
 
         # Act

@@ -5,22 +5,22 @@ Only Telegram API calls are mocked.
 Following TDD principles and Python Zen.
 """
 
-import os
-import pytest
 import asyncio
+import os
 import subprocess
 import time
 from datetime import datetime
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 try:
     import requests
 except ImportError:
     requests = None
 
+from src.infrastructure.database.mongo import close_client, get_db
 from src.presentation.bot.factory import create_butler_orchestrator
-from src.infrastructure.database.mongo import get_db, close_client
-
 
 pytestmark = pytest.mark.asyncio
 
@@ -32,8 +32,8 @@ def mcp_http_server():
     Returns:
         Server process handle or None if already running
     """
-    import sys
     import socket
+    import sys
 
     port = 8004
 

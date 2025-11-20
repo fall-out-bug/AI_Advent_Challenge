@@ -1,6 +1,9 @@
 # spark-jobs/load_to_redis.py
-import os, json
-from pyspark.sql import SparkSession, functions as F
+import json
+import os
+
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
 from pyspark.sql.utils import AnalysisException
 
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://minio:9000")
@@ -87,7 +90,9 @@ def main():
     total_bc = spark.sparkContext.broadcast(int(total_users))
 
     def write_meta(_):
-        import redis, time
+        import time
+
+        import redis
 
         r = redis.Redis(
             host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, decode_responses=True

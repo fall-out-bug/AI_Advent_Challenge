@@ -1,4 +1,5 @@
 """Tests for input validation."""
+
 from unittest.mock import Mock
 
 import pytest

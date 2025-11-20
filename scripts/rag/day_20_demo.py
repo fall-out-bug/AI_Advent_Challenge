@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import sys
 import time
-import asyncio
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Sequence
@@ -12,9 +12,15 @@ from typing import Dict, Sequence
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
-from src.application.rag import CompareRagAnswersUseCase, PromptAssembler, RetrievalService
+from src.application.rag import (
+    CompareRagAnswersUseCase,
+    PromptAssembler,
+    RetrievalService,
+)
 from src.domain.embedding_index import EmbeddingGateway
 from src.domain.rag import FilterConfig, Query, RetrievedChunk
+from src.infrastructure.clients.llm_client import ResilientLLMClient
+from src.infrastructure.config.rag_rerank import load_rag_rerank_config
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.embedding_index.gateways.local_embedding_gateway import (
     LocalEmbeddingGateway,
@@ -24,8 +30,6 @@ from src.infrastructure.embedding_index.repositories.mongo_document_repository i
     MongoDocumentRepository,
 )
 from src.infrastructure.embeddings import LocalEmbeddingClient
-from src.infrastructure.clients.llm_client import ResilientLLMClient
-from src.infrastructure.config.rag_rerank import load_rag_rerank_config
 from src.infrastructure.rag import (
     LLMRerankerAdapter,
     LLMServiceAdapter,
@@ -91,7 +95,9 @@ class PersonaPromptAssembler(PromptAssembler):
         for marker in ["Вопрос пользователя:", "Вопрос:"]:
             if marker in prompt:
                 parts = prompt.rsplit(marker, 1)
-                persona_block = f"\n\nДОПОЛНИТЕЛЬНО (стиль ответа):\n{self._persona_prompt}\n\n"
+                persona_block = (
+                    f"\n\nДОПОЛНИТЕЛЬНО (стиль ответа):\n{self._persona_prompt}\n\n"
+                )
                 return parts[0] + persona_block + marker + parts[1]
 
         # Fallback: prepend if no marker found
@@ -116,7 +122,9 @@ class PersonaPromptAssembler(PromptAssembler):
         return result
 
 
-def build_use_case(persona: PersonaConfig) -> tuple[CompareRagAnswersUseCase, FilterConfig]:
+def build_use_case(
+    persona: PersonaConfig,
+) -> tuple[CompareRagAnswersUseCase, FilterConfig]:
     settings = get_settings()
     rag_config = load_rag_rerank_config()
 
@@ -125,7 +133,9 @@ def build_use_case(persona: PersonaConfig) -> tuple[CompareRagAnswersUseCase, Fi
     chunk_collection = database[settings.embedding_mongo_chunks_collection]
     document_collection = database[settings.embedding_mongo_documents_collection]
     chunk_repository = MongoChunkRepository(chunk_collection, ensure_indexes=False)
-    document_repository = MongoDocumentRepository(document_collection, ensure_indexes=False)
+    document_repository = MongoDocumentRepository(
+        document_collection, ensure_indexes=False
+    )
 
     embedding_client = LocalEmbeddingClient(
         base_url=settings.embedding_api_url or "http://127.0.0.1:8000",
@@ -144,7 +154,9 @@ def build_use_case(persona: PersonaConfig) -> tuple[CompareRagAnswersUseCase, Fi
         fallback_index_path=Path("var/indices/embedding_index_v1.pkl"),
     )
 
-    reranker_client = ResilientLLMClient(url=settings.llm_url or "http://127.0.0.1:8000")
+    reranker_client = ResilientLLMClient(
+        url=settings.llm_url or "http://127.0.0.1:8000"
+    )
     reranker_adapter = LLMRerankerAdapter(
         llm_client=reranker_client,
         timeout_seconds=rag_config.reranker.llm.timeout_seconds,
@@ -184,9 +196,7 @@ def build_use_case(persona: PersonaConfig) -> tuple[CompareRagAnswersUseCase, Fi
 
     filter_enabled = rag_config.feature_flags.enable_rag_plus_plus
     threshold = rag_config.retrieval.score_threshold if filter_enabled else 0.0
-    strategy = (
-        rag_config.reranker.strategy if rag_config.reranker.enabled else "off"
-    )
+    strategy = rag_config.reranker.strategy if rag_config.reranker.enabled else "off"
     if strategy == "cross_encoder":
         strategy = "off"
     filter_config = FilterConfig(

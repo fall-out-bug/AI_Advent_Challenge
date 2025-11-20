@@ -9,6 +9,7 @@ from time import perf_counter
 from typing import Iterable, Sequence
 
 from src.application.benchmarking.models import (
+    BenchmarkDirection,
     BenchmarkJudgeResult,
     BenchmarkMetricResult,
     BenchmarkMetricRule,
@@ -17,7 +18,6 @@ from src.application.benchmarking.models import (
     BenchmarkSample,
     BenchmarkSampleResult,
     BenchmarkScenarioConfig,
-    BenchmarkDirection,
 )
 from src.application.benchmarking.protocols import (
     BenchmarkDatasetProvider,

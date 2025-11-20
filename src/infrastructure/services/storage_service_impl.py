@@ -13,10 +13,7 @@ from pathlib import Path
 from typing import BinaryIO, Optional, TextIO
 
 # noqa: E501
-from src.domain.interfaces.storage_service import (
-    StorageError,
-    StorageService,
-)
+from src.domain.interfaces.storage_service import StorageError, StorageService
 
 # noqa: E501
 logger = logging.getLogger(__name__)
@@ -27,15 +24,15 @@ logger = logging.getLogger(__name__)
 class StorageServiceImpl(StorageService):
     """Infrastructure implementation of StorageService with security focus.
 
-      Purpose:
-          Provides secure file system operations with comprehensive validation,
-          path traversal prevention, and proper cleanup. Implements defense-in-depth
-          security measures for file operations.
+    Purpose:
+        Provides secure file system operations with comprehensive validation,
+        path traversal prevention, and proper cleanup. Implements defense-in-depth
+        security measures for file operations.
 
-      Attributes:
-          allowed_base_dirs: List of allowed base directories for operations
-          max_temp_file_size: Maximum size for temporary files (bytes)
-          secure_temp_dir: Preferred secure temporary directory
+    Attributes:
+        allowed_base_dirs: List of allowed base directories for operations
+        max_temp_file_size: Maximum size for temporary files (bytes)
+        secure_temp_dir: Preferred secure temporary directory
     """
 
     def __init__(
@@ -46,10 +43,10 @@ class StorageServiceImpl(StorageService):
     ):
         """Initialize storage service with security configuration.
 
-              Args:
-                  allowed_base_dirs: Allowed base directories (default: system temp + /app/archive)
-                  max_temp_file_size: Maximum temporary file size in bytes
-                  secure_temp_dir: Preferred secure temp directory (/app/archive if available)
+        Args:
+            allowed_base_dirs: Allowed base directories (default: system temp + /app/archive)
+            max_temp_file_size: Maximum temporary file size in bytes
+            secure_temp_dir: Preferred secure temp directory (/app/archive if available)
         """
         self.allowed_base_dirs = allowed_base_dirs or [
             Path("/tmp"),
@@ -60,9 +57,7 @@ class StorageServiceImpl(StorageService):
             ),
         ]
         self.max_temp_file_size = max_temp_file_size
-        self.secure_temp_dir = (
-            secure_temp_dir or self._get_secure_temp_dir()
-        )
+        self.secure_temp_dir = secure_temp_dir or self._get_secure_temp_dir()
 
     def create_temp_file(
         self,
@@ -72,23 +67,21 @@ class StorageServiceImpl(StorageService):
     ) -> BinaryIO:
         """Create secure temporary file with optional content.
 
-              Args:
-                  suffix: File extension (e.g., '.zip', '.md')
-                  prefix: File prefix for identification
-                  content: Optional binary content to write
+        Args:
+            suffix: File extension (e.g., '.zip', '.md')
+            prefix: File prefix for identification
+            content: Optional binary content to write
 
-              Returns:
-                  Open binary file handle (caller responsible for closing)
+        Returns:
+            Open binary file handle (caller responsible for closing)
 
-              Raises:
-                  StorageError: If file creation fails or path is invalid
+        Raises:
+            StorageError: If file creation fails or path is invalid
         """
         try:
             # Validate suffix for security
             if self._contains_path_traversal(suffix):
-                raise StorageError(
-                    f"Invalid file suffix: {suffix}"
-                )
+                raise StorageError(f"Invalid file suffix: {suffix}")
 
             # Create temp file in secure location
             temp_dir = self.get_secure_temp_dir()
@@ -105,9 +98,7 @@ class StorageServiceImpl(StorageService):
             if not self.validate_path_safe(temp_path):
                 temp_file.close()
                 temp_path.unlink(missing_ok=True)
-                raise StorageError(
-                    f"Created unsafe temporary file path: {temp_path}"
-                )
+                raise StorageError(f"Created unsafe temporary file path: {temp_path}")
 
             # Write content if provided
             if content is not None:
@@ -121,18 +112,12 @@ class StorageServiceImpl(StorageService):
                 temp_file.write(content)
                 temp_file.flush()
 
-            logger.debug(
-                f"Created secure temp file: {temp_path}"
-            )
+            logger.debug(f"Created secure temp file: {temp_path}")
             return temp_file
 
         except Exception as e:
-            logger.error(
-                f"Failed to create temp file: {e}", exc_info=True
-            )
-            raise StorageError(
-                f"Failed to create temporary file: {e}"
-            ) from e
+            logger.error(f"Failed to create temp file: {e}", exc_info=True)
+            raise StorageError(f"Failed to create temporary file: {e}") from e
 
     def create_temp_text_file(
         self,
@@ -143,24 +128,22 @@ class StorageServiceImpl(StorageService):
     ) -> TextIO:
         """Create secure temporary text file with optional content.
 
-              Args:
-                  suffix: File extension (e.g., '.md', '.txt')
-                  prefix: File prefix for identification
-                  content: Optional text content to write
-                  encoding: Text encoding
+        Args:
+            suffix: File extension (e.g., '.md', '.txt')
+            prefix: File prefix for identification
+            content: Optional text content to write
+            encoding: Text encoding
 
-              Returns:
-                  Open text file handle (caller responsible for closing)
+        Returns:
+            Open text file handle (caller responsible for closing)
 
-              Raises:
-                  StorageError: If file creation fails or path is invalid
+        Raises:
+            StorageError: If file creation fails or path is invalid
         """
         try:
             # Validate suffix
             if self._contains_path_traversal(suffix):
-                raise StorageError(
-                    f"Invalid file suffix: {suffix}"
-                )
+                raise StorageError(f"Invalid file suffix: {suffix}")
 
             # Create temp file
             temp_dir = self.get_secure_temp_dir()
@@ -178,15 +161,11 @@ class StorageServiceImpl(StorageService):
             if not self.validate_path_safe(temp_path):
                 temp_file.close()
                 temp_path.unlink(missing_ok=True)
-                raise StorageError(
-                    f"Created unsafe temporary file path: {temp_path}"
-                )
+                raise StorageError(f"Created unsafe temporary file path: {temp_path}")
 
             # Write content if provided
             if content is not None:
-                if (
-                    len(content.encode(encoding)) > self.max_temp_file_size
-                ):
+                if len(content.encode(encoding)) > self.max_temp_file_size:
                     temp_file.close()
                     temp_path.unlink(missing_ok=True)
                     raise StorageError(
@@ -196,9 +175,7 @@ class StorageServiceImpl(StorageService):
                 temp_file.write(content)
                 temp_file.flush()
 
-            logger.debug(
-                f"Created secure temp text file: {temp_path}"
-            )
+            logger.debug(f"Created secure temp text file: {temp_path}")
             return temp_file
 
         except Exception as e:
@@ -206,18 +183,16 @@ class StorageServiceImpl(StorageService):
                 f"Failed to create temp text file: {e}",
                 exc_info=True,
             )
-            raise StorageError(
-                f"Failed to create temporary text file: {e}"
-            ) from e
+            raise StorageError(f"Failed to create temporary text file: {e}") from e
 
     def validate_path_safe(self, path: Path) -> bool:
         """Validate that path is safe for operations.
 
-              Args:
-                  path: Path to validate
+        Args:
+            path: Path to validate
 
-              Returns:
-                  True if path is safe, False otherwise
+        Returns:
+            True if path is safe, False otherwise
         """
         try:
             # Resolve any symlinks and relative components
@@ -226,60 +201,44 @@ class StorageServiceImpl(StorageService):
             # Check for path traversal
             if self._contains_path_traversal(
                 str(path)
-            ) or self._contains_path_traversal(
-                str(resolved_path)
-            ):
-                logger.warning(
-                    f"Path traversal detected: {path}"
-                )
+            ) or self._contains_path_traversal(str(resolved_path)):
+                logger.warning(f"Path traversal detected: {path}")
                 return False
 
             # Check if path is within allowed directories
             for allowed_dir in self.allowed_base_dirs:
                 try:
                     resolved_allowed = allowed_dir.resolve()
-                    if resolved_path.is_relative_to(
-                        resolved_allowed
-                    ):
+                    if resolved_path.is_relative_to(resolved_allowed):
                         return True
                 except Exception:
                     continue
 
-            logger.warning(
-                f"Path outside allowed directories: {path}"
-            )
+            logger.warning(f"Path outside allowed directories: {path}")
             return False
 
         except Exception as e:
-            logger.error(
-                f"Path validation failed for {path}: {e}"
-            )
+            logger.error(f"Path validation failed for {path}: {e}")
             return False
 
-    def cleanup_temp_file(
-        self, path: Path, missing_ok: bool = True
-    ) -> None:
+    def cleanup_temp_file(self, path: Path, missing_ok: bool = True) -> None:
         """Securely cleanup temporary file.
 
-              Args:
-                  path: Path to temporary file to remove
-                  missing_ok: Don't raise error if file doesn't exist
+        Args:
+            path: Path to temporary file to remove
+            missing_ok: Don't raise error if file doesn't exist
 
-              Raises:
-                  StorageError: If cleanup fails
+        Raises:
+            StorageError: If cleanup fails
         """
         try:
             # Validate path before cleanup
             if not self.validate_path_safe(path):
-                raise StorageError(
-                    f"Refusing to cleanup unsafe path: {path}"
-                )
+                raise StorageError(f"Refusing to cleanup unsafe path: {path}")
 
             # Additional security: check if it's actually a temp file
             if not self._is_temp_file_pattern(path):
-                logger.warning(
-                    f"Path doesn't match temp file pattern: {path}"
-                )
+                logger.warning(f"Path doesn't match temp file pattern: {path}")
                 # Still allow cleanup but log warning
 
             path.unlink(missing_ok=missing_ok)
@@ -291,18 +250,16 @@ class StorageServiceImpl(StorageService):
                 exc_info=True,
             )
             if not missing_ok:
-                raise StorageError(
-                    f"Failed to cleanup temporary file: {e}"
-                ) from e
+                raise StorageError(f"Failed to cleanup temporary file: {e}") from e
 
     def ensure_directory_exists(self, path: Path) -> None:
         """Ensure directory exists with proper permissions.
 
-              Args:
-                  path: Directory path to create
+        Args:
+            path: Directory path to create
 
-              Raises:
-                  StorageError: If directory creation fails
+        Raises:
+            StorageError: If directory creation fails
         """
         try:
             # Validate path safety
@@ -316,9 +273,7 @@ class StorageServiceImpl(StorageService):
 
             # Validate permissions (should be writable by owner)
             if not self.validate_file_access(path, "write"):
-                raise StorageError(
-                    f"Created directory lacks write permissions: {path}"
-                )
+                raise StorageError(f"Created directory lacks write permissions: {path}")
 
             logger.debug(f"Ensured directory exists: {path}")
 
@@ -327,29 +282,25 @@ class StorageServiceImpl(StorageService):
                 f"Failed to create directory {path}: {e}",
                 exc_info=True,
             )
-            raise StorageError(
-                f"Failed to create directory: {e}"
-            ) from e
+            raise StorageError(f"Failed to create directory: {e}") from e
 
     def get_secure_temp_dir(self) -> Path:
         """Get secure temporary directory path.
 
-              Returns:
-                  Path to secure temporary directory
+        Returns:
+            Path to secure temporary directory
         """
         return self.secure_temp_dir
 
-    def validate_file_access(
-        self, path: Path, operation: str
-    ) -> bool:
+    def validate_file_access(self, path: Path, operation: str) -> bool:
         """Validate file access permissions for operation.
 
-              Args:
-                  path: File path to check
-                  operation: Operation type ('read', 'write', 'execute')
+        Args:
+            path: File path to check
+            operation: Operation type ('read', 'write', 'execute')
 
-              Returns:
-                  True if operation is allowed, False otherwise
+        Returns:
+            True if operation is allowed, False otherwise
         """
         try:
             # Check if path exists (for read/write operations)
@@ -376,9 +327,7 @@ class StorageServiceImpl(StorageService):
                 return False
 
         except Exception as e:
-            logger.error(
-                f"File access validation failed for {path}: {e}"
-            )
+            logger.error(f"File access validation failed for {path}: {e}")
             return False
 
     def _get_secure_temp_dir(self) -> Path:
@@ -413,6 +362,4 @@ class StorageServiceImpl(StorageService):
         # Check for common temp file prefixes
         temp_prefixes = ["temp_", "homework_review_", "tmp"]
 
-        return any(
-            filename.startswith(prefix) for prefix in temp_prefixes
-        )
+        return any(filename.startswith(prefix) for prefix in temp_prefixes)

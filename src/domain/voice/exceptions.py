@@ -60,5 +60,3 @@ class InvalidVoiceCommandError(DomainError):
         """
         super().__init__(message, error_code="INVALID_VOICE_COMMAND")
         self.command_id = command_id
-
-

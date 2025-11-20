@@ -8,11 +8,11 @@ and "Explicit is better than implicit".
 import pytest
 from shared_package.exceptions.model_errors import (
     ModelClientError,
+    ModelConfigurationError,
     ModelConnectionError,
+    ModelNotAvailableError,
     ModelRequestError,
     ModelTimeoutError,
-    ModelConfigurationError,
-    ModelNotAvailableError
 )
 
 

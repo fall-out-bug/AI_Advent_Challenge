@@ -206,28 +206,25 @@ class InterestExtractionService:
                 get_interest_extraction_prompt,
             )
 
-            events_text = "\n".join([
-                f"- {event.role}: {event.content[:200]}"
-                for event in events[-50:]  # Last 50 events for context
-            ])
-
-            existing_str = (
-                ", ".join(existing_topics) if existing_topics else "none"
+            events_text = "\n".join(
+                [
+                    f"- {event.role}: {event.content[:200]}"
+                    for event in events[-50:]  # Last 50 events for context
+                ]
             )
+
+            existing_str = ", ".join(existing_topics) if existing_topics else "none"
 
             template = get_interest_extraction_prompt()
             return template.format(events=events_text, existing_topics=existing_str)
 
         except (ImportError, AttributeError, KeyError):
             # Fallback to inline prompt if template not available
-            events_text = "\n".join([
-                f"- {event.role}: {event.content[:200]}"
-                for event in events[-50:]
-            ])
-
-            existing_str = (
-                ", ".join(existing_topics) if existing_topics else "none"
+            events_text = "\n".join(
+                [f"- {event.role}: {event.content[:200]}" for event in events[-50:]]
             )
+
+            existing_str = ", ".join(existing_topics) if existing_topics else "none"
 
             return f"""Analyze conversation and extract user interests.
 
@@ -271,9 +268,7 @@ JSON:"""
                 return True
         return False
 
-    def _merge_interests(
-        self, existing: List[str], new: List[str]
-    ) -> List[str]:
+    def _merge_interests(self, existing: List[str], new: List[str]) -> List[str]:
         """Merge existing + new topics, keeping stable top-N.
 
         Purpose:
@@ -298,9 +293,7 @@ JSON:"""
         new_norm = {t.lower(): t for t in new}
 
         # Priority: topics in both lists (confirmed interests)
-        confirmed = [
-            existing_norm[key] for key in existing_norm if key in new_norm
-        ]
+        confirmed = [existing_norm[key] for key in existing_norm if key in new_norm]
 
         # Add remaining existing topics
         for topic in existing:

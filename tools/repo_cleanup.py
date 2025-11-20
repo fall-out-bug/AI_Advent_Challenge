@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Optional, Sequence
 
-
 try:  # pragma: no cover - optional dependency
     import yaml
 except ImportError:  # pragma: no cover
@@ -152,7 +151,9 @@ def load_move_plan(config_path: Path) -> List[MoveInstruction]:
     return instructions
 
 
-def build_actions(base_dir: Path, instructions: Sequence[MoveInstruction]) -> List[MoveAction]:
+def build_actions(
+    base_dir: Path, instructions: Sequence[MoveInstruction]
+) -> List[MoveAction]:
     """Resolve move instructions into executable file system actions.
 
     Purpose:

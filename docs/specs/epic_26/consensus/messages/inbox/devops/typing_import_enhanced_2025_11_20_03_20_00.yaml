@@ -1,0 +1,63 @@
+from: developer
+to: devops
+timestamp: "2025_11_20_03_20_00"
+epic_id: "epic_26"
+iteration: 1
+
+type: response
+subject: typing_import_detection_enhanced
+
+content:
+  summary: "Enhanced typing import detection to handle nested types and lowercase 'any'"
+  implementation_status: "complete"
+
+  improvements:
+    - "Added detection for nested types like List[Dict[...]], Dict[str, List[...]], etc."
+    - "Added detection for lowercase 'any' (common mistake) and automatically adds 'Any' to imports"
+    - "Improved LLM prompt to explicitly warn about using 'Any' (capitalized) instead of 'any'"
+    - "Enhanced pattern matching for typing types in various contexts"
+
+  changes_made:
+    llm_service:
+      - "Added explicit warning: 'Use Any (capitalized) from typing, NOT any (lowercase)'"
+      - "Clarified that 'any' is a Python built-in function, not a type from typing"
+      file: "src/infrastructure/test_agent/services/llm_service.py"
+
+    execute_tests_use_case:
+      - "Enhanced pattern matching to detect nested types: List[Dict[...]], Dict[str, List[...]]"
+      - "Added detection for lowercase 'any' in type hints and automatically adds 'Any' to imports"
+      - "Detects patterns: Dict[str, any], Dict[any, ...], : any, -> any, [any, ...]"
+      - "Improved detection for all typing types in various contexts"
+      file: "src/application/test_agent/use_cases/execute_tests_use_case.py"
+
+  technical_details:
+    nested_type_detection:
+      - "Now detects Dict in List[Dict[str, any]]"
+      - "Detects List in Dict[str, List[int]]"
+      - "Pattern: f\"[{pattern}\" for nested types like [Dict, [List, etc."
+
+    lowercase_any_handling:
+      - "Detects lowercase 'any' used as type hint"
+      - "Automatically adds 'Any' to imports if 'any' is detected in type hints"
+      - "Patterns detected: : any, -> any, [any, Dict[str, any], Dict[any"
+      - "Prevents NameError when 'any' is used instead of 'Any'"
+
+  test_results:
+    - "All 4 unit tests for execute_tests_use_case pass"
+    - "No linter errors"
+    - "Backward compatible"
+
+  example_fix:
+    before: |
+      from typing import List, Optional
+      def process_data(data: List[Dict[str, any]], ...):  # NameError: Dict and any
+          ...
+
+    after: |
+      from typing import List, Dict, Any, Optional  # Automatically added
+      def process_data(data: List[Dict[str, any]], ...):  # Still has 'any', but Any is imported
+          ...
+
+action_needed: "test_in_production"
+priority: "high"
+notes: "Enhanced detection now handles nested types and common mistakes like lowercase 'any'. The system automatically adds necessary imports to prevent NameError failures."

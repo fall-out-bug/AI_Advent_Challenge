@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+
 <<<<<<< HEAD
 from typing import TYPE_CHECKING, Optional
 
@@ -16,7 +17,6 @@ from aiogram.filters import Command
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import Message
 
-from src.presentation.bot.orchestrator import ButlerOrchestrator
 from src.infrastructure.logging import get_logger
 from src.infrastructure.metrics import get_butler_metrics
 from src.infrastructure.shutdown.graceful_shutdown import GracefulShutdown
@@ -24,6 +24,7 @@ from src.presentation.bot.handlers.butler_handler import setup_butler_handler
 from src.presentation.bot.handlers.menu import router as menu_router
 from src.presentation.bot.metrics_server import MetricsServer
 from src.presentation.bot.middleware.state_middleware import StatePersistenceMiddleware
+from src.presentation.bot.orchestrator import ButlerOrchestrator
 
 logger = get_logger("butler_bot")
 
@@ -178,8 +179,8 @@ class ButlerBot:
             logger.info("Personalization enabled, creating use cases...")
 
             # Get dependencies
-            from src.infrastructure.database.mongo import get_client
             from src.infrastructure.clients.llm_client import get_llm_client
+            from src.infrastructure.database.mongo import get_client
 
             # Note: These are async, but we can't use await in sync method
             # We'll create them lazily in async setup if needed
@@ -285,8 +286,8 @@ class ButlerBot:
             logger.info("Creating personalization use cases...")
 
             # Get async dependencies
-            from src.infrastructure.database.mongo import get_client
             from src.infrastructure.clients.llm_client import get_llm_client
+            from src.infrastructure.database.mongo import get_client
             from src.infrastructure.personalization.factory import (
                 create_personalized_use_cases,
             )

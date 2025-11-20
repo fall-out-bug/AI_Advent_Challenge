@@ -1,7 +1,8 @@
 """Tests for CollectDataUseCase."""
 
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
 
 from src.application.dtos.butler_use_case_dtos import DigestResult, StatsResult
 from src.application.use_cases.collect_data_use_case import CollectDataUseCase

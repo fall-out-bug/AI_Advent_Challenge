@@ -67,7 +67,9 @@ class TranscriptionResult:
         if not self.text.strip():
             raise ValueError("Transcription text cannot be empty")
         if not 0.0 <= self.confidence <= 1.0:
-            raise ValueError(f"Confidence must be between 0.0 and 1.0, got {self.confidence}")
+            raise ValueError(
+                f"Confidence must be between 0.0 and 1.0, got {self.confidence}"
+            )
         if self.duration_ms < 0:
             raise ValueError(f"Duration must be non-negative, got {self.duration_ms}")
 
@@ -116,7 +118,9 @@ class VoiceCommand:
         if not self.user_id.strip():
             raise ValueError("User ID cannot be empty")
         if self.created_at is not None and self.created_at < 0:
-            raise ValueError(f"Created timestamp must be non-negative, got {self.created_at}")
+            raise ValueError(
+                f"Created timestamp must be non-negative, got {self.created_at}"
+            )
         if (
             self.expires_at is not None
             and self.created_at is not None
@@ -165,4 +169,3 @@ class VoiceCommand:
         if self.expires_at is None:
             return False
         return current_time >= self.expires_at
-

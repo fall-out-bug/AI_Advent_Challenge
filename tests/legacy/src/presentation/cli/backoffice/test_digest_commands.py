@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import importlib
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, patch
 
-from click.testing import CliRunner
 import pytest
+from click.testing import CliRunner
 
 from src.application.dtos.digest_dtos import ChannelDigest
 from src.domain.value_objects.summary_result import SummaryResult

@@ -2,6 +2,7 @@
 
 <<<<<<< HEAD
 import asyncio
+
 =======
 >>>>>>> origin/master
 import os
@@ -25,7 +26,6 @@ def event_loop():
 =======
 # Note: Legacy tests use get_db() - consider migrating to mongodb_database_async fixture
 from src.infrastructure.database.mongo import close_client, get_db
-
 
 # Legacy event_loop fixture removed - pytest-asyncio handles event loop automatically
 # (asyncio_mode = auto in pytest.ini)

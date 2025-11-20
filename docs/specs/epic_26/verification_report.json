@@ -1,0 +1,60 @@
+{
+  "total_samples": 4,
+  "passed_samples": 0,
+  "failed_samples": 4,
+  "results": [
+    {
+      "file_name": "01_simple_functions.py",
+      "file_path": "/home/fall_out_bug/studies/AI_Challenge/docs/specs/epic_26/test_samples/01_simple_functions.py",
+      "status": "passed",
+      "test_count": 0,
+      "passed_count": 0,
+      "failed_count": 0,
+      "coverage": 0.0,
+      "errors": [
+        "LLM_URL not configured (value=''), using FallbackLLMClient. This will result in poor summarization quality."
+      ],
+      "verification_passed": false
+    },
+    {
+      "file_name": "02_calculator.py",
+      "file_path": "/home/fall_out_bug/studies/AI_Challenge/docs/specs/epic_26/test_samples/02_calculator.py",
+      "status": "passed",
+      "test_count": 0,
+      "passed_count": 0,
+      "failed_count": 0,
+      "coverage": 0.0,
+      "errors": [
+        "LLM_URL not configured (value=''), using FallbackLLMClient. This will result in poor summarization quality."
+      ],
+      "verification_passed": false
+    },
+    {
+      "file_name": "03_shopping_cart.py",
+      "file_path": "/home/fall_out_bug/studies/AI_Challenge/docs/specs/epic_26/test_samples/03_shopping_cart.py",
+      "status": "passed",
+      "test_count": 0,
+      "passed_count": 0,
+      "failed_count": 0,
+      "coverage": 0.0,
+      "errors": [
+        "LLM_URL not configured (value=''), using FallbackLLMClient. This will result in poor summarization quality."
+      ],
+      "verification_passed": false
+    },
+    {
+      "file_name": "04_data_processor.py",
+      "file_path": "/home/fall_out_bug/studies/AI_Challenge/docs/specs/epic_26/test_samples/04_data_processor.py",
+      "status": "passed",
+      "test_count": 0,
+      "passed_count": 0,
+      "failed_count": 0,
+      "coverage": 0.0,
+      "errors": [
+        "LLM_URL not configured (value=''), using FallbackLLMClient. This will result in poor summarization quality."
+      ],
+      "verification_passed": false
+    }
+  ],
+  "overall_status": "FAIL"
+}

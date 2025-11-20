@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
 from datetime import datetime, timedelta, timezone
+
+import pytest
 
 from src.application.use_cases.generate_channel_digest_by_name import (
     GenerateChannelDigestByNameUseCase,
@@ -80,13 +81,13 @@ async def test_map_reduce_with_real_llm(real_llm_client):
     Purpose:
         Verifies Map-Reduce works correctly with real LLM for long texts.
     """
+    from src.domain.services.summary_quality_checker import SummaryQualityChecker
+    from src.domain.services.text_cleaner import TextCleanerService
+    from src.infrastructure.llm.chunking.semantic_chunker import SemanticChunker
     from src.infrastructure.llm.summarizers.map_reduce_summarizer import (
         MapReduceSummarizer,
     )
-    from src.infrastructure.llm.chunking.semantic_chunker import SemanticChunker
     from src.infrastructure.llm.token_counter import TokenCounter
-    from src.domain.services.text_cleaner import TextCleanerService
-    from src.domain.services.summary_quality_checker import SummaryQualityChecker
 
     # Create long text (10+ posts, >5000 tokens total)
     long_text = "\n\n".join(
@@ -134,8 +135,9 @@ async def test_task_summary_full_flow(real_mongodb, test_user_id):
     # Create test tasks
     task_repo = TaskRepository(real_mongodb)
 
-    from src.domain.entities.task import TaskIn
     from datetime import datetime, timezone
+
+    from src.domain.entities.task import TaskIn
 
     test_tasks = [
         TaskIn(
@@ -172,11 +174,11 @@ async def test_llm_failure_fallback():
     Purpose:
         Verifies fallback mechanism works when LLM fails.
     """
+    from src.domain.services.summary_quality_checker import SummaryQualityChecker
+    from src.domain.services.text_cleaner import TextCleanerService
     from src.infrastructure.clients.llm_client import FallbackLLMClient
     from src.infrastructure.llm.summarizers.llm_summarizer import LLMSummarizer
     from src.infrastructure.llm.token_counter import TokenCounter
-    from src.domain.services.text_cleaner import TextCleanerService
-    from src.domain.services.summary_quality_checker import SummaryQualityChecker
 
     # Use FallbackLLMClient (always available)
     fallback_client = FallbackLLMClient()

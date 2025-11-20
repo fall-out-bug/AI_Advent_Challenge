@@ -10,7 +10,7 @@ This repository contains daily challenges building AI-powered systems with langu
 
 **Updates:** Project news and daily recaps are published in the Telegram channel [Высоконагруженный кабанчик](https://t.me/data_intensive_boar).
 
-**Current Status:** 🏆 Day 25 COMPLETED & DEPLOYED — Personalised Butler with Alfred-style дворецкий persona, user profiles, and memory management (Epic 25). Voice commands integrated (Epic 24), observability & benchmarks delivered (Epic 23).
+**Current Status:** 🏆 Day 26 COMPLETED & DEPLOYED — Test Agent (Epic 26) with autonomous test generation, code implementation, and verification using local Qwen model. Personalised Butler with Alfred-style дворецкий persona (Epic 25), voice commands integrated (Epic 24), observability & benchmarks delivered (Epic 23).
 
 ### Day 21 (Completed)
 - Summary: `docs/specs/epic_21/epic_21.md`
@@ -21,23 +21,25 @@ This repository contains daily challenges building AI-powered systems with langu
   - `make day_21_metrics` — print key rag_* metrics
 
 **Project Status:**
-- ✅ 25 daily challenges completed
+- ✅ 26 daily challenges completed
 - ✅ Clean Architecture fully implemented (Day 21)
 - ✅ Security hardening deployed (path traversal protection, input validation)
 - ✅ Quality automation established (pre-commit hooks, automated linting)
 - ✅ Production-ready multi-agent system with self-improvement
 - ✅ Automatic quality evaluation and fine-tuning
 - ✅ Comprehensive documentation for AI assistants
+- ✅ **Test Agent** (Day 26) with autonomous test generation and code implementation
 - ✅ **Personalised Butler** (Day 25) with user profiles, memory, and interest extraction
 
 **Key Features:**
-- ✅ 25 daily challenges from simple chat to observability, benchmarks, voice commands, and personalization
+- ✅ 26 daily challenges from simple chat to observability, benchmarks, voice commands, personalization, and test automation
 - ✅ Clean Architecture with SOLID principles
-- ✅ 420+ tests with 80%+ coverage
+- ✅ 450+ tests with 80%+ coverage
 - ✅ Multi-model support (StarCoder, Mistral, Qwen, TinyLlama)
 - ✅ MCP (Model Context Protocol) integration with HTTP server
 - ✅ MCP-aware agent with automatic tool discovery and execution
 - ✅ FSM-based Telegram bot for channel management and digest delivery
+- ✅ **Test Agent** (Day 26 - autonomous test generation, code implementation, and verification using local Qwen model)
 - ✅ **Hybrid Intent Recognition** (Rule-based + LLM with caching)
 - ✅ **HW Checker integration** (all_checks_status, queue_status, retry_check)
 - ✅ **Homework Review via Telegram** (list homeworks, review by commit hash)
@@ -82,6 +84,9 @@ make run-api
 
 # Backoffice CLI
 poetry run python -m src.presentation.cli.backoffice.main --help
+
+# Test Agent CLI (Day 26)
+poetry run python -m src.presentation.cli.test_agent.main path/to/code.py --help
 ```
 
 ### Document Embedding Index
@@ -170,6 +175,7 @@ AI_Challenge/
 | Day 23 | Observability & Benchmark Enablement | Prometheus, Grafana, Loki, Benchmarks | ✅ Complete |
 | Day 24 | Voice Commands Integration | Telegram Bot, Whisper STT, Butler Orchestrator | ✅ Complete |
 | Day 25 | Personalised Butler | User Profiles, Memory Management, Interest Extraction, Alfred-style дворецкий | ✅ Complete |
+| Day 26 | Test Agent | Autonomous Test Generation, Code Implementation, Local Qwen LLM | ✅ Complete |
 
 ## Core Infrastructure
 
@@ -215,6 +221,7 @@ Primary entry points:
 
 - **`docker-compose.butler.yml`** – production stack (MongoDB, MCP server, workers, bot, Prometheus, Grafana).
 - **`docker-compose.butler.dev.yml`** – development variant with hot reload and lightweight defaults.
+- **`docker-compose.test-agent.yml`** – Test Agent CLI service (Day 26 - Epic 26) with local Qwen model integration.
 
 Legacy configurations (Day 11/12 demos, full GPU stacks, experimental layouts) now live under `archive/docker-compose/`. Existing `make` targets keep working and reference the archived manifests.
 
@@ -266,6 +273,28 @@ make day-11-up
 - Robust retry logic with exponential backoff
 - Dialog history management with automatic compression
 - Prometheus metrics integration
+
+**Test Agent (Day 26 - Epic 26):**
+- **Autonomous Test Generation**: Analyzes code structure and generates comprehensive pytest test suites
+- **Code Implementation**: Generates implementation code based on requirements following Clean Architecture
+- **Test Execution**: Executes generated tests and collects pass/fail status and coverage metrics
+- **Local LLM Integration**: Uses local Qwen model exclusively (no external APIs)
+- **CLI Interface**: Simple command-line interface with viewing/saving options
+- **Code Quality**: Follows project standards (PEP 8, type hints, docstrings, ≥80% coverage)
+- **Multi-Layer Protection**: AST validation, source code protection, enhanced filtering to prevent function redefinitions
+- **Debug Logging**: Comprehensive debug logging for troubleshooting (optional via environment variables)
+- Quick start:
+```bash
+# Run Test Agent via Docker
+docker-compose -f docker-compose.test-agent.yml up test-agent
+
+# Or run directly
+python -m src.presentation.cli.test_agent.main path/to/code.py
+
+# With options
+python -m src.presentation.cli.test_agent.main path/to/code.py --save-code --show-tests
+```
+- See [Epic 26 Testing Guide](docs/specs/epic_26/TESTING_GUIDE.md) for detailed documentation
 
 **Personalised Butler (Day 25):**
 - **User Profiles**: Auto-created profiles with "Alfred-style дворецкий" persona
@@ -333,7 +362,12 @@ Main documentation:
 - [MONITORING.md](docs/reference/en/MONITORING.md) - Monitoring setup and Grafana dashboards
 - [SECURITY.md](docs/reference/en/SECURITY.md) - Security policies and practices
 
-Day 15 documentation (current):
+Day 26 documentation (current):
+- [Epic 26 Overview](docs/specs/epic_26/epic_26.md)
+- [Test Agent Testing Guide](docs/specs/epic_26/TESTING_GUIDE.md)
+- [Quick Test Guide](docs/specs/epic_26/QUICK_TEST.md)
+
+Day 15 documentation:
 - [Quality Assessment & Fine-tuning Guide](docs/day15/README.md)
 - [API Documentation](docs/day15/api.md)
 - [Migration from Day 12](docs/day15/MIGRATION_FROM_DAY12.md)

@@ -9,9 +9,7 @@ from src.infrastructure.benchmarking.jsonl_dataset_provider import (
     JsonlBenchmarkDatasetProvider,
 )
 from src.infrastructure.benchmarking.judge import SummarizationJudgeAdapter
-from src.infrastructure.benchmarking.metrics_recorder import (
-    PrometheusBenchmarkRecorder,
-)
+from src.infrastructure.benchmarking.metrics_recorder import PrometheusBenchmarkRecorder
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.llm.clients.resilient_client import ResilientLLMClient
 from src.infrastructure.llm.evaluation.summarization_evaluator import (
@@ -20,7 +18,9 @@ from src.infrastructure.llm.evaluation.summarization_evaluator import (
 from src.infrastructure.llm.token_counter import TokenCounter
 
 
-def create_benchmark_runner(max_concurrency: Optional[int] = None) -> BenchmarkEvaluationRunner:
+def create_benchmark_runner(
+    max_concurrency: Optional[int] = None,
+) -> BenchmarkEvaluationRunner:
     """Build BenchmarkEvaluationRunner wired with production dependencies.
 
     Purpose:
@@ -50,7 +50,9 @@ def create_benchmark_runner(max_concurrency: Optional[int] = None) -> BenchmarkE
         timeout=settings.benchmark_judge_timeout_seconds,
     )
     token_counter = TokenCounter(model_name=settings.llm_model)
-    evaluator = SummarizationEvaluator(llm_client=llm_client, token_counter=token_counter)
+    evaluator = SummarizationEvaluator(
+        llm_client=llm_client, token_counter=token_counter
+    )
     judge = SummarizationJudgeAdapter(evaluator=evaluator)
     dataset_provider = JsonlBenchmarkDatasetProvider()
     recorder = PrometheusBenchmarkRecorder()

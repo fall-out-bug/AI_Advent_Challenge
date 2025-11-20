@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
-import argparse, os, shutil, tempfile
-from pyspark.sql import SparkSession, functions as F
+import argparse
+import os
+import shutil
+import tempfile
+
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
 
 
 def compute_top10_genres(spark, ratings_csv, movies_csv):

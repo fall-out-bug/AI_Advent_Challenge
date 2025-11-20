@@ -7,14 +7,11 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from shared.shared_package.clients.base_client import ModelResponse
-
-from src.application.use_cases.review_submission_use_case import (
-    ReviewSubmissionUseCase,
-)
+from src.application.use_cases.review_submission_use_case import ReviewSubmissionUseCase
+from src.domain.services.diff_analyzer import DiffAnalyzer
 from src.domain.value_objects.long_summarization_task import LongTask
 from src.domain.value_objects.task_status import TaskStatus
 from src.domain.value_objects.task_type import TaskType
-from src.domain.services.diff_analyzer import DiffAnalyzer
 from src.infrastructure.archive.archive_service import ZipArchiveService
 from src.infrastructure.config.settings import Settings
 

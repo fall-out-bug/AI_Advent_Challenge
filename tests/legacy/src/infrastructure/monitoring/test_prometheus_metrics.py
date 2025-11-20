@@ -87,6 +87,7 @@ else:
     def mock_prometheus_available():
         """Ensure prometheus metrics module is loaded with real client."""
         import importlib
+
         import src.infrastructure.monitoring.prometheus_metrics as metrics_module
 
         yield importlib.reload(metrics_module)
@@ -155,8 +156,13 @@ else:
         channels_cursor.to_list = AsyncMock(return_value=[])
         mock_db.channels.find.return_value = channels_cursor
 
-        with patch("src.workers.post_fetcher_worker.get_mcp_client", return_value=mock_mcp):
-            with patch("src.workers.post_fetcher_worker.get_db", new=AsyncMock(return_value=mock_db)):
+        with patch(
+            "src.workers.post_fetcher_worker.get_mcp_client", return_value=mock_mcp
+        ):
+            with patch(
+                "src.workers.post_fetcher_worker.get_db",
+                new=AsyncMock(return_value=mock_db),
+            ):
                 with patch(
                     "src.workers.post_fetcher_worker.get_settings"
                 ) as mock_settings:
@@ -218,14 +224,18 @@ else:
         mock_callback.message.answer = AsyncMock()
         mock_callback.answer = AsyncMock()
 
-        with patch("src.presentation.bot.handlers.menu.get_mcp_client") as mock_client_fn:
+        with patch(
+            "src.presentation.bot.handlers.menu.get_mcp_client"
+        ) as mock_client_fn:
             mock_client = AsyncMock()
             mock_client_fn.return_value = mock_client
             mock_client.call_tool = AsyncMock(
                 return_value={"posts_by_channel": {}, "error": "no_posts"}
             )
 
-            with patch("src.presentation.bot.handlers.menu.get_pdf_cache") as mock_cache:
+            with patch(
+                "src.presentation.bot.handlers.menu.get_pdf_cache"
+            ) as mock_cache:
                 mock_cache.return_value.get = MagicMock(return_value=None)
 
                 with patch(

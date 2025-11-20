@@ -3,10 +3,11 @@
 Following TDD principles: test error handling and edge cases.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+from aiogram.exceptions import TelegramAPIError, TelegramBadRequest
 from aiogram.types import Message, User
-from aiogram.exceptions import TelegramBadRequest, TelegramAPIError
 
 from src.presentation.bot.butler_bot import ButlerBot
 from src.presentation.bot.orchestrator import ButlerOrchestrator

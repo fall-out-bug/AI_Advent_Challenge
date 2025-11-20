@@ -1,0 +1,78 @@
+from: devops
+to: developer
+timestamp: "2025_11_20_02_40_24"
+epic_id: "epic_26"
+iteration: 1
+
+type: request
+subject: add_code_viewing_functionality
+
+content:
+  summary: "Add functionality to view/save generated code from Test Agent workflow"
+  current_situation:
+    - "Generated code is created in memory as CodeFile entity"
+    - "Code is used only for test execution in temporary directory"
+    - "Code is not persisted to disk after execution"
+    - "No way to inspect generated code after workflow completes"
+  problem:
+    - "Users cannot review generated code to understand what Test Agent created"
+    - "Generated code is lost after test execution"
+    - "No debugging capability for generated code inspection"
+  requested_functionality:
+    option_1_save_to_file:
+      description: "Save generated code to workspace directory"
+      implementation:
+        - "Add CLI option: --save-code or --output-dir"
+        - "Save generated_code_{unique_id}.py to workspace/ directory"
+        - "Preserve code file after test execution"
+        - "Log file path in output"
+      example_usage: |
+        python -m src.presentation.cli.test_agent.main \
+          /app/test_samples/01_simple_functions.py --save-code
+        # Saves to: workspace/generated_code_abc12345.py
+    option_2_print_to_console:
+      description: "Print generated code to console"
+      implementation:
+        - "Add CLI option: --show-code or --verbose-code"
+        - "Print generated code content to stdout after generation"
+        - "Format with syntax highlighting if possible"
+      example_usage: |
+        python -m src.presentation.cli.test_agent.main \
+          /app/test_samples/01_simple_functions.py --show-code
+    option_3_both:
+      description: "Implement both save and show options"
+      implementation:
+        - "Combine both options above"
+        - "Allow --save-code and --show-code to work together"
+  implementation_location:
+    file: "src/presentation/cli/test_agent/main.py"
+    function: "main() function"
+    orchestrator: "src/application/test_agent/orchestrators/test_agent_orchestrator.py"
+    code_file_entity: "src/domain/test_agent/entities/code_file.py"
+  technical_details:
+    current_flow:
+      - "orchestrator.orchestrate_test_workflow() returns TestResult"
+      - "generated_code is CodeFile entity with path and content"
+      - "CodeFile is not persisted, only used for test execution"
+    suggested_changes:
+      - "Modify main() to accept --save-code/--show-code CLI arguments"
+      - "After code generation, save CodeFile.content to workspace/ if --save-code"
+      - "Print CodeFile.content if --show-code"
+      - "Update format_result() or add new function to display code location"
+  requirements:
+    - "Follow existing CLI patterns (use Click framework)"
+    - "Maintain backward compatibility (options should be optional)"
+    - "Save to workspace/ directory (already mounted in docker-compose)"
+    - "File naming: generated_code_{unique_id}.py (already used in CodeFile.path)"
+    - "Add logging for saved file path"
+  acceptance_criteria:
+    - "User can view generated code via --show-code option"
+    - "User can save generated code via --save-code option"
+    - "Saved code is accessible in workspace/ directory"
+    - "Code file path is logged/displayed in output"
+    - "Options work correctly in Docker container"
+    - "No breaking changes to existing functionality"
+
+action_needed: "add_code_viewing_functionality"
+priority: "medium"
+notes: "This is a usability improvement request. Generated code should be accessible for review and debugging purposes."

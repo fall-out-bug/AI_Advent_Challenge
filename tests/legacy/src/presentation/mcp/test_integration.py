@@ -1,4 +1,5 @@
 """Integration tests for MCP client-server workflow."""
+
 import pytest
 
 from src.presentation.mcp.client import MCPClient

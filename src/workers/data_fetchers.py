@@ -147,7 +147,10 @@ async def _get_summary_from_db(user_id: int) -> str:
 
     except Exception as db_err:
         logger.error(
-            "🔧 Debug DB query failed", user_id=user_id, error=str(db_err), exc_info=True
+            "🔧 Debug DB query failed",
+            user_id=user_id,
+            error=str(db_err),
+            exc_info=True,
         )
         import traceback
 

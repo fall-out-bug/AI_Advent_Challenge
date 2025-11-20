@@ -1,6 +1,9 @@
 # spark-jobs/load_to_redis.py
-import os, json
-from pyspark.sql import SparkSession, functions as F
+import json
+import os
+
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
 
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://minio:9000")
 MINIO_ACCESS = os.getenv("MINIO_ROOT_USER", "minioadmin")
@@ -70,14 +73,16 @@ def write_partition(rows):
         try:
             payload = {
                 "user_id": int(row.user_id),
-                "avg_rating": float(row.avg_rating)
-                if row.avg_rating is not None
-                else None,
+                "avg_rating": (
+                    float(row.avg_rating) if row.avg_rating is not None else None
+                ),
                 "num_movies": int(row.num_movies) if row.num_movies is not None else 0,
                 "genre_profile": _to_py_map(getattr(row, "genre_profile", None)),
-                "last_interaction_ts": int(row.last_interaction_ts)
-                if row.last_interaction_ts is not None
-                else None,
+                "last_interaction_ts": (
+                    int(row.last_interaction_ts)
+                    if row.last_interaction_ts is not None
+                    else None
+                ),
                 "movie_ids": [int(x) for x in (row.movie_ids or [])],
             }
             pipe.set(str(payload["user_id"]), json.dumps(payload))

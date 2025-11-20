@@ -1,9 +1,15 @@
 from __future__ import annotations
-import os, json, zipfile, pathlib, time
+
+import json
+import os
+import pathlib
+import time
+import zipfile
 from datetime import datetime
+
 from airflow import DAG
-from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
+from airflow.operators.python import PythonOperator
 
 # Env
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://minio:9000")
@@ -16,7 +22,9 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def download_and_unzip():
-    import requests, zipfile
+    import zipfile
+
+    import requests
 
     zip_path = DATA_DIR / "ml-latest.zip"
 
@@ -33,8 +41,9 @@ def download_and_unzip():
 
 
 def upload_to_minio():
-    from minio import Minio
     import os
+
+    from minio import Minio
 
     client = Minio(
         endpoint=MINIO_ENDPOINT.replace("http://", "").replace("https://", ""),

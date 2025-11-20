@@ -3,9 +3,10 @@
 Following TDD approach: tests written BEFORE implementation (Red phase).
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from src.infrastructure.dialogs.dialog_manager import DialogManager
 from src.infrastructure.dialogs.schemas import DialogMessage

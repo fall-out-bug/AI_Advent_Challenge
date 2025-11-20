@@ -1,24 +1,17 @@
 """Shared pytest fixtures for testing."""
 
 import asyncio
-<<<<<<< HEAD
-=======
 import uuid
->>>>>>> origin/master
 from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock, Mock
 
-import pytest
 import httpx
-<<<<<<< HEAD
-
-=======
+import pytest
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo import MongoClient
 
-from src.infrastructure.config.settings import get_settings
+# from src.infrastructure.config.settings import get_settings
 from src.infrastructure.database.mongo_client_factory import MongoClientFactory
->>>>>>> origin/master
 from src.infrastructure.repositories.json_conversation_repository import (
     JsonConversationRepository,
 )
@@ -129,7 +122,6 @@ def mcp_wrapper_mock():
     return mock_wrapper
 
 
-<<<<<<< HEAD
 @pytest.fixture(scope="session")
 def event_loop():
     """Create event loop for async tests.
@@ -142,8 +134,6 @@ def event_loop():
     loop.close()
 
 
-=======
->>>>>>> origin/master
 @pytest.fixture
 def temp_data_dir(tmp_path):
     """Create temporary data directory.
@@ -171,8 +161,6 @@ def cleanup_test_files(tmp_path):
     pass
 
 
-<<<<<<< HEAD
-=======
 # MongoDB fixtures (Cluster A - TL24-01)
 @pytest.fixture(scope="session")
 def mongodb_client() -> MongoClient:
@@ -192,7 +180,9 @@ def mongodb_client() -> MongoClient:
 
 
 @pytest.fixture
-def mongodb_database(mongodb_client: MongoClient, request: pytest.FixtureRequest) -> Any:
+def mongodb_database(
+    mongodb_client: MongoClient, request: pytest.FixtureRequest
+) -> Any:
     """Function-scoped MongoDB database fixture with per-test isolation.
 
     Purpose:
@@ -286,36 +276,37 @@ async def mongodb_database_async(
         pass
 
 
->>>>>>> origin/master
-# Import MCP fixtures
-from tests.fixtures.mcp_fixtures import (
-    mock_mcp_client,
-    sample_tools_metadata,
-    sample_dialog_history,
-    mock_mongodb,
-    mock_llm_client,
-    mock_agent_request,
-    mock_agent_response,
-)
-
 # Import Butler fixtures
 from tests.fixtures.butler_fixtures import (
-    mock_llm_client_protocol,
-    mock_tool_client_protocol,
-    mock_mongodb as butler_mock_mongodb,
-    mock_mode_classifier,
-    mock_intent_orchestrator,
-    mock_task_handler,
-    mock_data_handler,
-    mock_chat_handler,
     butler_orchestrator,
-    sample_dialog_context,
-    sample_task_message,
-    sample_data_message,
-    sample_idle_message,
+    mock_chat_handler,
+    mock_data_handler,
+    mock_intent_orchestrator,
+    mock_llm_client_protocol,
+    mock_mode_classifier,
+)
+from tests.fixtures.butler_fixtures import mock_mongodb as butler_mock_mongodb
+from tests.fixtures.butler_fixtures import (
+    mock_task_handler,
     mock_telegram_bot,
     mock_telegram_dispatcher,
     mock_telegram_message,
-    sample_user_id,
+    mock_tool_client_protocol,
+    sample_data_message,
+    sample_dialog_context,
+    sample_idle_message,
     sample_session_id,
+    sample_task_message,
+    sample_user_id,
+)
+
+# Import MCP fixtures
+from tests.fixtures.mcp_fixtures import (
+    mock_agent_request,
+    mock_agent_response,
+    mock_llm_client,
+    mock_mcp_client,
+    mock_mongodb,
+    sample_dialog_history,
+    sample_tools_metadata,
 )

@@ -51,14 +51,18 @@ def export_experiments(settings: Settings, output_dir: Path) -> None:
         writer.writeheader()
 
         for exp in experiments.get("experiments", []):
-            writer.writerow({
-                "id": exp.get("id", ""),
-                "name": exp.get("name", ""),
-                "status": exp.get("status", ""),
-                "timestamp": exp.get("timestamp", "")
-            })
+            writer.writerow(
+                {
+                    "id": exp.get("id", ""),
+                    "name": exp.get("name", ""),
+                    "status": exp.get("status", ""),
+                    "timestamp": exp.get("timestamp", ""),
+                }
+            )
 
-    print(f"✅ Exported {len(experiments.get('experiments', []))} experiments to {csv_path}")
+    print(
+        f"✅ Exported {len(experiments.get('experiments', []))} experiments to {csv_path}"
+    )
 
 
 def export_agents(settings: Settings, output_dir: Path) -> None:
@@ -87,11 +91,13 @@ def export_agents(settings: Settings, output_dir: Path) -> None:
         writer.writeheader()
 
         for agent in agents.get("agents", []):
-            writer.writerow({
-                "name": agent.get("name", ""),
-                "status": agent.get("status", ""),
-                "tasks_count": agent.get("tasks_count", 0)
-            })
+            writer.writerow(
+                {
+                    "name": agent.get("name", ""),
+                    "status": agent.get("status", ""),
+                    "tasks_count": agent.get("tasks_count", 0),
+                }
+            )
 
     print(f"✅ Exported agents to {csv_path}")
 
@@ -136,8 +142,8 @@ def generate_summary(output_dir: Path) -> None:
         "metrics": get_metrics().get_metrics(),
         "statistics": {
             "experiments": _count_items(settings.get_experiment_storage_path()),
-            "agents": _count_items(settings.get_agent_storage_path())
-        }
+            "agents": _count_items(settings.get_agent_storage_path()),
+        },
     }
 
     summary_path = output_dir / "summary.json"
@@ -171,10 +177,7 @@ def main() -> None:
     """Main entry point."""
     parser = argparse.ArgumentParser(description="Export data")
     parser.add_argument(
-        "--output",
-        type=str,
-        default="exports",
-        help="Output directory"
+        "--output", type=str, default="exports", help="Output directory"
     )
     args = parser.parse_args()
 

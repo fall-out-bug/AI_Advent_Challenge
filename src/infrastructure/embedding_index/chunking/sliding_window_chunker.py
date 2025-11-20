@@ -5,7 +5,12 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import List
 
-from src.domain.embedding_index import Chunker, ChunkingSettings, DocumentChunk, DocumentPayload
+from src.domain.embedding_index import (
+    Chunker,
+    ChunkingSettings,
+    DocumentChunk,
+    DocumentPayload,
+)
 
 
 class SlidingWindowChunker(Chunker):

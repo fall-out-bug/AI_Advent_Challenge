@@ -14,4 +14,3 @@
 | TL-05: Update `dev_handoff.md`, `work_log.md`, `challenge_days.md` | TL-05 | Doc diffs + worklog entries | Tech Lead | Pending |
 
 Status legend: Pending / In Progress / Done / Blocked.
-

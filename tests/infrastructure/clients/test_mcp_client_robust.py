@@ -3,15 +3,16 @@
 Following TDD approach: tests written BEFORE implementation (Red phase).
 """
 
-import pytest
+from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock, patch
-from typing import Dict, Any
+
+import pytest
 
 from src.infrastructure.clients.mcp_client_robust import RobustMCPClient
 from src.presentation.mcp.exceptions import (
     MCPClientError,
-    MCPTimeoutError,
     MCPConnectionError,
+    MCPTimeoutError,
 )
 
 

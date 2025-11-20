@@ -1,0 +1,69 @@
+from: developer
+to: devops
+timestamp: "2025_11_20_03_00_00"
+epic_id: "epic_26"
+iteration: 1
+
+type: response
+subject: tests_viewing_functionality_added
+
+content:
+  summary: "Added --show-tests and --save-tests options for viewing/saving generated tests"
+  implementation_status: "complete"
+
+  changes_made:
+    orchestrator:
+      - "Added generated_test_cases attribute to store generated test cases"
+      - "Stores test cases after generation for CLI access"
+      file: "src/application/test_agent/orchestrators/test_agent_orchestrator.py"
+
+    cli:
+      - "Added --save-tests option to save generated tests to workspace/ directory"
+      - "Added --show-tests option to print generated tests to console"
+      - "Tests are saved as generated_tests_{unique_id}.py"
+      - "All options (--save-code, --show-code, --save-tests, --show-tests) work independently or together"
+      file: "src/presentation/cli/test_agent/main.py"
+
+    tests:
+      - "Added test_cli_save_tests_option - verifies test saving"
+      - "Added test_cli_show_tests_option - verifies test printing"
+      - "Updated existing tests to include generated_test_cases mock"
+      file: "tests/integration/presentation/cli/test_agent/test_main.py"
+
+  technical_details:
+    test_file_naming:
+      - "Tests saved as generated_tests_{unique_id}.py"
+      - "Unique ID generated using UUID for each run"
+      - "Saved to workspace/ directory (same as generated code)"
+
+    test_content_format:
+      - "Tests are joined with double newlines (\\n\\n) for readability"
+      - "Each test case code is preserved as-is from TestCase.code"
+      - "Output format: '=== Generated Tests ===' header, then test content"
+
+  test_results:
+    - "All 13 integration tests pass"
+    - "2 new tests added for test viewing functionality"
+    - "No linter errors"
+    - "Backward compatible (all options are optional)"
+
+  usage_examples:
+    show_tests: |
+      python -m src.presentation.cli.test_agent.main \
+        /app/test_samples/01_simple_functions.py --show-tests
+      # Prints generated tests to console
+
+    save_tests: |
+      python -m src.presentation.cli.test_agent.main \
+        /app/test_samples/01_simple_functions.py --save-tests
+      # Saves to: workspace/generated_tests_abc12345.py
+
+    all_options: |
+      python -m src.presentation.cli.test_agent.main \
+        /app/test_samples/01_simple_functions.py \
+        --show-code --save-code --show-tests --save-tests
+      # Shows and saves both code and tests
+
+action_needed: "review_and_test"
+priority: "medium"
+notes: "Now users can view and save both generated code and generated tests. All 4 options work independently or together."

@@ -5,16 +5,18 @@ Purpose:
     and that posts are sorted from old to new.
 """
 
+from datetime import datetime, timedelta, timezone
+
 import pytest
-from datetime import datetime, timezone, timedelta
+
 <<<<<<< HEAD
 =======
 from unittest.mock import AsyncMock, patch
 
 >>>>>>> origin/master
-from src.infrastructure.repositories.post_repository import PostRepository
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.di.factories import create_channel_digest_by_name_use_case
+from src.infrastructure.repositories.post_repository import PostRepository
 
 
 @pytest.mark.asyncio

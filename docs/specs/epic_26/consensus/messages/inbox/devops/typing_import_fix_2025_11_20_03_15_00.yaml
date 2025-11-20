@@ -1,0 +1,79 @@
+from: developer
+to: devops
+timestamp: "2025_11_20_03_15_00"
+epic_id: "epic_26"
+iteration: 1
+
+type: response
+subject: typing_import_automatic_fix
+
+content:
+  summary: "Fixed NameError for typing types (List, Dict, Optional, etc.) by adding automatic imports"
+  implementation_status: "complete"
+
+  problem:
+    - "Generated code using typing types (List[int], Optional[int], etc.) failed with NameError"
+    - "LLM sometimes generates code with type hints but forgets to import from typing"
+    - "This caused test collection errors even when code was correctly written"
+    - "Example: NameError: name 'List' is not defined"
+
+  solution:
+    - "Added automatic detection of typing type usage in generated code"
+    - "Automatically adds 'from typing import ...' if typing types are used but import is missing"
+    - "Improved LLM prompt to explicitly mention typing import requirement"
+    - "Imports are added at the beginning of test file, before source code section"
+
+  changes_made:
+    llm_service:
+      - "Updated generate_code_prompt to explicitly mention typing import requirement"
+      - "Added instruction: 'If using type hints from typing (List, Dict, Optional, etc.), include: from typing import ...'"
+      file: "src/infrastructure/test_agent/services/llm_service.py"
+
+    execute_tests_use_case:
+      - "Added automatic typing import detection and injection"
+      - "Detects usage of: List, Dict, Optional, Union, Tuple, Set, Callable, Any, Sequence, Iterable"
+      - "Checks for usage patterns: List[int], : List, -> List, , List, (List"
+      - "Checks if 'from typing import' or 'import typing' is already present"
+      - "Automatically adds 'from typing import ...' at the beginning of test file if needed"
+      - "Imports placed before SOURCE_MARKER_START, so they're available for source code"
+      file: "src/application/test_agent/use_cases/execute_tests_use_case.py"
+
+  technical_details:
+    detection_logic:
+      - "Scans source code for typing type usage patterns"
+      - "Detects: List[int], Dict[str, int], Optional[int], Union[int, str], etc."
+      - "Also detects: -> List, : List, , List, (List in type hints"
+      - "Checks if import is already present in source code"
+      - "Adds 'from typing import List, Dict, Optional, ...' at file start if needed"
+
+    import_location:
+      - "Imports added at the very beginning of test file"
+      - "Before SOURCE_MARKER_START, so available for source code section"
+      - "Format: 'from typing import List, Optional, Dict' (sorted, unique types)"
+
+    supported_types:
+      - "List, Dict, Optional, Union, Tuple, Set, Callable, Any, Sequence, Iterable"
+      - "All common typing types used in Python type hints"
+
+  test_results:
+    - "All 4 unit tests for execute_tests_use_case pass"
+    - "No linter errors"
+    - "Backward compatible - only adds imports if typing types are used"
+    - "Does not add imports if already present"
+
+  example_fix:
+    before: |
+      # ===== SOURCE CODE (IMMUTABLE) =====
+      def find_max(numbers: List[int]) -> Optional[int]:  # NameError!
+          ...
+
+    after: |
+      from typing import List, Optional  # Automatically added
+
+      # ===== SOURCE CODE (IMMUTABLE) =====
+      def find_max(numbers: List[int]) -> Optional[int]:  # Works!
+          ...
+
+action_needed: "test_in_production"
+priority: "high"
+notes: "This fix ensures that code using typing type hints will always have the required imports, preventing NameError failures during test collection. The fix is automatic and transparent to users."

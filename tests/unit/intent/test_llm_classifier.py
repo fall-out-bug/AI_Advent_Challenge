@@ -3,8 +3,9 @@
 Following TDD: Test-Driven Development.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from src.domain.intent.intent_classifier import IntentType
 from src.domain.intent.llm_classifier import LLMClassifier

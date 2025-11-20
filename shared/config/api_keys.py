@@ -7,7 +7,7 @@ and "Explicit is better than implicit".
 
 import os
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 
 def load_api_key_from_file(file_path: Path, key_name: str) -> Optional[str]:
@@ -53,10 +53,7 @@ def get_api_key(api_type: str = "perplexity") -> Optional[str]:
         return api_key
 
     # Fallback to environment variables
-    env_var_map = {
-        "perplexity": "PERPLEXITY_API_KEY",
-        "chadgpt": "CHAD_API_KEY"
-    }
+    env_var_map = {"perplexity": "PERPLEXITY_API_KEY", "chadgpt": "CHAD_API_KEY"}
 
     env_var = env_var_map.get(api_type)
     if env_var:
@@ -88,5 +85,5 @@ def get_available_external_apis() -> Dict[str, bool]:
     """
     return {
         "perplexity": is_api_key_configured("perplexity"),
-        "chadgpt": is_api_key_configured("chadgpt")
+        "chadgpt": is_api_key_configured("chadgpt"),
     }

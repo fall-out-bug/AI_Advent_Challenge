@@ -3,24 +3,28 @@
 Following TDD principles: test complete Telegram bot workflows.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 from src.presentation.bot.butler_bot import ButlerBot
+
 <<<<<<< HEAD
 from src.domain.agents.services.mode_classifier import DialogMode
 from tests.fixtures.butler_fixtures import butler_orchestrator
+
 =======
 from src.application.dtos.butler_dialog_dtos import DialogMode
 from tests.fixtures.butler_fixtures import (
     butler_orchestrator,
-    mock_task_handler,
-    mock_data_handler,
     mock_chat_handler,
-    mock_tool_client_protocol,
-    mock_llm_client_protocol,
+    mock_data_handler,
     mock_intent_orchestrator,
+    mock_llm_client_protocol,
+    mock_task_handler,
+    mock_tool_client_protocol,
 )
+
 >>>>>>> origin/master
 
 

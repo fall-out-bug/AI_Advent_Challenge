@@ -73,13 +73,17 @@ class FallbackSTTAdapter:
             except SpeechToTextError as e:
                 # Check if it's a model not found error
                 error_msg = str(e).lower()
-                if "model" in error_msg and ("not found" in error_msg or "404" in error_msg):
+                if "model" in error_msg and (
+                    "not found" in error_msg or "404" in error_msg
+                ):
                     logger.warning(
                         f"Whisper model not found, will use Vosk for future requests: {e}"
                     )
                     self._whisper_failed = True  # Don't try Whisper again
                 else:
-                    logger.warning(f"Whisper transcription failed: {e}. Trying Vosk fallback.")
+                    logger.warning(
+                        f"Whisper transcription failed: {e}. Trying Vosk fallback."
+                    )
                 # Continue to Vosk fallback
             except Exception as e:
                 logger.warning(f"Whisper adapter error: {e}. Trying Vosk fallback.")
@@ -112,4 +116,3 @@ class FallbackSTTAdapter:
             "Please start Whisper STT service or install Vosk.",
             audio_format="wav",
         )
-

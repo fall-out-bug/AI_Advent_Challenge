@@ -1,4 +1,5 @@
 """HTTP wrapper for MCP server using FastAPI."""
+
 import asyncio
 import os
 import sys
@@ -161,7 +162,9 @@ async def call_tool(tool_request: ToolCallRequest, http_request: Request):
             logger.info(
                 f"Calling tool: {tool_name} with arguments: {str(tool_request.arguments)[:200]}"
             )
-            result = await mcp._tool_manager.call_tool(tool_name, tool_request.arguments)
+            result = await mcp._tool_manager.call_tool(
+                tool_name, tool_request.arguments
+            )
             logger.info(
                 f"Tool call completed: {tool_name} (result type: {type(result).__name__})"
             )

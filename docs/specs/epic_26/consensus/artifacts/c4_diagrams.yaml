@@ -1,0 +1,26 @@
+context:
+  changed: true
+  description: "Added Test Agent system - autonomous agent for test generation, code generation, and test execution using local Qwen model"
+
+container:
+  changed: true
+  new_containers:
+    - "Test Agent CLI (CLI application)"
+    - "Test Agent Application (use cases and orchestration)"
+    - "Test Agent Infrastructure (pytest executor, LLM service, reporting)"
+  modified_containers:
+    - "Existing LLM Client Infrastructure (reused for Qwen integration)"
+
+component:
+  changed: true
+  new_components:
+    - "TestAgentOrchestrator (application)"
+    - "GenerateTestsUseCase (application)"
+    - "GenerateCodeUseCase (application)"
+    - "ExecuteTestsUseCase (application)"
+    - "TestExecutor (infrastructure - pytest adapter)"
+    - "TestAgentLLMService (infrastructure - LLM wrapper)"
+    - "TestResultReporter (infrastructure)"
+    - "TestAgentCLI (presentation)"
+    - "TestCase, TestResult, CodeFile (domain entities)"
+  modified_components: []

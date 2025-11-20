@@ -7,21 +7,21 @@ and "Explicit is better than implicit".
 
 import pytest
 from shared_package.config.agents import (
+    AGENT_CONFIGS,
+    CODE_GENERATOR_PROMPT_TEMPLATE,
+    CODE_REVIEWER_PROMPT_TEMPLATE,
+    DEFAULT_GENERATOR_CONFIG,
+    DEFAULT_REVIEWER_CONFIG,
+    MODEL_AGENT_COMPATIBILITY,
     AgentConfig,
     CodeGeneratorConfig,
     CodeReviewerConfig,
-    DEFAULT_GENERATOR_CONFIG,
-    DEFAULT_REVIEWER_CONFIG,
-    AGENT_CONFIGS,
-    MODEL_AGENT_COMPATIBILITY,
     get_agent_config,
-    get_model_config_for_agent,
-    is_model_recommended_for_agent,
     get_compatible_models,
-    get_recommended_models,
+    get_model_config_for_agent,
     get_prompt_template,
-    CODE_GENERATOR_PROMPT_TEMPLATE,
-    CODE_REVIEWER_PROMPT_TEMPLATE
+    get_recommended_models,
+    is_model_recommended_for_agent,
 )
 
 
@@ -59,8 +59,7 @@ class TestCodeGeneratorConfig:
     def test_custom_generator_config(self):
         """Test custom code generator configuration."""
         config = CodeGeneratorConfig(
-            max_tokens=5000,
-            supported_languages=["python", "rust"]
+            max_tokens=5000, supported_languages=["python", "rust"]
         )
         assert config.max_tokens == 5000
         assert config.supported_languages == ["python", "rust"]
@@ -80,10 +79,7 @@ class TestCodeReviewerConfig:
 
     def test_custom_reviewer_config(self):
         """Test custom code reviewer configuration."""
-        config = CodeReviewerConfig(
-            max_tokens=3000,
-            check_pep8=False
-        )
+        config = CodeReviewerConfig(max_tokens=3000, check_pep8=False)
         assert config.max_tokens == 3000
         assert config.check_pep8 is False
 
@@ -287,8 +283,7 @@ class TestPromptTemplates:
     def test_template_formatting(self):
         """Test prompt template formatting."""
         formatted = CODE_GENERATOR_PROMPT_TEMPLATE.format(
-            language="python",
-            task="Create a hello world function"
+            language="python", task="Create a hello world function"
         )
         assert "python" in formatted
         assert "Create a hello world function" in formatted

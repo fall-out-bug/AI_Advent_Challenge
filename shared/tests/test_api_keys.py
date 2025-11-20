@@ -2,14 +2,14 @@
 Tests for API key management functionality.
 """
 
-from unittest.mock import patch, mock_open
 from pathlib import Path
+from unittest.mock import mock_open, patch
 
 from shared_package.config.api_keys import (
-    load_api_key_from_file,
     get_api_key,
-    is_api_key_configured,
     get_available_external_apis,
+    is_api_key_configured,
+    load_api_key_from_file,
 )
 
 

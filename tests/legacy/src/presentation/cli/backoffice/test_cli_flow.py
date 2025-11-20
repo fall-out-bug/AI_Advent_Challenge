@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import importlib
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, patch
 
 from click.testing import CliRunner
@@ -80,26 +80,33 @@ def test_cli_backoffice_full_flow() -> None:
         }
     )
 
-    with patch.object(
-        channels_module, "get_db", new=AsyncMock(return_value=db_stub)
-    ), patch.object(
-        channels_module,
-        "_fetch_channels",
-        new=AsyncMock(return_value=channel_rows),
-    ), patch.object(
-        channels_module,
-        "mcp_add_channel",
-        new=AsyncMock(return_value={"status": "subscribed", "channel_id": "abc123"}),
-    ) as mock_add, patch.object(
-        channels_module,
-        "mcp_delete_channel",
-        new=AsyncMock(return_value={"status": "deleted", "channel_id": "abc123"}),
-    ) as mock_delete, patch(
-        "src.infrastructure.database.mongo.get_db",
-        new=AsyncMock(return_value=db_stub),
-    ), patch(
-        "src.application.use_cases.generate_channel_digest.GenerateChannelDigestUseCase",
-        return_value=digest_use_case,
+    with (
+        patch.object(channels_module, "get_db", new=AsyncMock(return_value=db_stub)),
+        patch.object(
+            channels_module,
+            "_fetch_channels",
+            new=AsyncMock(return_value=channel_rows),
+        ),
+        patch.object(
+            channels_module,
+            "mcp_add_channel",
+            new=AsyncMock(
+                return_value={"status": "subscribed", "channel_id": "abc123"}
+            ),
+        ) as mock_add,
+        patch.object(
+            channels_module,
+            "mcp_delete_channel",
+            new=AsyncMock(return_value={"status": "deleted", "channel_id": "abc123"}),
+        ) as mock_delete,
+        patch(
+            "src.infrastructure.database.mongo.get_db",
+            new=AsyncMock(return_value=db_stub),
+        ),
+        patch(
+            "src.application.use_cases.generate_channel_digest.GenerateChannelDigestUseCase",
+            return_value=digest_use_case,
+        ),
     ):
         add_result = runner.invoke(
             channels, ["add", "--user-id", "42", "--channel", "tech_news"]

@@ -181,5 +181,3 @@ class InMemoryVoiceCommandStore(VoiceCommandStore):
                 f"Deleted voice command {command_id}",
                 extra={"command_id": str(command_id)},
             )
-
-

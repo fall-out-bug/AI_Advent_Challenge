@@ -18,13 +18,19 @@ import pytest
 @pytest.fixture
 def bootstrap_script() -> Path:
     """Return path to bootstrap script."""
-    return Path(__file__).resolve().parent.parent.parent.parent / "scripts/ci/bootstrap_shared_infra.py"
+    return (
+        Path(__file__).resolve().parent.parent.parent.parent
+        / "scripts/ci/bootstrap_shared_infra.py"
+    )
 
 
 @pytest.fixture
 def cleanup_script() -> Path:
     """Return path to cleanup script."""
-    return Path(__file__).resolve().parent.parent.parent.parent / "scripts/ci/cleanup_shared_infra.py"
+    return (
+        Path(__file__).resolve().parent.parent.parent.parent
+        / "scripts/ci/cleanup_shared_infra.py"
+    )
 
 
 @pytest.fixture
@@ -49,7 +55,15 @@ def test_bootstrap_check_fails_when_services_down(
 
     # Check should fail when services are down
     result = subprocess.run(
-        [sys.executable, str(bootstrap_script), "--check", "--mongo-port", str(mongo_port), "--mock-port", str(mock_port)],
+        [
+            sys.executable,
+            str(bootstrap_script),
+            "--check",
+            "--mongo-port",
+            str(mongo_port),
+            "--mock-port",
+            str(mock_port),
+        ],
         capture_output=True,
         check=False,
     )

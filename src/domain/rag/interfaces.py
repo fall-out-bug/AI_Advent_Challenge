@@ -6,7 +6,7 @@ from typing import Protocol, Sequence
 
 from src.domain.embedding_index import EmbeddingVector
 
-from .value_objects import Answer, RetrievedChunk, RerankResult
+from .value_objects import Answer, RerankResult, RetrievedChunk
 
 
 class VectorSearchService(Protocol):

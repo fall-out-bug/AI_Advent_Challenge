@@ -17,8 +17,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.presentation.bot.orchestrator import ButlerOrchestrator
 from src.application.dtos.butler_dialog_dtos import DialogMode
+from src.presentation.bot.orchestrator import ButlerOrchestrator
 
 
 @pytest.mark.asyncio
@@ -50,9 +50,15 @@ async def test_butler_orchestrator_public_api_characterization():
     mock_mongodb = MagicMock()
     mock_mongodb.dialog_contexts = MagicMock()
     mock_mongodb.dialog_contexts.find_one = AsyncMock(return_value=None)
-    mock_mongodb.dialog_contexts.insert_one = AsyncMock(return_value=MagicMock(inserted_id="test_id"))
-    mock_mongodb.dialog_contexts.update_one = AsyncMock(return_value=MagicMock(modified_count=1))
-    mock_mongodb.dialog_contexts.update_one = AsyncMock(return_value=MagicMock(modified_count=1))
+    mock_mongodb.dialog_contexts.insert_one = AsyncMock(
+        return_value=MagicMock(inserted_id="test_id")
+    )
+    mock_mongodb.dialog_contexts.update_one = AsyncMock(
+        return_value=MagicMock(modified_count=1)
+    )
+    mock_mongodb.dialog_contexts.update_one = AsyncMock(
+        return_value=MagicMock(modified_count=1)
+    )
 
     orchestrator = ButlerOrchestrator(
         mode_classifier=mock_mode_classifier,
@@ -64,8 +70,12 @@ async def test_butler_orchestrator_public_api_characterization():
     )
 
     # Characterize: Public method is `handle_user_message`
-    assert hasattr(orchestrator, "handle_user_message"), "Should have handle_user_message method"
-    assert callable(orchestrator.handle_user_message), "handle_user_message should be callable"
+    assert hasattr(
+        orchestrator, "handle_user_message"
+    ), "Should have handle_user_message method"
+    assert callable(
+        orchestrator.handle_user_message
+    ), "handle_user_message should be callable"
 
     # Characterize: Method signature: (user_id, message, session_id, force_mode=None) -> str
     response = await orchestrator.handle_user_message(
@@ -115,9 +125,15 @@ async def test_butler_orchestrator_message_routing_characterization():
     mock_mongodb = MagicMock()
     mock_mongodb.dialog_contexts = MagicMock()
     mock_mongodb.dialog_contexts.find_one = AsyncMock(return_value=None)
-    mock_mongodb.dialog_contexts.insert_one = AsyncMock(return_value=MagicMock(inserted_id="test_id"))
-    mock_mongodb.dialog_contexts.update_one = AsyncMock(return_value=MagicMock(modified_count=1))
-    mock_mongodb.dialog_contexts.update_one = AsyncMock(return_value=MagicMock(modified_count=1))
+    mock_mongodb.dialog_contexts.insert_one = AsyncMock(
+        return_value=MagicMock(inserted_id="test_id")
+    )
+    mock_mongodb.dialog_contexts.update_one = AsyncMock(
+        return_value=MagicMock(modified_count=1)
+    )
+    mock_mongodb.dialog_contexts.update_one = AsyncMock(
+        return_value=MagicMock(modified_count=1)
+    )
 
     orchestrator = ButlerOrchestrator(
         mode_classifier=mock_mode_classifier,
@@ -190,7 +206,9 @@ async def test_butler_orchestrator_context_management_characterization():
     mock_mongodb = MagicMock()
     mock_mongodb.dialog_contexts = MagicMock()
     mock_mongodb.dialog_contexts.find_one = AsyncMock(side_effect=find_one_side_effect)
-    mock_mongodb.dialog_contexts.insert_one = AsyncMock(side_effect=insert_one_side_effect)
+    mock_mongodb.dialog_contexts.insert_one = AsyncMock(
+        side_effect=insert_one_side_effect
+    )
     mock_mongodb.dialog_contexts.update_one = AsyncMock()
 
     orchestrator = ButlerOrchestrator(
@@ -231,7 +249,9 @@ async def test_butler_orchestrator_error_handling_characterization():
     """
     # Setup: Create orchestrator that will raise exception
     mock_mode_classifier = MagicMock()
-    mock_mode_classifier.classify = AsyncMock(side_effect=Exception("Classification error"))
+    mock_mode_classifier.classify = AsyncMock(
+        side_effect=Exception("Classification error")
+    )
 
     mock_mongodb = MagicMock()
     mock_mongodb.dialog_contexts = MagicMock()
@@ -253,9 +273,7 @@ async def test_butler_orchestrator_error_handling_characterization():
 
     assert isinstance(response, str), "Should return string response even on error"
     assert (
-        "error" in response.lower()
-        or "sorry" in response.lower()
-        or "❌" in response
+        "error" in response.lower() or "sorry" in response.lower() or "❌" in response
     ), "Error response should be user-friendly"
 
 
@@ -380,7 +398,13 @@ async def test_mcp_aware_agent_tool_invocation_characterization():
     mock_chat_client = MagicMock()
     mock_chat_client.create_completion = AsyncMock(
         return_value=MagicMock(
-            choices=[MagicMock(message=MagicMock(content='{"tool": "get_posts", "params": {"channel_username": "test"}}'))]
+            choices=[
+                MagicMock(
+                    message=MagicMock(
+                        content='{"tool": "get_posts", "params": {"channel_username": "test"}}'
+                    )
+                )
+            ]
         )
     )
     agent.chat_client = mock_chat_client
@@ -461,8 +485,12 @@ async def test_butler_orchestrator_private_attributes_characterization():
     mock_mongodb = MagicMock()
     mock_mongodb.dialog_contexts = MagicMock()
     mock_mongodb.dialog_contexts.find_one = AsyncMock(return_value=None)
-    mock_mongodb.dialog_contexts.insert_one = AsyncMock(return_value=MagicMock(inserted_id="test_id"))
-    mock_mongodb.dialog_contexts.update_one = AsyncMock(return_value=MagicMock(modified_count=1))
+    mock_mongodb.dialog_contexts.insert_one = AsyncMock(
+        return_value=MagicMock(inserted_id="test_id")
+    )
+    mock_mongodb.dialog_contexts.update_one = AsyncMock(
+        return_value=MagicMock(modified_count=1)
+    )
 
     orchestrator = ButlerOrchestrator(
         mode_classifier=mock_mode_classifier,
@@ -534,9 +562,15 @@ async def test_mcp_aware_agent_state_transitions_characterization():
     )
 
     # Characterize: Agent has private methods for stage processing
-    assert hasattr(agent, "_stage_decision"), "Should have _stage_decision private method"
-    assert hasattr(agent, "_stage_execution"), "Should have _stage_execution private method"
-    assert hasattr(agent, "_stage_formatting"), "Should have _stage_formatting private method"
+    assert hasattr(
+        agent, "_stage_decision"
+    ), "Should have _stage_decision private method"
+    assert hasattr(
+        agent, "_stage_execution"
+    ), "Should have _stage_execution private method"
+    assert hasattr(
+        agent, "_stage_formatting"
+    ), "Should have _stage_formatting private method"
 
     # Characterize: Process method orchestrates stages
     request = AgentRequest(

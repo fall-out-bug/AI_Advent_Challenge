@@ -4,8 +4,9 @@ These tests document current Map-Reduce summarizer behavior
 before refactoring in Cluster D.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from src.domain.value_objects.summarization_context import SummarizationContext
 from src.infrastructure.llm.summarizers.map_reduce_summarizer import MapReduceSummarizer
@@ -49,7 +50,10 @@ class TestMapReduceSummarizerInterface:
         if map_tokens_param and map_tokens_param.default != inspect.Parameter.empty:
             assert map_tokens_param.default == 600
 
-        if reduce_tokens_param and reduce_tokens_param.default != inspect.Parameter.empty:
+        if (
+            reduce_tokens_param
+            and reduce_tokens_param.default != inspect.Parameter.empty
+        ):
             assert reduce_tokens_param.default == 2000
 
     def test_map_reduce_summarizer_summarize_text_signature(self):

@@ -1,4 +1,5 @@
 """Unit tests for MCP adapters."""
+
 from unittest.mock import AsyncMock, Mock
 
 import pytest

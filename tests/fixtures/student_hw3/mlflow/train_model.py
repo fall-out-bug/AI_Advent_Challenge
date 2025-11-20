@@ -1,20 +1,23 @@
 # mlflow/train_model.py
-import os, json, time
-import pandas as pd
-import numpy as np
+import json
+import os
+import time
+
 import mlflow
 import mlflow.sklearn
+import numpy as np
+import pandas as pd
+import redis
 from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
 from sklearn.metrics import (
     accuracy_score,
-    roc_auc_score,
+    f1_score,
     precision_score,
     recall_score,
-    f1_score,
+    roc_auc_score,
 )
-import redis
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow:5000")
 os.environ.setdefault("MLFLOW_TRACKING_URI", TRACKING_URI)

@@ -1,44 +1,44 @@
 # Epic 24 · Review Questions & Fixes
 
-**Reviewer:** cursor_reviewer_v1  
-**Date:** 2025-11-18  
+**Reviewer:** cursor_reviewer_v1
+**Date:** 2025-11-18
 **Status:** ✅ **READY FOR IMPLEMENTATION** (все вопросы закрыты)
 
 ## Critical Issues (Resolved)
 
-1. **STT Model Selection**  
-   - Решение: используем локальный Ollama (`/api/generate`) с моделью `whisper-small` RU; Vosk остаётся CPU fallback.  
+1. **STT Model Selection**
+   - Решение: используем локальный Ollama (`/api/generate`) с моделью `whisper-small` RU; Vosk остаётся CPU fallback.
    - Обновлено в: `tech_lead_plan.md` (TL-00/TL-02), `day_24_voice_agent_arch.md`.
 
-2. **Redis Availability**  
-   - Решение: shared Redis из Day 23 — основной storage; in-memory cache лишь fallback для dev/аварий.  
+2. **Redis Availability**
+   - Решение: shared Redis из Day 23 — основной storage; in-memory cache лишь fallback для dev/аварий.
    - Обновлено в TL-00/TL-02 и acceptance matrix.
 
-3. **CI Metrics Gate**  
-   - Решение: вместо несуществующего `check_metrics.py` используем manual `curl …/metrics | grep voice_` (TL-05 tasks + CI gate таблица).  
+3. **CI Metrics Gate**
+   - Решение: вместо несуществующего `check_metrics.py` используем manual `curl …/metrics | grep voice_` (TL-05 tasks + CI gate таблица).
 
 ## High-Priority Clarifications (Resolved)
 
-4. **ConfirmationGateway** — добавлен протокол (`src/domain/interfaces/confirmation_gateway.py`, TL-01).  
-5. **ButlerGateway** — добавлен протокол-адаптер (`src/domain/interfaces/butler_gateway.py`, TL-01).  
-6. **Temp File Cleanup** — TL-02 требует `try/finally` cleanup + optional TTL job.  
-7. **Session ID Strategy** — TL-03: `voice_{user_id}_{command_id}` или Butler session manager.  
-8. **Audio Conversion** — TL-03: OGG→WAV через `pydub.AudioSegment` (ffmpeg).  
-9. **Confidence Threshold** — TL-00: `stt_min_confidence = 0.6`.  
+4. **ConfirmationGateway** — добавлен протокол (`src/domain/interfaces/confirmation_gateway.py`, TL-01).
+5. **ButlerGateway** — добавлен протокол-адаптер (`src/domain/interfaces/butler_gateway.py`, TL-01).
+6. **Temp File Cleanup** — TL-02 требует `try/finally` cleanup + optional TTL job.
+7. **Session ID Strategy** — TL-03: `voice_{user_id}_{command_id}` или Butler session manager.
+8. **Audio Conversion** — TL-03: OGG→WAV через `pydub.AudioSegment` (ffmpeg).
+9. **Confidence Threshold** — TL-00: `stt_min_confidence = 0.6`.
 10. **Error Messages** — TL-03: жёстко RU строки (“Команда отклонена…”, “Не удалось распознать голос…”).
 
 ## Summary Checklist
-- [x] STT (Ollama + Vosk) финализирован.  
-- [x] Redis usage задокументирован.  
-- [x] Gateway протоколы определены.  
-- [x] Session ID, audio conversion, cleanup, RU UX и confidence threshold описаны.  
+- [x] STT (Ollama + Vosk) финализирован.
+- [x] Redis usage задокументирован.
+- [x] Gateway протоколы определены.
+- [x] Session ID, audio conversion, cleanup, RU UX и confidence threshold описаны.
 - [x] CI gate заменён на manual metrics check.
 
 Документы `tech_lead_plan.md`, `day_24_voice_agent_arch.md`, `acceptance_matrix.md` и связанные артефакты обновлены; можно передавать в разработку.
 # Epic 24 · Review Questions & Fixes
 
-**Reviewer:** cursor_reviewer_v1  
-**Date:** 2025-11-18  
+**Reviewer:** cursor_reviewer_v1
+**Date:** 2025-11-18
 **Status:** ⚠️ **NEEDS CLARIFICATION** before implementation start
 
 ## 🔴 Critical Issues (Must Fix Before Start)
@@ -48,7 +48,7 @@
 - **Ollama** = HTTP API service (not truly offline/local binary)
 - **Local Whisper** = Python binding or CLI binary (truly offline)
 
-**Location:** 
+**Location:**
 - `tech_lead_plan.md` TL-00: "STT stack: primary — локальный Whisper small RU (GPU)"
 - `tech_lead_plan.md` TL-02: "mock Ollama API" in evidence
 - `day_24_voice_agent_arch.md` §4.3: "Wraps local Whisper/Vosk binary via CLI or Python binding"
@@ -58,7 +58,7 @@
 - Option B: Ollama HTTP API (requires Ollama service running) — not truly offline
 - Option C: Both (Whisper primary, Ollama as fallback) — but this contradicts "offline" requirement
 
-**Recommendation:** 
+**Recommendation:**
 - Use **Option A** (local Whisper Python binding) for true offline support
 - Remove Ollama references from TL-02 evidence
 - Update TL-00 decision to explicitly state: "Local Whisper via `openai-whisper` Python package, no HTTP dependencies"
@@ -175,7 +175,7 @@
 **Location:**
 - `tech_lead_plan.md` TL-02: "automatic cleanup как при успешной транскрипции, так и при ошибках STT"
 
-**Question:** 
+**Question:**
 - Cleanup immediately after transcription?
 - Cleanup on confirmation/rejection?
 - Background job for orphaned files?
@@ -343,4 +343,3 @@
 **Overall Assessment:** Plan is **well-structured** but needs **clarifications on STT model, Redis availability, and gateway protocols** before implementation can start safely.
 
 **Confidence Level:** Medium (will be High after clarifications)
-

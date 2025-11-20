@@ -5,7 +5,6 @@ Following the Zen of Python:
 - Explicit is better than implicit
 """
 
-
 try:
     from prometheus_client import Counter, Histogram  # type: ignore
 

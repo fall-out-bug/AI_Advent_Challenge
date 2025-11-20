@@ -38,4 +38,3 @@ class Transcription:
     language: str
     duration_ms: int
     segments: list[dict] | None = None
-

@@ -6,9 +6,8 @@ dependencies expose their own `tests` namespace packages in site-packages.
 
 from __future__ import annotations
 
-from pathlib import Path
 import sys
-
+from pathlib import Path
 
 # Guarantee the repository test root is the first entry for the `tests` package.
 _THIS_DIR = Path(__file__).resolve().parent

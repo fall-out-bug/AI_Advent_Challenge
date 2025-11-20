@@ -4,17 +4,17 @@ Simple integration test for communication adapters.
 Following Python Zen: "Simple is better than complex".
 """
 
-import pytest
 from unittest.mock import AsyncMock
 
+import pytest
+from shared_package.agents.schemas import AgentRequest, AgentResponse, TaskMetadata
 from shared_package.orchestration.adapters import (
-    AdapterType,
     AdapterConfig,
+    AdapterFactory,
+    AdapterType,
     DirectAdapter,
     RestAdapter,
-    AdapterFactory
 )
-from shared_package.agents.schemas import AgentRequest, AgentResponse, TaskMetadata
 
 
 class TestSimpleIntegration:
@@ -32,10 +32,8 @@ class TestSimpleIntegration:
             result="Generated code",
             success=True,
             metadata=TaskMetadata(
-                task_id="test_123",
-                task_type="code_generation",
-                timestamp=1234567890.0
-            )
+                task_id="test_123", task_type="code_generation", timestamp=1234567890.0
+            ),
         )
         mock_agent.process.return_value = expected_response
 
@@ -69,8 +67,7 @@ class TestSimpleIntegration:
         assert isinstance(direct_adapter2, DirectAdapter)
 
         rest_adapter2 = AdapterFactory.create_adapter(
-            AdapterType.REST,
-            base_url="http://localhost:8000"
+            AdapterType.REST, base_url="http://localhost:8000"
         )
         assert isinstance(rest_adapter2, RestAdapter)
 
@@ -80,7 +77,7 @@ class TestSimpleIntegration:
             adapter_type=AdapterType.DIRECT,
             timeout=60.0,
             max_retries=5,
-            retry_delay=2.0
+            retry_delay=2.0,
         )
 
         assert config.adapter_type == AdapterType.DIRECT

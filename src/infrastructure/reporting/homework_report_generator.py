@@ -450,9 +450,11 @@ async def generate_detailed_markdown_report(
                     "major": "🟠",
                     "minor": "🟡",
                 }.get(
-                    finding.severity.value
-                    if hasattr(finding.severity, "value")
-                    else str(finding.severity).lower(),
+                    (
+                        finding.severity.value
+                        if hasattr(finding.severity, "value")
+                        else str(finding.severity).lower()
+                    ),
                     "⚪",
                 )
 
@@ -505,9 +507,11 @@ async def generate_detailed_markdown_report(
                         "major": "🟠",
                         "minor": "🟡",
                     }.get(
-                        finding.severity.value
-                        if hasattr(finding.severity, "value")
-                        else str(finding.severity).lower(),
+                        (
+                            finding.severity.value
+                            if hasattr(finding.severity, "value")
+                            else str(finding.severity).lower()
+                        ),
                         "⚪",
                     )
 
@@ -558,9 +562,11 @@ async def generate_detailed_markdown_report(
                     "major": "🟠",
                     "minor": "🟡",
                 }.get(
-                    finding.severity.value
-                    if hasattr(finding.severity, "value")
-                    else str(finding.severity).lower(),
+                    (
+                        finding.severity.value
+                        if hasattr(finding.severity, "value")
+                        else str(finding.severity).lower()
+                    ),
                     "⚪",
                 )
 
@@ -595,9 +601,11 @@ async def generate_detailed_markdown_report(
                     sentences = rec_text.split(". ")
                     if len(sentences) > 1:
                         rec_lines = [
-                            f"{s}."
-                            if not s.endswith(".") and i < len(sentences) - 1
-                            else s
+                            (
+                                f"{s}."
+                                if not s.endswith(".") and i < len(sentences) - 1
+                                else s
+                            )
                             for i, s in enumerate(sentences)
                             if s.strip()
                         ]

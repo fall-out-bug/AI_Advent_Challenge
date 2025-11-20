@@ -77,14 +77,8 @@ async def test_memory_compression_triggered(
     # Create 51 events (exceeds cap of 50)
     events = []
     for i in range(51):
-        events.append(
-            UserMemoryEvent.create_user_event(user_id, f"Message {i}")
-        )
-        events.append(
-            UserMemoryEvent.create_assistant_event(
-                user_id, f"Reply {i}"
-            )
-        )
+        events.append(UserMemoryEvent.create_user_event(user_id, f"Message {i}"))
+        events.append(UserMemoryEvent.create_assistant_event(user_id, f"Reply {i}"))
     await memory_repo.append_events(events)
 
     # Mock LLM for compression summary
@@ -114,9 +108,7 @@ async def test_memory_compression_triggered(
 
 
 @pytest.mark.asyncio
-async def test_voice_source_handled(
-    personalized_reply_use_case, memory_repo
-):
+async def test_voice_source_handled(personalized_reply_use_case, memory_repo):
     """Test voice source is handled correctly."""
     user_id = "test_user_voice_999"
     message_text = "Голосовое сообщение"

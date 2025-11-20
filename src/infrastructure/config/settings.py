@@ -25,17 +25,12 @@ class Settings(BaseSettings):
     """
 
     mongodb_url: str = Field(
-<<<<<<< HEAD
         default="mongodb://shared-mongo:27017/butler?authSource=admin",
         description="MongoDB connection string (uses Docker service name 'shared-mongo' by default)",
-=======
-        default="mongodb://localhost:27017",
-        description="MongoDB connection string",
     )
     test_mongodb_url: str = Field(
         default="mongodb://ci_admin:ci_password@127.0.0.1:37017/butler?authSource=admin",
         description="MongoDB connection string for tests (Day 23 infra default, can override via TEST_MONGODB_URL env var)",
->>>>>>> origin/master
     )
     db_name: str = Field(default="butler", description="Primary database name")
     mongo_timeout_ms: int = Field(default=10000, description="Mongo client timeout")
@@ -45,12 +40,8 @@ class Settings(BaseSettings):
     )
     # LLM settings
     llm_url: str = Field(
-<<<<<<< HEAD
         default="http://llm-api:8000",
         description="LLM service URL (uses Docker service name 'llm-api' by default)",
-=======
-        default="", description="LLM service URL (e.g., http://mistral-chat:8000)"
->>>>>>> origin/master
     )
     llm_model: str = Field(
         default="mistral-7b-instruct-v0.2", description="LLM model name"
@@ -153,7 +144,6 @@ class Settings(BaseSettings):
             "(longer for large texts)"
         ),
     )
-<<<<<<< HEAD
     # Personalization settings
     personalization_enabled: bool = Field(
         default=True,
@@ -179,8 +169,6 @@ class Settings(BaseSettings):
         le=1.0,
         description="LLM temperature for interest extraction (lower = more deterministic)",
     )
-=======
->>>>>>> origin/master
     summarizer_timeout_seconds_long: float = Field(
         default=600.0,
         description="Timeout in seconds for long async summarization tasks",
@@ -450,7 +438,6 @@ class Settings(BaseSettings):
         default="embedding:chunk:",
         description="Redis key prefix for stored embeddings",
     )
-<<<<<<< HEAD
     # Voice/STT settings
     whisper_host: str = Field(
         default="whisper-stt",
@@ -464,6 +451,10 @@ class Settings(BaseSettings):
         default="base",
         description="Whisper model name (e.g., tiny, base, small, medium, large, large-v2, large-v3)",
     )
+    stt_min_confidence: float = Field(
+        default=0.6,
+        description="Minimum confidence threshold for STT transcription (0.0-1.0)",
+    )
     voice_redis_host: str = Field(
         default="shared-redis",
         description="Redis host for voice command store (default: shared-redis)",
@@ -476,40 +467,22 @@ class Settings(BaseSettings):
         default=None,
         description="Redis password for voice command store (reads from VOICE_REDIS_PASSWORD or REDIS_PASSWORD env var)",
     )
+    voice_command_ttl_seconds: int = Field(
+        default=600,
+        description="TTL for pending voice commands in Redis (default 10 minutes)",
+    )
 
     @field_validator("voice_redis_password", mode="before")
     @classmethod
     def validate_voice_redis_password(cls, v: str | None) -> str | None:
         """Validate voice_redis_password by reading from environment if not set."""
         import os
+
         if v is None:
             # Try VOICE_REDIS_PASSWORD first, then REDIS_PASSWORD as fallback
             v = os.getenv("VOICE_REDIS_PASSWORD") or os.getenv("REDIS_PASSWORD")
         return v
-=======
-    # Voice agent settings (STT)
-    # Note: Separate from LLM service (Mistral/Ollama for LLM, Whisper for STT)
-    whisper_host: str = Field(
-        default="localhost",
-        description="Whisper STT service host (separate from LLM)",
-    )
-    whisper_port: int = Field(
-        default=8005,
-        description="Whisper STT service port",
-    )
-    stt_model: str = Field(
-        default="tiny",  # Fast model for quick testing (for production use larger models like base/small)
-        description="Whisper model name (e.g., tiny, base, small, medium, large, large-v2, large-v3)",
-    )
-    stt_min_confidence: float = Field(
-        default=0.6,
-        description="Minimum confidence threshold for STT transcription (0.0-1.0)",
-    )
-    voice_command_ttl_seconds: int = Field(
-        default=600,
-        description="TTL for pending voice commands in Redis (default 10 minutes)",
-    )
->>>>>>> origin/master
+
     # RAG retrieval settings
     rag_top_k: int = Field(
         default=5,

@@ -64,8 +64,12 @@ def detect_assignment_type(codebase: Mapping[str, str]) -> str:
     if any("airflow" in candidate for candidate in lower_paths + lower_contents):
         return "HW2"
 
-    dockerfile_present = any(Path(path).name.lower() == "dockerfile" for path in codebase)
-    spark_present = any("spark" in candidate for candidate in lower_paths + lower_contents)
+    dockerfile_present = any(
+        Path(path).name.lower() == "dockerfile" for path in codebase
+    )
+    spark_present = any(
+        "spark" in candidate for candidate in lower_paths + lower_contents
+    )
 
     if dockerfile_present and spark_present:
         return "HW1"
@@ -248,9 +252,9 @@ class _HomeworkReviewWorkflow:
             logs=self._review_logger.get_all_logs(),
             report={
                 "markdown": markdown,
-                "json": json.loads(report.to_json())
-                if hasattr(report, "to_json")
-                else {},
+                "json": (
+                    json.loads(report.to_json()) if hasattr(report, "to_json") else {}
+                ),
             },
             metadata={
                 "execution_time_seconds": report.execution_time_seconds,

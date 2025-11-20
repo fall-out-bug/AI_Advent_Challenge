@@ -239,5 +239,3 @@ class TestHandleVoiceConfirmationUseCase:
 
         with pytest.raises(RuntimeError, match="Failed to process voice command"):
             await use_case.execute(input_data)
-
-
