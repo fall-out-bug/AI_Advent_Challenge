@@ -166,9 +166,6 @@ async def test_generate_channel_digest_multiple_channels(
     # Mock posts for each channel - need to return posts so digests are created
     call_count = [0]
 
-<<<<<<< HEAD
-    def get_posts_side_effect(channel_username, since):
-=======
     async def get_posts_side_effect(channel_username, since, user_id=None):
         """Side effect for get_posts_by_channel mock.
 
@@ -184,7 +181,6 @@ async def test_generate_channel_digest_multiple_channels(
         Returns:
             List of post dictionaries.
         """
->>>>>>> origin/master
         call_count[0] += 1
         if call_count[0] == 1:
             return [

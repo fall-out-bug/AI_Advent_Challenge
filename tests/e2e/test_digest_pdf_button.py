@@ -9,13 +9,14 @@ Following TDD principles:
 """
 
 import base64
-import pytest
 import types
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
 try:
-    from aiogram.types import CallbackQuery, Message, User, Chat
+    from aiogram.types import CallbackQuery, Chat, Message, User
 except Exception:
     pytest.skip("aiogram is required for E2E tests", allow_module_level=True)
 
@@ -71,7 +72,9 @@ def clear_cache():
 
 @pytest.mark.asyncio
 @pytest.mark.e2e
-async def test_digest_button_click_generates_and_sends_pdf(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_digest_button_click_generates_and_sends_pdf(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """E2E: User clicks Digest button → PDF generated → PDF sent.
 
     Scenario:
@@ -102,7 +105,9 @@ async def test_digest_button_click_generates_and_sends_pdf(monkeypatch: pytest.M
                             },
                             {
                                 "text": "Post 2 from channel1",
-                                "date": (datetime.utcnow() - timedelta(hours=1)).isoformat(),
+                                "date": (
+                                    datetime.utcnow() - timedelta(hours=1)
+                                ).isoformat(),
                                 "message_id": "2",
                                 "channel_username": "channel1",
                             },
@@ -176,7 +181,9 @@ async def test_digest_button_click_generates_and_sends_pdf(monkeypatch: pytest.M
 
 @pytest.mark.asyncio
 @pytest.mark.e2e
-async def test_digest_button_click_no_posts_message(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_digest_button_click_no_posts_message(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """E2E: User clicks Digest button → No posts → Informative message.
 
     Scenario:
@@ -184,6 +191,7 @@ async def test_digest_button_click_no_posts_message(monkeypatch: pytest.MonkeyPa
     2. No posts found in database
     3. Bot sends informative message
     """
+
     class FakeClient:
         """Mock MCP client for testing."""
 
@@ -204,7 +212,9 @@ async def test_digest_button_click_no_posts_message(monkeypatch: pytest.MonkeyPa
 
     # Verify informative message sent
     assert len(call.message.sent) > 0
-    assert any("No new posts" in msg or "no posts" in msg.lower() for msg in call.message.sent)
+    assert any(
+        "No new posts" in msg or "no posts" in msg.lower() for msg in call.message.sent
+    )
 
     # Verify no PDF was sent
     assert len(call.message.documents) == 0
@@ -212,7 +222,9 @@ async def test_digest_button_click_no_posts_message(monkeypatch: pytest.MonkeyPa
 
 @pytest.mark.asyncio
 @pytest.mark.e2e
-async def test_digest_button_click_cached_pdf_sent_immediately(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_digest_button_click_cached_pdf_sent_immediately(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """E2E: User clicks Digest button → Cached PDF → Sent immediately.
 
     Scenario:
@@ -253,7 +265,9 @@ async def test_digest_button_click_cached_pdf_sent_immediately(monkeypatch: pyte
 
 @pytest.mark.asyncio
 @pytest.mark.e2e
-async def test_digest_button_click_pdf_error_fallback_to_text(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_digest_button_click_pdf_error_fallback_to_text(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """E2E: User clicks Digest button → PDF error → Fallback to text digest.
 
     Scenario:
@@ -262,6 +276,7 @@ async def test_digest_button_click_pdf_error_fallback_to_text(monkeypatch: pytes
     3. Bot falls back to text digest
     4. User receives text digest
     """
+
     class FakeClient:
         """Mock MCP client for testing."""
 
@@ -299,10 +314,17 @@ async def test_digest_button_click_pdf_error_fallback_to_text(monkeypatch: pytes
                 }
             elif tool_name == "convert_markdown_to_pdf":
                 # Simulate PDF generation error
-                return {"error": "PDF generation failed", "pdf_bytes": "", "file_size": 0, "pages": 0}
+                return {
+                    "error": "PDF generation failed",
+                    "pdf_bytes": "",
+                    "file_size": 0,
+                    "pages": 0,
+                }
             elif tool_name == "get_channel_digest":
                 # Fallback tool
-                return {"digests": [{"channel": "channel1", "summary": "Fallback summary"}]}
+                return {
+                    "digests": [{"channel": "channel1", "summary": "Fallback summary"}]
+                }
             return {}
 
     monkeypatch.setattr(menu_mod, "MCPClient", lambda: FakeClient())
@@ -312,7 +334,10 @@ async def test_digest_button_click_pdf_error_fallback_to_text(monkeypatch: pytes
 
     # Verify fallback to text digest
     assert len(call.message.sent) > 0
-    assert any("📰" in msg or "Fallback" in msg or "summary" in msg.lower() for msg in call.message.sent)
+    assert any(
+        "📰" in msg or "Fallback" in msg or "summary" in msg.lower()
+        for msg in call.message.sent
+    )
 
     # Verify no PDF was sent
     assert len(call.message.documents) == 0
@@ -320,7 +345,9 @@ async def test_digest_button_click_pdf_error_fallback_to_text(monkeypatch: pytes
 
 @pytest.mark.asyncio
 @pytest.mark.e2e
-async def test_digest_button_click_multiple_channels_processed(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_digest_button_click_multiple_channels_processed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """E2E: User clicks Digest button → Multiple channels → All processed in PDF.
 
     Scenario:
@@ -362,7 +389,8 @@ async def test_digest_button_click_multiple_channels_processed(monkeypatch: pyte
                 }
             elif tool_name == "format_digest_markdown":
                 return {
-                    "markdown": "# Digest\n\n" + "\n\n".join([f"## Channel{i}" for i in range(5)]),
+                    "markdown": "# Digest\n\n"
+                    + "\n\n".join([f"## Channel{i}" for i in range(5)]),
                     "sections_count": 5,
                 }
             elif tool_name == "combine_markdown_sections":

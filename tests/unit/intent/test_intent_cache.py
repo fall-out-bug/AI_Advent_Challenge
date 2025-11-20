@@ -3,8 +3,9 @@
 Following TDD: Test-Driven Development.
 """
 
-import pytest
 import asyncio
+
+import pytest
 
 from src.domain.intent.intent_classifier import IntentResult, IntentType
 from src.infrastructure.cache.intent_cache import IntentCache

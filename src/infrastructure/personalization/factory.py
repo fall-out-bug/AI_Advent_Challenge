@@ -15,18 +15,20 @@ from src.application.personalization.use_cases.reset_personalization import (
     ResetPersonalizationUseCase,
 )
 from src.infrastructure.config.settings import Settings
+from src.infrastructure.logging import get_logger
 from src.infrastructure.personalization.memory_repository import (
     MongoUserMemoryRepository,
 )
 from src.infrastructure.personalization.profile_repository import (
     MongoUserProfileRepository,
 )
-from src.infrastructure.logging import get_logger
 
 if TYPE_CHECKING:
-    from src.infrastructure.clients.llm_client import LLMClient as InfrastructureLLMClient
     from src.application.personalization.interest_extraction_service import (
         InterestExtractionService,
+    )
+    from src.infrastructure.clients.llm_client import (
+        LLMClient as InfrastructureLLMClient,
     )
 
 logger = get_logger("personalization_factory")
@@ -67,12 +69,8 @@ def create_personalized_use_cases(
         logger.info("Creating personalization use cases...")
 
         # Create repositories
-        profile_repo = MongoUserProfileRepository(
-            mongo_client, settings.db_name
-        )
-        memory_repo = MongoUserMemoryRepository(
-            mongo_client, settings.db_name
-        )
+        profile_repo = MongoUserProfileRepository(mongo_client, settings.db_name)
+        memory_repo = MongoUserMemoryRepository(mongo_client, settings.db_name)
 
         logger.info("Repositories created")
 

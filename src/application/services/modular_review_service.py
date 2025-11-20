@@ -14,9 +14,7 @@ from multipass_reviewer.application.orchestrator import (
 )
 from multipass_reviewer.domain.interfaces.archive_reader import ArchiveReader
 from multipass_reviewer.domain.interfaces.llm_client import LLMClientProtocol
-from multipass_reviewer.domain.interfaces.review_logger import (
-    ReviewLoggerProtocol,
-)
+from multipass_reviewer.domain.interfaces.review_logger import ReviewLoggerProtocol
 from multipass_reviewer.domain.models.review_models import (
     MultiPassReport as PackageReview,
 )
@@ -35,9 +33,7 @@ from src.infrastructure.archive.archive_service import ZipArchiveService
 from src.infrastructure.config.settings import Settings, get_settings
 from src.infrastructure.logging.review_logger import ReviewLogger
 from src.infrastructure.monitoring.checker_metrics import observe_pass
-from src.infrastructure.monitoring.review_metrics import (
-    review_pipeline_duration,
-)
+from src.infrastructure.monitoring.review_metrics import review_pipeline_duration
 
 
 class _ZipArchiveReaderAdapter(ArchiveReader):
@@ -74,9 +70,7 @@ class _LLMClientAliasAdapter(LLMClientProtocol):
         prompt: str,
         **kwargs: Any,
     ) -> str:
-        actual_model = (
-            self._default_model if model_name == "summary" else model_name
-        )
+        actual_model = self._default_model if model_name == "summary" else model_name
         response = await self._delegate.make_request(
             actual_model,
             prompt,
@@ -173,11 +167,7 @@ class ModularReviewService:
                 findings.append(
                     LegacyFinding(
                         severity=_parse_severity(entry.get("severity")),
-                        title=(
-                            entry.get("title")
-                            or entry.get("message")
-                            or name
-                        ),
+                        title=(entry.get("title") or entry.get("message") or name),
                         description=entry.get("description")
                         or entry.get("message")
                         or "",

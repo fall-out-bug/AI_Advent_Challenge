@@ -37,6 +37,7 @@ def test_agent_generates_response_with_temperature() -> None:
 
 def test_agent_compares_multiple_temperatures() -> None:
     """Test that agent runs prompt with multiple temperature values."""
+
     def mock_post_side_effect(*args: any, **kwargs: any) -> Mock:
         temp = kwargs.get("json", {}).get("temperature", 0.0)
         mock_resp = Mock()

@@ -3,18 +3,19 @@
 Testing full flow: message → orchestrator → handler → response.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from aiogram.types import Message, User
 
-from src.presentation.bot.handlers.butler_handler import (
-    setup_butler_handler,
-    handle_any_message,
-)
-from src.presentation.bot.orchestrator import ButlerOrchestrator
-from src.application.services.mode_classifier import ModeClassifier
 from src.application.dtos.butler_dialog_dtos import DialogMode
+from src.application.services.mode_classifier import ModeClassifier
+from src.presentation.bot.handlers.butler_handler import (
+    handle_any_message,
+    setup_butler_handler,
+)
 from src.presentation.bot.handlers.chat import ChatHandler
+from src.presentation.bot.orchestrator import ButlerOrchestrator
 
 
 @pytest.fixture

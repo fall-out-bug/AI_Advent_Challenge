@@ -113,12 +113,7 @@ def _to_string(value: Any) -> str:
 
 
 def _escape_markdown(value: str) -> str:
-    return (
-        value.replace("\\", "\\\\")
-        .replace("|", "\\|")
-        .replace("\n", "<br>")
-        .strip()
-    )
+    return value.replace("\\", "\\\\").replace("|", "\\|").replace("\n", "<br>").strip()
 
 
 def format_markdown(records: list[SkipRecord]) -> str:
@@ -143,7 +138,9 @@ def format_markdown(records: list[SkipRecord]) -> str:
 
 def format_csv(records: list[SkipRecord], output: Path | None) -> None:
     fieldnames = ["nodeid", "marker", "active", "reason", "condition", "file"]
-    target = sys.stdout if output is None else output.open("w", newline="", encoding="utf-8")
+    target = (
+        sys.stdout if output is None else output.open("w", newline="", encoding="utf-8")
+    )
     writer = csv.DictWriter(target, fieldnames=fieldnames)
     writer.writeheader()
     for record in sorted(records, key=lambda r: r.nodeid):

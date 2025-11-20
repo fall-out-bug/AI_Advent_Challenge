@@ -3,8 +3,9 @@
 Following TDD principles: tests written before implementation.
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 from src.domain.models.code_review_models import MultiPassReport
 

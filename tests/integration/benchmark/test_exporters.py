@@ -135,7 +135,9 @@ def test_export_review_reports_produces_expected_fields(
                             "pass_name": "pass_1",
                             "summary": "Проверка структуры.",
                             "recommendations": ["Добавить KPI"],
-                            "findings": [{"title": "Наблюдение", "description": "Описание"}],
+                            "findings": [
+                                {"title": "Наблюдение", "description": "Описание"}
+                            ],
                         }
                     ],
                     "metadata": {

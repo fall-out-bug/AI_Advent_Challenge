@@ -40,9 +40,7 @@ class TemperatureAgent:
             llm_url: Base URL for LLM API. Defaults to env or localhost.
         """
         self._llm_url = (
-            llm_url
-            or os.environ.get("LLM_URL")
-            or "http://localhost:8000/v1"
+            llm_url or os.environ.get("LLM_URL") or "http://localhost:8000/v1"
         ).rstrip("/")
         self._client = httpx.Client(timeout=60.0)
 
@@ -50,9 +48,7 @@ class TemperatureAgent:
         """Close HTTP client."""
         self._client.close()
 
-    def generate_response(
-        self, prompt: str, temperature: float
-    ) -> TemperatureResult:
+    def generate_response(self, prompt: str, temperature: float) -> TemperatureResult:
         """Generate response with specific temperature.
 
         Args:
@@ -134,7 +130,9 @@ def format_comparison(results: list[TemperatureResult]) -> str:
         lines.append(f"Tokens used: {result.tokens_used}")
         lines.append(f"Creativity score: {result.creativity_score:.2f}")
         lines.append("Response:")
-        lines.append(result.response[:200] + ("..." if len(result.response) > 200 else ""))
+        lines.append(
+            result.response[:200] + ("..." if len(result.response) > 200 else "")
+        )
         lines.append("")
         lines.append("-" * 60)
         lines.append("")
@@ -154,10 +152,7 @@ def main(argv: list[str] | None = None) -> int:
     """Entry point for Day 4 demo."""
     args = sys.argv[1:] if argv is None else argv
 
-    prompt = (
-        " ".join(args) if args
-        else "Explain quantum computing in simple terms"
-    )
+    prompt = " ".join(args) if args else "Explain quantum computing in simple terms"
 
     agent = TemperatureAgent()
 

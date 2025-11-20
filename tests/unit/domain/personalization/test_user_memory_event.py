@@ -1,8 +1,9 @@
 """Unit tests for UserMemoryEvent value object."""
 
-import pytest
 from datetime import datetime
 from uuid import UUID
+
+import pytest
 
 from src.domain.personalization.user_memory_event import UserMemoryEvent
 

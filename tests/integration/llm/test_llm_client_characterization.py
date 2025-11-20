@@ -4,8 +4,9 @@ These tests document current LLM client interface and behavior
 before refactoring in Cluster D.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from src.infrastructure.llm.clients.llm_client import LLMClient
 
@@ -64,9 +65,7 @@ class TestLLMClientProtocol:
         assert return_annotation == list[str] or "list" in str(return_annotation)
 
     @pytest.mark.asyncio
-    async def test_llm_client_generate_behavior_characterization(
-        self, mock_llm_client
-    ):
+    async def test_llm_client_generate_behavior_characterization(self, mock_llm_client):
         """Characterize generate() method behavior.
 
         Purpose:

@@ -3,10 +3,11 @@
 Following TDD principles: comprehensive fixtures for end-to-end testing.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 from aiogram import Bot, Dispatcher
-from aiogram.types import User, Message, Chat
+from aiogram.types import Chat, Message, User
 
 from tests.fixtures.butler_fixtures import butler_orchestrator
 

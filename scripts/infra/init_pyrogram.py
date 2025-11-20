@@ -13,8 +13,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from dotenv import load_dotenv
 import os
+
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -44,11 +45,7 @@ async def initialize_session():
     print("\n💾 Session will be saved to: telegram_channel_reader.session")
     print("   (You won't need to enter credentials again)\n")
 
-    client = Client(
-        "telegram_channel_reader",
-        api_id=int(api_id),
-        api_hash=api_hash
-    )
+    client = Client("telegram_channel_reader", api_id=int(api_id), api_hash=api_hash)
 
     try:
         await client.start()
@@ -57,13 +54,16 @@ async def initialize_session():
 
         # Test: get your own info
         me = await client.get_me()
-        print(f"\n👤 Logged in as: {me.first_name} (@{me.username if me.username else 'no username'})")
+        print(
+            f"\n👤 Logged in as: {me.first_name} (@{me.username if me.username else 'no username'})"
+        )
 
     except KeyboardInterrupt:
         print("\n❌ Cancelled by user")
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
     finally:
         if client.is_connected:

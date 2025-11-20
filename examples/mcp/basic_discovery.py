@@ -1,4 +1,5 @@
 """Basic MCP tool discovery example."""
+
 import asyncio
 import sys
 from pathlib import Path

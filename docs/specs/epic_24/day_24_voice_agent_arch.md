@@ -96,7 +96,7 @@ TranscriptionResult      Callback → HandleVoiceConfirmationUseCase
 1. `VoiceUpdateHandler` downloads audio (OGG).
 2. Use case converts to PCM/WAV temp file, passes bytes to `SpeechToTextService.transcribe`.
 3. STT returns text; use case stores `VoiceCommand` (id with UUID, TTL=10 min). При ошибке STT или низкой уверенности команда **не** сохраняется, пользователю отправляется сообщение с просьбой перезаписать голос.
-4. Use case sends message (RU):  
+4. Use case sends message (RU):
    «Распознала: „…“. Подтвердить?» (кнопки «Подтвердить» / «Повторить»).
 5. On confirm: `HandleVoiceConfirmationUseCase` pulls command, invokes Butler orchestrator (text route). Butler уже логирует и выполняет соответствующий сценарий (например, дайджест).
 6. On reject: send prompt to resend audio, delete command state.
@@ -141,12 +141,12 @@ Constraints: reject if duration > 120s.
 class ButlerGateway(Protocol):
     async def handle_user_message(self, user_id: str, text: str, session_id: str) -> str:
         """Delegate confirmed voice command text into existing Butler pipeline.
-        
+
         Args:
             user_id: User identifier
             text: Confirmed transcription text
             session_id: Session identifier (generated as f"voice_{user_id}_{command_id}" or from Butler session manager)
-        
+
         Returns:
             Response text from Butler orchestrator
         """
@@ -159,7 +159,7 @@ class ButlerGateway(Protocol):
 class ConfirmationGateway(Protocol):
     async def send_confirmation(self, user_id: str, text: str, command_id: UUID) -> None:
         """Send confirmation message to user with inline buttons.
-        
+
         Args:
             user_id: Telegram user ID
             text: Recognized transcription text
@@ -198,4 +198,3 @@ class ConfirmationGateway(Protocol):
 6. **Error messages:** Hardcoded Russian strings for MVP (future: i18n system out of scope).
 
 Implementation ready to start under Epic 24 TL-01 stage.
-

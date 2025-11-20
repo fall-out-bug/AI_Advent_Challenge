@@ -3,8 +3,9 @@
 Following TDD principles and testing best practices.
 """
 
-import pytest
 from unittest.mock import AsyncMock, Mock
+
+import pytest
 
 from src.application.dtos.butler_dialog_dtos import DialogMode
 from src.application.services.mode_classifier import ModeClassifier

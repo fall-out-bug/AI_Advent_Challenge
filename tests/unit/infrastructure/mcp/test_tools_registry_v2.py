@@ -3,15 +3,16 @@
 Following TDD approach with comprehensive test coverage.
 """
 
-import pytest
+from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock
-from typing import Dict, Any, List
+
+import pytest
 
 from src.infrastructure.mcp.tools_registry_v2 import (
     MCPToolsRegistryV2,
-    ToolSchema,
-    ToolParameter,
     ToolCategory,
+    ToolParameter,
+    ToolSchema,
 )
 
 

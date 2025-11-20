@@ -6,9 +6,9 @@ import time
 from unittest.mock import Mock, patch
 
 from examples.day05_model_comparison import (
+    MODEL_PRICING,
     ModelComparisonAgent,
     ModelResult,
-    MODEL_PRICING,
 )
 
 
@@ -87,6 +87,7 @@ def test_agent_calculates_cost_correctly() -> None:
 
 def test_agent_compares_multiple_models() -> None:
     """Test that agent runs prompt with multiple models."""
+
     def mock_post_side_effect(*args: any, **kwargs: any) -> Mock:
         model = kwargs.get("json", {}).get("model", "unknown")
         mock_resp = Mock()

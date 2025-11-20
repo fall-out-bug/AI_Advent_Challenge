@@ -4,18 +4,19 @@ Tests for input validation models.
 
 import pytest
 from pydantic import ValidationError
-
 from shared_package.validation.models import (
-    ModelRequest,
-    ModelResponse,
     ChatMessage,
     ChatRequest,
     ModelAvailabilityRequest,
-    ValidationError as CustomValidationError,
-    validate_model_request,
+    ModelRequest,
+    ModelResponse,
+)
+from shared_package.validation.models import ValidationError as CustomValidationError
+from shared_package.validation.models import (
+    sanitize_input,
     validate_chat_request,
+    validate_model_request,
     validate_model_response,
-    sanitize_input
 )
 
 
@@ -25,10 +26,7 @@ class TestModelRequest:
     def test_valid_model_request(self):
         """Test valid model request."""
         request = ModelRequest(
-            model_name="qwen",
-            prompt="Hello, world!",
-            max_tokens=100,
-            temperature=0.7
+            model_name="qwen", prompt="Hello, world!", max_tokens=100, temperature=0.7
         )
 
         assert request.model_name == "qwen"
@@ -38,10 +36,7 @@ class TestModelRequest:
 
     def test_model_request_defaults(self):
         """Test model request with defaults."""
-        request = ModelRequest(
-            model_name="mistral",
-            prompt="Test prompt"
-        )
+        request = ModelRequest(model_name="mistral", prompt="Test prompt")
 
         assert request.model_name == "mistral"
         assert request.prompt == "Test prompt"
@@ -51,7 +46,15 @@ class TestModelRequest:
     def test_model_name_validation(self):
         """Test model name validation."""
         # Valid names
-        valid_names = ["qwen", "mistral", "tinyllama", "perplexity", "chadgpt", "model-1", "model_1"]
+        valid_names = [
+            "qwen",
+            "mistral",
+            "tinyllama",
+            "perplexity",
+            "chadgpt",
+            "model-1",
+            "model_1",
+        ]
         for name in valid_names:
             request = ModelRequest(model_name=name, prompt="test")
             assert request.model_name == name.lower()
@@ -92,7 +95,7 @@ class TestModelRequest:
             "data:text/html,<script>alert('xss')</script>",
             "vbscript:msgbox('xss')",
             "onload=alert('xss')",
-            "onerror=alert('xss')"
+            "onerror=alert('xss')",
         ]
 
         for prompt in dangerous_prompts:
@@ -139,7 +142,7 @@ class TestModelResponse:
             response_tokens=5,
             total_tokens=15,
             model_name="qwen",
-            response_time=1.5
+            response_time=1.5,
         )
 
         assert response.response == "Hello, world!"
@@ -157,7 +160,7 @@ class TestModelResponse:
             response_tokens=5,
             total_tokens=15,
             model_name="qwen",
-            response_time=1.5
+            response_time=1.5,
         )
 
         assert response.response == "Hello world"
@@ -171,19 +174,21 @@ class TestModelResponse:
             response_tokens=5,
             total_tokens=15,
             model_name="qwen",
-            response_time=1.0
+            response_time=1.0,
         )
         assert response.total_tokens == 15
 
         # Invalid total tokens
-        with pytest.raises(ValidationError, match="must equal input_tokens \\+ response_tokens"):
+        with pytest.raises(
+            ValidationError, match="must equal input_tokens \\+ response_tokens"
+        ):
             ModelResponse(
                 response="test",
                 input_tokens=10,
                 response_tokens=5,
                 total_tokens=20,  # Should be 15
                 model_name="qwen",
-                response_time=1.0
+                response_time=1.0,
             )
 
 
@@ -233,7 +238,7 @@ class TestChatRequest:
         """Test valid chat request."""
         messages = [
             ChatMessage(role="system", content="You are a helpful assistant."),
-            ChatMessage(role="user", content="Hello!")
+            ChatMessage(role="user", content="Hello!"),
         ]
 
         request = ChatRequest(messages=messages)
@@ -251,7 +256,9 @@ class TestChatRequest:
         """Test first message must be system or user."""
         messages = [ChatMessage(role="assistant", content="Hello!")]
 
-        with pytest.raises(ValidationError, match="First message must be from system or user"):
+        with pytest.raises(
+            ValidationError, match="First message must be from system or user"
+        ):
             ChatRequest(messages=messages)
 
     def test_conversation_length_limit(self):
@@ -263,10 +270,14 @@ class TestChatRequest:
         messages = [
             ChatMessage(role="user", content=long_content),
             ChatMessage(role="assistant", content=long_content),
-            ChatMessage(role="user", content="extra content")  # This pushes it over the limit
+            ChatMessage(
+                role="user", content="extra content"
+            ),  # This pushes it over the limit
         ]
 
-        with pytest.raises(ValidationError, match="Total conversation length exceeds limit"):
+        with pytest.raises(
+            ValidationError, match="Total conversation length exceeds limit"
+        ):
             ChatRequest(messages=messages)
 
 
@@ -279,7 +290,7 @@ class TestValidationFunctions:
             "model_name": "qwen",
             "prompt": "Hello!",
             "max_tokens": 100,
-            "temperature": 0.7
+            "temperature": 0.7,
         }
 
         request = validate_model_request(data)
@@ -292,7 +303,7 @@ class TestValidationFunctions:
             "model_name": "",  # Invalid
             "prompt": "Hello!",
             "max_tokens": 100,
-            "temperature": 0.7
+            "temperature": 0.7,
         }
 
         with pytest.raises(CustomValidationError, match="Validation failed"):
@@ -301,11 +312,9 @@ class TestValidationFunctions:
     def test_validate_chat_request(self):
         """Test validate_chat_request function."""
         data = {
-            "messages": [
-                {"role": "user", "content": "Hello!"}
-            ],
+            "messages": [{"role": "user", "content": "Hello!"}],
             "max_tokens": 100,
-            "temperature": 0.7
+            "temperature": 0.7,
         }
 
         request = validate_chat_request(data)
@@ -320,7 +329,7 @@ class TestValidationFunctions:
             "response_tokens": 5,
             "total_tokens": 15,
             "model_name": "qwen",
-            "response_time": 1.0
+            "response_time": 1.0,
         }
 
         response = validate_model_response(data)

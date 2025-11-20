@@ -3,8 +3,9 @@
 Following TDD principles and testing best practices.
 """
 
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
 
 from src.application.dtos.butler_dialog_dtos import DialogContext, DialogState
 from src.presentation.bot.handlers.chat import ChatHandler

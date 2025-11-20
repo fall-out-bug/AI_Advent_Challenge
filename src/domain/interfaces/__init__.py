@@ -1,6 +1,4 @@
 """Domain interfaces."""
-<<<<<<< HEAD
-=======
 
 from __future__ import annotations
 
@@ -13,4 +11,3 @@ __all__ = [
     "ConfirmationGateway",
     "ButlerGateway",
 ]
->>>>>>> origin/master

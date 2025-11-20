@@ -67,8 +67,6 @@ class ChannelNormalizer:
 
         return normalized.strip()
 
-<<<<<<< HEAD
-=======
     def to_canonical_form(self, channel_username: str) -> str:
         """Convert channel username to canonical form per E.1 policy.
 
@@ -100,7 +98,6 @@ class ChannelNormalizer:
 
         return canonical
 
->>>>>>> origin/master
     def tokenize(self, text: str) -> List[str]:
         """Tokenize text into words.
 

@@ -16,14 +16,10 @@ from uuid import uuid4
 from src.infrastructure.config.settings import Settings
 from src.infrastructure.logging.review_logger import ReviewLogger
 
-<<<<<<< HEAD
-=======
 try:
     from src.infrastructure.metrics.observability_metrics import structured_logs_total
 except Exception:  # pragma: no cover - metrics optional in constrained envs
     structured_logs_total = None
-
->>>>>>> origin/master
 __all__ = [
     "get_logger",
     "ReviewLogger",
@@ -132,8 +128,6 @@ class StructuredLogger(logging.Logger):
         structured.setdefault("timestamp", datetime.utcnow().isoformat())
         structured.update(_LOG_CONTEXT.get({}))
 
-<<<<<<< HEAD
-=======
         if structured_logs_total:
             try:
                 structured_logs_total.labels(
@@ -142,7 +136,6 @@ class StructuredLogger(logging.Logger):
             except Exception:  # pragma: no cover - defensive logging
                 pass
 
->>>>>>> origin/master
         kwargs["extra"] = {"structured_data": _sanitize_payload(structured)}
         super()._log(level, msg, args, **kwargs)
 

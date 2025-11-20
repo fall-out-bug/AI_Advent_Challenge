@@ -216,4 +216,3 @@ class TestRedisVoiceCommandStore:
 
         # Should not raise
         assert True
-

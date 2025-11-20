@@ -1,8 +1,8 @@
 """Embedding index domain package."""
 
 from .interfaces import (
-    ChunkRepository,
     Chunker,
+    ChunkRepository,
     DocumentCollector,
     DocumentRepository,
     EmbeddingGateway,

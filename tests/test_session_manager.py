@@ -4,9 +4,10 @@ Following TDD principles and the Zen of Python.
 """
 
 import json
-import pytest
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
+import pytest
 
 from src.domain.agents.session_manager import SessionManager
 

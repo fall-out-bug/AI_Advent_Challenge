@@ -17,12 +17,11 @@ from src.infrastructure.llm.prompts.summarization_prompts import (
     get_map_prompt,
     get_reduce_prompt,
 )
-<<<<<<< HEAD
-=======
+
 from src.infrastructure.llm.summarizers.chunk_summarization_params import (
     ChunkSummarizationParams,
 )
->>>>>>> origin/master
+
 from src.infrastructure.llm.token_counter import TokenCounter
 
 try:
@@ -120,11 +119,6 @@ class MapReduceSummarizer:
         # If single chunk, use direct summarization
         if len(chunks) == 1:
             chunk = chunks[0]
-<<<<<<< HEAD
-            map_result = await self._summarize_chunk(
-                chunk, max_sentences=max_sentences, language=language, context=context
-            )
-=======
             params = ChunkSummarizationParams(
                 chunk=chunk,
                 max_sentences=max_sentences,
@@ -132,7 +126,6 @@ class MapReduceSummarizer:
                 context=context,
             )
             map_result = await self._summarize_chunk(params)
->>>>>>> origin/master
             duration = time.time() - start_time
 
             sentences = self._split_sentences(map_result)
@@ -154,19 +147,12 @@ class MapReduceSummarizer:
         chunk_summaries = await asyncio.gather(
             *[
                 self._summarize_chunk(
-<<<<<<< HEAD
-                    chunk,
-                    max_sentences=max(3, max_sentences // 2),
-                    language=language,
-                    context=context,
-=======
                     ChunkSummarizationParams(
                         chunk=chunk,
                         max_sentences=max(3, max_sentences // 2),
                         language=language,
                         context=context,
                     )
->>>>>>> origin/master
                 )
                 for chunk in chunks
             ]
@@ -306,15 +292,6 @@ class MapReduceSummarizer:
             context=context,
         )
 
-<<<<<<< HEAD
-    async def _summarize_chunk(self, chunk, max_sentences: int, language: str) -> str:
-        """Summarize a single chunk (Map phase).
-
-        Args:
-            chunk: TextChunk to summarize.
-            max_sentences: Max sentences for this chunk.
-            language: Target language.
-=======
     async def _summarize_chunk(self, params: ChunkSummarizationParams) -> str:
         """Summarize a single chunk (Map phase).
 
@@ -325,19 +302,14 @@ class MapReduceSummarizer:
         Args:
             params: ChunkSummarizationParams containing chunk, max_sentences,
                 language, and optional context.
->>>>>>> origin/master
 
         Returns:
             Chunk summary text.
         """
         map_prompt = get_map_prompt(
-<<<<<<< HEAD
-            text=chunk.text, language=language, max_sentences=max_sentences
-=======
             text=params.chunk.text,
             language=params.language,
             max_sentences=params.max_sentences,
->>>>>>> origin/master
         )
 
         response = await self.llm_client.generate(

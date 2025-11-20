@@ -16,12 +16,12 @@ from src.application.benchmarking.models import (
     BenchmarkSample,
     BenchmarkScenarioConfig,
 )
-from src.application.benchmarking.runner import BenchmarkEvaluationRunner
 from src.application.benchmarking.protocols import (
     BenchmarkDatasetProvider,
     BenchmarkJudge,
     BenchmarkMetricsRecorder,
 )
+from src.application.benchmarking.runner import BenchmarkEvaluationRunner
 
 
 class _StubDatasetProvider(BenchmarkDatasetProvider):

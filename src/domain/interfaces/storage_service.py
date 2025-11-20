@@ -18,20 +18,20 @@ from typing import BinaryIO, Optional, TextIO
 class StorageService(ABC):
     """Service interface for secure storage operations.
 
-      Purpose:
-          Abstract file system operations to enable testing, security validation,
-          and infrastructure flexibility. Provides secure temporary file handling,
-          path validation, and cleanup.
+    Purpose:
+        Abstract file system operations to enable testing, security validation,
+        and infrastructure flexibility. Provides secure temporary file handling,
+        path validation, and cleanup.
 
-      This interface ensures domain logic remains independent of
-      specific storage implementations (local filesystem, cloud storage, etc.).
+    This interface ensures domain logic remains independent of
+    specific storage implementations (local filesystem, cloud storage, etc.).
 
-      Example:
-          >>> service = SomeStorageService()
-          >>> with service.create_temp_file('.zip') as temp_file:
-          ...     temp_file.write(b'data')
-          ...     path = temp_file.name
-          >>> service.cleanup_temp_file(path)
+    Example:
+        >>> service = SomeStorageService()
+        >>> with service.create_temp_file('.zip') as temp_file:
+        ...     temp_file.write(b'data')
+        ...     path = temp_file.name
+        >>> service.cleanup_temp_file(path)
     """
 
     @abstractmethod
@@ -43,16 +43,16 @@ class StorageService(ABC):
     ) -> BinaryIO:
         """Create secure temporary file with optional content.
 
-              Args:
-                  suffix: File extension (e.g., '.zip', '.md')
-                  prefix: File prefix for identification
-                  content: Optional binary content to write
+        Args:
+            suffix: File extension (e.g., '.zip', '.md')
+            prefix: File prefix for identification
+            content: Optional binary content to write
 
-              Returns:
-                  Open binary file handle (caller responsible for closing)
+        Returns:
+            Open binary file handle (caller responsible for closing)
 
-              Raises:
-                  StorageError: If file creation fails or path is invalid
+        Raises:
+            StorageError: If file creation fails or path is invalid
         """
 
     @abstractmethod
@@ -65,85 +65,81 @@ class StorageService(ABC):
     ) -> TextIO:
         """Create secure temporary text file with optional content.
 
-              Args:
-                  suffix: File extension (e.g., '.md', '.txt')
-                  prefix: File prefix for identification
-                  content: Optional text content to write
-                  encoding: Text encoding
+        Args:
+            suffix: File extension (e.g., '.md', '.txt')
+            prefix: File prefix for identification
+            content: Optional text content to write
+            encoding: Text encoding
 
-              Returns:
-                  Open text file handle (caller responsible for closing)
+        Returns:
+            Open text file handle (caller responsible for closing)
 
-              Raises:
-                  StorageError: If file creation fails or path is invalid
+        Raises:
+            StorageError: If file creation fails or path is invalid
         """
 
     @abstractmethod
     def validate_path_safe(self, path: Path) -> bool:
         """Validate that path is safe for operations.
 
-              Args:
-                  path: Path to validate
+        Args:
+            path: Path to validate
 
-              Returns:
-                  True if path is safe, False otherwise
+        Returns:
+            True if path is safe, False otherwise
 
-              Security checks:
-              - No path traversal (..)
-              - Path within allowed directories
-              - No symlinks to sensitive locations
+        Security checks:
+        - No path traversal (..)
+        - Path within allowed directories
+        - No symlinks to sensitive locations
         """
 
     @abstractmethod
-    def cleanup_temp_file(
-        self, path: Path, missing_ok: bool = True
-    ) -> None:
+    def cleanup_temp_file(self, path: Path, missing_ok: bool = True) -> None:
         """Securely cleanup temporary file.
 
-              Args:
-                  path: Path to temporary file to remove
-                  missing_ok: Don't raise error if file doesn't exist
+        Args:
+            path: Path to temporary file to remove
+            missing_ok: Don't raise error if file doesn't exist
 
-              Raises:
-                  StorageError: If cleanup fails
+        Raises:
+            StorageError: If cleanup fails
         """
 
     @abstractmethod
     def ensure_directory_exists(self, path: Path) -> None:
         """Ensure directory exists with proper permissions.
 
-              Args:
-                  path: Directory path to create
+        Args:
+            path: Directory path to create
 
-              Raises:
-                  StorageError: If directory creation fails
+        Raises:
+            StorageError: If directory creation fails
         """
 
     @abstractmethod
     def get_secure_temp_dir(self) -> Path:
         """Get secure temporary directory path.
 
-              Returns:
-                  Path to secure temporary directory
+        Returns:
+            Path to secure temporary directory
 
-              Security:
-              - Uses system temp directory or configured secure location
-              - Validates directory permissions
-              - Prefers shared volumes for multi-container setups
+        Security:
+        - Uses system temp directory or configured secure location
+        - Validates directory permissions
+        - Prefers shared volumes for multi-container setups
         """
 
     @abstractmethod
-    def validate_file_access(
-        self, path: Path, operation: str
-    ) -> bool:
+    def validate_file_access(self, path: Path, operation: str) -> bool:
         """Validate file access permissions for operation.
 
-              Args:
-                  path: File path to check
-                  operation: Operation type ('read', 'write', 'execute')
+        Args:
+            path: File path to check
+            operation: Operation type ('read', 'write', 'execute')
 
-              Returns:
-                  True if operation is allowed, False otherwise
+        Returns:
+            True if operation is allowed, False otherwise
         """
 
 

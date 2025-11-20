@@ -19,9 +19,9 @@ def test_rag_config_includes_new_fields(tmp_path: Path) -> None:
         "  score_threshold: 0.3\n"
         "reranker:\n"
         "  enabled: true\n"
-        "  strategy: \"llm\"\n"
+        '  strategy: "llm"\n'
         "  seed: 123\n"
-        "  variance_window: \"rolling_5m\"\n"
+        '  variance_window: "rolling_5m"\n'
         "  adaptive_threshold: 0.4\n",
         encoding="utf-8",
     )

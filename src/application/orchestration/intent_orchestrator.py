@@ -4,8 +4,8 @@ Refactored to use extracted modules following Single Responsibility Principle.
 Following the Zen of Python: Simple is better than complex.
 """
 
-import logging
 import json
+import logging
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Protocol, Tuple, runtime_checkable
 

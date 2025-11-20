@@ -266,9 +266,7 @@ class PersonalizedReplyUseCase:
                 compressed=False,
             )
 
-    async def _compress_memory(
-        self, user_id: str, profile: UserProfile
-    ) -> UserProfile:
+    async def _compress_memory(self, user_id: str, profile: UserProfile) -> UserProfile:
         """Compress user memory and extract interests.
 
         Purpose:
@@ -285,29 +283,24 @@ class PersonalizedReplyUseCase:
         start_time = time.time()
 
         try:
-            logger.info(
-                "Starting memory compression", extra={"user_id": user_id}
-            )
+            logger.info("Starting memory compression", extra={"user_id": user_id})
 
             # Load all events for summarization
-            all_events = await self.memory_repo.get_recent_events(
-                user_id, limit=1000
-            )
+            all_events = await self.memory_repo.get_recent_events(user_id, limit=1000)
 
             # Use interest extraction service if available
             if self.interest_extraction_service:
                 # Extract summary + interests
-                summary, interests = (
-                    await self.interest_extraction_service.extract_interests(
-                        events=all_events,
-                        existing_topics=profile.preferred_topics,
-                    )
+                (
+                    summary,
+                    interests,
+                ) = await self.interest_extraction_service.extract_interests(
+                    events=all_events,
+                    existing_topics=profile.preferred_topics,
                 )
 
                 # Update profile with summary + interests
-                updated_profile = profile.with_summary(summary).with_topics(
-                    interests
-                )
+                updated_profile = profile.with_summary(summary).with_topics(interests)
 
                 # Track metrics
                 user_interests_updated_total.inc()
@@ -323,9 +316,9 @@ class PersonalizedReplyUseCase:
                 )
             else:
                 # Fallback: simple summarization (backward compatibility)
-                events_text = "\n".join([
-                    f"{e.role}: {e.content[:200]}" for e in all_events
-                ])
+                events_text = "\n".join(
+                    [f"{e.role}: {e.content[:200]}" for e in all_events]
+                )
 
                 summary_prompt = (
                     f"Summarise the following conversation history in Russian "
@@ -340,7 +333,9 @@ class PersonalizedReplyUseCase:
 
             # Compress: keep last N events
             await self.memory_repo.compress(
-                user_id, updated_profile.memory_summary or "", keep_last_n=KEEP_AFTER_COMPRESSION
+                user_id,
+                updated_profile.memory_summary or "",
+                keep_last_n=KEEP_AFTER_COMPRESSION,
             )
 
             # Save updated profile

@@ -4,16 +4,12 @@ import pytest
 
 from src.application.personalization.dtos import PersonalizedReplyInput
 from src.infrastructure.config.settings import get_settings
-from src.infrastructure.personalization.factory import (
-    create_personalized_use_cases,
-)
+from src.infrastructure.personalization.factory import create_personalized_use_cases
 
 
 @pytest.mark.e2e
 @pytest.mark.asyncio
-async def test_text_personalized_reply_flow(
-    real_mongodb, llm_client
-):
+async def test_text_personalized_reply_flow(real_mongodb, llm_client):
     """Test full text message personalization flow.
 
     Purpose:
@@ -78,9 +74,7 @@ async def test_text_personalized_reply_flow(
 
 @pytest.mark.e2e
 @pytest.mark.asyncio
-async def test_personalization_profile_auto_creation(
-    real_mongodb, llm_client
-):
+async def test_personalization_profile_auto_creation(real_mongodb, llm_client):
     """Test that profile is auto-created on first interaction."""
     settings = get_settings()
     mongo_client = real_mongodb.client

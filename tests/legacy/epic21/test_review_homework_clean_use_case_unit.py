@@ -5,11 +5,14 @@ Tests the new Clean Architecture use case implementation.
 Epic 21 · Stage 21_01d · Use Case Decomposition
 """
 
-import pytest
 from unittest.mock import AsyncMock
 
+import pytest
+
 from src.application.dtos.homework_dtos import HomeworkReviewResult
-from src.application.use_cases.review_homework_clean_use_case import ReviewHomeworkCleanUseCase
+from src.application.use_cases.review_homework_clean_use_case import (
+    ReviewHomeworkCleanUseCase,
+)
 
 
 @pytest.mark.epic21
@@ -25,7 +28,9 @@ class TestReviewHomeworkCleanUseCaseUnit:
         mock_service = AsyncMock()
 
         # Default successful responses
-        mock_service.review_homework.return_value = "FILE:review_abc123456.md:dGVzdCBtYXJrZG93biByZXBvcnQ="
+        mock_service.review_homework.return_value = (
+            "FILE:review_abc123456.md:dGVzdCBtYXJrZG93biByZXBvcnQ="
+        )
         mock_service.list_homeworks.return_value = {
             "total": 2,
             "commits": [
@@ -33,9 +38,9 @@ class TestReviewHomeworkCleanUseCaseUnit:
                     "commit_hash": "abc123",
                     "archive_name": "hw1.zip",
                     "assignment": "Python Basics",
-                    "status": "passed"
+                    "status": "passed",
                 }
-            ]
+            ],
         }
 
         return mock_service
@@ -47,7 +52,9 @@ class TestReviewHomeworkCleanUseCaseUnit:
             homework_review_service=mock_homework_review_service,
         )
 
-    async def test_execute_successful_review(self, use_case, mock_homework_review_service):
+    async def test_execute_successful_review(
+        self, use_case, mock_homework_review_service
+    ):
         """Unit: execute handles successful review."""
         # Act
         result = await use_case.execute("abc123456789")
@@ -87,10 +94,14 @@ class TestReviewHomeworkCleanUseCaseUnit:
             await use_case.execute("   ")
         assert "cannot be empty or whitespace" in str(exc_info.value)
 
-    async def test_execute_domain_service_failure(self, use_case, mock_homework_review_service):
+    async def test_execute_domain_service_failure(
+        self, use_case, mock_homework_review_service
+    ):
         """Unit: execute handles domain service failures."""
         # Mock service failure
-        mock_homework_review_service.review_homework.side_effect = Exception("Storage error")
+        mock_homework_review_service.review_homework.side_effect = Exception(
+            "Storage error"
+        )
 
         # Act & Assert
         with pytest.raises(RuntimeError) as exc_info:
@@ -99,7 +110,9 @@ class TestReviewHomeworkCleanUseCaseUnit:
         assert "Homework review failed" in str(exc_info.value)
         assert "Storage error" in str(exc_info.value)
 
-    async def test_execute_invalid_file_format(self, use_case, mock_homework_review_service):
+    async def test_execute_invalid_file_format(
+        self, use_case, mock_homework_review_service
+    ):
         """Unit: execute handles invalid FILE format from service."""
         # Mock invalid FILE format
         mock_homework_review_service.review_homework.return_value = "INVALID_FORMAT"
@@ -110,10 +123,14 @@ class TestReviewHomeworkCleanUseCaseUnit:
 
         assert "Review failed" in str(exc_info.value)
 
-    async def test_execute_error_response_from_service(self, use_case, mock_homework_review_service):
+    async def test_execute_error_response_from_service(
+        self, use_case, mock_homework_review_service
+    ):
         """Unit: execute handles error messages from service."""
         # Mock error response
-        mock_homework_review_service.review_homework.return_value = "❌ Archive not found"
+        mock_homework_review_service.review_homework.return_value = (
+            "❌ Archive not found"
+        )
 
         # Act & Assert
         with pytest.raises(RuntimeError) as exc_info:
@@ -122,7 +139,9 @@ class TestReviewHomeworkCleanUseCaseUnit:
         assert "Review failed" in str(exc_info.value)
         assert "Archive not found" in str(exc_info.value)
 
-    async def test_list_recent_homeworks_success(self, use_case, mock_homework_review_service):
+    async def test_list_recent_homeworks_success(
+        self, use_case, mock_homework_review_service
+    ):
         """Unit: list_recent_homeworks delegates to domain service."""
         # Act
         result = await use_case.list_recent_homeworks(days=3)
@@ -136,7 +155,9 @@ class TestReviewHomeworkCleanUseCaseUnit:
         # Verify domain service was called
         mock_homework_review_service.list_homeworks.assert_called_once_with(3)
 
-    async def test_list_recent_homeworks_default_days(self, use_case, mock_homework_review_service):
+    async def test_list_recent_homeworks_default_days(
+        self, use_case, mock_homework_review_service
+    ):
         """Unit: list_recent_homeworks uses default days parameter."""
         # Act
         result = await use_case.list_recent_homeworks()
@@ -144,10 +165,14 @@ class TestReviewHomeworkCleanUseCaseUnit:
         # Assert
         mock_homework_review_service.list_homeworks.assert_called_once_with(1)
 
-    async def test_list_recent_homeworks_service_failure(self, use_case, mock_homework_review_service):
+    async def test_list_recent_homeworks_service_failure(
+        self, use_case, mock_homework_review_service
+    ):
         """Unit: list_recent_homeworks handles service failures."""
         # Mock service failure
-        mock_homework_review_service.list_homeworks.side_effect = Exception("Database connection failed")
+        mock_homework_review_service.list_homeworks.side_effect = Exception(
+            "Database connection failed"
+        )
 
         # Act & Assert
         with pytest.raises(RuntimeError) as exc_info:
@@ -156,7 +181,9 @@ class TestReviewHomeworkCleanUseCaseUnit:
         assert "Failed to list homeworks" in str(exc_info.value)
         assert "Database connection failed" in str(exc_info.value)
 
-    async def test_list_recent_homeworks_malformed_response(self, use_case, mock_homework_review_service):
+    async def test_list_recent_homeworks_malformed_response(
+        self, use_case, mock_homework_review_service
+    ):
         """Unit: list_recent_homeworks handles malformed service responses."""
         # Mock malformed response
         mock_homework_review_service.list_homeworks.return_value = "not a dict"
@@ -167,7 +194,9 @@ class TestReviewHomeworkCleanUseCaseUnit:
         # Assert - should return empty list gracefully
         assert result == []
 
-    async def test_list_recent_homeworks_missing_commits_key(self, use_case, mock_homework_review_service):
+    async def test_list_recent_homeworks_missing_commits_key(
+        self, use_case, mock_homework_review_service
+    ):
         """Unit: list_recent_homeworks handles missing commits key."""
         # Mock response without commits key
         mock_homework_review_service.list_homeworks.return_value = {"total": 5}
@@ -178,7 +207,9 @@ class TestReviewHomeworkCleanUseCaseUnit:
         # Assert - should return empty list
         assert result == []
 
-    async def test_execute_preserves_exception_chain(self, use_case, mock_homework_review_service):
+    async def test_execute_preserves_exception_chain(
+        self, use_case, mock_homework_review_service
+    ):
         """Unit: execute preserves exception chaining."""
         # Mock service with specific exception
         original_error = ValueError("Original domain error")
@@ -191,7 +222,9 @@ class TestReviewHomeworkCleanUseCaseUnit:
         # Verify exception chaining
         assert exc_info.value.__cause__ is original_error
 
-    async def test_execute_with_long_commit_hash(self, use_case, mock_homework_review_service):
+    async def test_execute_with_long_commit_hash(
+        self, use_case, mock_homework_review_service
+    ):
         """Unit: execute handles long commit hashes."""
         long_commit = "a" * 64  # Max SHA-256 length
 
@@ -206,7 +239,9 @@ class TestReviewHomeworkCleanUseCaseUnit:
         context = call_args[0][0]
         assert context.session_id == "review_aaaaaaaa"  # First 8 'a's
 
-    async def test_days_parameter_passed_through(self, use_case, mock_homework_review_service):
+    async def test_days_parameter_passed_through(
+        self, use_case, mock_homework_review_service
+    ):
         """Unit: days parameter is passed to execute method."""
         # Act - call execute with days parameter (currently unused but validated)
         result = await use_case.execute("test_commit", days=5)

@@ -71,7 +71,9 @@ class CreateTaskUseCase:
                 return self._build_clarification_result(intent_result)
             return await self._create_task(user_id, intent_result)
         except Exception as error:  # noqa: BLE001
-            logger.error("Task creation failed", exc_info=True, extra={"error": str(error)})
+            logger.error(
+                "Task creation failed", exc_info=True, extra={"error": str(error)}
+            )
             return TaskCreationResult(
                 created=False,
                 error=f"Task creation failed: {error}",
@@ -106,7 +108,9 @@ class CreateTaskUseCase:
             intent_payload=payload,
         )
 
-    async def _create_task(self, user_id: int, intent_result: Any) -> TaskCreationResult:
+    async def _create_task(
+        self, user_id: int, intent_result: Any
+    ) -> TaskCreationResult:
         """Call MCP tool to create a task."""
 
         params = self._build_params(user_id, intent_result)
@@ -116,7 +120,9 @@ class CreateTaskUseCase:
 
         task_id = mcp_result.get("task_id")
         if not task_id:
-            return TaskCreationResult(created=False, error="Task id missing in response")
+            return TaskCreationResult(
+                created=False, error="Task id missing in response"
+            )
 
         return TaskCreationResult(created=True, task_id=str(task_id))
 

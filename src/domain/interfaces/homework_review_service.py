@@ -20,48 +20,46 @@ from src.domain.agents.state_machine import DialogContext
 class HomeworkReviewService(ABC):
     """Service interface for homework review operations.
 
-      Purpose:
-          Abstract homework review business logic to enable testing,
-          infrastructure flexibility, and clean architecture compliance.
+    Purpose:
+        Abstract homework review business logic to enable testing,
+        infrastructure flexibility, and clean architecture compliance.
 
-      This interface ensures domain logic remains independent of
-      specific implementations (HW Checker API, review tools, etc.).
+    This interface ensures domain logic remains independent of
+    specific implementations (HW Checker API, review tools, etc.).
 
-      Example:
-          >>> service = SomeHomeworkReviewService()
-          >>> result = await service.list_homeworks(1)
-          >>> review = await service.review_homework("abc123")
+    Example:
+        >>> service = SomeHomeworkReviewService()
+        >>> result = await service.list_homeworks(1)
+        >>> review = await service.review_homework("abc123")
     """
 
     @abstractmethod
     async def list_homeworks(self, days: int) -> Dict[str, Any]:
         """List recent homework submissions.
 
-              Args:
-                  days: Number of days to look back.
+        Args:
+            days: Number of days to look back.
 
-              Returns:
-                  Dictionary with 'total' and 'commits' keys.
+        Returns:
+            Dictionary with 'total' and 'commits' keys.
 
-              Raises:
-                  HomeworkReviewError: If listing operation fails.
+        Raises:
+            HomeworkReviewError: If listing operation fails.
         """
 
     @abstractmethod
-    async def review_homework(
-        self, context: DialogContext, commit_hash: str
-    ) -> str:
+    async def review_homework(self, context: DialogContext, commit_hash: str) -> str:
         """Review homework by commit hash.
 
-              Args:
-                  context: Dialog context with state and data.
-                  commit_hash: Git commit hash to review.
+        Args:
+            context: Dialog context with state and data.
+            commit_hash: Git commit hash to review.
 
-              Returns:
-                  Special format string for file sending or error message.
+        Returns:
+            Special format string for file sending or error message.
 
-              Raises:
-                  HomeworkReviewError: If review operation fails.
+        Raises:
+            HomeworkReviewError: If review operation fails.
         """
 
 

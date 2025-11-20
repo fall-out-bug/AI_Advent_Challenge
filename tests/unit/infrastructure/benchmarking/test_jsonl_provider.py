@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 
 from src.application.benchmarking.models import (
-    BenchmarkMetricRule,
     BenchmarkDirection,
+    BenchmarkMetricRule,
     BenchmarkScenarioConfig,
 )
 from src.infrastructure.benchmarking.jsonl_dataset_provider import (

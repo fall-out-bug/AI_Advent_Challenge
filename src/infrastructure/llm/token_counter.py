@@ -157,7 +157,7 @@ class TokenCounter:
         # - Mixed: average
         char_count = len(text)
         # Rough heuristic: count Cyrillic characters for Russian ratio
-        cyrillic_count = sum(1 for c in text if "\u0400" <= c <= "\u04FF")
+        cyrillic_count = sum(1 for c in text if "\u0400" <= c <= "\u04ff")
         russian_ratio = cyrillic_count / char_count if char_count > 0 else 0
 
         # Weighted average

@@ -175,5 +175,3 @@ class TestHandleVoiceConfirmationInput:
                 user_id="123456789",
                 action="",
             )
-
-

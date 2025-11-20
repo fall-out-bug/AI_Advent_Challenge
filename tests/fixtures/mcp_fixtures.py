@@ -6,9 +6,9 @@ Following TDD principles and Python Zen:
 """
 
 import asyncio
+from datetime import datetime
 from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock
-from datetime import datetime
 
 import pytest
 

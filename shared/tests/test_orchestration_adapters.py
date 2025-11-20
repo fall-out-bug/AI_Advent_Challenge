@@ -6,19 +6,19 @@ and "Explicit is better than implicit".
 """
 
 import asyncio
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from aiohttp import ClientError, ClientTimeout
 
+import pytest
+from aiohttp import ClientError, ClientTimeout
+from shared_package.agents.schemas import AgentRequest, AgentResponse, TaskMetadata
 from shared_package.orchestration.adapters import (
-    AdapterType,
     AdapterConfig,
+    AdapterFactory,
+    AdapterType,
     CommunicationAdapter,
     DirectAdapter,
     RestAdapter,
-    AdapterFactory
 )
-from shared_package.agents.schemas import AgentRequest, AgentResponse, TaskMetadata
 
 
 class TestAdapterConfig:
@@ -36,10 +36,7 @@ class TestAdapterConfig:
     def test_custom_config(self):
         """Test custom configuration creation."""
         config = AdapterConfig(
-            adapter_type=AdapterType.REST,
-            timeout=60.0,
-            max_retries=5,
-            retry_delay=2.0
+            adapter_type=AdapterType.REST, timeout=60.0, max_retries=5, retry_delay=2.0
         )
 
         assert config.adapter_type == AdapterType.REST
@@ -116,10 +113,8 @@ class TestDirectAdapter:
             result="test result",
             success=True,
             metadata=TaskMetadata(
-                task_id="test_id",
-                task_type="test",
-                timestamp=1234567890.0
-            )
+                task_id="test_id", task_type="test", timestamp=1234567890.0
+            ),
         )
         mock_agent.process.return_value = expected_response
 
@@ -166,11 +161,13 @@ class TestRestAdapter:
 
     def test_base_url_normalization(self):
         """Test base URL normalization."""
-        adapter = RestAdapter("http://localhost:8000/", AdapterConfig(adapter_type=AdapterType.REST))
+        adapter = RestAdapter(
+            "http://localhost:8000/", AdapterConfig(adapter_type=AdapterType.REST)
+        )
         assert adapter.base_url == "http://localhost:8000"
 
     @pytest.mark.asyncio
-    @patch('aiohttp.ClientSession')
+    @patch("aiohttp.ClientSession")
     async def test_get_session_creation(self, mock_session_class, adapter):
         """Test HTTP session creation."""
         session = await adapter._get_session()
@@ -185,19 +182,21 @@ class TestRestAdapter:
         # Session should be closed (mocked)
 
     @pytest.mark.asyncio
-    @patch('shared_package.orchestration.adapters.RestAdapter._get_session')
+    @patch("shared_package.orchestration.adapters.RestAdapter._get_session")
     async def test_send_request_success(self, mock_get_session, adapter):
         """Test successful REST request."""
         # Setup mock
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.json = AsyncMock(return_value={
-            "result": "test result",
-            "success": True,
-            "error": None,
-            "metadata": None,
-            "quality": None
-        })
+        mock_response.json = AsyncMock(
+            return_value={
+                "result": "test result",
+                "success": True,
+                "error": None,
+                "metadata": None,
+                "quality": None,
+            }
+        )
 
         # Create proper async context manager mock
         class AsyncContextManager:
@@ -224,7 +223,7 @@ class TestRestAdapter:
         mock_session.post.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch('shared_package.orchestration.adapters.RestAdapter._get_session')
+    @patch("shared_package.orchestration.adapters.RestAdapter._get_session")
     async def test_send_request_http_error(self, mock_get_session, adapter):
         """Test REST request with HTTP error."""
         # Setup mock
@@ -253,19 +252,21 @@ class TestRestAdapter:
             await adapter.send_request("test_agent", request)
 
     @pytest.mark.asyncio
-    @patch('shared_package.orchestration.adapters.RestAdapter._get_session')
+    @patch("shared_package.orchestration.adapters.RestAdapter._get_session")
     async def test_send_request_retry_logic(self, mock_get_session, adapter):
         """Test REST request retry logic."""
         # Setup mock to fail first two attempts, succeed on third
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.json = AsyncMock(return_value={
-            "result": "test result",
-            "success": True,
-            "error": None,
-            "metadata": None,
-            "quality": None
-        })
+        mock_response.json = AsyncMock(
+            return_value={
+                "result": "test result",
+                "success": True,
+                "error": None,
+                "metadata": None,
+                "quality": None,
+            }
+        )
 
         # Create proper async context manager mock
         class AsyncContextManager:
@@ -283,7 +284,7 @@ class TestRestAdapter:
         mock_session.post.side_effect = [
             ClientError("Connection failed"),
             ClientError("Connection failed"),
-            AsyncContextManager(mock_response)
+            AsyncContextManager(mock_response),
         ]
         mock_get_session.return_value = mock_session
 
@@ -296,7 +297,7 @@ class TestRestAdapter:
         assert mock_session.post.call_count == 3
 
     @pytest.mark.asyncio
-    @patch('shared_package.orchestration.adapters.RestAdapter._get_session')
+    @patch("shared_package.orchestration.adapters.RestAdapter._get_session")
     async def test_send_request_max_retries_exceeded(self, mock_get_session, adapter):
         """Test REST request when max retries exceeded."""
         # Setup mock to always fail
@@ -310,7 +311,7 @@ class TestRestAdapter:
             await adapter.send_request("test_agent", request)
 
     @pytest.mark.asyncio
-    @patch('shared_package.orchestration.adapters.RestAdapter._get_session')
+    @patch("shared_package.orchestration.adapters.RestAdapter._get_session")
     async def test_is_available_success(self, mock_get_session, adapter):
         """Test availability check success."""
         # Setup mock
@@ -337,10 +338,12 @@ class TestRestAdapter:
 
         # Verify
         assert result is True
-        mock_session.get.assert_called_once_with("http://localhost:8000/agents/test_agent/health")
+        mock_session.get.assert_called_once_with(
+            "http://localhost:8000/agents/test_agent/health"
+        )
 
     @pytest.mark.asyncio
-    @patch('aiohttp.ClientSession')
+    @patch("aiohttp.ClientSession")
     async def test_is_available_failure(self, mock_session_class, adapter):
         """Test availability check failure."""
         # Setup mock
@@ -368,9 +371,7 @@ class TestAdapterFactory:
     def test_create_direct_adapter_custom_config(self):
         """Test creating direct adapter with custom config."""
         config = AdapterConfig(
-            adapter_type=AdapterType.DIRECT,
-            timeout=60.0,
-            max_retries=5
+            adapter_type=AdapterType.DIRECT, timeout=60.0, max_retries=5
         )
         adapter = AdapterFactory.create_direct_adapter(config)
 
@@ -389,9 +390,7 @@ class TestAdapterFactory:
     def test_create_rest_adapter_custom_config(self):
         """Test creating REST adapter with custom config."""
         config = AdapterConfig(
-            adapter_type=AdapterType.REST,
-            timeout=60.0,
-            max_retries=5
+            adapter_type=AdapterType.REST, timeout=60.0, max_retries=5
         )
         adapter = AdapterFactory.create_rest_adapter("http://localhost:8000", config)
 
@@ -409,8 +408,7 @@ class TestAdapterFactory:
     def test_create_adapter_rest(self):
         """Test creating adapter by type - REST."""
         adapter = AdapterFactory.create_adapter(
-            AdapterType.REST,
-            base_url="http://localhost:8000"
+            AdapterType.REST, base_url="http://localhost:8000"
         )
 
         assert isinstance(adapter, RestAdapter)
@@ -442,10 +440,8 @@ class TestIntegration:
             result="Generated code",
             success=True,
             metadata=TaskMetadata(
-                task_id="test_123",
-                task_type="code_generation",
-                timestamp=1234567890.0
-            )
+                task_id="test_123", task_type="code_generation", timestamp=1234567890.0
+            ),
         )
         mock_agent.process.return_value = expected_response
 
@@ -463,25 +459,27 @@ class TestIntegration:
         mock_agent.process.assert_called_once_with(request)
 
     @pytest.mark.asyncio
-    @patch('shared_package.orchestration.adapters.RestAdapter._get_session')
+    @patch("shared_package.orchestration.adapters.RestAdapter._get_session")
     async def test_rest_adapter_workflow(self, mock_get_session):
         """Test complete REST adapter workflow."""
         # Setup mock
         mock_session = MagicMock()
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.json = AsyncMock(return_value={
-            "result": "Generated code",
-            "success": True,
-            "error": None,
-            "metadata": {
-                "task_id": "test_123",
-                "task_type": "code_generation",
-                "timestamp": 1234567890.0,
-                "model_name": "gpt-4"
-            },
-            "quality": None
-        })
+        mock_response.json = AsyncMock(
+            return_value={
+                "result": "Generated code",
+                "success": True,
+                "error": None,
+                "metadata": {
+                    "task_id": "test_123",
+                    "task_type": "code_generation",
+                    "timestamp": 1234567890.0,
+                    "model_name": "gpt-4",
+                },
+                "quality": None,
+            }
+        )
 
         # Create proper async context manager mock
         class AsyncContextManager:
@@ -511,5 +509,7 @@ class TestIntegration:
         assert response.success is True
 
         # Verify HTTP calls
-        mock_session.get.assert_called_once_with("http://localhost:8000/agents/code_generator/health")
+        mock_session.get.assert_called_once_with(
+            "http://localhost:8000/agents/code_generator/health"
+        )
         mock_session.post.assert_called_once()

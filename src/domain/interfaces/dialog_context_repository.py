@@ -20,53 +20,51 @@ from src.domain.agents.state_machine import DialogContext
 class DialogContextRepository(ABC):
     """Repository interface for dialog context persistence.
 
-      Purpose:
-          Abstract the storage of dialog contexts to enable testing,
-          infrastructure flexibility, and clean architecture compliance.
+    Purpose:
+        Abstract the storage of dialog contexts to enable testing,
+        infrastructure flexibility, and clean architecture compliance.
 
-      This interface ensures domain logic remains independent of
-      specific storage implementations (MongoDB, Redis, etc.).
+    This interface ensures domain logic remains independent of
+    specific storage implementations (MongoDB, Redis, etc.).
 
-      Example:
-          >>> repo = SomeDialogContextRepository()
-          >>> context = await repo.get_by_session("session_123")
-          >>> await repo.save(context)
+    Example:
+        >>> repo = SomeDialogContextRepository()
+        >>> context = await repo.get_by_session("session_123")
+        >>> await repo.save(context)
     """
 
     @abstractmethod
-    async def get_by_session(
-        self, session_id: str
-    ) -> Optional[DialogContext]:
+    async def get_by_session(self, session_id: str) -> Optional[DialogContext]:
         """Retrieve dialog context by session identifier.
 
-              Args:
-                  session_id: Unique session identifier.
+        Args:
+            session_id: Unique session identifier.
 
-              Returns:
-                  DialogContext instance if found, None otherwise.
+        Returns:
+            DialogContext instance if found, None otherwise.
 
-              Raises:
-                  RepositoryError: If retrieval operation fails.
+        Raises:
+            RepositoryError: If retrieval operation fails.
         """
 
     @abstractmethod
     async def save(self, context: DialogContext) -> None:
         """Persist dialog context.
 
-              Args:
-                  context: DialogContext instance to save.
+        Args:
+            context: DialogContext instance to save.
 
-              Raises:
-                  RepositoryError: If save operation fails.
+        Raises:
+            RepositoryError: If save operation fails.
         """
 
     @abstractmethod
     async def delete(self, session_id: str) -> None:
         """Remove dialog context by session identifier.
 
-              Args:
-                  session_id: Session identifier to delete.
+        Args:
+            session_id: Session identifier to delete.
 
-              Raises:
-                  RepositoryError: If delete operation fails.
+        Raises:
+            RepositoryError: If delete operation fails.
         """

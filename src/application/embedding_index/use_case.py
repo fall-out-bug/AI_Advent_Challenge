@@ -8,11 +8,11 @@ from typing import Deque, List, Mapping, MutableMapping, Sequence
 
 from src.application.embedding_index.dtos import IndexingRequest, IndexingResult
 from src.domain.embedding_index import (
-    ChunkRepository,
     Chunker,
     ChunkingSettings,
-    DocumentCollector,
+    ChunkRepository,
     DocumentChunk,
+    DocumentCollector,
     DocumentPayload,
     DocumentRecord,
     DocumentRepository,

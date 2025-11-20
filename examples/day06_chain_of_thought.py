@@ -43,9 +43,7 @@ class CoTAgent:
             llm_url: Base URL for LLM API. Defaults to env or localhost.
         """
         self._llm_url = (
-            llm_url
-            or os.environ.get("LLM_URL")
-            or "http://localhost:8000/v1"
+            llm_url or os.environ.get("LLM_URL") or "http://localhost:8000/v1"
         ).rstrip("/")
         self._client = httpx.Client(timeout=60.0)
 
@@ -53,9 +51,7 @@ class CoTAgent:
         """Close HTTP client."""
         self._client.close()
 
-    def _generate_response(
-        self, prompt: str, use_cot: bool = False
-    ) -> str:
+    def _generate_response(self, prompt: str, use_cot: bool = False) -> str:
         """Generate LLM response with or without CoT.
 
         Args:
@@ -117,7 +113,7 @@ Let's solve this step by step:"""
             idx = response_lower.find(marker)
             if idx != -1:
                 # Extract text after marker
-                after_marker = response[idx + len(marker):].strip()
+                after_marker = response[idx + len(marker) :].strip()
                 # Take first line or number
                 lines = after_marker.split("\n")
                 if lines:
@@ -131,9 +127,7 @@ Let's solve this step by step:"""
 
         return None
 
-    def _check_correctness(
-        self, answer: str | None, problem: str
-    ) -> bool | None:
+    def _check_correctness(self, answer: str | None, problem: str) -> bool | None:
         """Check if answer is correct (simple heuristic).
 
         Args:
@@ -226,7 +220,10 @@ def format_comparison(comparison: CoTComparison) -> str:
     lines.append("SUMMARY")
     lines.append("=" * 60)
 
-    if comparison.is_correct_direct is not None and comparison.is_correct_cot is not None:
+    if (
+        comparison.is_correct_direct is not None
+        and comparison.is_correct_cot is not None
+    ):
         if comparison.is_correct_cot and not comparison.is_correct_direct:
             lines.append("✓ CoT improved correctness")
         elif comparison.is_correct_direct and not comparison.is_correct_cot:
@@ -234,7 +231,9 @@ def format_comparison(comparison: CoTComparison) -> str:
         elif comparison.is_correct_direct == comparison.is_correct_cot:
             lines.append("= Both methods produced same correctness")
     else:
-        lines.append("Note: Automatic correctness checking not available for this problem type.")
+        lines.append(
+            "Note: Automatic correctness checking not available for this problem type."
+        )
         lines.append("Please compare the responses manually.")
 
     lines.append("")
@@ -246,10 +245,7 @@ def main(argv: list[str] | None = None) -> int:
     """Entry point for Day 6 demo."""
     args = sys.argv[1:] if argv is None else argv
 
-    problem = (
-        " ".join(args) if args
-        else "2x + 6 = 14"
-    )
+    problem = " ".join(args) if args else "2x + 6 = 14"
 
     agent = CoTAgent()
 

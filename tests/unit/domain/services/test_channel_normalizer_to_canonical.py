@@ -26,9 +26,7 @@ class TestChannelNormalizerToCanonicalForm:
         result = normalizer.to_canonical_form("@onaboka")
         assert result == "onaboka"
 
-    def test_to_canonical_form_lowercase(
-        self, normalizer: ChannelNormalizer
-    ) -> None:
+    def test_to_canonical_form_lowercase(self, normalizer: ChannelNormalizer) -> None:
         """Test that uppercase is converted to lowercase."""
         result = normalizer.to_canonical_form("Onaboka")
         assert result == "onaboka"
@@ -83,4 +81,6 @@ class TestChannelNormalizerToCanonicalForm:
 
         for input_text, expected in test_cases:
             result = normalizer.to_canonical_form(input_text)
-            assert result == expected, f"Input: {input_text!r}, Expected: {expected!r}, Got: {result!r}"
+            assert (
+                result == expected
+            ), f"Input: {input_text!r}, Expected: {expected!r}, Got: {result!r}"

@@ -14,12 +14,13 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from dotenv import load_dotenv
 import os
+
+from dotenv import load_dotenv
 
 load_dotenv()
 
-from src.infrastructure.database.mongo import get_db, close_client
+from src.infrastructure.database.mongo import close_client, get_db
 from src.infrastructure.logging import get_logger
 
 logger = get_logger(name="clear_db")

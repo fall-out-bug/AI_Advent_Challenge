@@ -57,4 +57,3 @@ class SpeechToTextService(Protocol):
             0.85
         """
         ...
-

@@ -6,14 +6,17 @@ Uses in-memory mock MongoDB for isolated testing.
 Epic 21 · Stage 21_01a · Dialog Context Repository
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from src.domain.agents.butler_orchestrator import ButlerOrchestrator
 from src.domain.agents.services.mode_classifier import DialogMode
 from src.domain.agents.state_machine import DialogContext, DialogState
-from src.infrastructure.repositories.mongo_dialog_context_repository import MongoDialogContextRepository
 from src.infrastructure.di.container import LegacyDialogContextAdapter
+from src.infrastructure.repositories.mongo_dialog_context_repository import (
+    MongoDialogContextRepository,
+)
 
 
 @pytest.mark.epic21
@@ -103,13 +106,15 @@ class TestButlerOrchestratorWithRepositoryIntegration:
             dialog_context_repository=mongo_repo,
         )
 
-    async def test_integration_mongo_repository_new_session(self, orchestrator_with_mongo, mongo_repo):
+    async def test_integration_mongo_repository_new_session(
+        self, orchestrator_with_mongo, mongo_repo
+    ):
         """Integration: MongoDB repository works for new session."""
         # Act - Handle message for new session
         response = await orchestrator_with_mongo.handle_user_message(
             user_id="mongo_user",
             message="Hello MongoDB test",
-            session_id="mongo_session_new"
+            session_id="mongo_session_new",
         )
 
         # Assert
@@ -157,7 +162,7 @@ class TestButlerOrchestratorWithRepositoryIntegration:
         response = await orchestrator.handle_user_message(
             user_id="existing_mongo_user",
             message="Update task description",
-            session_id="existing_mongo_session"
+            session_id="existing_mongo_session",
         )
 
         # Assert

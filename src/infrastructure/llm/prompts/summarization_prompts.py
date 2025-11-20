@@ -23,13 +23,13 @@ def get_map_prompt(
         Formatted prompt string.
     """
     if language == "ru":
-<<<<<<< HEAD
         # Load persona style for map phase
         try:
             from src.application.personalization.templates import (
                 get_digest_map_prompt,
                 get_persona_template,
             )
+
             persona_template = get_persona_template()
             persona_section = persona_template.format(
                 persona="дворецкий",
@@ -46,8 +46,6 @@ def get_map_prompt(
         except Exception:
             # Fallback to old prompt
             pass
-=======
->>>>>>> origin/master
         return (
             f"Перед тобой фрагмент постов из Telegram-канала.\n\n"
             f"ЗАДАЧА: Выдели {max_sentences} ключевых фактов из этого фрагмента. "
@@ -109,13 +107,13 @@ def get_reduce_prompt(
         Formatted prompt string.
     """
     if language == "ru":
-<<<<<<< HEAD
         # Load persona style for reduce phase
         try:
             from src.application.personalization.templates import (
                 get_digest_reduce_prompt,
                 get_persona_template,
             )
+
             persona_template = get_persona_template()
             persona_section = persona_template.format(
                 persona="дворецкий",
@@ -132,8 +130,6 @@ def get_reduce_prompt(
         except Exception:
             # Fallback to old prompt
             pass
-=======
->>>>>>> origin/master
         return (
             f"Перед тобой несколько суммаризаций фрагментов ОДНОГО Telegram-канала.\n\n"
             f"КРИТИЧЕСКИ ВАЖНО:\n"
@@ -246,7 +242,6 @@ def get_direct_summarization_prompt(
         channel_context = f" канала @{channel_username}"
 
     if language == "ru":
-<<<<<<< HEAD
         # Load digest summarization prompt from config (includes persona style)
         try:
             from src.application.personalization.templates import (
@@ -276,6 +271,7 @@ def get_direct_summarization_prompt(
         except Exception as e:
             # Fallback to old prompt if template loading fails
             import logging
+
             logger = logging.getLogger(__name__)
             logger.warning(
                 f"Could not load digest prompt from config, using fallback: {e}",
@@ -314,40 +310,6 @@ def get_direct_summarization_prompt(
                 f"Посты из канала{channel_context}:\n{text}\n\n"
                 f"Суммари (только этот канал):"
             )
-=======
-        return (
-            f"Суммаризируй эти посты из Telegram-канала{channel_context}{time_context}.\n\n"
-            f"КРИТИЧЕСКИ ВАЖНО:\n"
-            f"- Эти посты ВСЕ из ОДНОГО канала{channel_context}\n"
-            f"- НЕ смешивай информацию из других каналов или источников\n"
-            f"- Суммаризируй ТОЛЬКО то, что написано в этих постах\n\n"
-            f"Требования:\n"
-            f"- Напиши ПОЛНЫЙ, ПОДРОБНЫЙ и ЖИВОЙ дайджест из {max_sentences} РАЗНЫХ предложений на русском языке\n"
-            f"- Каждое предложение раскрывает РАЗНЫЙ аспект или тему\n"
-            f"- Без повторов, без нумерации, без Markdown\n"
-            f"- Обычный текст, только предложения\n\n"
-            f"Формат ответа:\n"
-            f"- Верни ТОЛЬКО текст, НЕ JSON, НЕ структурированные данные\n"
-            f"- Только предложения на русском языке\n"
-            f"- Пиши ПОЛНЫЙ, ДЕТАЛЬНЫЙ и ИНТЕРЕСНЫЙ дайджест - используй ВСЕ {max_sentences} предложений, не обрезай текст\n"
-            f"- Включи ВСЕ важные детали из постов, опиши ВСЕ темы и аспекты\n"
-            f"- Раскрой каждую тему подробно и интересно, не ограничивайся общими фразами\n"
-            f"- Используй разнообразные формулировки, сделай текст живым и увлекательным\n"
-            f"- Учитывай временной период: это посты{time_context}, сфокусируйся на актуальном контенте за этот период\n"
-            + (
-                f"- Целевой размер примерно {max_chars} символов - используй это пространство для подробного и интересного описания\n"
-                if max_chars
-                else ""
-            )
-            + "\n"
-            f"Пример правильного ответа:\n"
-            f"Разработчики представили новую версию iOS с улучшенной производительностью на 30%. "
-            f"Добавлены новые функции для работы с жестами и улучшена безопасность. "
-            f"Обсуждаются отзывы пользователей о стабильности и совместимости.\n\n"
-            f"Посты из канала{channel_context}:\n{text}\n\n"
-            f"Суммари (только этот канал):"
-        )
->>>>>>> origin/master
     else:
         channel_context_en = (
             f" from channel @{channel_username}" if channel_username else ""

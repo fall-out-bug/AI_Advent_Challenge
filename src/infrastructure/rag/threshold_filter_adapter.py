@@ -37,8 +37,8 @@ class ThresholdFilterAdapter:
             ).inc(below_threshold_count)
 
         if len(passed) > top_k:
-            rag_metrics.rag_chunks_filtered_total.labels(
-                category="above_top_k"
-            ).inc(len(passed) - top_k)
+            rag_metrics.rag_chunks_filtered_total.labels(category="above_top_k").inc(
+                len(passed) - top_k
+            )
 
         return passed[:top_k]

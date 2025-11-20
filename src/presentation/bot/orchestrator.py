@@ -7,7 +7,11 @@ from typing import Any, Optional
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from src.application.dtos.butler_dialog_dtos import DialogContext, DialogMode, DialogState
+from src.application.dtos.butler_dialog_dtos import (
+    DialogContext,
+    DialogMode,
+    DialogState,
+)
 from src.application.services.mode_classifier import ModeClassifier
 from src.presentation.bot.handlers.base import Handler
 

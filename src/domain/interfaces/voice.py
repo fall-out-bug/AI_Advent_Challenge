@@ -163,4 +163,3 @@ class ButlerGateway(Protocol):
             RuntimeError: If routing fails.
         """
         ...
-

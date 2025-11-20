@@ -1,9 +1,9 @@
 import pytest
 
 from src.domain.parsers.tool_call_parser import (
+    ToolCallParser,
     extract_json_from_text,
     extract_tool_from_text_heuristic,
-    ToolCallParser,
 )
 
 

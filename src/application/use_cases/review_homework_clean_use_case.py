@@ -10,12 +10,8 @@ Epic 21 · Stage 21_01d · Use Case Decomposition
 from typing import Optional
 
 # noqa: E501
-from src.application.dtos.homework_dtos import (
-    HomeworkReviewResult,
-)
-from src.domain.interfaces.homework_review_service import (
-    HomeworkReviewService,
-)
+from src.application.dtos.homework_dtos import HomeworkReviewResult
+from src.domain.interfaces.homework_review_service import HomeworkReviewService
 
 
 # noqa: E501
@@ -23,13 +19,13 @@ from src.domain.interfaces.homework_review_service import (
 class ReviewHomeworkCleanUseCase:
     """Clean Architecture use case for homework review orchestration.
 
-      Purpose:
-          Orchestrate homework review business logic using domain services.
-          Follows Clean Architecture: Application layer depends only on
-          domain interfaces.
+    Purpose:
+        Orchestrate homework review business logic using domain services.
+        Follows Clean Architecture: Application layer depends only on
+        domain interfaces.
 
-      Attributes:
-          homework_review_service: Domain service for homework review operations.
+    Attributes:
+        homework_review_service: Domain service for homework review operations.
     """
 
     def __init__(
@@ -38,8 +34,8 @@ class ReviewHomeworkCleanUseCase:
     ):
         """Initialize use case with domain service.
 
-              Args:
-                  homework_review_service: Domain service for homework operations.
+        Args:
+            homework_review_service: Domain service for homework operations.
         """
         self.homework_review_service = homework_review_service
 
@@ -48,33 +44,26 @@ class ReviewHomeworkCleanUseCase:
     ) -> HomeworkReviewResult:
         """Execute homework review orchestration.
 
-              Args:
-                  commit_hash: Git commit hash to review.
-                  days: Optional days parameter for context (future use).
+        Args:
+            commit_hash: Git commit hash to review.
+            days: Optional days parameter for context (future use).
 
-              Returns:
-                  HomeworkReviewResult with review outcomes.
+        Returns:
+            HomeworkReviewResult with review outcomes.
 
-              Raises:
-                  ValueError: If commit_hash is invalid.
-                  RuntimeError: If review operation fails.
+        Raises:
+            ValueError: If commit_hash is invalid.
+            RuntimeError: If review operation fails.
         """
         if not commit_hash or not isinstance(commit_hash, str):
-            raise ValueError(
-                "commit_hash must be a non-empty string"
-            )
+            raise ValueError("commit_hash must be a non-empty string")
 
         if len(commit_hash.strip()) == 0:
-            raise ValueError(
-                "commit_hash cannot be empty or whitespace"
-            )
+            raise ValueError("commit_hash cannot be empty or whitespace")
 
         # Create minimal context for domain service
         # Domain service expects DialogContext, create a minimal one
-        from src.domain.agents.state_machine import (
-            DialogContext,
-            DialogState,
-        )
+        from src.domain.agents.state_machine import DialogContext, DialogState
 
         context = DialogContext(
             state=DialogState.IDLE,
@@ -94,9 +83,7 @@ class ReviewHomeworkCleanUseCase:
             if result.startswith("FILE:"):
                 # Extract components from FILE:format
                 try:
-                    _, filename, content_b64 = result.split(
-                        ":", 2
-                    )
+                    _, filename, content_b64 = result.split(":", 2)
                     # For now, return basic success result
                     # In real implementation, might need to decode and parse
                     # content
@@ -118,25 +105,19 @@ class ReviewHomeworkCleanUseCase:
 
         except Exception as e:
             # Wrap domain service exceptions
-            raise RuntimeError(
-                f"Homework review failed: {str(e)}"
-            ) from e
+            raise RuntimeError(f"Homework review failed: {str(e)}") from e
 
-    async def list_recent_homeworks(
-        self, days: int = 1
-    ) -> list[dict]:
+    async def list_recent_homeworks(self, days: int = 1) -> list[dict]:
         """List recent homework submissions.
 
-              Args:
-                  days: Number of days to look back.
+        Args:
+            days: Number of days to look back.
 
-              Returns:
-                  List of homework submission metadata.
+        Returns:
+            List of homework submission metadata.
         """
         try:
-            result = await self.homework_review_service.list_homeworks(
-                days
-            )
+            result = await self.homework_review_service.list_homeworks(days)
 
             # Result is already in expected format from domain service
             if isinstance(result, dict) and "commits" in result:
@@ -145,6 +126,4 @@ class ReviewHomeworkCleanUseCase:
                 return []
 
         except Exception as e:
-            raise RuntimeError(
-                f"Failed to list homeworks: {str(e)}"
-            ) from e
+            raise RuntimeError(f"Failed to list homeworks: {str(e)}") from e

@@ -1,7 +1,8 @@
 """Tests for ResetPersonalizationUseCase."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from src.application.personalization.dtos import ResetPersonalizationInput
 from src.application.personalization.use_cases.reset_personalization import (
@@ -33,7 +34,9 @@ def use_case(mock_profile_repo, mock_memory_repo):
 
 
 @pytest.mark.asyncio
-async def test_execute_resets_successfully(use_case, mock_profile_repo, mock_memory_repo):
+async def test_execute_resets_successfully(
+    use_case, mock_profile_repo, mock_memory_repo
+):
     """Test successful reset operation."""
     input_data = ResetPersonalizationInput(user_id="123")
     output = await use_case.execute(input_data)

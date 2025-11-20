@@ -7,9 +7,8 @@ import asyncio
 from pathlib import Path
 from typing import Iterable, Sequence
 
-from src.domain.rag import FilterConfig, Query
-
 from scripts.rag import day_20_demo as base_demo
+from src.domain.rag import FilterConfig, Query
 
 
 def _parse_arguments() -> argparse.Namespace:
@@ -89,7 +88,11 @@ def _override_filter_config(
         raise ValueError("threshold must be between 0.0 and 1.0.")
 
     top_k = base_config.top_k
-    threshold = threshold_override if threshold_override is not None else base_config.score_threshold
+    threshold = (
+        threshold_override
+        if threshold_override is not None
+        else base_config.score_threshold
+    )
 
     if filter_enabled is False:
         return FilterConfig(score_threshold=0.0, top_k=top_k)

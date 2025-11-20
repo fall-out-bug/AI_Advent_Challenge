@@ -9,22 +9,22 @@ agent implementations and communication adapters.
 """
 
 import asyncio
-import pytest
 from datetime import datetime
 
-from shared_package.orchestration import (
-    SequentialOrchestrator,
-    ParallelOrchestrator,
-    DirectAdapter,
-    OrchestrationConfig
-)
+import pytest
 from shared_package.agents import (
+    AgentRequest,
     CodeGeneratorAgent,
     CodeReviewerAgent,
-    AgentRequest,
-    TaskMetadata
+    TaskMetadata,
 )
 from shared_package.clients.unified_client import UnifiedModelClient
+from shared_package.orchestration import (
+    DirectAdapter,
+    OrchestrationConfig,
+    ParallelOrchestrator,
+    SequentialOrchestrator,
+)
 
 
 class MockModelClient:
@@ -33,7 +33,7 @@ class MockModelClient:
     def __init__(self, responses: dict = None):
         self.responses = responses or {
             "code_generation": "def fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n-1) + fibonacci(n-2)",
-            "code_review": "Code quality: 0.85\nReadability: Good\nEfficiency: Could be improved with memoization\nIssues: None"
+            "code_review": "Code quality: 0.85\nReadability: Good\nEfficiency: Could be improved with memoization\nIssues: None",
         }
 
     async def make_request(
@@ -41,7 +41,7 @@ class MockModelClient:
         model_name: str,
         prompt: str,
         max_tokens: int = 1000,
-        temperature: float = 0.7
+        temperature: float = 0.7,
     ):
         """Mock make_request method."""
         await asyncio.sleep(0.1)  # Simulate processing time
@@ -49,7 +49,11 @@ class MockModelClient:
         # Better prompt detection
         if "review" in prompt.lower() or "quality" in prompt.lower():
             response_text = self.responses["code_review"]
-        elif "generate" in prompt.lower() or "create" in prompt.lower() or "write" in prompt.lower():
+        elif (
+            "generate" in prompt.lower()
+            or "create" in prompt.lower()
+            or "write" in prompt.lower()
+        ):
             response_text = self.responses["code_generation"]
         else:
             response_text = "Mock response"
@@ -95,19 +99,19 @@ async def test_sequential_generator_reviewer_workflow(adapter_with_agents):
     metadata = TaskMetadata(
         task_id="integration_test",
         task_type="code_generation_and_review",
-        timestamp=datetime.now().timestamp()
+        timestamp=datetime.now().timestamp(),
     )
 
     # Define sequential workflow
     agents = {
         "generator": AgentRequest(
             task="Generate a Python function to calculate fibonacci numbers",
-            metadata=metadata
+            metadata=metadata,
         ),
         "reviewer": AgentRequest(
             task="Review the generated code for quality and improvements",
-            metadata=metadata
-        )
+            metadata=metadata,
+        ),
     }
 
     result = await orchestrator.orchestrate(agents)
@@ -137,19 +141,19 @@ async def test_parallel_multiple_generators(adapter_with_agents):
     metadata = TaskMetadata(
         task_id="parallel_test",
         task_type="parallel_generation",
-        timestamp=datetime.now().timestamp()
+        timestamp=datetime.now().timestamp(),
     )
 
     # Define parallel tasks
     agents = {
         "generator": AgentRequest(
             task="Generate a Python function to calculate fibonacci numbers",
-            metadata=metadata
+            metadata=metadata,
         ),
         "reviewer": AgentRequest(
             task="Generate a Python function to calculate factorial numbers",
-            metadata=metadata
-        )
+            metadata=metadata,
+        ),
     }
 
     result = await orchestrator.orchestrate(agents)
@@ -172,18 +176,17 @@ async def test_pipeline_execution(adapter_with_agents):
     metadata = TaskMetadata(
         task_id="pipeline_test",
         task_type="pipeline_execution",
-        timestamp=datetime.now().timestamp()
+        timestamp=datetime.now().timestamp(),
     )
 
     # Define pipeline
     pipeline = [
         {"agent_id": "generator", "task_modifier": "Generate code for: {task}"},
-        {"agent_id": "reviewer", "task_modifier": "Review this code: {result}"}
+        {"agent_id": "reviewer", "task_modifier": "Review this code: {result}"},
     ]
 
     initial_request = AgentRequest(
-        task="Create a Python function to reverse a string",
-        metadata=metadata
+        task="Create a Python function to reverse a string", metadata=metadata
     )
 
     result = await orchestrator.orchestrate_with_pipeline(pipeline, initial_request)
@@ -208,24 +211,23 @@ async def test_race_execution(adapter_with_agents):
     metadata = TaskMetadata(
         task_id="race_test",
         task_type="race_execution",
-        timestamp=datetime.now().timestamp()
+        timestamp=datetime.now().timestamp(),
     )
 
     # Define race tasks
     agents = {
         "generator": AgentRequest(
             task="Generate a Python function to calculate fibonacci numbers",
-            metadata=metadata
+            metadata=metadata,
         ),
         "reviewer": AgentRequest(
             task="Generate a Python function to calculate factorial numbers",
-            metadata=metadata
-        )
+            metadata=metadata,
+        ),
     }
 
     result = await orchestrator.orchestrate_with_race(
-        agents,
-        winner_takes_all=False  # Allow multiple winners
+        agents, winner_takes_all=False  # Allow multiple winners
     )
 
     # Verify results
@@ -241,24 +243,23 @@ async def test_batched_execution(adapter_with_agents):
     metadata = TaskMetadata(
         task_id="batch_test",
         task_type="batched_execution",
-        timestamp=datetime.now().timestamp()
+        timestamp=datetime.now().timestamp(),
     )
 
     # Define multiple tasks
     agents = {
         "generator": AgentRequest(
             task="Generate a Python function to calculate fibonacci numbers",
-            metadata=metadata
+            metadata=metadata,
         ),
         "reviewer": AgentRequest(
             task="Generate a Python function to calculate factorial numbers",
-            metadata=metadata
-        )
+            metadata=metadata,
+        ),
     }
 
     result = await orchestrator.orchestrate_with_batching(
-        agents,
-        batch_size=1  # Process one at a time
+        agents, batch_size=1  # Process one at a time
     )
 
     # Verify results
@@ -274,19 +275,15 @@ async def test_error_handling_and_recovery(adapter_with_agents):
     metadata = TaskMetadata(
         task_id="error_test",
         task_type="error_handling",
-        timestamp=datetime.now().timestamp()
+        timestamp=datetime.now().timestamp(),
     )
 
     # Create a request that will cause an error
     agents = {
         "generator": AgentRequest(
-            task="Generate invalid code that will cause errors",
-            metadata=metadata
+            task="Generate invalid code that will cause errors", metadata=metadata
         ),
-        "reviewer": AgentRequest(
-            task="Review the generated code",
-            metadata=metadata
-        )
+        "reviewer": AgentRequest(task="Review the generated code", metadata=metadata),
     }
 
     result = await orchestrator.orchestrate(agents)

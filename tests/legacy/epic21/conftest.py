@@ -1,8 +1,9 @@
 """Test configuration for Epic 21 characterization tests."""
 
-import pytest
+from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock
-from typing import Dict, Any
+
+import pytest
 
 from src.domain.agents.handlers.chat_handler import ChatHandler
 from src.domain.agents.handlers.data_handler import DataHandler
@@ -47,7 +48,9 @@ async def butler_mock_mongodb():
         result.inserted_id = f"mock_id_{session_id}"
         return result
 
-    async def update_one_mock(filter: Dict[str, Any], update: Dict[str, Any], **kwargs) -> MagicMock:
+    async def update_one_mock(
+        filter: Dict[str, Any], update: Dict[str, Any], **kwargs
+    ) -> MagicMock:
         """Update existing document with upsert support."""
         session_id = filter.get("session_id")
         if session_id:
@@ -80,13 +83,15 @@ async def butler_mock_mongodb():
         return result
 
     # Configure the mock to use async methods
-    dialog_contexts.configure_mock(**{
-        'find_one': AsyncMock(side_effect=find_one_mock),
-        'insert_one': AsyncMock(side_effect=insert_one_mock),
-        'update_one': AsyncMock(side_effect=update_one_mock),
-        'delete_one': AsyncMock(side_effect=delete_one_mock),
-        'count_documents': AsyncMock(side_effect=count_documents_mock),
-    })
+    dialog_contexts.configure_mock(
+        **{
+            "find_one": AsyncMock(side_effect=find_one_mock),
+            "insert_one": AsyncMock(side_effect=insert_one_mock),
+            "update_one": AsyncMock(side_effect=update_one_mock),
+            "delete_one": AsyncMock(side_effect=delete_one_mock),
+            "count_documents": AsyncMock(side_effect=count_documents_mock),
+        }
+    )
 
     db.dialog_contexts = dialog_contexts
 

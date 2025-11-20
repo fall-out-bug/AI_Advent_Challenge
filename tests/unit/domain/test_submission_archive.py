@@ -1,7 +1,8 @@
 """Tests for SubmissionArchive value object."""
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 from src.domain.value_objects.submission_archive import SubmissionArchive
 

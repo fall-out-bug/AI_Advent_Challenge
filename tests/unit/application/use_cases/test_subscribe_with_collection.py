@@ -1,7 +1,8 @@
 """Tests for SubscribeToChannelWithCollectionUseCase."""
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 
 from src.application.use_cases.subscribe_with_collection import (
     SubscribeToChannelWithCollectionUseCase,

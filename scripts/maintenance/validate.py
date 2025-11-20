@@ -78,10 +78,7 @@ def validate_config_files() -> bool:
     """
     print("\n📋 Validating configuration files...")
 
-    config_files = [
-        Path("config/models.yaml"),
-        Path("config/agents.yaml")
-    ]
+    config_files = [Path("config/models.yaml"), Path("config/agents.yaml")]
 
     all_valid = True
     for config_file in config_files:
@@ -104,7 +101,7 @@ def validate_storage_files(settings: Settings) -> bool:
 
     storage_files = [
         settings.get_agent_storage_path(),
-        settings.get_experiment_storage_path()
+        settings.get_experiment_storage_path(),
     ]
 
     all_valid = True
@@ -141,10 +138,10 @@ async def validate_health_checks() -> bool:
     if model_result.status.value != "healthy":
         print(f"   ⚠️  {model_result.message}")
 
-    return (
-        storage_result.status.value == "healthy" and
-        model_result.status.value in ["healthy", "degraded"]
-    )
+    return storage_result.status.value == "healthy" and model_result.status.value in [
+        "healthy",
+        "degraded",
+    ]
 
 
 def validate_dependencies() -> bool:
@@ -182,12 +179,12 @@ def main() -> None:
         "config": validate_config_files(),
         "storage": validate_storage_files(settings),
         "health": asyncio.run(validate_health_checks()),
-        "dependencies": validate_dependencies()
+        "dependencies": validate_dependencies(),
     }
 
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("📊 Validation Results:")
-    print("="*50)
+    print("=" * 50)
 
     for check, passed in results.items():
         status = "✅ PASS" if passed else "❌ FAIL"
@@ -195,12 +192,12 @@ def main() -> None:
 
     all_passed = all(results.values())
 
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     if all_passed:
         print("✅ All checks passed!")
     else:
         print("⚠️  Some checks failed")
-    print("="*50)
+    print("=" * 50)
 
 
 if __name__ == "__main__":

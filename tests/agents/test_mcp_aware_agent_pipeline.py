@@ -1,5 +1,6 @@
 import asyncio
 import types
+
 import pytest
 
 from src.domain.agents.mcp_aware_agent import MCPAwareAgent

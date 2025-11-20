@@ -7,8 +7,16 @@ and "Explicit is better than implicit".
 
 import pytest
 from shared_package.config.models import (
-    ModelType, ModelName, ModelPort, MODEL_CONFIGS, MODEL_PORTS, LOCAL_MODELS,
-    get_model_config, get_local_models, get_model_port, is_local_model
+    LOCAL_MODELS,
+    MODEL_CONFIGS,
+    MODEL_PORTS,
+    ModelName,
+    ModelPort,
+    ModelType,
+    get_local_models,
+    get_model_config,
+    get_model_port,
+    is_local_model,
 )
 
 
@@ -69,8 +77,9 @@ class TestModelConfigs:
 
         for model_name in local_models:
             config = MODEL_CONFIGS[model_name]
-            assert config.get("openai_compatible", False) is True, \
-                f"Model {model_name} should have openai_compatible=True"
+            assert (
+                config.get("openai_compatible", False) is True
+            ), f"Model {model_name} should have openai_compatible=True"
 
     def test_external_model_config(self):
         """Test external model configuration."""

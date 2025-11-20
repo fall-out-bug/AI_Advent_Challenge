@@ -4,10 +4,7 @@ from __future__ import annotations
 
 from typing import Iterable
 
-from src.application.dtos.homework_dtos import (
-    HomeworkListResult,
-    HomeworkSubmission,
-)
+from src.application.dtos.homework_dtos import HomeworkListResult, HomeworkSubmission
 from src.domain.interfaces.homework_checker import HomeworkCheckerProtocol
 
 

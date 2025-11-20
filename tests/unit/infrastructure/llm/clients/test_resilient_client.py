@@ -113,6 +113,7 @@ async def test_batch_generate_success(resilient_client, mock_llm_client):
 async def test_exponential_backoff_timing(resilient_client, mock_llm_client):
     """Test that exponential backoff delays increase."""
     import time
+
     import httpx
 
     mock_llm_client.generate.side_effect = [
@@ -153,9 +154,9 @@ async def test_max_retries_respected(resilient_client, mock_llm_client):
 def test_prometheus_metrics_exist():
     """Test that Prometheus metrics are defined."""
     from src.infrastructure.llm.clients.resilient_client import (
+        _llm_fallback_usage,
         _llm_request_duration,
         _llm_requests_total,
-        _llm_fallback_usage,
     )
 
     # Metrics should exist (may be None if Prometheus not available)

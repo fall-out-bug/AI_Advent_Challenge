@@ -32,7 +32,7 @@ class MockHandler(BaseHTTPRequestHandler):
             metrics = (
                 "# HELP mock_request_total Total number of mock requests.\n"
                 "# TYPE mock_request_total counter\n"
-                "mock_request_total{service=\"mock_shared_infra\"} 1\n"
+                'mock_request_total{service="mock_shared_infra"} 1\n'
             ).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "text/plain; version=0.0.4")
@@ -63,7 +63,9 @@ def run_server(port: int) -> None:
 def main() -> None:
     """CLI entry point."""
     parser = argparse.ArgumentParser(description="Mock shared infra services for CI.")
-    parser.add_argument("--port", type=int, default=18080, help="Port to bind the HTTP server.")
+    parser.add_argument(
+        "--port", type=int, default=18080, help="Port to bind the HTTP server."
+    )
     args = parser.parse_args()
     run_server(args.port)
 

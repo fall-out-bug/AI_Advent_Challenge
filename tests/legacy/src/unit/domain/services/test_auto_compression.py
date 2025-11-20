@@ -3,7 +3,6 @@
 Following TDD principles and the Zen of Python.
 """
 
-
 from src.domain.services.token_analyzer import TokenAnalyzer
 
 

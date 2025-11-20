@@ -43,9 +43,7 @@ class AuditEvent:
     metadata: Dict[str, Any] = field(default_factory=dict)
     trace_id: Optional[str] = None
     event_id: str = field(default_factory=lambda: uuid4().hex)
-    timestamp: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     @classmethod
     def create(

@@ -1,0 +1,137 @@
+from: tech_lead
+to: tech_lead
+timestamp: "2025_11_19_23_59_17"
+epic_id: "epic_26"
+iteration: 2
+
+type: summary
+subject: prompt_fixes_and_multi_pass_approach_summary
+
+content:
+  summary: "Summary of prompt fixes and multi-pass approach implementation for Test Agent"
+  status: "in_progress"
+
+  context:
+    issue: "Test Agent generates tests that fail with syntax errors"
+    root_cause: "LLM generates function redefinitions and explanatory text instead of pure test code"
+    approach: "Multi-pass generation with autonomous validation and cleaning"
+
+  changes_implemented:
+    prompt_improvements:
+      file: "src/infrastructure/test_agent/services/llm_service.py"
+      changes:
+        - "Added strict rules: generate ONLY valid Python code"
+        - "Explicitly forbidden function redefinitions"
+        - "Explicitly forbidden explanatory text"
+        - "Increased max_tokens to 2048 for better generation"
+        - "Added examples of correct vs incorrect output"
+
+    multi_pass_generation:
+      file: "src/application/test_agent/use_cases/generate_tests_use_case.py"
+      changes:
+        - "Pass 1: Initial LLM generation"
+        - "Pass 2: Parse and validate each test individually"
+        - "Pass 3: Regenerate if too few valid tests (< 2)"
+        - "Pass 4: Final validation"
+        - "Added _is_valid_test_code() method for per-test validation"
+        - "Added _validate_and_clean_tests() for batch validation"
+        - "Added _clean_test_code() for aggressive filtering"
+        - "Modified _parse_test_cases() to accept code_file parameter"
+
+    test_execution_improvements:
+      file: "src/application/test_agent/use_cases/execute_tests_use_case.py"
+      changes:
+        - "Added source code validation before merging"
+        - "Added protection for source code section"
+        - "Split content into source and test parts for safe cleaning"
+        - "Enhanced filtering to remove function redefinitions"
+        - "Added syntax validation with detailed error messages"
+
+    error_parsing_improvements:
+      file: "src/infrastructure/test_agent/adapters/pytest_executor.py"
+      changes:
+        - "Improved error parsing to extract more context"
+        - "Added verbose mode for debugging"
+        - "Better handling of collection errors"
+
+    cli_improvements:
+      file: "src/presentation/cli/test_agent/main.py"
+      changes:
+        - "Added verbose error output mode"
+        - "Better error reporting"
+
+  current_status:
+    tests_passing: true
+      - "All unit tests pass"
+      - "Multi-pass approach implemented"
+      - "Validation logic in place"
+
+    production_issue: true
+      - "Error: Generated test file has syntax errors at line 4"
+      - "Problem: LLM still generates function redefinitions"
+      - "Symptom: 'def add(x: int, y: int) -> int:' without docstring appears in file"
+      - "Location: Error occurs in source code section, suggesting redefinitions leak through"
+
+  root_cause_analysis:
+    hypothesis_1: "LLM generates function redefinitions that pass initial filtering"
+      - "Filtering happens after parsing, but redefinitions may be in test code"
+      - "Need to validate each test case before adding to list"
+
+    hypothesis_2: "Source code section gets corrupted during merge"
+      - "Source code is read correctly (validated)"
+      - "But error shows incomplete function definition in source section"
+      - "May be issue with how test cases are merged with source"
+
+    hypothesis_3: "Test cases contain redefinitions that aren't caught"
+      - "_is_valid_test_code() should catch these"
+      - "But may not be called for all test cases"
+      - "Or redefinitions are in a format that passes validation"
+
+  next_steps:
+    immediate:
+      - "Add debug logging to see what LLM actually generates"
+      - "Add debug logging to see what passes validation"
+      - "Add debug logging to see final file content before execution"
+      - "Verify source code section is never modified"
+
+    short_term:
+      - "Improve _is_valid_test_code() to catch all redefinition patterns"
+      - "Add AST-based validation for each test case before adding"
+      - "Ensure source code section is completely protected"
+      - "Test with different LLM responses to ensure robustness"
+
+    long_term:
+      - "Consider using structured output from LLM (JSON schema)"
+      - "Add retry mechanism with different prompts if generation fails"
+      - "Add metrics for generation success rate"
+      - "Consider fine-tuning prompts based on success patterns"
+
+  files_modified:
+    - "src/infrastructure/test_agent/services/llm_service.py"
+    - "src/application/test_agent/use_cases/generate_tests_use_case.py"
+    - "src/application/test_agent/use_cases/execute_tests_use_case.py"
+    - "src/infrastructure/test_agent/adapters/pytest_executor.py"
+    - "src/presentation/cli/test_agent/main.py"
+    - "tests/unit/application/test_agent/use_cases/test_generate_tests_use_case.py"
+
+  testing_status:
+    unit_tests: "All passing"
+    integration_tests: "Not run yet"
+    e2e_tests: "Failing - syntax errors in generated tests"
+
+  key_insights:
+    - "Multi-pass approach is correct direction for autonomous agent"
+    - "Validation at each stage is critical"
+    - "Source code protection is essential"
+    - "LLM output needs aggressive filtering"
+    - "Need better debugging capabilities"
+
+  recommendations:
+    - "Continue with multi-pass approach - it's the right architecture"
+    - "Add comprehensive logging for debugging"
+    - "Protect source code section more aggressively"
+    - "Consider using AST-based validation at every stage"
+    - "Test with various LLM outputs to ensure robustness"
+
+action_needed: "continue_debugging_and_improve_filtering"
+notes: "Multi-pass approach implemented successfully. All unit tests pass. Production issue persists - LLM generates function redefinitions that leak through filters. Need to add debug logging and improve validation at each stage. Source code section protection needs strengthening."

@@ -18,13 +18,6 @@ from src.infrastructure.clients.llm_client import (
 
 
 def test_http_llm_client_host_url_conversion() -> None:
-<<<<<<< HEAD
-    """Docker URLs are converted to host URLs when needed."""
-    client = HTTPLLMClient(url="llm-server:8000")
-    host_url = client._get_host_url("http://llm-server:8000")
-    assert host_url == "http://localhost:8001"
-    assert client.url == "http://llm-server:8000"
-=======
     """Docker URLs are converted to host URLs when needed.
 
     Uses config-driven URL mapping instead of hardcoded values.
@@ -36,7 +29,6 @@ def test_http_llm_client_host_url_conversion() -> None:
     assert host_url.startswith("http://")
     assert "localhost" in host_url or "127.0.0.1" in host_url
     assert client.url == f"http://{test_docker_url}"
->>>>>>> origin/master
 
 
 class _StubResponse:
@@ -67,17 +59,12 @@ class _StubAsyncClient:
 
 @pytest.mark.asyncio
 async def test_http_llm_client_generate_uses_chat(monkeypatch: pytest.MonkeyPatch) -> None:
-<<<<<<< HEAD
-    """HTTPLLMClient returns response from /chat endpoint when available."""
-    client = HTTPLLMClient(url="http://localhost:8000")
-=======
     """HTTPLLMClient returns response from /chat endpoint when available.
 
     Uses config-driven URL instead of hardcoded value.
     """
     test_url = "http://test-llm:8000"
     client = HTTPLLMClient(url=test_url)
->>>>>>> origin/master
     stub = _StubAsyncClient([_StubResponse({"response": "answer"})])
     async def _get_client() -> _StubAsyncClient:
         return stub
@@ -85,22 +72,13 @@ async def test_http_llm_client_generate_uses_chat(monkeypatch: pytest.MonkeyPatc
     monkeypatch.setattr(client, "_get_client", _get_client)
     result = await client.generate("Prompt")
     assert result == "answer"
-<<<<<<< HEAD
-    assert stub.calls == ["http://localhost:8000/chat"]
-=======
     # Verify URL path is correct (config-driven check)
     assert len(stub.calls) > 0
     assert stub.calls[0].endswith("/chat")
->>>>>>> origin/master
 
 
 @pytest.mark.asyncio
 async def test_http_llm_client_falls_back_to_openai(monkeypatch: pytest.MonkeyPatch) -> None:
-<<<<<<< HEAD
-    """When /chat returns 404, the client uses /v1/chat/completions."""
-    client = HTTPLLMClient(url="http://localhost:8000")
-    request = httpx.Request("POST", "http://localhost:8000/chat")
-=======
     """When /chat returns 404, the client uses /v1/chat/completions.
 
     Uses config-driven URL instead of hardcoded value.
@@ -108,7 +86,6 @@ async def test_http_llm_client_falls_back_to_openai(monkeypatch: pytest.MonkeyPa
     test_url = "http://test-llm:8000"
     client = HTTPLLMClient(url=test_url)
     request = httpx.Request("POST", f"{test_url}/chat")
->>>>>>> origin/master
     http_error = httpx.HTTPStatusError(
         "not found",
         request=request,

@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-"""Voice command use cases."""
-=======
 """Voice agent use cases.
 
 Purpose:
@@ -18,5 +15,3 @@ __all__ = [
     "ProcessVoiceCommandUseCase",
     "HandleVoiceConfirmationUseCase",
 ]
-
->>>>>>> origin/master

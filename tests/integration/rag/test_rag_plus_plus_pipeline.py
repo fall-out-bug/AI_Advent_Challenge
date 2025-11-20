@@ -7,15 +7,13 @@ from typing import Sequence
 
 import pytest
 
-from src.application.rag import CompareRagAnswersUseCase, PromptAssembler, RetrievalService
-from src.domain.embedding_index import DocumentChunk, EmbeddingGateway, EmbeddingVector
-from src.domain.rag import (
-    Answer,
-    FilterConfig,
-    Query,
-    RerankResult,
-    RetrievedChunk,
+from src.application.rag import (
+    CompareRagAnswersUseCase,
+    PromptAssembler,
+    RetrievalService,
 )
+from src.domain.embedding_index import DocumentChunk, EmbeddingGateway, EmbeddingVector
+from src.domain.rag import Answer, FilterConfig, Query, RerankResult, RetrievedChunk
 from src.infrastructure.rag import ThresholdFilterAdapter
 
 
@@ -222,7 +220,9 @@ async def test_rerank_latency_under_threshold() -> None:
     )
 
     result_chunks = await retrieval_service.retrieve(
-        query_text="Test", query_vector=EmbeddingVector(values=(0.1,), model="x", dimension=1), filter_config=filter_config
+        query_text="Test",
+        query_vector=EmbeddingVector(values=(0.1,), model="x", dimension=1),
+        filter_config=filter_config,
     )
 
     assert len(result_chunks) == 2

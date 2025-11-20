@@ -21,8 +21,8 @@ from __future__ import annotations
 
 import argparse
 import gzip
-from pathlib import Path
 import sys
+from pathlib import Path
 
 
 def compress_jsonl(

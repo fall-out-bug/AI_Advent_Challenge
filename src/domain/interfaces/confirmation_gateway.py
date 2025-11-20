@@ -51,5 +51,3 @@ class ConfirmationGateway(Protocol):
             ... )
         """
         ...
-
-

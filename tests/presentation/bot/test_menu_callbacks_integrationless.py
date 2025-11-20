@@ -1,9 +1,10 @@
 import asyncio
 import types
+
 import pytest
 
 try:
-    from aiogram.types import CallbackQuery, Message, User, Chat
+    from aiogram.types import CallbackQuery, Chat, Message, User
 except Exception:
     pytest.skip("aiogram is required for menu tests", allow_module_level=True)
 

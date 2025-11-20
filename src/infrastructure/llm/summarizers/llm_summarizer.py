@@ -210,9 +210,11 @@ class LLMSummarizer:
         if not cleaned_posts:
             # Fallback: return empty summary
             return SummaryResult(
-                text="Нет пригодных постов для суммаризации."
-                if language == "ru"
-                else "No suitable posts for summarization.",
+                text=(
+                    "Нет пригодных постов для суммаризации."
+                    if language == "ru"
+                    else "No suitable posts for summarization."
+                ),
                 sentences_count=0,
                 method="direct",
                 confidence=0.0,

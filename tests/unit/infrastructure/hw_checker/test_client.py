@@ -3,9 +3,10 @@
 Following TDD approach with comprehensive test coverage.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from httpx import Response, HTTPStatusError, RequestError
+
+import pytest
+from httpx import HTTPStatusError, RequestError, Response
 
 from src.infrastructure.hw_checker.client import HWCheckerClient
 

@@ -1,0 +1,74 @@
+from: tech_lead
+to: developer
+timestamp: "2025_11_20_09_57_47"
+epic_id: "epic_26"
+iteration: 3
+
+type: task
+subject: verify_voice_module_exports
+
+content:
+  summary: "Verify and fix voice module exports after merge conflict resolution"
+  status: "pending"
+  priority: "low"
+
+  issue_identified:
+    file: "src/application/voice/__init__.py"
+    problem: "VoiceCommandDTO export name mentioned in review but not found"
+    context: "After merge conflict resolution, need to verify all exports are correct"
+
+  tasks:
+    - task: "Verify voice module exports"
+      description: "Check that all DTOs and use cases are properly exported in __init__.py files"
+      files_to_check:
+        - "src/application/voice/__init__.py"
+        - "src/application/voice/dtos.py"
+        - "src/application/voice/use_cases/__init__.py"
+        - "src/domain/voice/__init__.py"
+
+    - task: "Verify DTO classes exist"
+      description: "Ensure all DTO classes are defined and match export names"
+      expected_classes:
+        - "ProcessVoiceCommandInput"
+        - "HandleVoiceConfirmationInput"
+        - "TranscriptionOutput"
+        - "VoiceCommandDTO (if exists, or verify correct name)"
+
+    - task: "Check for missing exports"
+      description: "If VoiceCommandDTO is used elsewhere, ensure it's exported or renamed correctly"
+      action: "Search codebase for VoiceCommandDTO usage and verify imports work"
+
+    - task: "Run voice-related tests"
+      description: "Run tests to verify voice module functionality"
+      command: "pytest tests/ -k voice -v"
+
+    - task: "Update exports if needed"
+      description: "Add missing exports or fix export names in __init__.py files"
+      files_to_update:
+        - "src/application/voice/__init__.py"
+        - "src/application/voice/use_cases/__init__.py"
+
+  verification_steps:
+    - "Check imports in voice use cases"
+    - "Verify all DTOs are accessible from voice module"
+    - "Run import tests: python -c 'from src.application.voice import *'"
+    - "Check for any ImportError or NameError"
+
+  expected_outcome:
+    - "All voice module exports verified and correct"
+    - "No missing exports or incorrect names"
+    - "All voice-related imports work correctly"
+    - "Tests pass (if voice tests exist)"
+
+  notes: |
+    This is a low-priority task identified during merge conflict review.
+    The issue may be:
+    1. VoiceCommandDTO was renamed to something else
+    2. VoiceCommandDTO is not needed (legacy code)
+    3. Export name is different than expected
+
+    If voice module is not critical for current epic, this can be deferred.
+
+action_needed: "verify_and_fix_exports"
+priority: "low"
+deadline: "flexible"

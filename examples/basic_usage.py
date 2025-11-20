@@ -5,6 +5,7 @@ This script demonstrates common API and CLI operations.
 """
 
 import asyncio
+
 import httpx
 
 
@@ -35,7 +36,7 @@ def demo_api_usage():
         response = httpx.get(f"{base_url}/health/ready")
         data = response.json()
         print(f"Overall: {data.get('overall')}")
-        for check, details in data.get('checks', {}).items():
+        for check, details in data.get("checks", {}).items():
             print(f"  {check}: {details.get('status')}")
     except Exception as e:
         print(f"Error: {e}")

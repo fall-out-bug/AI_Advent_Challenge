@@ -3,17 +3,17 @@
 Following TDD approach with comprehensive test coverage.
 """
 
-import pytest
+from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock, patch
-from typing import Dict, Any
 
 import httpx
+import pytest
 
 from src.infrastructure.llm.mistral_client import (
     MistralClient,
     MistralClientError,
-    MistralTimeoutError,
     MistralConnectionError,
+    MistralTimeoutError,
 )
 
 
@@ -327,24 +327,15 @@ class TestMistralClient:
         original_url = os.environ.get("MISTRAL_API_URL")
 
         try:
-<<<<<<< HEAD
-            os.environ["MISTRAL_API_URL"] = "http://custom:9000"
-=======
             # Use config-driven URL from environment variable (not hardcoded)
             test_url = "http://custom:9000"
             os.environ["MISTRAL_API_URL"] = test_url
->>>>>>> origin/master
 
             # Act
             client = MistralClient()
 
-<<<<<<< HEAD
-            # Assert
-            assert client.base_url == "http://custom:9000"
-=======
             # Assert: URL comes from environment variable (config-driven check)
             assert client.base_url == test_url
->>>>>>> origin/master
         finally:
             if original_url:
                 os.environ["MISTRAL_API_URL"] = original_url

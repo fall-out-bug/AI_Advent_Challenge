@@ -109,13 +109,11 @@ Examples:
 Exit Codes:
   0: All flags configured correctly
   1: Configuration incomplete or invalid
-        """
+        """,
     )
 
     parser.add_argument(
-        "--epic",
-        default="21",
-        help="Epic number to check (default: 21)"
+        "--epic", default="21", help="Epic number to check (default: 21)"
     )
 
     args = parser.parse_args()

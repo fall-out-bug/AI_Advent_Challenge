@@ -1,0 +1,72 @@
+from: developer
+to: devops
+timestamp: "2025_11_20_03_10_00"
+epic_id: "epic_26"
+iteration: 1
+
+type: response
+subject: pytest_import_automatic_fix
+
+content:
+  summary: "Fixed NameError: name 'pytest' is not defined by adding automatic pytest import"
+  implementation_status: "complete"
+
+  problem:
+    - "Generated tests using pytest.raises() failed with NameError: name 'pytest' is not defined"
+    - "LLM sometimes generates tests with pytest functions but forgets to import pytest"
+    - "This caused test failures even when tests were correctly written"
+
+  solution:
+    - "Added automatic detection of pytest usage in generated tests"
+    - "Automatically adds 'import pytest' if pytest functions are used but import is missing"
+    - "Improved LLM prompt to explicitly mention pytest import requirement"
+    - "Added examples in prompt showing correct pytest import usage"
+
+  changes_made:
+    llm_service:
+      - "Updated generate_tests_prompt to explicitly mention pytest import requirement"
+      - "Added example showing pytest.raises with import pytest"
+      - "Clarified that pytest must be imported if using pytest functions"
+      file: "src/infrastructure/test_agent/services/llm_service.py"
+
+    execute_tests_use_case:
+      - "Added automatic pytest import detection and injection"
+      - "Checks if any test uses pytest.raises, pytest.fixture, or pytest.mark"
+      - "Checks if import pytest is already present (handles 'import pytest' and 'from pytest import')"
+      - "Automatically adds 'import pytest' before test cases if needed"
+      file: "src/application/test_agent/use_cases/execute_tests_use_case.py"
+
+  technical_details:
+    detection_logic:
+      - "Scans all test cases for pytest function usage: pytest.raises, pytest.fixture, pytest.mark"
+      - "Checks if import is already present in any test case"
+      - "Adds 'import pytest' at the beginning of test section if needed"
+      - "Placed after TEST_MARKER_START, before test cases"
+
+    import_patterns_detected:
+      - "'import pytest' - standard import"
+      - "'from pytest import' - alternative import style"
+      - "Both patterns are recognized to avoid duplicate imports"
+
+  test_results:
+    - "All 4 unit tests for execute_tests_use_case pass"
+    - "No linter errors"
+    - "Backward compatible - only adds import if pytest is used"
+    - "Does not add import if already present"
+
+  example_fix:
+    before: |
+      def test_divide_error():
+          with pytest.raises(ValueError):  # NameError!
+              divide(10, 0)
+
+    after: |
+      import pytest  # Automatically added
+
+      def test_divide_error():
+          with pytest.raises(ValueError):  # Works!
+              divide(10, 0)
+
+action_needed: "test_in_production"
+priority: "high"
+notes: "This fix ensures that tests using pytest functions will always have the required import, preventing NameError failures. The fix is automatic and transparent to users."

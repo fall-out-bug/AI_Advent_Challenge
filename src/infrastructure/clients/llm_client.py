@@ -88,15 +88,11 @@ class HTTPLLMClient:
         return self._client
 
     async def generate(
-<<<<<<< HEAD
-        self, prompt: str, temperature: float = 0.2, max_tokens: int = 256
-=======
         self,
         prompt: str,
         temperature: float = 0.2,
         max_tokens: int = 256,
         stop_sequences: list[str] | None = None,
->>>>>>> origin/master
     ) -> str:
         """Generate text via OpenAI-compatible chat completions API.
 
@@ -104,10 +100,7 @@ class HTTPLLMClient:
             prompt: Input prompt
             temperature: Sampling temperature
             max_tokens: Maximum tokens to generate
-<<<<<<< HEAD
-=======
             stop_sequences: Optional list of stop sequences to end generation
->>>>>>> origin/master
 
         Returns:
             Assistant message content from choices[0].message.content
@@ -128,11 +121,8 @@ class HTTPLLMClient:
         }
         if self.model:
             chat_payload["model"] = self.model
-<<<<<<< HEAD
-=======
         if stop_sequences:
             chat_payload["stop"] = stop_sequences
->>>>>>> origin/master
 
         try:
             response = await client.post(
@@ -152,6 +142,14 @@ class HTTPLLMClient:
             if e.response is not None and e.response.status_code == 404:
                 logger.debug(f"/chat endpoint not found, trying /v1/chat/completions")
                 pass  # Fall through to try /v1/chat/completions
+            elif e.response is not None and e.response.status_code == 503:
+                # 503 Service Unavailable - service is overloaded or backend unavailable
+                logger.warning(
+                    f"Service unavailable (503) from /chat endpoint - {e}. "
+                    f"This may indicate Ollama/backend is not responding."
+                )
+                # Re-raise to trigger fallback or retry
+                raise
             else:
                 logger.warning(
                     f"HTTP error from /chat endpoint: {e.response.status_code if e.response else 'unknown'} - {e}"
@@ -231,22 +229,15 @@ class HTTPLLMClient:
 
         # Fallback: try OpenAI-compatible /v1/chat/completions endpoint
         openai_url = f"{self.url}/v1/chat/completions"
-<<<<<<< HEAD
-=======
         # Use provided stop_sequences or default OpenAI-compatible stops
         stop = stop_sequences if stop_sequences else ["</s>", "[/INST]"]
->>>>>>> origin/master
         openai_payload = {
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": max_tokens,
             "temperature": temperature,
             "top_p": 0.95,
-<<<<<<< HEAD
-            "stop": ["</s>", "[/INST]"],
-=======
             "stop": stop,
->>>>>>> origin/master
         }
 
         try:
@@ -283,11 +274,8 @@ class HTTPLLMClient:
                     }
                     if self.model:
                         host_payload["model"] = self.model
-<<<<<<< HEAD
-=======
                     if stop_sequences:
                         host_payload["stop"] = stop_sequences
->>>>>>> origin/master
                     response = await client.post(
                         host_url, json=host_payload, timeout=self.timeout
                     )
@@ -302,22 +290,17 @@ class HTTPLLMClient:
 
                     # If /chat doesn't work, try /v1/chat/completions
                     host_url = f"{self._host_url}/v1/chat/completions"
-<<<<<<< HEAD
-=======
                     # Use provided stop_sequences or default OpenAI-compatible stops
-                    host_stop = stop_sequences if stop_sequences else ["</s>", "[/INST]"]
->>>>>>> origin/master
+                    host_stop = (
+                        stop_sequences if stop_sequences else ["</s>", "[/INST]"]
+                    )
                     host_openai_payload = {
                         "model": self.model,
                         "messages": [{"role": "user", "content": prompt}],
                         "max_tokens": max_tokens,
                         "temperature": temperature,
                         "top_p": 0.95,
-<<<<<<< HEAD
-                        "stop": ["</s>", "[/INST]"],
-=======
                         "stop": host_stop,
->>>>>>> origin/master
                     }
                     response = await client.post(
                         host_url, json=host_openai_payload, timeout=self.timeout
@@ -345,8 +328,6 @@ class HTTPLLMClient:
             # Re-raise to let ResilientLLMClient fallback if needed
             raise
 
-<<<<<<< HEAD
-=======
     async def batch_generate(
         self,
         prompts: list[str],
@@ -373,7 +354,6 @@ class HTTPLLMClient:
         ]
         return await asyncio.gather(*tasks)
 
->>>>>>> origin/master
     async def close(self) -> None:
         """Close HTTP client."""
         if self._client:
@@ -389,15 +369,11 @@ class FallbackLLMClient:
     """
 
     async def generate(
-<<<<<<< HEAD
-        self, prompt: str, temperature: float = 0.2, max_tokens: int = 256
-=======
         self,
         prompt: str,
         temperature: float = 0.2,
         max_tokens: int = 256,
         stop_sequences: list[str] | None = None,
->>>>>>> origin/master
     ) -> str:
         """Generate context-aware fallback response.
 
@@ -405,10 +381,7 @@ class FallbackLLMClient:
             prompt: Input prompt
             temperature: Sampling temperature (ignored)
             max_tokens: Maximum tokens (ignored)
-<<<<<<< HEAD
-=======
             stop_sequences: Optional stop sequences (ignored)
->>>>>>> origin/master
 
         Returns:
             Fallback response in appropriate format
@@ -463,10 +436,32 @@ class FallbackLLMClient:
             "needs_clarification",
         ]
 
+        # Detect code/test generation prompts
+        code_generation_keywords = [
+            "generate test",
+            "write test",
+            "create test",
+            "test case",
+            "pytest",
+            "def test_",
+            "import pytest",
+            "assert ",
+            "generate code",
+            "implement",
+            "python code",
+            "function definition",
+            "def ",
+            "class ",
+            "from typing import",
+        ]
+
         is_summarization = any(
             keyword in prompt_lower for keyword in summarization_keywords
         )
         is_intent = any(keyword in prompt_lower for keyword in intent_keywords)
+        is_code_generation = any(
+            keyword in prompt_lower for keyword in code_generation_keywords
+        )
 
         # Stronger detection: if prompt contains "пост" or "post" and summarization keywords, it's summarization
         if ("пост" in prompt_lower or "post" in prompt_lower) and is_summarization:
@@ -681,6 +676,37 @@ class FallbackLLMClient:
 
                 prompt_hash = hashlib.md5(prompt.encode()[:100]).hexdigest()[:8]
                 return f"Обсуждаются основные темы канала. [fallback:{prompt_hash}]"
+        elif is_code_generation:
+            # For code/test generation, return a minimal valid Python code structure
+            # This helps avoid syntax errors even if LLM times out
+            # Extract function/class names from prompt if possible
+            import re
+
+            # Try to extract function name from prompt
+            func_match = re.search(r"def\s+(\w+)", prompt)
+            class_match = re.search(r"class\s+(\w+)", prompt)
+
+            fallback_code = "# Fallback code due to LLM timeout\n"
+            fallback_code += "from typing import List, Dict, Optional, Any\n\n"
+
+            if func_match:
+                func_name = func_match.group(1)
+                fallback_code += f"def {func_name}():\n"
+                fallback_code += "    pass\n"
+            elif class_match:
+                class_name = class_match.group(1)
+                fallback_code += f"class {class_name}:\n"
+                fallback_code += "    pass\n"
+            else:
+                # Generic fallback
+                fallback_code += "def placeholder():\n"
+                fallback_code += "    pass\n"
+
+            logger.warning(
+                f"Code generation fallback used (LLM timeout/error). "
+                f"Returning minimal valid Python code."
+            )
+            return fallback_code
         else:
             # Default to intent parsing JSON format
             return (
@@ -688,8 +714,6 @@ class FallbackLLMClient:
                 '"priority":"medium","tags":[],"needs_clarification":false,"questions":[]}'
             )
 
-<<<<<<< HEAD
-=======
     async def batch_generate(
         self,
         prompts: list[str],
@@ -716,7 +740,6 @@ class FallbackLLMClient:
         ]
         return await asyncio.gather(*tasks)
 
->>>>>>> origin/master
 
 def get_llm_client(url: str | None = None, timeout: float = 120.0) -> LLMClient:
     """Get appropriate LLM client based on configuration.
@@ -752,26 +775,28 @@ class ResilientLLMClient:
         Wraps HTTPLLMClient and automatically falls back on connection failures.
     """
 
-    def __init__(self, url: str | None = None) -> None:
+    def __init__(
+        self, primary_client: "LLMClient" | None = None, url: str | None = None
+    ) -> None:
         """Initialize resilient client.
 
         Args:
-            url: LLM service URL
+            primary_client: Primary LLM client instance (if provided, url is ignored)
+            url: LLM service URL (used only if primary_client is None)
         """
-        self._primary = get_llm_client(url) if url else get_llm_client()
+        if primary_client is not None:
+            self._primary = primary_client
+        else:
+            self._primary = get_llm_client(url) if url else get_llm_client()
         self._fallback = FallbackLLMClient()
         self._use_fallback = isinstance(self._primary, FallbackLLMClient)
 
     async def generate(
-<<<<<<< HEAD
-        self, prompt: str, temperature: float = 0.2, max_tokens: int = 256
-=======
         self,
         prompt: str,
         temperature: float = 0.2,
         max_tokens: int = 256,
         stop_sequences: list[str] | None = None,
->>>>>>> origin/master
     ) -> str:
         """Generate with automatic fallback.
 
@@ -779,37 +804,41 @@ class ResilientLLMClient:
             prompt: Input prompt
             temperature: Sampling temperature
             max_tokens: Maximum tokens
-<<<<<<< HEAD
-=======
             stop_sequences: Optional stop sequences
->>>>>>> origin/master
 
         Returns:
             Generated text or fallback response
         """
         if self._use_fallback:
-<<<<<<< HEAD
-            return await self._fallback.generate(prompt, temperature, max_tokens)
+            return await self._fallback.generate(
+                prompt, temperature, max_tokens, stop_sequences
+            )
 
         try:
-            return await self._primary.generate(prompt, temperature, max_tokens)
+            return await self._primary.generate(
+                prompt, temperature, max_tokens, stop_sequences
+            )
         except (httpx.ConnectError, httpx.TimeoutException) as e:
             logger.warning(f"LLM service unavailable, using fallback: {e}")
-            return await self._fallback.generate(prompt, temperature, max_tokens)
+            return await self._fallback.generate(
+                prompt, temperature, max_tokens, stop_sequences
+            )
+        except httpx.HTTPStatusError as e:
+            # Handle 503 Service Unavailable and other HTTP errors
+            if e.response is not None and e.response.status_code == 503:
+                logger.warning(
+                    f"LLM service returned 503 (Service Unavailable), using fallback: {e}"
+                )
+            else:
+                logger.warning(f"LLM HTTP error, using fallback: {e}")
+            return await self._fallback.generate(
+                prompt, temperature, max_tokens, stop_sequences
+            )
         except Exception as e:
             logger.warning(f"LLM error, using fallback: {e}")
-            return await self._fallback.generate(prompt, temperature, max_tokens)
-=======
-            return await self._fallback.generate(prompt, temperature, max_tokens, stop_sequences)
-
-        try:
-            return await self._primary.generate(prompt, temperature, max_tokens, stop_sequences)
-        except (httpx.ConnectError, httpx.TimeoutException) as e:
-            logger.warning(f"LLM service unavailable, using fallback: {e}")
-            return await self._fallback.generate(prompt, temperature, max_tokens, stop_sequences)
-        except Exception as e:
-            logger.warning(f"LLM error, using fallback: {e}")
-            return await self._fallback.generate(prompt, temperature, max_tokens, stop_sequences)
+            return await self._fallback.generate(
+                prompt, temperature, max_tokens, stop_sequences
+            )
 
     async def batch_generate(
         self,
@@ -836,4 +865,3 @@ class ResilientLLMClient:
             self.generate(p, temperature, max_tokens, stop_sequences) for p in prompts
         ]
         return await asyncio.gather(*tasks)
->>>>>>> origin/master

@@ -4,11 +4,16 @@ Tests ButlerOrchestrator → HybridClassifier → Handlers integration.
 Following TDD: Test-Driven Development.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.application.dtos.butler_dialog_dtos import DialogContext, DialogMode, DialogState
+import pytest
+
+from src.application.dtos.butler_dialog_dtos import (
+    DialogContext,
+    DialogMode,
+    DialogState,
+)
 from src.application.services.mode_classifier import ModeClassifier
 from src.domain.intent import HybridIntentClassifier, IntentType
 from src.domain.interfaces.llm_client import LLMClientProtocol
@@ -37,7 +42,7 @@ class TestIntentIntegration:
     @pytest.fixture
     async def hybrid_classifier(self, mock_llm_client):
         """Create HybridIntentClassifier with mocked LLM."""
-        from src.domain.intent import RuleBasedClassifier, LLMClassifier
+        from src.domain.intent import LLMClassifier, RuleBasedClassifier
         from src.infrastructure.cache.intent_cache import IntentCache
 
         rule_classifier = RuleBasedClassifier()

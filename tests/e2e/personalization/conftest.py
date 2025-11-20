@@ -1,7 +1,8 @@
 """Test fixtures for personalization E2E tests."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from src.infrastructure.clients.llm_client import get_llm_client
 

@@ -19,7 +19,9 @@ from typing import Any
 import pytest
 
 from src.application.dtos.digest_dtos import ChannelDigest
-from src.application.use_cases.generate_channel_digest import GenerateChannelDigestUseCase
+from src.application.use_cases.generate_channel_digest import (
+    GenerateChannelDigestUseCase,
+)
 from src.application.use_cases.generate_channel_digest_by_name import (
     GenerateChannelDigestByNameUseCase,
 )
@@ -70,12 +72,15 @@ async def test_digest_by_name_basic_flow_characterization(mongodb_database_async
         await post_repo.save_post(post)
 
     # Mock get_db to return test database
-    from unittest.mock import patch, AsyncMock
+    from unittest.mock import AsyncMock, patch
 
     async def mock_get_db():
         return mongodb_database_async
 
-    with patch("src.application.use_cases.generate_channel_digest_by_name.get_db", side_effect=mock_get_db):
+    with patch(
+        "src.application.use_cases.generate_channel_digest_by_name.get_db",
+        side_effect=mock_get_db,
+    ):
         use_case = GenerateChannelDigestByNameUseCase()
 
         # Execute
@@ -86,14 +91,22 @@ async def test_digest_by_name_basic_flow_characterization(mongodb_database_async
         )
 
         # Characterize: Verify return type and structure
-        assert isinstance(result, ChannelDigest), "Result should be ChannelDigest object"
+        assert isinstance(
+            result, ChannelDigest
+        ), "Result should be ChannelDigest object"
 
         # Characterize: Verify ChannelDigest fields
-        assert hasattr(result, "channel_username"), "ChannelDigest should have channel_username"
-        assert hasattr(result, "channel_title"), "ChannelDigest should have channel_title"
+        assert hasattr(
+            result, "channel_username"
+        ), "ChannelDigest should have channel_username"
+        assert hasattr(
+            result, "channel_title"
+        ), "ChannelDigest should have channel_title"
         assert hasattr(result, "summary"), "ChannelDigest should have summary"
         assert hasattr(result, "post_count"), "ChannelDigest should have post_count"
-        assert hasattr(result, "time_window_hours"), "ChannelDigest should have time_window_hours"
+        assert hasattr(
+            result, "time_window_hours"
+        ), "ChannelDigest should have time_window_hours"
         assert hasattr(result, "tags"), "ChannelDigest should have tags"
         assert hasattr(result, "generated_at"), "ChannelDigest should have generated_at"
 
@@ -107,11 +120,17 @@ async def test_digest_by_name_basic_flow_characterization(mongodb_database_async
         # Characterize: Verify summary structure
         from src.domain.value_objects.summary_result import SummaryResult
 
-        assert isinstance(result.summary, SummaryResult), "Summary should be SummaryResult object"
+        assert isinstance(
+            result.summary, SummaryResult
+        ), "Summary should be SummaryResult object"
         assert hasattr(result.summary, "text"), "SummaryResult should have text"
-        assert hasattr(result.summary, "sentences_count"), "SummaryResult should have sentences_count"
+        assert hasattr(
+            result.summary, "sentences_count"
+        ), "SummaryResult should have sentences_count"
         assert hasattr(result.summary, "method"), "SummaryResult should have method"
-        assert hasattr(result.summary, "confidence"), "SummaryResult should have confidence"
+        assert hasattr(
+            result.summary, "confidence"
+        ), "SummaryResult should have confidence"
 
         # Characterize: Verify summary text is non-empty string (if posts found)
         if result.post_count > 0:
@@ -184,8 +203,16 @@ async def test_digest_all_channels_basic_flow_characterization(mongodb_database_
     async def mock_get_db():
         return mongodb_database_async
 
-    with patch("src.application.use_cases.generate_channel_digest.get_db", side_effect=mock_get_db), \
-         patch("src.application.use_cases.generate_channel_digest_by_name.get_db", side_effect=mock_get_db):
+    with (
+        patch(
+            "src.application.use_cases.generate_channel_digest.get_db",
+            side_effect=mock_get_db,
+        ),
+        patch(
+            "src.application.use_cases.generate_channel_digest_by_name.get_db",
+            side_effect=mock_get_db,
+        ),
+    ):
         use_case = GenerateChannelDigestUseCase()
 
         # Execute
@@ -193,16 +220,22 @@ async def test_digest_all_channels_basic_flow_characterization(mongodb_database_
 
         # Characterize: Verify return type
         assert isinstance(result, list), "Result should be list"
-        assert all(isinstance(d, ChannelDigest) for d in result), "All items should be ChannelDigest"
+        assert all(
+            isinstance(d, ChannelDigest) for d in result
+        ), "All items should be ChannelDigest"
 
         # Characterize: Verify sorting behavior (by post_count descending)
         if len(result) > 1:
             post_counts = [d.post_count for d in result]
-            assert post_counts == sorted(post_counts, reverse=True), "Digests should be sorted by post_count (desc)"
+            assert post_counts == sorted(
+                post_counts, reverse=True
+            ), "Digests should be sorted by post_count (desc)"
 
         # Characterize: Verify only channels with posts are included
         # (This is current behavior - channels with post_count=0 are excluded)
-        assert all(d.post_count > 0 for d in result), "Only channels with posts should be included"
+        assert all(
+            d.post_count > 0 for d in result
+        ), "Only channels with posts should be included"
 
     # Cleanup
     await mongodb_database_async.channels.delete_many({"user_id": 200})
@@ -235,7 +268,10 @@ async def test_digest_empty_channel_behavior_characterization(mongodb_database_a
     async def mock_get_db():
         return mongodb_database_async
 
-    with patch("src.application.use_cases.generate_channel_digest_by_name.get_db", side_effect=mock_get_db):
+    with patch(
+        "src.application.use_cases.generate_channel_digest_by_name.get_db",
+        side_effect=mock_get_db,
+    ):
         use_case = GenerateChannelDigestByNameUseCase()
 
         # Execute
@@ -246,7 +282,9 @@ async def test_digest_empty_channel_behavior_characterization(mongodb_database_a
         )
 
         # Characterize: Verify empty channel handling
-        assert isinstance(result, ChannelDigest), "Should return ChannelDigest even for empty channel"
+        assert isinstance(
+            result, ChannelDigest
+        ), "Should return ChannelDigest even for empty channel"
         assert result.post_count == 0, "Post count should be 0"
         assert isinstance(result.summary.text, str), "Should have summary text"
         # Should have fallback message (in Russian or English)
@@ -305,7 +343,10 @@ async def test_digest_time_filtering_behavior_characterization(mongodb_database_
     async def mock_get_db():
         return mongodb_database_async
 
-    with patch("src.application.use_cases.generate_channel_digest_by_name.get_db", side_effect=mock_get_db):
+    with patch(
+        "src.application.use_cases.generate_channel_digest_by_name.get_db",
+        side_effect=mock_get_db,
+    ):
         use_case = GenerateChannelDigestByNameUseCase()
 
         # Execute with 24h window
@@ -352,9 +393,9 @@ async def test_digest_error_handling_characterization():
             hours=24,
         )
         # Should return ChannelDigest (even if empty) or raise specific exception
-        assert isinstance(result, ChannelDigest) or isinstance(result, Exception), (
-            "Should return ChannelDigest or raise specific exception"
-        )
+        assert isinstance(result, ChannelDigest) or isinstance(
+            result, Exception
+        ), "Should return ChannelDigest or raise specific exception"
     except Exception as e:
         # If it raises, should be a specific exception type (not generic)
         # Note: May raise OperationFailure if DB auth issues, which is acceptable
@@ -410,7 +451,10 @@ async def test_summarization_method_characterization(mongodb_database_async):
     async def mock_get_db():
         return mongodb_database_async
 
-    with patch("src.application.use_cases.generate_channel_digest_by_name.get_db", side_effect=mock_get_db):
+    with patch(
+        "src.application.use_cases.generate_channel_digest_by_name.get_db",
+        side_effect=mock_get_db,
+    ):
         use_case = GenerateChannelDigestByNameUseCase()
 
         result = await use_case.execute(
@@ -420,17 +464,27 @@ async def test_summarization_method_characterization(mongodb_database_async):
         )
 
         # Characterize: Verify summary method field
-        assert hasattr(result.summary, "method"), "SummaryResult should have method field"
+        assert hasattr(
+            result.summary, "method"
+        ), "SummaryResult should have method field"
         assert isinstance(result.summary.method, str), "Method should be string"
         # Current methods: "direct", "map_reduce", "error"
-        assert result.summary.method in ["direct", "map_reduce", "error"], (
-            f"Method should be one of: direct, map_reduce, error. Got: {result.summary.method}"
-        )
+        assert result.summary.method in [
+            "direct",
+            "map_reduce",
+            "error",
+        ], f"Method should be one of: direct, map_reduce, error. Got: {result.summary.method}"
 
         # Characterize: Verify confidence field
-        assert hasattr(result.summary, "confidence"), "SummaryResult should have confidence field"
-        assert isinstance(result.summary.confidence, (int, float)), "Confidence should be number"
-        assert 0.0 <= result.summary.confidence <= 1.0, "Confidence should be between 0 and 1"
+        assert hasattr(
+            result.summary, "confidence"
+        ), "SummaryResult should have confidence field"
+        assert isinstance(
+            result.summary.confidence, (int, float)
+        ), "Confidence should be number"
+        assert (
+            0.0 <= result.summary.confidence <= 1.0
+        ), "Confidence should be between 0 and 1"
 
     # Cleanup
     await mongodb_database_async.channels.delete_many({"user_id": 500})

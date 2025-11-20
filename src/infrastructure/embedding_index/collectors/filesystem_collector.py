@@ -7,7 +7,11 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Iterable, Iterator, Mapping, Sequence
 
-from src.domain.embedding_index import DocumentCollector, DocumentPayload, DocumentRecord
+from src.domain.embedding_index import (
+    DocumentCollector,
+    DocumentPayload,
+    DocumentRecord,
+)
 from src.infrastructure.embedding_index.preprocessing.text_preprocessor import (
     TextPreprocessor,
 )

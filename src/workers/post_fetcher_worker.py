@@ -14,12 +14,9 @@ import time
 from datetime import datetime, timedelta
 from typing import Optional
 
-<<<<<<< HEAD
-from src.infrastructure.clients.telegram_utils import fetch_channel_posts
-=======
 from src.domain.interfaces.telegram_adapter import TelegramAdapter
 from src.infrastructure.clients.telegram_adapter_impl import TelegramAdapterImpl
->>>>>>> origin/master
+
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.database.mongo import get_db
 from src.infrastructure.logging import get_logger
@@ -48,32 +45,22 @@ class PostFetcherWorker:
         Processes channels independently, continuing on errors.
     """
 
-<<<<<<< HEAD
-    def __init__(self, mcp_url: Optional[str] = None) -> None:
-=======
     def __init__(
         self,
         mcp_url: Optional[str] = None,
         telegram_adapter: Optional[TelegramAdapter] = None,
     ) -> None:
->>>>>>> origin/master
         """Initialize worker.
 
         Args:
             mcp_url: Optional MCP server URL (defaults to stdio)
-<<<<<<< HEAD
-=======
             telegram_adapter: Optional Telegram adapter for fetching posts.
                 Defaults to TelegramAdapterImpl if not provided.
->>>>>>> origin/master
         """
         mcp_url = mcp_url or os.getenv("MCP_SERVER_URL")
         self.mcp = get_mcp_client(server_url=mcp_url)
         self.settings = get_settings()
-<<<<<<< HEAD
-=======
         self.telegram_adapter = telegram_adapter or TelegramAdapterImpl()
->>>>>>> origin/master
         logger.info(
             f"Post fetcher worker initialized: interval_hours={self.settings.post_fetch_interval_hours}, "
             f"ttl_days={self.settings.post_ttl_days}"
@@ -328,13 +315,8 @@ class PostFetcherWorker:
             f"since={since.isoformat()}"
         )
 
-<<<<<<< HEAD
-        # Fetch posts from Telegram
-        posts = await fetch_channel_posts(
-=======
         # Fetch posts from Telegram via adapter
         posts = await self.telegram_adapter.fetch_channel_posts(
->>>>>>> origin/master
             channel_username=channel_username,
             since=since,
             user_id=user_id,

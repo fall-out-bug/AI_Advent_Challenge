@@ -125,7 +125,9 @@ class LocalEmbeddingClient:
                 data = response.json()
                 embedding = data.get("embedding")
                 if not embedding or not isinstance(embedding, list):
-                    raise EmbeddingClientError("Invalid Ollama response: missing embedding.")
+                    raise EmbeddingClientError(
+                        "Invalid Ollama response: missing embedding."
+                    )
                 vectors.append(
                     EmbeddingVector(
                         values=tuple(embedding),
@@ -202,7 +204,9 @@ class LocalEmbeddingClient:
         try:
             return response.json()
         except ValueError as error:
-            raise EmbeddingClientError("Embedding response was not valid JSON.") from error
+            raise EmbeddingClientError(
+                "Embedding response was not valid JSON."
+            ) from error
 
     def _parse_response(self, data: dict[str, Any]) -> list[EmbeddingVector]:
         """Transform the JSON payload into embedding vectors.

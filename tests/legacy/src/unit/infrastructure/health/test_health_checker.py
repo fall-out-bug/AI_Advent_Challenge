@@ -6,7 +6,6 @@ Following TDD principles:
 - Clear assertions
 """
 
-
 from src.infrastructure.health.health_checker import (
     HealthChecker,
     HealthResult,

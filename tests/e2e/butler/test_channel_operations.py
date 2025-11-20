@@ -5,22 +5,22 @@ Only Telegram API calls are mocked.
 Following TDD principles and Python Zen.
 """
 
-import os
-import pytest
 import asyncio
+import os
 import subprocess
 import time
 from datetime import datetime
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 try:
     import requests
 except ImportError:
     requests = None
 
+from src.infrastructure.database.mongo import close_client, get_db
 from src.presentation.bot.factory import create_butler_orchestrator
-from src.infrastructure.database.mongo import get_db, close_client
-
 
 pytestmark = pytest.mark.asyncio
 
@@ -32,8 +32,8 @@ def mcp_http_server():
     Returns:
         Server process handle or None if already running
     """
-    import sys
     import socket
+    import sys
 
     port = 8004
 
@@ -461,17 +461,10 @@ class TestDigestGeneration:
                 # Print agent response for inspection
                 print(f"\n[Agent Response - Digest]: {response}")
             except Exception:
-<<<<<<< HEAD
-                # If metadata resolution fails, mock the tool_client calls
-                with patch.object(
-                    real_butler_orchestrator.data_handler.tool_client,
-                    "call_tool",
-=======
                 # If metadata resolution fails, mock at the use case level (public API)
                 # Patch CollectDataUseCase._tool_client instead of accessing private attributes
                 with patch(
                     "src.application.use_cases.collect_data_use_case.CollectDataUseCase._tool_client.call_tool",
->>>>>>> origin/master
                     new_callable=AsyncMock,
                 ) as mock_call:
 
@@ -493,10 +486,7 @@ class TestDigestGeneration:
 
                     mock_call.side_effect = call_tool_side_effect
 
-<<<<<<< HEAD
-=======
                     # Execute using public API
->>>>>>> origin/master
                     response = await real_butler_orchestrator.handle_user_message(
                         user_id=test_user_id,
                         message="Дай дайджест по Набоке за 5 дней",
@@ -507,10 +497,7 @@ class TestDigestGeneration:
                 print(f"\n[Agent Response - Digest]: {response}")
 
                 # Verify: Response contains digest or indicates channel resolution worked
-<<<<<<< HEAD
-=======
                 # (via public API response, not private attribute access)
->>>>>>> origin/master
                 assert response is not None
                 # Response should either contain digest info OR indicate channel was found
                 # (Even if no posts, channel resolution should work)

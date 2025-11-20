@@ -60,5 +60,3 @@ class ButlerGateway(Protocol):
             "Дайджест по каналу onaboka за последние 24 часа..."
         """
         ...
-
-

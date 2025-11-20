@@ -61,7 +61,8 @@ Message: {message}"""
                 return dialog_mode
             except Exception as exc:  # noqa: BLE001
                 logger.warning(
-                    "Hybrid classifier failed: %s, falling back to keyword matching", exc
+                    "Hybrid classifier failed: %s, falling back to keyword matching",
+                    exc,
                 )
 
         message_lower = message.lower()
@@ -110,7 +111,8 @@ Message: {message}"""
         if any(keyword in message_lower for keyword in list_keywords):
             if "статус" not in message_lower and "status" not in message_lower:
                 logger.debug(
-                    "Fast path: '%s' classified as HOMEWORK_REVIEW (list)", message_lower
+                    "Fast path: '%s' classified as HOMEWORK_REVIEW (list)",
+                    message_lower,
                 )
                 return True
         if any(keyword in message_lower for keyword in review_keywords):

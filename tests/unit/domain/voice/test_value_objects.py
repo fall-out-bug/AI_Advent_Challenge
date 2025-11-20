@@ -282,5 +282,3 @@ class TestVoiceCommand:
 
         assert command.is_expired(now + 600.0)  # Exactly at expiry
         assert command.is_expired(now + 700.0)  # After expiry
-
-

@@ -39,26 +39,20 @@ except ImportError:
 from src.application.use_cases.enqueue_review_task_use_case import (
     EnqueueReviewTaskUseCase,
 )
-from src.application.use_cases.review_submission_use_case import (
-    ReviewSubmissionUseCase,
-)
+from src.application.use_cases.review_submission_use_case import ReviewSubmissionUseCase
 from src.domain.services.diff_analyzer import DiffAnalyzer
 from src.infrastructure.archive.archive_service import ZipArchiveService
 from src.infrastructure.clients.external_api_client import ExternalAPIClient
-from src.infrastructure.clients.external_api_mock import (
-    ExternalAPIClientMock,
-)
-from src.infrastructure.logs.log_normalizer import LogNormalizer
-from src.infrastructure.logs.log_parser_impl import LogParserImpl
-from src.infrastructure.logs.llm_log_analyzer import LLMLogAnalyzer
+from src.infrastructure.clients.external_api_mock import ExternalAPIClientMock
 from src.infrastructure.config.settings import get_settings
 from src.infrastructure.database.mongo import get_db
+from src.infrastructure.logs.llm_log_analyzer import LLMLogAnalyzer
+from src.infrastructure.logs.log_normalizer import LogNormalizer
+from src.infrastructure.logs.log_parser_impl import LogParserImpl
 from src.infrastructure.repositories.homework_review_repository import (
     HomeworkReviewRepository,
 )
-from src.infrastructure.repositories.long_tasks_repository import (
-    LongTasksRepository,
-)
+from src.infrastructure.repositories.long_tasks_repository import LongTasksRepository
 
 
 def create_test_zip(zip_path: str, files: dict[str, str]) -> None:
@@ -83,6 +77,7 @@ async def test_mongodb_connection() -> bool:
         db = await get_db()
         # Use client to ping, not db.admin
         from src.infrastructure.database.mongo import get_client
+
         client = await get_client()
         await client.admin.command("ping")
         print("✅ MongoDB connection: OK")
@@ -179,6 +174,7 @@ async def test_use_cases() -> bool:
     except Exception as e:
         print(f"❌ Use cases: FAILED - {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

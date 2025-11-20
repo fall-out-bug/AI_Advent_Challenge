@@ -1,7 +1,8 @@
 """Tests for PersonalizationServiceImpl."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from src.application.personalization.personalization_service import (
     PersonalizationServiceImpl,

@@ -12,7 +12,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.infrastructure.database.mongo import get_db, close_client
+from src.infrastructure.database.mongo import close_client, get_db
 from src.infrastructure.logging import get_logger
 
 logger = get_logger("clear_channels")
@@ -46,7 +46,9 @@ async def clear_all_channels() -> None:
         # Verify deletion
         count_after = await db.channels.count_documents({})
         if count_after > 0:
-            logger.warning(f"Warning: {count_after} channels still remain after deletion")
+            logger.warning(
+                f"Warning: {count_after} channels still remain after deletion"
+            )
             print(f"⚠️  Warning: {count_after} channel(s) still remain")
         else:
             print("✅ Database cleared successfully")

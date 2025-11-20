@@ -43,9 +43,7 @@ class ConversationalAgent:
             llm_url: Base URL for LLM API. Defaults to env or localhost.
         """
         self._llm_url = (
-            llm_url
-            or os.environ.get("LLM_URL")
-            or "http://localhost:8000/v1"
+            llm_url or os.environ.get("LLM_URL") or "http://localhost:8000/v1"
         ).rstrip("/")
         self._client = httpx.Client(timeout=60.0)
         self._conversation_history: list[dict[str, str]] = []
@@ -203,7 +201,8 @@ outputting the final specification."""
 def main(argv: list[str] | None = None) -> int:
     """Entry point for Day 3 demo."""
     initial_prompt = (
-        " ".join(argv[1:]) if argv and len(argv) > 1
+        " ".join(argv[1:])
+        if argv and len(argv) > 1
         else "I want to build a task management system for a small team."
     )
 

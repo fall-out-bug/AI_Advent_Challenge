@@ -30,7 +30,9 @@ def format_output(data: Any, format_type: OutputFormat | str) -> str:
         Rendered string representation suitable for stdout.
     """
     resolved_format = (
-        format_type if isinstance(format_type, OutputFormat) else OutputFormat(format_type)
+        format_type
+        if isinstance(format_type, OutputFormat)
+        else OutputFormat(format_type)
     )
 
     if resolved_format is OutputFormat.JSON:

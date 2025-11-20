@@ -11,7 +11,11 @@ from src.presentation.cli.backoffice.formatters import OutputFormat, format_outp
 
 def test_format_output_json() -> None:
     """Formatter should return valid JSON string."""
-    payload = {"channel": "tech_news", "status": "active", "tags": ["analytics", "news"]}
+    payload = {
+        "channel": "tech_news",
+        "status": "active",
+        "tags": ["analytics", "news"],
+    }
 
     result = format_output(payload, OutputFormat.JSON)
 
@@ -24,7 +28,10 @@ def test_format_output_json() -> None:
     "payload,expected_fragments",
     [
         (
-            [{"name": "channel_a", "status": "active"}, {"name": "channel_b", "status": "archived"}],
+            [
+                {"name": "channel_a", "status": "active"},
+                {"name": "channel_b", "status": "archived"},
+            ],
             ["channel_a", "channel_b", "status"],
         ),
         (

@@ -38,9 +38,9 @@ class DebugUtils:
             "estimated_tokens": int(estimated_tokens),
             "character_count": len(text),
             "word_count": word_count,
-            "tokens_per_word": round(estimated_tokens / word_count, 2)
-            if word_count > 0
-            else 0,
+            "tokens_per_word": (
+                round(estimated_tokens / word_count, 2) if word_count > 0 else 0
+            ),
         }
 
     def replay_request(self, request_data: Dict[str, Any]) -> Dict[str, Any]:

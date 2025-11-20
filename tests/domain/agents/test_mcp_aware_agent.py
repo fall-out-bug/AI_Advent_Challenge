@@ -3,14 +3,15 @@
 Following TDD approach: tests written BEFORE implementation (Red phase).
 """
 
-import pytest
+from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock
-from typing import Dict, Any
+
+import pytest
+from shared_package.clients.base_client import ModelResponse
+from shared_package.clients.unified_client import UnifiedModelClient
 
 from src.domain.agents.mcp_aware_agent import MCPAwareAgent
 from src.domain.agents.schemas import AgentRequest, AgentResponse
-from shared_package.clients.unified_client import UnifiedModelClient
-from shared_package.clients.base_client import ModelResponse
 
 
 @pytest.mark.asyncio

@@ -34,7 +34,11 @@ def test_digest_sample_to_document_matches_exporter_shape() -> None:
         channel="@startup_digest_ru",
         language="ru",
         summary_markdown="- Пилот.\n- Экспорт.",
-        posts=("Пост про ИИ.", "Компания запустила сервис.", "Стартап нашел инвестиции."),
+        posts=(
+            "Пост про ИИ.",
+            "Компания запустила сервис.",
+            "Стартап нашел инвестиции.",
+        ),
         feature_flags={"enable_quality_evaluation": True},
         latency_seconds=150.0,
         created_at=datetime(2025, 11, 10, tzinfo=timezone.utc),

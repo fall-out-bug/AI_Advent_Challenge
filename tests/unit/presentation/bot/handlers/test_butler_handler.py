@@ -4,9 +4,10 @@ Following TDD: Test first, then implementation.
 Following Python Zen: Simple is better than complex.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from aiogram.types import Message, User, Chat
+
+import pytest
+from aiogram.types import Chat, Message, User
 
 from src.presentation.bot.handlers.butler_handler import (
     _handle_error,

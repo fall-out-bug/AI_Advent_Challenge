@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-"""Voice command application layer."""
-=======
 """Application layer for voice agent functionality.
 
 Purpose:
@@ -17,5 +14,3 @@ __all__ = [
     "ProcessVoiceCommandInput",
     "HandleVoiceConfirmationInput",
 ]
-
->>>>>>> origin/master

@@ -1,4 +1,5 @@
 import json
+
 import pytest
 
 from src.domain.agents.mcp_aware_agent import MCPAwareAgent

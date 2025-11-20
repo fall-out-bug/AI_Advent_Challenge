@@ -24,7 +24,12 @@ class _DummyMetric:
 
 
 try:  # pragma: no cover - optional dependency guard
-    from prometheus_client import Counter, Gauge, Histogram, start_http_server  # type: ignore
+    from prometheus_client import (  # type: ignore
+        Counter,
+        Gauge,
+        Histogram,
+        start_http_server,
+    )
 except ImportError:  # pragma: no cover - fallback
     Counter = Gauge = Histogram = _DummyMetric  # type: ignore
 

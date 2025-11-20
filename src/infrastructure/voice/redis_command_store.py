@@ -169,5 +169,3 @@ class RedisVoiceCommandStore(VoiceCommandStore):
         if self._redis_client is not None and self._owns_client:
             await self._redis_client.aclose()
             self._redis_client = None
-
-

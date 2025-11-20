@@ -47,8 +47,6 @@ class RerankerConfig(BaseModel):
 
     enabled: bool = False
     strategy: str = Field(default="off")
-<<<<<<< HEAD
-=======
     seed: int | None = Field(
         default=None,
         ge=0,
@@ -64,7 +62,6 @@ class RerankerConfig(BaseModel):
         le=1.0,
         description="Optional upper bound for acceptable rerank variance.",
     )
->>>>>>> origin/master
     llm: RerankerLLMConfig = Field(default_factory=RerankerLLMConfig)
     cross_encoder: RerankerCrossEncoderConfig = Field(
         default_factory=RerankerCrossEncoderConfig

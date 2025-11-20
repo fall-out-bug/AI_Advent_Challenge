@@ -9,13 +9,13 @@ Following Python Zen: "Simple is better than complex"
 and "Explicit is better than implicit".
 """
 
-import pytest
 import asyncio
-from unittest.mock import AsyncMock, patch, MagicMock
-import httpx
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from shared_package.clients.unified_client import UnifiedModelClient
+import httpx
+import pytest
 from shared_package.clients.base_client import ModelResponse
+from shared_package.clients.unified_client import UnifiedModelClient
 
 
 class TestOpenAICompatibility:

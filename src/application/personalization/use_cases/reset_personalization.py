@@ -67,17 +67,13 @@ class ResetPersonalizationUseCase:
         """
         try:
             # Count events before deletion
-            event_count = await self.memory_repo.count_events(
-                input_data.user_id
-            )
+            event_count = await self.memory_repo.count_events(input_data.user_id)
 
             # Reset profile (delete and recreate with defaults)
             await self.profile_repo.reset(input_data.user_id)
 
             # Delete all memory events (via compression with keep_last_n=0)
-            await self.memory_repo.compress(
-                input_data.user_id, "", keep_last_n=0
-            )
+            await self.memory_repo.compress(input_data.user_id, "", keep_last_n=0)
 
             logger.info(
                 "Personalization reset successfully",

@@ -1,6 +1,7 @@
 """Unit tests for RetrievalService and compatibility adapter."""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Sequence
 
@@ -10,10 +11,10 @@ from src.application.rag import RetrievalService, RetrievalServiceCompat
 from src.domain.embedding_index import EmbeddingVector
 from src.domain.rag import (
     FilterConfig,
-    RerankResult,
-    RetrievedChunk,
     RelevanceFilterService,
     RerankerService,
+    RerankResult,
+    RetrievedChunk,
     VectorSearchService,
 )
 
@@ -65,9 +66,7 @@ class StubFilter(RelevanceFilterService):
         threshold: float,
         top_k: int,
     ) -> Sequence[RetrievedChunk]:
-        self.calls.append(
-            {"chunks": chunks, "threshold": threshold, "top_k": top_k}
-        )
+        self.calls.append({"chunks": chunks, "threshold": threshold, "top_k": top_k})
         return self.filtered
 
 

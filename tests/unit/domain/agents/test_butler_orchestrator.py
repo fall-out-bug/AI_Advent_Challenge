@@ -3,10 +3,15 @@
 Following TDD principles and testing best practices.
 """
 
-import pytest
 from unittest.mock import AsyncMock, Mock
 
-from src.application.dtos.butler_dialog_dtos import DialogContext, DialogMode, DialogState
+import pytest
+
+from src.application.dtos.butler_dialog_dtos import (
+    DialogContext,
+    DialogMode,
+    DialogState,
+)
 from src.application.services.mode_classifier import ModeClassifier
 from src.presentation.bot.handlers.chat import ChatHandler
 from src.presentation.bot.handlers.data import DataHandler
@@ -119,6 +124,7 @@ class TestButlerOrchestrator:
         self, orchestrator, mock_mode_classifier, mock_handlers
     ):
         """Test unknown modes fall back to chat handler."""
+
         class FakeMode:
             value = "legacy"
 

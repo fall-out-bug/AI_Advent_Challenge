@@ -6,9 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.application.use_cases.review_submission_use_case import (
-    ReviewSubmissionUseCase,
-)
+from src.application.use_cases.review_submission_use_case import ReviewSubmissionUseCase
 from src.domain.services.diff_analyzer import DiffAnalyzer
 from src.infrastructure.archive.archive_service import ZipArchiveService
 from src.infrastructure.config.settings import Settings

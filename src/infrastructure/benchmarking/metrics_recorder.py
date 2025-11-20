@@ -5,9 +5,9 @@ from __future__ import annotations
 from typing import Protocol
 
 from src.application.benchmarking.models import (
+    BenchmarkMetricResult,
     BenchmarkOutcome,
     BenchmarkRunResult,
-    BenchmarkMetricResult,
 )
 from src.application.benchmarking.protocols import BenchmarkMetricsRecorder
 
@@ -122,9 +122,7 @@ class PrometheusBenchmarkRecorder(BenchmarkMetricsRecorder):
         >>> recorder.record_run(run_result)
     """
 
-    def __init__(
-        self, outcome_mapper: OutcomeToFloat = default_outcome_mapper
-    ) -> None:
+    def __init__(self, outcome_mapper: OutcomeToFloat = default_outcome_mapper) -> None:
         self._outcome_mapper = outcome_mapper
 
     def record_run(self, run_result: BenchmarkRunResult) -> None:
@@ -163,9 +161,7 @@ class PrometheusBenchmarkRecorder(BenchmarkMetricsRecorder):
         dataset: str,
         metric: BenchmarkMetricResult,
     ) -> None:
-        benchmark_metric_value.labels(
-            scenario, dataset, metric.name
-        ).set(metric.value)
-        benchmark_metric_outcome.labels(
-            scenario, dataset, metric.name
-        ).set(self._outcome_mapper(metric.outcome))
+        benchmark_metric_value.labels(scenario, dataset, metric.name).set(metric.value)
+        benchmark_metric_outcome.labels(scenario, dataset, metric.name).set(
+            self._outcome_mapper(metric.outcome)
+        )

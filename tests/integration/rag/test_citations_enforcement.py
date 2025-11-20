@@ -86,9 +86,7 @@ def test_citation_format_in_prompt() -> None:
     assembler = PromptAssembler(max_context_tokens=3000)
     chunks = _make_chunks_with_sources()
 
-    prompt = assembler.build_rag_prompt(
-        question="Тестовый вопрос", chunks=chunks
-    )
+    prompt = assembler.build_rag_prompt(question="Тестовый вопрос", chunks=chunks)
 
     # Check that prompt includes chunk numbering and relevance scores
     assert "[Фрагмент" in prompt or "Фрагмент" in prompt
@@ -96,4 +94,6 @@ def test_citation_format_in_prompt() -> None:
 
     # Verify source_path is included in prompt for each chunk
     for chunk in chunks:
-        assert chunk.source_path in prompt, f"source_path {chunk.source_path} not found in prompt"
+        assert (
+            chunk.source_path in prompt
+        ), f"source_path {chunk.source_path} not found in prompt"

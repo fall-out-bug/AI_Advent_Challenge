@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import yaml
-
 from pathlib import Path
+
+import yaml
 
 ALERTS_FILE = Path("prometheus/alerts.yml")
 
@@ -31,8 +31,6 @@ def test_mcp_alert_uses_new_metric() -> None:
     mcp_rule = next(rule for rule in alerts if rule.get("alert") == "MCPServerHighErrorRate")
     expr = mcp_rule.get("expr")
     assert "mcp_requests_total" in expr
-<<<<<<< HEAD
-=======
 
 
 def test_epic23_observability_alerts_present() -> None:
@@ -73,4 +71,3 @@ def test_epic23_alerts_use_new_metrics() -> None:
     rag_rule = next(rule for rule in alerts if rule.get("alert") == "RAGVarianceThresholdExceeded")
     expr = rag_rule.get("expr")
     assert "rag_variance_ratio" in expr
->>>>>>> origin/master

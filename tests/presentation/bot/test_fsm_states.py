@@ -1,8 +1,7 @@
 import pytest
 
 try:
-    from aiogram.fsm.state import State
-    from aiogram.fsm.state import StatesGroup
+    from aiogram.fsm.state import State, StatesGroup
 except Exception as exc:  # pragma: no cover
     pytest.skip("aiogram is required for FSM tests", allow_module_level=True)
 

@@ -33,7 +33,9 @@ async def test_summarizer_service_interface_characterization():
     summarizer = create_adaptive_summarizer()
 
     # Characterize: Verify it implements SummarizerService
-    assert isinstance(summarizer, SummarizerService), "Should implement SummarizerService interface"
+    assert isinstance(
+        summarizer, SummarizerService
+    ), "Should implement SummarizerService interface"
 
     # Characterize: Verify required method exists
     assert hasattr(summarizer, "summarize_posts"), "Should have summarize_posts method"
@@ -74,7 +76,9 @@ async def test_summarizer_service_interface_characterization():
 
     # Characterize: Verify SummaryResult fields
     assert hasattr(result, "text"), "SummaryResult should have text"
-    assert hasattr(result, "sentences_count"), "SummaryResult should have sentences_count"
+    assert hasattr(
+        result, "sentences_count"
+    ), "SummaryResult should have sentences_count"
     assert hasattr(result, "method"), "SummaryResult should have method"
     assert hasattr(result, "confidence"), "SummaryResult should have confidence"
     assert hasattr(result, "metadata"), "SummaryResult should have metadata"
@@ -114,7 +118,9 @@ async def test_summarization_empty_posts_behavior_characterization():
     # Should return SummaryResult (not raise exception)
     from src.domain.value_objects.summary_result import SummaryResult
 
-    assert isinstance(result, SummaryResult), "Should return SummaryResult even for empty posts"
+    assert isinstance(
+        result, SummaryResult
+    ), "Should return SummaryResult even for empty posts"
     assert isinstance(result.text, str), "Should have text (fallback message)"
 
 
@@ -161,6 +167,8 @@ async def test_summarization_method_selection_characterization():
     # Characterize: Should return valid SummaryResult with method field
     assert isinstance(result_small, type(result_small)), "Should return SummaryResult"
     assert hasattr(result_small, "method"), "Should have method field"
-    assert result_small.method in ["direct", "map_reduce", "error"], (
-        f"Method should be direct, map_reduce, or error. Got: {result_small.method}"
-    )
+    assert result_small.method in [
+        "direct",
+        "map_reduce",
+        "error",
+    ], f"Method should be direct, map_reduce, or error. Got: {result_small.method}"

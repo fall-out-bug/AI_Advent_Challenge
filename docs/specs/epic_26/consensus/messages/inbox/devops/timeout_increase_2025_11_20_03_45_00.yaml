@@ -1,0 +1,52 @@
+from: developer
+to: devops
+timestamp: "2025_11_20_03_45_00"
+epic_id: "epic_26"
+iteration: 1
+
+type: response
+subject: increased_timeout_for_code_generation
+
+content:
+  summary: "Increased LLM timeout from 600s to 900s for test and code generation"
+  implementation_status: "complete"
+
+  problem:
+    - "Current timeout of 600 seconds (10 minutes) may be insufficient for complex code generation"
+    - "Code generation with complex types (List[Dict[str, Any]]) can take longer"
+    - "Long prompts with multiple functions and type hints require more processing time"
+
+  solution:
+    - "Increased timeout from 600.0 to 900.0 seconds (15 minutes)"
+    - "This gives LLM more time to generate complete code with proper imports"
+    - "Reduces likelihood of timeout-triggered fallback"
+
+  changes_made:
+    test_agent_cli:
+      - "Increased timeout from 600.0 to 900.0 seconds"
+      - "Updated comments to reflect longer timeout for code generation"
+      file: "src/presentation/cli/test_agent/main.py"
+
+  technical_details:
+    timeout_configuration:
+      - "Previous: 600.0 seconds (10 minutes)"
+      - "New: 900.0 seconds (15 minutes)"
+      - "Applied to: get_llm_client(timeout=900.0)"
+      - "Covers: test generation, code generation, complex type hints"
+
+    rationale:
+      - "Test generation: 3-5 minutes typical"
+      - "Code generation: 5-10 minutes for complex code"
+      - "15 minutes provides safety margin"
+      - "Still uses ResilientLLMClient for fallback on errors"
+
+  test_results:
+    - "No linter errors"
+    - "Backward compatible"
+    - "Timeout increase should reduce fallback usage"
+
+  notes: "This timeout increase, combined with the improved fallback code generation, should significantly reduce issues with missing imports and incomplete code generation."
+
+action_needed: "rebuild_docker_image"
+priority: "medium"
+notes: "Timeout increased to give LLM more time for complex code generation. This should reduce timeout-related fallbacks and improve code quality."

@@ -1,9 +1,10 @@
 """Unit tests for SummarizationEvaluator."""
 
 import json
-import pytest
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from src.domain.value_objects.summarization_context import SummarizationContext
 from src.infrastructure.llm.evaluation.summarization_evaluator import (

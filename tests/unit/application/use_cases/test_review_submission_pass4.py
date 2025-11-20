@@ -3,21 +3,21 @@
 Following TDD principles.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from shared.shared_package.clients.base_client import ModelResponse
+import pytest
 
-from src.domain.value_objects.long_summarization_task import LongTask
-from src.domain.value_objects.task_type import TaskType
-from src.domain.value_objects.task_status import TaskStatus
+from shared.shared_package.clients.base_client import ModelResponse
 from src.application.use_cases.review_submission_use_case import ReviewSubmissionUseCase
+from src.domain.services.diff_analyzer import DiffAnalyzer
+from src.domain.value_objects.long_summarization_task import LongTask
+from src.domain.value_objects.task_status import TaskStatus
+from src.domain.value_objects.task_type import TaskType
+from src.infrastructure.archive.archive_service import ZipArchiveService
+from src.infrastructure.config.settings import Settings
 from src.infrastructure.repositories.homework_review_repository import (
     HomeworkReviewRepository,
 )
-from src.infrastructure.config.settings import Settings
-from src.infrastructure.archive.archive_service import ZipArchiveService
-from src.domain.services.diff_analyzer import DiffAnalyzer
 
 
 class TestReviewSubmissionPass4:
@@ -30,7 +30,7 @@ class TestReviewSubmissionPass4:
         mock_unified_client = MagicMock()
         mock_unified_client.make_request = AsyncMock(
             return_value=ModelResponse(
-                response="{\"haiku\": \"test\"}",
+                response='{"haiku": "test"}',
                 response_tokens=5,
                 input_tokens=5,
                 total_tokens=10,
@@ -109,9 +109,7 @@ class TestReviewSubmissionPass4:
             await use_case.execute(task)
 
             # Verify logs were extracted
-            archive_service.extract_logs.assert_called_once_with(
-                "/path/to/logs.zip"
-            )
+            archive_service.extract_logs.assert_called_once_with("/path/to/logs.zip")
 
     @pytest.mark.asyncio
     async def test_pass_4_skipped_when_no_logs(self) -> None:
@@ -119,7 +117,7 @@ class TestReviewSubmissionPass4:
         mock_unified_client = MagicMock()
         mock_unified_client.make_request = AsyncMock(
             return_value=ModelResponse(
-                response="{\"haiku\": \"test\"}",
+                response='{"haiku": "test"}',
                 response_tokens=5,
                 input_tokens=5,
                 total_tokens=10,
@@ -183,7 +181,7 @@ class TestReviewSubmissionPass4:
         mock_unified_client = MagicMock()
         mock_unified_client.make_request = AsyncMock(
             return_value=ModelResponse(
-                response="{\"haiku\": \"test\"}",
+                response='{"haiku": "test"}',
                 response_tokens=5,
                 input_tokens=5,
                 total_tokens=10,

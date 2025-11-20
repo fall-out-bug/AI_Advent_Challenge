@@ -57,12 +57,10 @@ def main() -> None:
         "--threshold",
         type=int,
         default=75,
-        help="Minimum coverage threshold (default: 75)"
+        help="Minimum coverage threshold (default: 75)",
     )
     parser.add_argument(
-        "--html",
-        action="store_true",
-        help="Generate HTML coverage report"
+        "--html", action="store_true", help="Generate HTML coverage report"
     )
     args = parser.parse_args()
 

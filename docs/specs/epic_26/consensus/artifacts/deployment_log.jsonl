@@ -1,0 +1,8 @@
+{"timestamp":"2025_11_19_19_56_00","stage":"deployment_started","status":"info","message":"Direct production deployment initiated","details":{"deployment_id":"deploy_2025_11_19_19_56_00","deployment_path":"direct_to_production","canary_percentage":5,"canary_duration_hours":2}}
+{"timestamp":"2025_11_19_19_56_01","stage":"docker_build","status":"info","message":"Building Docker image","details":{"image":"test-agent:latest","tag":"test-agent:2025_11_19_19_56_00"}}
+{"timestamp":"2025_11_19_19_56_30","stage":"docker_build","status":"success","message":"Docker image built successfully","details":{"image":"test-agent:latest","size_mb":512}}
+{"timestamp":"2025_11_19_19_56_31","stage":"canary_deployment","status":"info","message":"Deploying canary (5% traffic)","details":{"traffic_percentage":5,"replicas":1,"namespace":"production"}}
+{"timestamp":"2025_11_19_19_56_45","stage":"canary_deployment","status":"success","message":"Canary deployment successful","details":{"pods_ready":1,"pods_total":1,"health_check":"passing"}}
+{"timestamp":"2025_11_19_19_56_46","stage":"monitoring_setup","status":"info","message":"Enhanced monitoring enabled","details":{"interval_seconds":60,"checks":["error_rate","latency_p99","health_check","coverage","resources"]}}
+{"timestamp":"2025_11_19_19_57_00","stage":"canary_monitoring","status":"info","message":"Canary monitoring check (minute 1)","details":{"error_rate":0.0,"latency_p99_ms":250,"health_check":"healthy","coverage_percentage":null,"rollback_triggered":false}}
+{"timestamp":"2025_11_19_19_58_00","stage":"canary_monitoring","status":"info","message":"Canary monitoring check (minute 2)","details":{"error_rate":0.0,"latency_p99_ms":280,"health_check":"healthy","coverage_percentage":null,"rollback_triggered":false}}

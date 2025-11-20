@@ -80,10 +80,18 @@ async def run_summarization_test(
         elapsed_time = time.time() - start_time
 
         # Extract quality metrics if available
-        quality_score = summary_result.metadata.get("quality_score", {}) if summary_result.metadata else {}
+        quality_score = (
+            summary_result.metadata.get("quality_score", {})
+            if summary_result.metadata
+            else {}
+        )
 
         # Calculate chunk count from metadata
-        chunk_count = summary_result.metadata.get("chunk_count", 0) if summary_result.metadata else 0
+        chunk_count = (
+            summary_result.metadata.get("chunk_count", 0)
+            if summary_result.metadata
+            else 0
+        )
 
         return {
             "success": True,
@@ -95,7 +103,11 @@ async def run_summarization_test(
             "chunk_count": chunk_count,
             "elapsed_time": elapsed_time,
             "tokens_per_second": total_tokens / elapsed_time if elapsed_time > 0 else 0,
-            "quality_score": quality_score.get("score", 0.0) if isinstance(quality_score, dict) else 0.0,
+            "quality_score": (
+                quality_score.get("score", 0.0)
+                if isinstance(quality_score, dict)
+                else 0.0
+            ),
             "confidence": summary_result.confidence,
         }
     except Exception as e:
@@ -140,19 +152,23 @@ async def run_stress_test(
 
     # Different max_sentences
     for max_sent in [5, 8, 10, 15]:
-        configs.append({
-            "name": f"max_sentences_{max_sent}",
-            "max_sentences": max_sent,
-            "chunk_size": 3000,  # Default
-        })
+        configs.append(
+            {
+                "name": f"max_sentences_{max_sent}",
+                "max_sentences": max_sent,
+                "chunk_size": 3000,  # Default
+            }
+        )
 
     # Different chunk sizes (only for map-reduce)
     for chunk_size in [3000, 5000, 8000]:
-        configs.append({
-            "name": f"chunk_size_{chunk_size}",
-            "max_sentences": 8,
-            "chunk_size": chunk_size,
-        })
+        configs.append(
+            {
+                "name": f"chunk_size_{chunk_size}",
+                "max_sentences": 8,
+                "chunk_size": chunk_size,
+            }
+        )
 
     # Run tests
     results = {
@@ -229,13 +245,19 @@ def generate_report(results: dict[str, Any], output_file: Path) -> None:
         f.write(f"**Failed:** {len(failed)}\n\n")
 
         if successful:
-            avg_time = sum(r["result"]["elapsed_time"] for r in successful) / len(successful)
+            avg_time = sum(r["result"]["elapsed_time"] for r in successful) / len(
+                successful
+            )
             f.write(f"**Average Time:** {avg_time:.2f}s\n\n")
 
         # Detailed results
         f.write("### Detailed Results\n\n")
-        f.write("| Config | Method | Sentences | Time (s) | Tokens/s | Quality | Status |\n")
-        f.write("|--------|--------|-----------|----------|----------|---------|--------|\n")
+        f.write(
+            "| Config | Method | Sentences | Time (s) | Tokens/s | Quality | Status |\n"
+        )
+        f.write(
+            "|--------|--------|-----------|----------|----------|---------|--------|\n"
+        )
 
         for config_result in results["configs"]:
             config = config_result["config"]
@@ -271,7 +293,8 @@ async def main() -> None:
     parser.add_argument(
         "--file",
         type=Path,
-        default=Path.home() / "010000_000060_ART-456646aa-282f-42dd-973e-0d51304b5076-Анна_Каренина.txt",
+        default=Path.home()
+        / "010000_000060_ART-456646aa-282f-42dd-973e-0d51304b5076-Анна_Каренина.txt",
         help="Path to text file for testing",
     )
     parser.add_argument(

@@ -60,7 +60,9 @@ class WhisperSpeechToTextAdapter:
         self.settings = settings or get_settings()
         self.timeout = timeout
         self._client: Optional[httpx.AsyncClient] = None
-        self._base_url = f"http://{self.settings.whisper_host}:{self.settings.whisper_port}"
+        self._base_url = (
+            f"http://{self.settings.whisper_host}:{self.settings.whisper_port}"
+        )
 
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create HTTP client."""
@@ -145,7 +147,9 @@ class WhisperSpeechToTextAdapter:
             # Calculate duration (rough estimate: 16kHz, 16-bit, mono)
             # For OGG, actual duration might differ, but this is a reasonable default
             audio_size_bytes = len(audio)
-            estimated_duration_ms = int((audio_size_bytes / 32000) * 1000)  # Rough estimate
+            estimated_duration_ms = int(
+                (audio_size_bytes / 32000) * 1000
+            )  # Rough estimate
 
             # Call Whisper API for transcription
             # Note: We use Ollama adapter interface but connect to Whisper server
@@ -154,7 +158,7 @@ class WhisperSpeechToTextAdapter:
 
             # Read file content first (before async operation)
             file_content = temp_file_path.read_bytes()
-            
+
             # Prepare multipart form data
             files = {"file": (temp_file_path.name, file_content, "audio/wav")}
             # Whisper API expects form data with file and language
@@ -164,15 +168,16 @@ class WhisperSpeechToTextAdapter:
             }
 
             try:
-                response = await client.post(url, files=files, data=data, timeout=self.timeout)
+                response = await client.post(
+                    url, files=files, data=data, timeout=self.timeout
+                )
                 response.raise_for_status()
             except httpx.HTTPStatusError as e:
                 voice_transcriptions_total.labels(status="error").inc()
                 error_text = e.response.text if e.response else str(e)
                 # Check if model not found (404 or 400 with model error)
                 if e.response.status_code == 404 or (
-                    e.response.status_code == 400
-                    and "model" in error_text.lower()
+                    e.response.status_code == 400 and "model" in error_text.lower()
                 ):
                     raise SpeechToTextError(
                         f"Whisper STT model '{self.settings.stt_model}' not found. "
@@ -262,4 +267,3 @@ class WhisperSpeechToTextAdapter:
                         f"Failed to delete temp file {temp_file_path}: {e}",
                         extra={"temp_file": str(temp_file_path)},
                     )
-

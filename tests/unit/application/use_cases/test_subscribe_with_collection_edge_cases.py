@@ -1,7 +1,8 @@
 """Edge case tests for SubscribeToChannelWithCollectionUseCase."""
 
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
 
 from src.application.use_cases.subscribe_with_collection import (
     SubscribeToChannelWithCollectionUseCase,

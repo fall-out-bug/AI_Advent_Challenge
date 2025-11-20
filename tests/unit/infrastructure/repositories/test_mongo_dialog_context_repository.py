@@ -20,7 +20,9 @@ from src.infrastructure.repositories.mongo_dialog_context_repository import (
 class TestMongoDialogContextRepository:
     """Unit tests for MongoDialogContextRepository."""
 
-    async def test_get_by_session_returns_none_for_unknown_session(self, butler_mock_mongodb):
+    async def test_get_by_session_returns_none_for_unknown_session(
+        self, butler_mock_mongodb
+    ):
         """Unit: get_by_session returns None for unknown session."""
         repo = MongoDialogContextRepository(butler_mock_mongodb)
 
@@ -174,7 +176,9 @@ class TestMongoDialogContextRepository:
         assert context.data == {"search": "restaurants"}
         assert context.step_count == 3
 
-    async def test_deserialization_handles_missing_optional_fields(self, butler_mock_mongodb):
+    async def test_deserialization_handles_missing_optional_fields(
+        self, butler_mock_mongodb
+    ):
         """Unit: deserialization provides defaults for missing fields."""
         repo = MongoDialogContextRepository(butler_mock_mongodb)
 

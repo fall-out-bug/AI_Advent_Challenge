@@ -8,7 +8,6 @@ import signal
 import subprocess
 from pathlib import Path
 
-
 STATE_PATH = Path(__file__).resolve().parent / ".shared_infra_state.json"
 
 

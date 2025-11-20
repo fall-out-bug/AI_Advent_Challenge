@@ -13,7 +13,9 @@ from unittest.mock import patch
 
 import pytest
 
-from src.infrastructure.services.homework_review_service_impl import HomeworkReviewServiceImpl
+from src.infrastructure.services.homework_review_service_impl import (
+    HomeworkReviewServiceImpl,
+)
 
 
 @pytest.mark.epic21
@@ -34,27 +36,34 @@ class TestStorageOperationsCharacterization:
         # This test captures current tempfile usage in HomeworkReviewServiceImpl
 
         # Mock the HW checker and tool client
-        mock_hw_checker = type('MockHWChecker', (), {
-            'download_archive': lambda self, commit_hash: b'fake_zip_content'
-        })()
+        mock_hw_checker = type(
+            "MockHWChecker",
+            (),
+            {"download_archive": lambda self, commit_hash: b"fake_zip_content"},
+        )()
 
-        mock_tool_client = type('MockToolClient', (), {
-            'call_tool': lambda self, *args, **kwargs: {
-                'success': True,
-                'markdown_report': '# Test Report\n\nContent',
-                'total_findings': 0,
-                'execution_time_seconds': 1.0,
-                'detected_components': []
-            }
-        })()
+        mock_tool_client = type(
+            "MockToolClient",
+            (),
+            {
+                "call_tool": lambda self, *args, **kwargs: {
+                    "success": True,
+                    "markdown_report": "# Test Report\n\nContent",
+                    "total_findings": 0,
+                    "execution_time_seconds": 1.0,
+                    "detected_components": [],
+                }
+            },
+        )()
 
         # Create mock storage service
         class MockStorageService:
-            def create_temp_file(self, suffix='', prefix='temp_', content=None):
-                import tempfile
+            def create_temp_file(self, suffix="", prefix="temp_", content=None):
                 import os
+                import tempfile
                 from unittest.mock import MagicMock
-                temp_dir = '/tmp' if os.path.exists('/tmp') else tempfile.gettempdir()
+
+                temp_dir = "/tmp" if os.path.exists("/tmp") else tempfile.gettempdir()
                 mock_file = MagicMock()
                 mock_file.name = f"{temp_dir}/homework_review_test{suffix}"
                 if content:
@@ -66,64 +75,78 @@ class TestStorageOperationsCharacterization:
             def cleanup_temp_file(self, path, missing_ok=True):
                 pass
 
-        service = HomeworkReviewServiceImpl(mock_hw_checker, mock_tool_client, MockStorageService())
+        service = HomeworkReviewServiceImpl(
+            mock_hw_checker, mock_tool_client, MockStorageService()
+        )
 
         # Mock context
-        context = type('MockContext', (), {})()
+        context = type("MockContext", (), {})()
 
         # Capture temp file creation
-        with patch('tempfile.NamedTemporaryFile') as mock_tempfile, \
-            patch('tempfile.gettempdir', return_value='/tmp'), \
-            patch('os.path.exists', return_value=True), \
-            patch('pathlib.Path.unlink'):
+        with (
+            patch("tempfile.NamedTemporaryFile") as mock_tempfile,
+            patch("tempfile.gettempdir", return_value="/tmp"),
+            patch("os.path.exists", return_value=True),
+            patch("pathlib.Path.unlink"),
+        ):
 
             # Configure mock tempfile
             mock_tempfile.return_value.__enter__ = lambda self: self
             mock_tempfile.return_value.__exit__ = lambda self, *args: None
-            mock_tempfile.return_value.name = '/tmp/homework_review_test.zip'
+            mock_tempfile.return_value.name = "/tmp/homework_review_test.zip"
             mock_tempfile.return_value.write = lambda self, data: None
             mock_tempfile.return_value.close = lambda self: None
 
         # Call review_homework
-        result = service.review_homework(context, 'test_commit')
+        result = service.review_homework(context, "test_commit")
 
         # Verify tempfile was created
         mock_tempfile.assert_called_once()
         call_kwargs = mock_tempfile.call_args[1]
-        assert call_kwargs['delete'] == False
-        assert call_kwargs['suffix'] == '.zip'
-        assert 'homework_review' in call_kwargs['prefix']
-        assert call_kwargs['dir'] == '/tmp'  # Uses gettempdir()
+        assert call_kwargs["delete"] == False
+        assert call_kwargs["suffix"] == ".zip"
+        assert "homework_review" in call_kwargs["prefix"]
+        assert call_kwargs["dir"] == "/tmp"  # Uses gettempdir()
 
     def test_shared_archive_directory_usage(self):
         """Characterization: Services check for /app/archive shared directory."""
-        with patch('os.path.exists') as mock_exists, \
-            patch('tempfile.gettempdir', return_value='/tmp'):
+        with (
+            patch("os.path.exists") as mock_exists,
+            patch("tempfile.gettempdir", return_value="/tmp"),
+        ):
 
             # Test when /app/archive exists
             mock_exists.return_value = True
 
-            mock_hw_checker = type('MockHWChecker', (), {
-                'download_archive': lambda self, commit_hash: b'fake_zip_content'
-            })()
+            mock_hw_checker = type(
+                "MockHWChecker",
+                (),
+                {"download_archive": lambda self, commit_hash: b"fake_zip_content"},
+            )()
 
-            mock_tool_client = type('MockToolClient', (), {
-                'call_tool': lambda self, *args, **kwargs: {
-                    'success': True,
-                    'markdown_report': '# Test Report\n\nContent',
-                    'total_findings': 0,
-                    'execution_time_seconds': 1.0,
-                    'detected_components': []
-                }
-            })()
+            mock_tool_client = type(
+                "MockToolClient",
+                (),
+                {
+                    "call_tool": lambda self, *args, **kwargs: {
+                        "success": True,
+                        "markdown_report": "# Test Report\n\nContent",
+                        "total_findings": 0,
+                        "execution_time_seconds": 1.0,
+                        "detected_components": [],
+                    }
+                },
+            )()
 
             # Create mock storage service
+
         class MockStorageService:
-            def create_temp_file(self, suffix='', prefix='temp_', content=None):
-                import tempfile
+            def create_temp_file(self, suffix="", prefix="temp_", content=None):
                 import os
+                import tempfile
                 from unittest.mock import MagicMock
-                temp_dir = '/tmp' if os.path.exists('/tmp') else tempfile.gettempdir()
+
+                temp_dir = "/tmp" if os.path.exists("/tmp") else tempfile.gettempdir()
                 mock_file = MagicMock()
                 mock_file.name = f"{temp_dir}/homework_review_test{suffix}"
                 if content:
@@ -135,23 +158,27 @@ class TestStorageOperationsCharacterization:
             def cleanup_temp_file(self, path, missing_ok=True):
                 pass
 
-        service = HomeworkReviewServiceImpl(mock_hw_checker, mock_tool_client, MockStorageService())
+        service = HomeworkReviewServiceImpl(
+            mock_hw_checker, mock_tool_client, MockStorageService()
+        )
 
-        with patch('tempfile.NamedTemporaryFile') as mock_tempfile, \
-            patch('pathlib.Path.unlink'):
+        with (
+            patch("tempfile.NamedTemporaryFile") as mock_tempfile,
+            patch("pathlib.Path.unlink"),
+        ):
 
             mock_tempfile.return_value.__enter__ = lambda self: self
             mock_tempfile.return_value.__exit__ = lambda self, *args: None
-            mock_tempfile.return_value.name = '/app/archive/homework_review_test.zip'
+            mock_tempfile.return_value.name = "/app/archive/homework_review_test.zip"
             mock_tempfile.return_value.write = lambda self, data: None
             mock_tempfile.return_value.close = lambda self: None
 
-        context = type('MockContext', (), {})()
-        result = service.review_homework(context, 'test_commit')
+        context = type("MockContext", (), {})()
+        result = service.review_homework(context, "test_commit")
 
         # Should use /app/archive when available
         call_kwargs = mock_tempfile.call_args[1]
-        assert call_kwargs['dir'] == '/app/archive'
+        assert call_kwargs["dir"] == "/app/archive"
 
     def test_tempfile_cleanup_on_success(self):
         """Characterization: Temp files are cleaned up after successful operations."""
@@ -161,38 +188,48 @@ class TestStorageOperationsCharacterization:
             nonlocal cleanup_called
             cleanup_called = True
 
-        with patch('tempfile.NamedTemporaryFile') as mock_tempfile, \
-            patch('tempfile.gettempdir', return_value='/tmp'), \
-            patch('os.path.exists', return_value=False), \
-            patch('pathlib.Path.unlink', side_effect=mock_unlink):
+        with (
+            patch("tempfile.NamedTemporaryFile") as mock_tempfile,
+            patch("tempfile.gettempdir", return_value="/tmp"),
+            patch("os.path.exists", return_value=False),
+            patch("pathlib.Path.unlink", side_effect=mock_unlink),
+        ):
 
             mock_tempfile.return_value.__enter__ = lambda self: self
             mock_tempfile.return_value.__exit__ = lambda self, *args: None
-            mock_tempfile.return_value.name = '/tmp/homework_review_test.zip'
+            mock_tempfile.return_value.name = "/tmp/homework_review_test.zip"
             mock_tempfile.return_value.write = lambda self, data: None
             mock_tempfile.return_value.close = lambda self: None
 
-            mock_hw_checker = type('MockHWChecker', (), {
-                'download_archive': lambda self, commit_hash: b'fake_zip_content'
-            })()
+            mock_hw_checker = type(
+                "MockHWChecker",
+                (),
+                {"download_archive": lambda self, commit_hash: b"fake_zip_content"},
+            )()
 
-            mock_tool_client = type('MockToolClient', (), {
-                'call_tool': lambda self, *args, **kwargs: {
-                    'success': True,
-                    'markdown_report': '# Test Report\n\nContent',
-                    'total_findings': 0,
-                    'execution_time_seconds': 1.0,
-                    'detected_components': []
-                }
-            })()
+            mock_tool_client = type(
+                "MockToolClient",
+                (),
+                {
+                    "call_tool": lambda self, *args, **kwargs: {
+                        "success": True,
+                        "markdown_report": "# Test Report\n\nContent",
+                        "total_findings": 0,
+                        "execution_time_seconds": 1.0,
+                        "detected_components": [],
+                    }
+                },
+            )()
 
             # Create mock storage service
+
         class MockStorageService:
-            def create_temp_file(self, suffix='', prefix='temp_', content=None):
-                import tempfile
+            def create_temp_file(self, suffix="", prefix="temp_", content=None):
                 import os
+                import tempfile
                 from unittest.mock import MagicMock
-                temp_dir = '/tmp' if os.path.exists('/tmp') else tempfile.gettempdir()
+
+                temp_dir = "/tmp" if os.path.exists("/tmp") else tempfile.gettempdir()
                 mock_file = MagicMock()
                 mock_file.name = f"{temp_dir}/homework_review_test{suffix}"
                 if content:
@@ -204,11 +241,13 @@ class TestStorageOperationsCharacterization:
             def cleanup_temp_file(self, path, missing_ok=True):
                 pass
 
-        service = HomeworkReviewServiceImpl(mock_hw_checker, mock_tool_client, MockStorageService())
+        service = HomeworkReviewServiceImpl(
+            mock_hw_checker, mock_tool_client, MockStorageService()
+        )
 
-        context = type('MockContext', (), {})()
+        context = type("MockContext", (), {})()
 
-        result = service.review_homework(context, 'test_commit')
+        result = service.review_homework(context, "test_commit")
 
         # Should cleanup temp file
         assert cleanup_called
@@ -221,36 +260,46 @@ class TestStorageOperationsCharacterization:
             nonlocal cleanup_called
             cleanup_called = True
 
-        with patch('tempfile.NamedTemporaryFile') as mock_tempfile, \
-            patch('tempfile.gettempdir', return_value='/tmp'), \
-            patch('os.path.exists', return_value=False), \
-            patch('pathlib.Path.unlink', side_effect=mock_unlink):
+        with (
+            patch("tempfile.NamedTemporaryFile") as mock_tempfile,
+            patch("tempfile.gettempdir", return_value="/tmp"),
+            patch("os.path.exists", return_value=False),
+            patch("pathlib.Path.unlink", side_effect=mock_unlink),
+        ):
 
             mock_tempfile.return_value.__enter__ = lambda self: self
             mock_tempfile.return_value.__exit__ = lambda self, *args: None
-            mock_tempfile.return_value.name = '/tmp/homework_review_test.zip'
+            mock_tempfile.return_value.name = "/tmp/homework_review_test.zip"
             mock_tempfile.return_value.write = lambda self, data: None
             mock_tempfile.return_value.close = lambda self: None
 
-            mock_hw_checker = type('MockHWChecker', (), {
-                'download_archive': lambda self, commit_hash: b'fake_zip_content'
-            })()
+            mock_hw_checker = type(
+                "MockHWChecker",
+                (),
+                {"download_archive": lambda self, commit_hash: b"fake_zip_content"},
+            )()
 
             # Mock tool client to fail
-            mock_tool_client = type('MockToolClient', (), {
-                'call_tool': lambda self, *args, **kwargs: {
-                    'success': False,
-                    'error': 'Tool failed'
-                }
-            })()
+            mock_tool_client = type(
+                "MockToolClient",
+                (),
+                {
+                    "call_tool": lambda self, *args, **kwargs: {
+                        "success": False,
+                        "error": "Tool failed",
+                    }
+                },
+            )()
 
             # Create mock storage service
+
         class MockStorageService:
-            def create_temp_file(self, suffix='', prefix='temp_', content=None):
-                import tempfile
+            def create_temp_file(self, suffix="", prefix="temp_", content=None):
                 import os
+                import tempfile
                 from unittest.mock import MagicMock
-                temp_dir = '/tmp' if os.path.exists('/tmp') else tempfile.gettempdir()
+
+                temp_dir = "/tmp" if os.path.exists("/tmp") else tempfile.gettempdir()
                 mock_file = MagicMock()
                 mock_file.name = f"{temp_dir}/homework_review_test{suffix}"
                 if content:
@@ -262,49 +311,61 @@ class TestStorageOperationsCharacterization:
             def cleanup_temp_file(self, path, missing_ok=True):
                 pass
 
-        service = HomeworkReviewServiceImpl(mock_hw_checker, mock_tool_client, MockStorageService())
+        service = HomeworkReviewServiceImpl(
+            mock_hw_checker, mock_tool_client, MockStorageService()
+        )
 
-        context = type('MockContext', (), {})()
+        context = type("MockContext", (), {})()
 
-        result = service.review_homework(context, 'test_commit')
+        result = service.review_homework(context, "test_commit")
 
         # Should cleanup temp file even on error
         assert cleanup_called
 
     def test_tempfile_path_validation(self):
         """Characterization: Temp file paths are constructed safely."""
-        with patch('tempfile.NamedTemporaryFile') as mock_tempfile, \
-            patch('tempfile.gettempdir', return_value='/tmp'), \
-            patch('os.path.exists', return_value=False), \
-            patch('pathlib.Path.unlink'):
+        with (
+            patch("tempfile.NamedTemporaryFile") as mock_tempfile,
+            patch("tempfile.gettempdir", return_value="/tmp"),
+            patch("os.path.exists", return_value=False),
+            patch("pathlib.Path.unlink"),
+        ):
 
             mock_tempfile.return_value.__enter__ = lambda self: self
             mock_tempfile.return_value.__exit__ = lambda self, *args: None
-            mock_tempfile.return_value.name = '/tmp/homework_review_test.zip'
+            mock_tempfile.return_value.name = "/tmp/homework_review_test.zip"
             mock_tempfile.return_value.write = lambda self, data: None
             mock_tempfile.return_value.close = lambda self: None
 
-            mock_hw_checker = type('MockHWChecker', (), {
-                'download_archive': lambda self, commit_hash: b'fake_zip_content'
-            })()
+            mock_hw_checker = type(
+                "MockHWChecker",
+                (),
+                {"download_archive": lambda self, commit_hash: b"fake_zip_content"},
+            )()
 
-            mock_tool_client = type('MockToolClient', (), {
-                'call_tool': lambda self, *args, **kwargs: {
-                    'success': True,
-                    'markdown_report': '# Test Report\n\nContent',
-                    'total_findings': 0,
-                    'execution_time_seconds': 1.0,
-                    'detected_components': []
-                }
-            })()
+            mock_tool_client = type(
+                "MockToolClient",
+                (),
+                {
+                    "call_tool": lambda self, *args, **kwargs: {
+                        "success": True,
+                        "markdown_report": "# Test Report\n\nContent",
+                        "total_findings": 0,
+                        "execution_time_seconds": 1.0,
+                        "detected_components": [],
+                    }
+                },
+            )()
 
             # Create mock storage service
+
         class MockStorageService:
-            def create_temp_file(self, suffix='', prefix='temp_', content=None):
-                import tempfile
+            def create_temp_file(self, suffix="", prefix="temp_", content=None):
                 import os
+                import tempfile
                 from unittest.mock import MagicMock
-                temp_dir = '/tmp' if os.path.exists('/tmp') else tempfile.gettempdir()
+
+                temp_dir = "/tmp" if os.path.exists("/tmp") else tempfile.gettempdir()
                 mock_file = MagicMock()
                 mock_file.name = f"{temp_dir}/homework_review_test{suffix}"
                 if content:
@@ -316,48 +377,60 @@ class TestStorageOperationsCharacterization:
             def cleanup_temp_file(self, path, missing_ok=True):
                 pass
 
-        service = HomeworkReviewServiceImpl(mock_hw_checker, mock_tool_client, MockStorageService())
-        context = type('MockContext', (), {})()
+        service = HomeworkReviewServiceImpl(
+            mock_hw_checker, mock_tool_client, MockStorageService()
+        )
+        context = type("MockContext", (), {})()
 
-        result = service.review_homework(context, 'test_commit_123')
+        result = service.review_homework(context, "test_commit_123")
 
-            # Verify tempfile was created with safe parameters
+        # Verify tempfile was created with safe parameters
         call_kwargs = mock_tempfile.call_args[1]
-        assert call_kwargs['delete'] == False  # Don't auto-delete
-        assert call_kwargs['suffix'] == '.zip'  # Correct extension
-        assert call_kwargs['prefix'] == 'homework_review_'  # Safe prefix
-        assert isinstance(call_kwargs['dir'], str)  # Valid directory
+        assert call_kwargs["delete"] == False  # Don't auto-delete
+        assert call_kwargs["suffix"] == ".zip"  # Correct extension
+        assert call_kwargs["prefix"] == "homework_review_"  # Safe prefix
+        assert isinstance(call_kwargs["dir"], str)  # Valid directory
 
     def test_file_operation_error_handling(self):
         """Characterization: File operations handle errors gracefully."""
-        with patch('tempfile.NamedTemporaryFile') as mock_tempfile, \
-            patch('tempfile.gettempdir', return_value='/tmp'), \
-            patch('os.path.exists', return_value=False):
+        with (
+            patch("tempfile.NamedTemporaryFile") as mock_tempfile,
+            patch("tempfile.gettempdir", return_value="/tmp"),
+            patch("os.path.exists", return_value=False),
+        ):
 
             # Mock tempfile to raise exception
             mock_tempfile.side_effect = OSError("Permission denied")
 
-            mock_hw_checker = type('MockHWChecker', (), {
-                'download_archive': lambda self, commit_hash: b'fake_zip_content'
-            })()
+            mock_hw_checker = type(
+                "MockHWChecker",
+                (),
+                {"download_archive": lambda self, commit_hash: b"fake_zip_content"},
+            )()
 
-            mock_tool_client = type('MockToolClient', (), {
-                'call_tool': lambda self, *args, **kwargs: {
-                    'success': True,
-                    'markdown_report': '# Test Report\n\nContent',
-                    'total_findings': 0,
-                    'execution_time_seconds': 1.0,
-                    'detected_components': []
-                }
-            })()
+            mock_tool_client = type(
+                "MockToolClient",
+                (),
+                {
+                    "call_tool": lambda self, *args, **kwargs: {
+                        "success": True,
+                        "markdown_report": "# Test Report\n\nContent",
+                        "total_findings": 0,
+                        "execution_time_seconds": 1.0,
+                        "detected_components": [],
+                    }
+                },
+            )()
 
             # Create mock storage service
+
         class MockStorageService:
-            def create_temp_file(self, suffix='', prefix='temp_', content=None):
-                import tempfile
+            def create_temp_file(self, suffix="", prefix="temp_", content=None):
                 import os
+                import tempfile
                 from unittest.mock import MagicMock
-                temp_dir = '/tmp' if os.path.exists('/tmp') else tempfile.gettempdir()
+
+                temp_dir = "/tmp" if os.path.exists("/tmp") else tempfile.gettempdir()
                 mock_file = MagicMock()
                 mock_file.name = f"{temp_dir}/homework_review_test{suffix}"
                 if content:
@@ -369,10 +442,12 @@ class TestStorageOperationsCharacterization:
             def cleanup_temp_file(self, path, missing_ok=True):
                 pass
 
-        service = HomeworkReviewServiceImpl(mock_hw_checker, mock_tool_client, MockStorageService())
-        context = type('MockContext', (), {})()
+        service = HomeworkReviewServiceImpl(
+            mock_hw_checker, mock_tool_client, MockStorageService()
+        )
+        context = type("MockContext", (), {})()
 
-        result = service.review_homework(context, 'test_commit')
+        result = service.review_homework(context, "test_commit")
 
         # Should handle file creation errors
         assert "Ошибка при ревью" in result
@@ -382,38 +457,48 @@ class TestStorageOperationsCharacterization:
         # This test documents that current implementation doesn't validate commit_hash
         # for path traversal attacks - this is what we want to fix
 
-        with patch('tempfile.NamedTemporaryFile') as mock_tempfile, \
-            patch('tempfile.gettempdir', return_value='/tmp'), \
-            patch('os.path.exists', return_value=False), \
-            patch('pathlib.Path.unlink'):
+        with (
+            patch("tempfile.NamedTemporaryFile") as mock_tempfile,
+            patch("tempfile.gettempdir", return_value="/tmp"),
+            patch("os.path.exists", return_value=False),
+            patch("pathlib.Path.unlink"),
+        ):
 
             mock_tempfile.return_value.__enter__ = lambda self: self
             mock_tempfile.return_value.__exit__ = lambda self, *args: None
-            mock_tempfile.return_value.name = '/tmp/homework_review_test.zip'
+            mock_tempfile.return_value.name = "/tmp/homework_review_test.zip"
             mock_tempfile.return_value.write = lambda self, data: None
             mock_tempfile.return_value.close = lambda self: None
 
-            mock_hw_checker = type('MockHWChecker', (), {
-                'download_archive': lambda self, commit_hash: b'fake_zip_content'
-            })()
+            mock_hw_checker = type(
+                "MockHWChecker",
+                (),
+                {"download_archive": lambda self, commit_hash: b"fake_zip_content"},
+            )()
 
-            mock_tool_client = type('MockToolClient', (), {
-                'call_tool': lambda self, *args, **kwargs: {
-                    'success': True,
-                    'markdown_report': '# Test Report\n\nContent',
-                    'total_findings': 0,
-                    'execution_time_seconds': 1.0,
-                    'detected_components': []
-                }
-            })()
+            mock_tool_client = type(
+                "MockToolClient",
+                (),
+                {
+                    "call_tool": lambda self, *args, **kwargs: {
+                        "success": True,
+                        "markdown_report": "# Test Report\n\nContent",
+                        "total_findings": 0,
+                        "execution_time_seconds": 1.0,
+                        "detected_components": [],
+                    }
+                },
+            )()
 
             # Create mock storage service
+
         class MockStorageService:
-            def create_temp_file(self, suffix='', prefix='temp_', content=None):
-                import tempfile
+            def create_temp_file(self, suffix="", prefix="temp_", content=None):
                 import os
+                import tempfile
                 from unittest.mock import MagicMock
-                temp_dir = '/tmp' if os.path.exists('/tmp') else tempfile.gettempdir()
+
+                temp_dir = "/tmp" if os.path.exists("/tmp") else tempfile.gettempdir()
                 mock_file = MagicMock()
                 mock_file.name = f"{temp_dir}/homework_review_test{suffix}"
                 if content:
@@ -425,8 +510,10 @@ class TestStorageOperationsCharacterization:
             def cleanup_temp_file(self, path, missing_ok=True):
                 pass
 
-        service = HomeworkReviewServiceImpl(mock_hw_checker, mock_tool_client, MockStorageService())
-        context = type('MockContext', (), {})()
+        service = HomeworkReviewServiceImpl(
+            mock_hw_checker, mock_tool_client, MockStorageService()
+        )
+        context = type("MockContext", (), {})()
 
         # Current code accepts any commit_hash without validation
         # This is a security gap we want to fix
@@ -440,14 +527,14 @@ class TestStorageOperationsCharacterization:
         """Characterization: Current storage directory access patterns."""
         # This test captures how storage directories are currently accessed
 
-        from src.infrastructure.health.storage_health import StorageHealthChecker
         from src.infrastructure.config.settings import Settings
+        from src.infrastructure.health.storage_health import StorageHealthChecker
 
         # Create settings with test paths
         settings = Settings(
-            storage_path=Path('/tmp/test_storage'),
-            agent_storage_path=Path('/tmp/test_storage/agents'),
-            experiment_storage_path=Path('/tmp/test_storage/experiments')
+            storage_path=Path("/tmp/test_storage"),
+            agent_storage_path=Path("/tmp/test_storage/agents"),
+            experiment_storage_path=Path("/tmp/test_storage/experiments"),
         )
 
         # Skip due to pydantic issues - test would check storage directory permissions

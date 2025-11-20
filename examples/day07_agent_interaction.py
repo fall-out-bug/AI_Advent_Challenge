@@ -59,9 +59,7 @@ class TaskAgent:
             llm_url: Base URL for LLM API. Defaults to env or localhost.
         """
         self._llm_url = (
-            llm_url
-            or os.environ.get("LLM_URL")
-            or "http://localhost:8000/v1"
+            llm_url or os.environ.get("LLM_URL") or "http://localhost:8000/v1"
         ).rstrip("/")
         self._client = httpx.Client(timeout=60.0)
 
@@ -150,9 +148,7 @@ class ReviewerAgent:
             llm_url: Base URL for LLM API. Defaults to env or localhost.
         """
         self._llm_url = (
-            llm_url
-            or os.environ.get("LLM_URL")
-            or "http://localhost:8000/v1"
+            llm_url or os.environ.get("LLM_URL") or "http://localhost:8000/v1"
         ).rstrip("/")
         self._client = httpx.Client(timeout=60.0)
 
@@ -287,7 +283,9 @@ def format_output(task_result: TaskResult, review_result: ReviewResult) -> str:
     lines.append("AGENT 2: REVIEW RESULT")
     lines.append("-" * 60)
     lines.append(f"Review Score: {review_result.review_score:.2f}/1.0")
-    lines.append(f"Approval: {'✓ Approved' if review_result.approval else '✗ Not Approved'}")
+    lines.append(
+        f"Approval: {'✓ Approved' if review_result.approval else '✗ Not Approved'}"
+    )
     lines.append(f"Issues: {len(review_result.issues)}")
     if review_result.issues:
         for issue in review_result.issues:
@@ -311,10 +309,7 @@ def main(argv: list[str] | None = None) -> int:
     """Entry point for Day 7 demo."""
     args = sys.argv[1:] if argv is None else argv
 
-    task = (
-        " ".join(args) if args
-        else "Write a function to calculate factorial"
-    )
+    task = " ".join(args) if args else "Write a function to calculate factorial"
 
     task_agent = TaskAgent()
     reviewer_agent = ReviewerAgent()

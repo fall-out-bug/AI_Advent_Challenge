@@ -1,14 +1,11 @@
-<<<<<<< HEAD
 import asyncio
-=======
->>>>>>> origin/master
+
 import os
 from datetime import datetime
 
 import pytest
 from pymongo.errors import OperationFailure
 
-<<<<<<< HEAD
 
 @pytest.fixture(scope="module")
 def event_loop():
@@ -17,10 +14,6 @@ def event_loop():
     loop.close()
 
 
-=======
-# Legacy event_loop fixture removed - pytest-asyncio handles event loop automatically
-# (asyncio_mode = auto in pytest.ini)
->>>>>>> origin/master
 @pytest.fixture(autouse=True)
 def _set_test_db_env(monkeypatch):
     monkeypatch.setenv("DB_NAME", "butler_test")

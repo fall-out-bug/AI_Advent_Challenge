@@ -6,9 +6,10 @@ They mock database operations and focus on verifying that:
 - Only posts within specified time window are included
 """
 
-import pytest
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 
 @pytest.fixture
@@ -153,8 +154,9 @@ async def test_get_channel_digest_calculates_cutoff_correctly():
 
     Note: This test requires MongoDB dependencies. Skipped if not available.
     """
-    from src.presentation.mcp.tools.digest_tools import get_channel_digest
     from datetime import datetime, timedelta
+
+    from src.presentation.mcp.tools.digest_tools import get_channel_digest
 
     # Mock database and fetch functions
     mock_db = MagicMock()
@@ -196,8 +198,9 @@ async def test_get_channel_digest_calculates_cutoff_correctly():
 
 def test_summarize_posts_receives_filtered_posts():
     """Test that summarize_posts receives only filtered posts."""
-    from src.infrastructure.llm.summarizer import summarize_posts
     from unittest.mock import AsyncMock
+
+    from src.infrastructure.llm.summarizer import summarize_posts
 
     now = datetime.utcnow()
 

@@ -14,15 +14,16 @@ from pathlib import Path
 
 # Load environment variables
 from dotenv import load_dotenv
+
 load_dotenv()
 
 # Add project root to path
 ROOT_DIR = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT_DIR))
 
-from src.infrastructure.clients.telegram_utils import search_channels_by_name
 from src.infrastructure.cache.dialogs_cache import PublicChannelsCache
 from src.infrastructure.clients.bot_api_resolver import BotApiChannelResolver
+from src.infrastructure.clients.telegram_utils import search_channels_by_name
 from src.infrastructure.logging import get_logger
 
 logger = get_logger("diag_search")
@@ -71,16 +72,22 @@ async def diagnose_search(query: str, limit: int = 5):
                 username = channel.get("username", "").lower()
 
                 if query_lower in title or query_lower in username:
-                    cache_matches.append({
-                        "username": channel.get("username"),
-                        "title": channel.get("title"),
-                        "match_type": "title" if query_lower in title else "username"
-                    })
+                    cache_matches.append(
+                        {
+                            "username": channel.get("username"),
+                            "title": channel.get("title"),
+                            "match_type": (
+                                "title" if query_lower in title else "username"
+                            ),
+                        }
+                    )
 
             if cache_matches:
                 print(f"   Matches in cache: {len(cache_matches)}")
                 for i, match in enumerate(cache_matches[:limit], 1):
-                    print(f"   {i}. @{match['username']} | {match['title']} ({match['match_type']})")
+                    print(
+                        f"   {i}. @{match['username']} | {match['title']} ({match['match_type']})"
+                    )
             else:
                 print("   No matches in cache")
         else:
@@ -119,6 +126,7 @@ async def diagnose_search(query: str, limit: int = 5):
     except Exception as e:
         print(f"   Error: {e}")
         import traceback
+
         traceback.print_exc()
     print()
 
@@ -128,7 +136,11 @@ async def diagnose_search(query: str, limit: int = 5):
     username_pattern = query.lstrip("@").strip()
 
     # Check if query looks like username
-    is_username_like = all(c.isalnum() or c == "_" for c in username_pattern) if username_pattern else False
+    is_username_like = (
+        all(c.isalnum() or c == "_" for c in username_pattern)
+        if username_pattern
+        else False
+    )
     print(f"   Query looks like username: {is_username_like}")
 
     if is_username_like:
@@ -140,7 +152,9 @@ async def diagnose_search(query: str, limit: int = 5):
                 bot_elapsed = time.time() - bot_start
 
                 if bot_result:
-                    print(f"   Bot API found: @{bot_result['username']} | {bot_result['title']}")
+                    print(
+                        f"   Bot API found: @{bot_result['username']} | {bot_result['title']}"
+                    )
                     print(f"   Bot API time: {bot_elapsed:.3f}s")
                 else:
                     print("   Bot API: Channel not found")

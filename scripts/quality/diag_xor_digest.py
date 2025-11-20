@@ -7,8 +7,8 @@ Purpose:
 
 import asyncio
 import sys
-from pathlib import Path
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 # Load environment variables
 from dotenv import load_dotenv
@@ -31,8 +31,8 @@ print(f"DEBUG: LLM_URL from env: '{llm_url}'")
 sys.path.insert(0, str(ROOT_DIR))
 
 from src.infrastructure.database.mongo import get_db
-from src.infrastructure.repositories.post_repository import PostRepository
 from src.infrastructure.logging import get_logger
+from src.infrastructure.repositories.post_repository import PostRepository
 
 logger = get_logger("diag_xor")
 
@@ -57,7 +57,7 @@ async def diagnose_xor_digest(user_id: int = None, hours: int = 168):
 
     channel_query = {
         "channel_username": {"$regex": "xor", "$options": "i"},
-        "active": True
+        "active": True,
     }
     if user_id:
         channel_query["user_id"] = user_id
@@ -71,7 +71,9 @@ async def diagnose_xor_digest(user_id: int = None, hours: int = 168):
 
     print(f"   Found {len(channels)} XOR channel(s):")
     for ch in channels:
-        print(f"   - @{ch.get('channel_username')} | {ch.get('title')} | user_id={ch.get('user_id')}")
+        print(
+            f"   - @{ch.get('channel_username')} | {ch.get('title')} | user_id={ch.get('user_id')}"
+        )
 
     xor_channel = channels[0]
     channel_username = xor_channel.get("channel_username")
@@ -118,18 +120,20 @@ async def diagnose_xor_digest(user_id: int = None, hours: int = 168):
         # Convert posts to dict format
         posts_dict = []
         for post in posts[:20]:  # Limit to 20 posts for testing
-            posts_dict.append({
-                "text": post.get("text", ""),
-                "date": post.get("date"),
-            })
+            posts_dict.append(
+                {
+                    "text": post.get("text", ""),
+                    "date": post.get("date"),
+                }
+            )
 
         print(f"   Testing with {len(posts_dict)} posts")
-        print(f"   Total text length: {sum(len(p.get('text', '')) for p in posts_dict)}")
+        print(
+            f"   Total text length: {sum(len(p.get('text', '')) for p in posts_dict)}"
+        )
 
         summary = await summarize_posts(
-            posts_dict,
-            max_sentences=25,
-            time_period_hours=hours
+            posts_dict, max_sentences=25, time_period_hours=hours
         )
 
         print(f"   ✅ Summarization successful!")
@@ -141,6 +145,7 @@ async def diagnose_xor_digest(user_id: int = None, hours: int = 168):
         print(f"   Error type: {type(e).__name__}")
         print(f"   Error message: {str(e)}")
         import traceback
+
         traceback.print_exc()
 
     print()
@@ -175,6 +180,7 @@ async def diagnose_xor_digest(user_id: int = None, hours: int = 168):
         print(f"   Error type: {type(e).__name__}")
         print(f"   Error message: {str(e)}")
         import traceback
+
         traceback.print_exc()
 
     print()
@@ -189,7 +195,12 @@ def main():
 
     parser = argparse.ArgumentParser(description="Diagnose XOR channel digest issues")
     parser.add_argument("--user-id", type=int, help="Telegram user ID")
-    parser.add_argument("--hours", type=int, default=168, help="Hours to look back (default: 168 = 7 days)")
+    parser.add_argument(
+        "--hours",
+        type=int,
+        default=168,
+        help="Hours to look back (default: 168 = 7 days)",
+    )
 
     args = parser.parse_args()
 

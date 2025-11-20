@@ -54,9 +54,7 @@ class ModelComparisonAgent:
             llm_url: Base URL for LLM API. Defaults to env or localhost.
         """
         self._llm_url = (
-            llm_url
-            or os.environ.get("LLM_URL")
-            or "http://localhost:8000/v1"
+            llm_url or os.environ.get("LLM_URL") or "http://localhost:8000/v1"
         ).rstrip("/")
         self._client = httpx.Client(timeout=120.0)
 
@@ -126,9 +124,7 @@ class ModelComparisonAgent:
             quality_score=quality_score,
         )
 
-    def compare_models(
-        self, prompt: str, models: list[str]
-    ) -> list[ModelResult]:
+    def compare_models(self, prompt: str, models: list[str]) -> list[ModelResult]:
         """Compare multiple models on the same prompt.
 
         Args:
@@ -185,11 +181,17 @@ def format_comparison(results: list[ModelResult]) -> str:
     for result in results:
         lines.append(f"Model: {result.model}")
         lines.append(f"Response time: {result.response_time_ms:.1f} ms")
-        lines.append(f"Tokens: {result.tokens_prompt} prompt + {result.tokens_completion} completion = {result.tokens_total} total")
-        lines.append(f"Cost: ${result.cost_usd:.6f}" if result.cost_usd > 0 else "Cost: Free")
+        lines.append(
+            f"Tokens: {result.tokens_prompt} prompt + {result.tokens_completion} completion = {result.tokens_total} total"
+        )
+        lines.append(
+            f"Cost: ${result.cost_usd:.6f}" if result.cost_usd > 0 else "Cost: Free"
+        )
         lines.append(f"Quality score: {result.quality_score:.2f}")
         lines.append("Response:")
-        lines.append(result.response[:300] + ("..." if len(result.response) > 300 else ""))
+        lines.append(
+            result.response[:300] + ("..." if len(result.response) > 300 else "")
+        )
         lines.append("")
         lines.append("-" * 80)
         lines.append("")
@@ -199,12 +201,20 @@ def format_comparison(results: list[ModelResult]) -> str:
     lines.append("=" * 80)
     if results:
         fastest = min(results, key=lambda r: r.response_time_ms)
-        cheapest = min(results, key=lambda r: r.cost_usd if r.cost_usd > 0 else float('inf'))
+        cheapest = min(
+            results, key=lambda r: r.cost_usd if r.cost_usd > 0 else float("inf")
+        )
         highest_quality = max(results, key=lambda r: r.quality_score)
 
         lines.append(f"Fastest: {fastest.model} ({fastest.response_time_ms:.1f} ms)")
-        lines.append(f"Cheapest: {cheapest.model} (${cheapest.cost_usd:.6f})" if cheapest.cost_usd > 0 else f"Cheapest: {cheapest.model} (Free)")
-        lines.append(f"Highest quality: {highest_quality.model} (score: {highest_quality.quality_score:.2f})")
+        lines.append(
+            f"Cheapest: {cheapest.model} (${cheapest.cost_usd:.6f})"
+            if cheapest.cost_usd > 0
+            else f"Cheapest: {cheapest.model} (Free)"
+        )
+        lines.append(
+            f"Highest quality: {highest_quality.model} (score: {highest_quality.quality_score:.2f})"
+        )
 
     lines.append("")
 
@@ -215,10 +225,7 @@ def main(argv: list[str] | None = None) -> int:
     """Entry point for Day 5 demo."""
     args = sys.argv[1:] if argv is None else argv
 
-    prompt = (
-        " ".join(args) if args
-        else "What is machine learning?"
-    )
+    prompt = " ".join(args) if args else "What is machine learning?"
 
     # Models from different categories (adjust based on available models)
     models = [

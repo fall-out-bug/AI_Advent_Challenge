@@ -96,10 +96,7 @@ TOOL_STATUS_OVERRIDES: Dict[str, Tuple[str, str]] = {
     ),
     "format_digest_markdown": (
         "deprecated",
-        (
-            "Formatting moves to CLI renderer; keep for backward compatibility "
-            "only."
-        ),
+        ("Formatting moves to CLI renderer; keep for backward compatibility " "only."),
     ),
     "combine_markdown_sections": (
         "deprecated",
@@ -161,10 +158,12 @@ class MCPToolsRegistry:
         self.cache_ttl_seconds = cache_ttl_seconds
         self._tools: Optional[List[ToolMetadata]] = None
         self._cache_timestamp: Optional[datetime] = None
-        self._include_deprecated = (
-            os.getenv(DEPRECATED_ENV_FLAG, "0").lower()
-            not in {"", "0", "false", "no"}
-        )
+        self._include_deprecated = os.getenv(DEPRECATED_ENV_FLAG, "0").lower() not in {
+            "",
+            "0",
+            "false",
+            "no",
+        }
 
     async def discover_tools(self) -> List[ToolMetadata]:
         """Discover all available MCP tools.
@@ -227,9 +226,7 @@ class MCPToolsRegistry:
             status = override[0] if override else DEFAULT_TOOL_STATUS
 
             if status in HIDDEN_STATUSES and not self._include_deprecated:
-                logger.debug(
-                    "Skipping %s tool '%s' during discovery", status, name
-                )
+                logger.debug("Skipping %s tool '%s' during discovery", status, name)
                 continue
 
             filtered.append(tool)
@@ -255,9 +252,7 @@ class MCPToolsRegistry:
 
                 metadata = ToolMetadata(
                     name=name,
-                    description=self._augment_description(
-                        description, status, note
-                    ),
+                    description=self._augment_description(description, status, note),
                     input_schema=tool.get("input_schema", {}),
                     status=status,
                     note=note,
@@ -270,9 +265,7 @@ class MCPToolsRegistry:
         return parsed
 
     @staticmethod
-    def _augment_description(
-        description: str, status: str, note: Optional[str]
-    ) -> str:
+    def _augment_description(description: str, status: str, note: Optional[str]) -> str:
         """Append lifecycle details to tool description."""
         status_prefix = f"[{status.upper()}] "
         note_suffix = f" — {note}" if note else ""

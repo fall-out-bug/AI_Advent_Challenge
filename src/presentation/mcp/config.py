@@ -1,4 +1,5 @@
 """Configuration management for MCP module."""
+
 import os
 from dataclasses import dataclass
 from pathlib import Path

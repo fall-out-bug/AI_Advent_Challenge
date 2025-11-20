@@ -1,6 +1,7 @@
 """Unit tests for ParliamentAdapter."""
 
 import pytest
+
 from src.presentation.mcp.adapters.complexity_adapter import ComplexityAdapter
 from src.presentation.mcp.exceptions import MCPValidationError
 

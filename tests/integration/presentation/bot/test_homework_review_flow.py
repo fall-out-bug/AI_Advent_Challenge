@@ -4,20 +4,25 @@ Testing full flow: message → orchestrator → handler → MCP tools → respon
 """
 
 import base64
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 import tempfile
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.presentation.bot.orchestrator import ButlerOrchestrator
-from src.application.dtos.butler_dialog_dtos import DialogContext, DialogMode, DialogState
+import pytest
+
+from src.application.dtos.butler_dialog_dtos import (
+    DialogContext,
+    DialogMode,
+    DialogState,
+)
 from src.application.services.mode_classifier import ModeClassifier
-from src.infrastructure.hw_checker.client import HWCheckerClient
 from src.application.use_cases.list_homework_submissions import (
     ListHomeworkSubmissionsUseCase,
 )
 from src.application.use_cases.review_homework_use_case import ReviewHomeworkUseCase
+from src.infrastructure.hw_checker.client import HWCheckerClient
 from src.presentation.bot.handlers.homework import HomeworkHandler
+from src.presentation.bot.orchestrator import ButlerOrchestrator
 
 
 @pytest.fixture
@@ -61,10 +66,11 @@ def mode_classifier(mock_llm_client):
 @pytest.fixture
 def orchestrator(mode_classifier, homework_handler):
     """Create ButlerOrchestrator with mocked dependencies."""
+    from motor.motor_asyncio import AsyncIOMotorDatabase
+
     from src.presentation.bot.handlers.chat import ChatHandler
     from src.presentation.bot.handlers.data import DataHandler
     from src.presentation.bot.handlers.task import TaskHandler
-    from motor.motor_asyncio import AsyncIOMotorDatabase
 
     # Create minimal mocks for other handlers
     mock_chat = MagicMock(spec=ChatHandler)

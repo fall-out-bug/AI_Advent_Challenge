@@ -7,6 +7,7 @@ Purpose:
 from typing import Optional
 
 import httpx
+
 from src.domain.interfaces.voice import SpeechToTextAdapter
 from src.domain.value_objects.transcription import Transcription
 from src.infrastructure.config.settings import get_settings
@@ -164,4 +165,3 @@ class WhisperSpeechToTextAdapter:
                 exc_info=True,
             )
             raise RuntimeError(f"Transcription failed: {str(e)}") from e
-

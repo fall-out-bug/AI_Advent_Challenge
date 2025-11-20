@@ -1,7 +1,8 @@
 """Unit tests for UserProfile value object."""
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 from src.domain.personalization.user_profile import UserProfile
 

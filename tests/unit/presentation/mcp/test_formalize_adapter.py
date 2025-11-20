@@ -1,7 +1,8 @@
 """Tests for formalize task adapter."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from src.presentation.mcp.adapters.formalize_adapter import FormalizeAdapter
 

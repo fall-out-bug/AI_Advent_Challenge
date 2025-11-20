@@ -1,0 +1,41 @@
+{
+  "epic_id": "epic_26",
+  "iteration": 1,
+  "timestamp": "2025_11_19_16_25_10",
+  "user_story": "As a developer, I want an autonomous test agent that writes tests, implements code, and verifies results, so that I can automate test-driven development workflows using local Qwen model.",
+  "acceptance_criteria": [
+    "GIVEN a code file or requirement, WHEN the test agent is invoked, THEN it generates comprehensive test cases following pytest patterns",
+    "GIVEN test cases, WHEN the agent generates implementation code, THEN the code follows Clean Architecture boundaries and project standards",
+    "GIVEN generated tests and code, WHEN tests are executed, THEN the agent reports pass/fail status and coverage metrics",
+    "GIVEN the agent runs, WHEN it processes requests, THEN it uses only local Qwen model (no external APIs)",
+    "GIVEN the agent completes a task, WHEN results are reported, THEN test coverage meets ≥80% threshold"
+  ],
+  "out_of_scope": [
+    "External test frameworks beyond pytest",
+    "Cloud-based LLM services (must use local Qwen only)",
+    "Complex multi-service test orchestration",
+    "Performance/load testing (focus on functional tests only)",
+    "Integration with external CI/CD systems (local execution only)"
+  ],
+  "metrics": {
+    "technical_metrics": [
+      "Test generation success rate: ≥90% of test cases should be valid pytest code",
+      "Code generation quality: ≥80% of generated code should pass type checking (mypy strict)",
+      "Test execution success: ≥95% of generated tests should execute without syntax errors",
+      "Coverage target: Generated tests should achieve ≥80% code coverage for target modules",
+      "Response time: Agent should complete test generation within 30 seconds per file"
+    ],
+    "customer_estimates": [
+      "To be provided by customer via explicit chat request"
+    ]
+  },
+  "constraints": [
+    "Must use existing Clean Architecture structure (domain, application, infrastructure, presentation layers)",
+    "Must integrate with existing LLM client infrastructure (Qwen model only)",
+    "Must follow project code standards: PEP 8, type hints required, docstrings required",
+    "Must maintain ≥80% test coverage for generated code",
+    "Must work entirely on local infrastructure (no external API calls)",
+    "Must respect existing layer boundaries (no cross-layer violations)",
+    "Must use pytest framework (existing project standard)"
+  ]
+}

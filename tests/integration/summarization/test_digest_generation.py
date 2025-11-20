@@ -15,12 +15,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-<<<<<<< HEAD
 from src.infrastructure.database.mongo import get_db
-=======
->>>>>>> origin/master
-from src.infrastructure.repositories.post_repository import PostRepository
+
 from src.infrastructure.di.factories import create_channel_digest_by_name_use_case
+from src.infrastructure.repositories.post_repository import PostRepository
 
 
 @pytest.fixture
@@ -31,10 +29,7 @@ async def test_posts_for_periods(real_mongodb):
         Setup test data with posts from different time periods.
     """
     db = real_mongodb
-<<<<<<< HEAD
     post_repo = PostRepository(db)
-=======
->>>>>>> origin/master
 
     now = datetime.now(timezone.utc)
 
@@ -86,14 +81,9 @@ async def test_posts_for_periods(real_mongodb):
         },
     ]
 
-<<<<<<< HEAD
     # Save all posts
     for post in posts:
         await post_repo.save_post(post)
-=======
-    # Save all posts directly into test database
-    await db.posts.insert_many(posts)
->>>>>>> origin/master
 
     yield posts
 
@@ -114,13 +104,8 @@ async def test_digest_24_hours(test_posts_for_periods, real_mongodb):
     # Verify posts are in database
     posts_count = await db.posts.count_documents(
         {
-<<<<<<< HEAD
-            "channel_username": "test_channel",
-            "user_id": 123,
-=======
             "user_id": 123,
             "channel_username": "test_channel",
->>>>>>> origin/master
             "test_data": True,
         }
     )
@@ -138,22 +123,6 @@ async def test_digest_24_hours(test_posts_for_periods, real_mongodb):
     )
 
     try:
-<<<<<<< HEAD
-        # Create use case - it will use its own DB connection
-        # We need to ensure it uses the same database
-        from src.infrastructure.database.mongo import get_db as get_db_func
-
-        # Override get_db to return our test database
-        original_get_db = get_db_func
-        use_case = await create_channel_digest_by_name_use_case()
-
-        # Execute
-        result = await use_case.execute(
-            user_id=123,
-            channel_username="test_channel",
-            hours=24,
-        )
-=======
         # Patch use case DB access to use the test database
         with patch(
             "src.application.use_cases.generate_channel_digest_by_name.get_db",
@@ -167,7 +136,6 @@ async def test_digest_24_hours(test_posts_for_periods, real_mongodb):
                 channel_username="test_channel",
                 hours=24,
             )
->>>>>>> origin/master
 
         assert result is not None
         assert result.channel_username == "test_channel"
@@ -190,11 +158,8 @@ async def test_digest_3_days(test_posts_for_periods, real_mongodb):
     """
     db = real_mongodb
 
-<<<<<<< HEAD
     use_case = await create_channel_digest_by_name_use_case()
 
-=======
->>>>>>> origin/master
     await db.channels.insert_one(
         {
             "user_id": 123,
@@ -206,17 +171,6 @@ async def test_digest_3_days(test_posts_for_periods, real_mongodb):
     )
 
     try:
-<<<<<<< HEAD
-        result = await use_case.execute(
-            user_id=123,
-            channel_username="test_channel",
-            hours=72,  # 3 days
-        )
-
-        assert result is not None
-        # Should include posts from last 3 days (msg_1, msg_2, msg_3)
-        assert result.post_count == 3, "Should include posts from last 3 days"
-=======
         with patch(
             "src.application.use_cases.generate_channel_digest_by_name.get_db",
             new=AsyncMock(return_value=db),
@@ -231,7 +185,6 @@ async def test_digest_3_days(test_posts_for_periods, real_mongodb):
             assert result is not None
             # Should include posts from last 3 days (msg_1, msg_2, msg_3)
             assert result.post_count == 3, "Should include posts from last 3 days"
->>>>>>> origin/master
 
     finally:
         await db.channels.delete_many({"test_data": True})
@@ -246,11 +199,8 @@ async def test_digest_7_days(test_posts_for_periods, real_mongodb):
     """
     db = real_mongodb
 
-<<<<<<< HEAD
     use_case = await create_channel_digest_by_name_use_case()
 
-=======
->>>>>>> origin/master
     await db.channels.insert_one(
         {
             "user_id": 123,
@@ -262,17 +212,6 @@ async def test_digest_7_days(test_posts_for_periods, real_mongodb):
     )
 
     try:
-<<<<<<< HEAD
-        result = await use_case.execute(
-            user_id=123,
-            channel_username="test_channel",
-            hours=168,  # 7 days
-        )
-
-        assert result is not None
-        # Should include posts from last 7 days (msg_1, msg_2, msg_3, msg_4)
-        assert result.post_count == 4, "Should include posts from last 7 days"
-=======
         with patch(
             "src.application.use_cases.generate_channel_digest_by_name.get_db",
             new=AsyncMock(return_value=db),
@@ -287,7 +226,6 @@ async def test_digest_7_days(test_posts_for_periods, real_mongodb):
             assert result is not None
             # Should include posts from last 7 days (msg_1, msg_2, msg_3, msg_4)
             assert result.post_count == 4, "Should include posts from last 7 days"
->>>>>>> origin/master
 
     finally:
         await db.channels.delete_many({"test_data": True})
@@ -302,11 +240,8 @@ async def test_digest_empty_channel(real_mongodb):
     """
     db = real_mongodb
 
-<<<<<<< HEAD
     use_case = await create_channel_digest_by_name_use_case()
 
-=======
->>>>>>> origin/master
     await db.channels.insert_one(
         {
             "user_id": 123,
@@ -318,17 +253,6 @@ async def test_digest_empty_channel(real_mongodb):
     )
 
     try:
-<<<<<<< HEAD
-        result = await use_case.execute(
-            user_id=123,
-            channel_username="empty_channel",
-            hours=24,
-        )
-
-        assert result is not None
-        assert result.post_count == 0
-        assert "Нет постов" in result.summary.text or "No posts" in result.summary.text
-=======
         with patch(
             "src.application.use_cases.generate_channel_digest_by_name.get_db",
             new=AsyncMock(return_value=db),
@@ -343,7 +267,6 @@ async def test_digest_empty_channel(real_mongodb):
             assert result is not None
             assert result.post_count == 0
             assert "Нет постов" in result.summary.text or "No posts" in result.summary.text
->>>>>>> origin/master
 
     finally:
         await db.channels.delete_many({"test_data": True})

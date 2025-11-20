@@ -3,10 +3,11 @@
 Following TDD principles: test error handling and fallback behavior.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from src.domain.agents.services.mode_classifier import ModeClassifier, DialogMode
+import pytest
+
+from src.domain.agents.services.mode_classifier import DialogMode, ModeClassifier
 from src.domain.interfaces.llm_client import LLMClientProtocol
 
 

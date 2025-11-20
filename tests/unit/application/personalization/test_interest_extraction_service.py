@@ -45,10 +45,12 @@ class MockLLMClient:
 async def test_extract_interests_from_python_conversation():
     """Test interest extraction from Python-themed conversation."""
     # Mock LLM response
-    llm_response = json.dumps({
-        "summary": "User discussed Python development and Docker deployment",
-        "interests": ["Python", "Docker", "Clean Architecture"],
-    })
+    llm_response = json.dumps(
+        {
+            "summary": "User discussed Python development and Docker deployment",
+            "interests": ["Python", "Docker", "Clean Architecture"],
+        }
+    )
 
     llm_client = MockLLMClient(llm_response)
     service = InterestExtractionService(llm_client, max_topics=7)
@@ -74,10 +76,12 @@ async def test_extract_interests_from_python_conversation():
 @pytest.mark.asyncio
 async def test_merge_interests_with_existing():
     """Test merging new interests with existing topics."""
-    llm_response = json.dumps({
-        "summary": "User discussed Python and Clean Architecture",
-        "interests": ["Python", "Clean Architecture", "Telegram bots"],
-    })
+    llm_response = json.dumps(
+        {
+            "summary": "User discussed Python and Clean Architecture",
+            "interests": ["Python", "Clean Architecture", "Telegram bots"],
+        }
+    )
 
     llm_client = MockLLMClient(llm_response)
     service = InterestExtractionService(llm_client, max_topics=7)
@@ -101,15 +105,17 @@ async def test_merge_interests_with_existing():
 async def test_filter_sensitive_data():
     """Test that sensitive data is filtered from interests."""
     # LLM might return sensitive data (should be filtered)
-    llm_response = json.dumps({
-        "summary": "User discussed API keys",
-        "interests": [
-            "Python",
-            "sk-1234567890abcdefghijklmnopqrstuvwxyz",  # API key (should be filtered)
-            "password=mysecret",  # Password (should be filtered)
-            "Docker",
-        ],
-    })
+    llm_response = json.dumps(
+        {
+            "summary": "User discussed API keys",
+            "interests": [
+                "Python",
+                "sk-1234567890abcdefghijklmnopqrstuvwxyz",  # API key (should be filtered)
+                "password=mysecret",  # Password (should be filtered)
+                "Docker",
+            ],
+        }
+    )
 
     llm_client = MockLLMClient(llm_response)
     service = InterestExtractionService(llm_client, max_topics=7)
@@ -176,19 +182,21 @@ async def test_missing_json_keys_graceful_fallback():
 async def test_max_topics_constraint():
     """Test that max_topics constraint is enforced."""
     # LLM returns more topics than max
-    llm_response = json.dumps({
-        "summary": "User discussed many topics",
-        "interests": [
-            "Python",
-            "Docker",
-            "Clean Architecture",
-            "Telegram bots",
-            "FastAPI",
-            "PostgreSQL",
-            "Redis",
-            "Kubernetes",  # 8th topic (should be capped)
-        ],
-    })
+    llm_response = json.dumps(
+        {
+            "summary": "User discussed many topics",
+            "interests": [
+                "Python",
+                "Docker",
+                "Clean Architecture",
+                "Telegram bots",
+                "FastAPI",
+                "PostgreSQL",
+                "Redis",
+                "Kubernetes",  # 8th topic (should be capped)
+            ],
+        }
+    )
 
     llm_client = MockLLMClient(llm_response)
     service = InterestExtractionService(llm_client, max_topics=7)

@@ -10,9 +10,9 @@ import pytest
 from src.application.embedding_index.dtos import IndexingRequest
 from src.application.embedding_index.use_case import BuildEmbeddingIndexUseCase
 from src.domain.embedding_index import (
-    ChunkRepository,
     Chunker,
     ChunkingSettings,
+    ChunkRepository,
     DocumentCollector,
     DocumentPayload,
     DocumentRecord,
@@ -146,7 +146,9 @@ def test_use_case_indexes_documents_and_embeddings() -> None:
     )
     request = IndexingRequest(
         sources=["/tmp/docs"],
-        chunking_settings=ChunkingSettings(chunk_size_tokens=1200, chunk_overlap_tokens=200),
+        chunking_settings=ChunkingSettings(
+            chunk_size_tokens=1200, chunk_overlap_tokens=200
+        ),
         extra_tags={"language": "ru", "stage": "19"},
         batch_size=2,
     )
@@ -187,7 +189,9 @@ def test_use_case_batches_embeddings_respecting_batch_size() -> None:
     )
     request = IndexingRequest(
         sources=["/tmp/docs"],
-        chunking_settings=ChunkingSettings(chunk_size_tokens=1200, chunk_overlap_tokens=200),
+        chunking_settings=ChunkingSettings(
+            chunk_size_tokens=1200, chunk_overlap_tokens=200
+        ),
         extra_tags={"language": "ru", "stage": "19"},
         batch_size=2,
     )

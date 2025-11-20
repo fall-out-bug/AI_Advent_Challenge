@@ -66,8 +66,8 @@ class DataHandler(Handler):
         self.tool_client = tool_client
         self.hybrid_classifier = hybrid_classifier
         self.hw_checker_client = hw_checker_client
-        self._collect_data_use_case = (
-            collect_data_use_case or CollectDataUseCase(tool_client=tool_client)
+        self._collect_data_use_case = collect_data_use_case or CollectDataUseCase(
+            tool_client=tool_client
         )
 
     async def handle(self, context: DialogContext, message: str) -> str:

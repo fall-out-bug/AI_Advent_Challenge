@@ -3,8 +3,9 @@
 Following TDD principles and testing best practices.
 """
 
-import pytest
 from unittest.mock import AsyncMock, Mock
+
+import pytest
 
 from src.application.dtos.butler_dialog_dtos import DialogContext, DialogState
 from src.application.dtos.butler_use_case_dtos import TaskCreationResult
@@ -32,9 +33,7 @@ class TestTaskHandler:
         self, handler: TaskHandler, mock_create_task_use_case: CreateTaskUseCase
     ) -> None:
         """Task handler returns success message when use case succeeds."""
-        context = DialogContext(
-            state=DialogState.IDLE, user_id="123", session_id="456"
-        )
+        context = DialogContext(state=DialogState.IDLE, user_id="123", session_id="456")
         mock_create_task_use_case.execute.return_value = TaskCreationResult(
             created=True,
             task_id="task123",
@@ -51,9 +50,7 @@ class TestTaskHandler:
         self, handler: TaskHandler, mock_create_task_use_case: CreateTaskUseCase
     ) -> None:
         """Clarification responses are passed through and conversation state stored."""
-        context = DialogContext(
-            state=DialogState.IDLE, user_id="123", session_id="456"
-        )
+        context = DialogContext(state=DialogState.IDLE, user_id="123", session_id="456")
         mock_create_task_use_case.execute.return_value = TaskCreationResult(
             created=False,
             clarification="What is the deadline?",
@@ -70,9 +67,7 @@ class TestTaskHandler:
         self, handler: TaskHandler, mock_create_task_use_case: CreateTaskUseCase
     ) -> None:
         """User sees error message when use case fails."""
-        context = DialogContext(
-            state=DialogState.IDLE, user_id="123", session_id="456"
-        )
+        context = DialogContext(state=DialogState.IDLE, user_id="123", session_id="456")
         mock_create_task_use_case.execute.return_value = TaskCreationResult(
             created=False,
             error="Task creation failed: Validation error",
@@ -88,9 +83,7 @@ class TestTaskHandler:
         self, handler: TaskHandler, mock_create_task_use_case: CreateTaskUseCase
     ) -> None:
         """Handler falls back to generic error message on unexpected exceptions."""
-        context = DialogContext(
-            state=DialogState.IDLE, user_id="123", session_id="456"
-        )
+        context = DialogContext(state=DialogState.IDLE, user_id="123", session_id="456")
         mock_create_task_use_case.execute.side_effect = Exception("boom")
 
         response = await handler.handle(context, "Create task")

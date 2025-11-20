@@ -3,8 +3,9 @@
 Tests that digests cannot be generated without subscription.
 """
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 
 from src.presentation.mcp.tools.channels.channel_digest import (
     get_channel_digest_by_name,

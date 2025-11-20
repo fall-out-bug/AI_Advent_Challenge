@@ -1,10 +1,11 @@
 """Integration tests for LLM-based summarizer."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from src.infrastructure.llm.summarizer import summarize_posts, MapReduceSummarizer
+import pytest
+
 from src.infrastructure.clients.llm_client import LLMClient
+from src.infrastructure.llm.summarizer import MapReduceSummarizer, summarize_posts
 
 
 class MockLLMClient(LLMClient):
@@ -136,8 +137,8 @@ async def test_map_reduce_summarizer() -> None:
         ]
     )
 
-    from src.infrastructure.llm.token_counter import TokenCounter
     from src.infrastructure.llm.chunker import SemanticChunker
+    from src.infrastructure.llm.token_counter import TokenCounter
 
     # Use small chunk size to force multiple chunks
     counter = TokenCounter()

@@ -6,21 +6,19 @@ matches the OpenAPI specification.
 
 import json
 from pathlib import Path
+from unittest.mock import AsyncMock
 
 import pytest
 import yaml
-from fastapi.testclient import TestClient
 from fastapi import FastAPI
-from unittest.mock import AsyncMock
+from fastapi.testclient import TestClient
 
-from src.presentation.api.review_routes import create_review_router
 from src.application.use_cases.enqueue_review_task_use_case import (
     EnqueueReviewTaskUseCase,
 )
-from src.application.use_cases.get_review_status_use_case import (
-    GetReviewStatusUseCase,
-)
+from src.application.use_cases.get_review_status_use_case import GetReviewStatusUseCase
 from src.infrastructure.config.settings import Settings
+from src.presentation.api.review_routes import create_review_router
 
 
 @pytest.fixture

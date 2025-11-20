@@ -46,7 +46,9 @@ def test_render_digest_markdown(sample_digest: ChannelDigest) -> None:
 
 
 @pytest.mark.asyncio()
-async def test_export_digest_markdown(tmp_path: Path, sample_digest: ChannelDigest) -> None:
+async def test_export_digest_markdown(
+    tmp_path: Path, sample_digest: ChannelDigest
+) -> None:
     destination = tmp_path / "digest.md"
 
     async def fake_fetcher(user_id: int, channel: str | None, hours: int):
@@ -101,7 +103,9 @@ async def test_export_digest_pdf(tmp_path: Path, sample_digest: ChannelDigest) -
 
 
 @pytest.mark.asyncio()
-async def test_export_digest_overwrite_guard(tmp_path: Path, sample_digest: ChannelDigest) -> None:
+async def test_export_digest_overwrite_guard(
+    tmp_path: Path, sample_digest: ChannelDigest
+) -> None:
     destination = tmp_path / "digest.md"
     destination.write_text("existing", encoding="utf-8")
 

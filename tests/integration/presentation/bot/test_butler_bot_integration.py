@@ -3,9 +3,10 @@
 Testing full integration: factory → orchestrator → bot → handler.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 import os
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from src.presentation.bot.butler_bot import ButlerBot
 from src.presentation.bot.factory import create_butler_orchestrator
@@ -61,9 +62,10 @@ async def test_factory_creates_orchestrator(mock_get_mcp, mock_mistral, mock_get
     mock_get_mcp.return_value = mock_mcp_base
 
     # Mock RobustMCPClient and adapter
-    with patch("src.presentation.bot.factory.RobustMCPClient") as mock_robust, patch(
-        "src.presentation.bot.factory.MCPToolClientAdapter"
-    ) as mock_adapter:
+    with (
+        patch("src.presentation.bot.factory.RobustMCPClient") as mock_robust,
+        patch("src.presentation.bot.factory.MCPToolClientAdapter") as mock_adapter,
+    ):
         mock_robust_client = MagicMock()
         mock_robust.return_value = mock_robust_client
 

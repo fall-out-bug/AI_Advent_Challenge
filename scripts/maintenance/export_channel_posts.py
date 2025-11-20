@@ -6,11 +6,11 @@ Purpose:
 """
 
 import asyncio
+import json
 import os
 import sys
-import json
-from pathlib import Path
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 # Load environment variables
 from dotenv import load_dotenv
@@ -25,8 +25,8 @@ else:
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.infrastructure.database.mongo import get_db
-from src.infrastructure.repositories.post_repository import PostRepository
 from src.infrastructure.logging import get_logger
+from src.infrastructure.repositories.post_repository import PostRepository
 
 logger = get_logger("export_posts")
 
@@ -60,11 +60,9 @@ async def export_channel_posts(user_id: int, channels: list[str], hours: int = 1
         print(f"  Found {len(posts)} posts")
 
         # Get channel metadata
-        channel_doc = await db.channels.find_one({
-            "user_id": user_id,
-            "channel_username": channel_username,
-            "active": True
-        })
+        channel_doc = await db.channels.find_one(
+            {"user_id": user_id, "channel_username": channel_username, "active": True}
+        )
 
         channel_title = channel_doc.get("title") if channel_doc else None
         channel_id = channel_doc.get("channel_id") if channel_doc else None
@@ -74,7 +72,7 @@ async def export_channel_posts(user_id: int, channels: list[str], hours: int = 1
             "channel_title": channel_title,
             "channel_id": channel_id,
             "posts_count": len(posts),
-            "posts": []
+            "posts": [],
         }
 
         # Format posts for export
@@ -84,7 +82,9 @@ async def export_channel_posts(user_id: int, channels: list[str], hours: int = 1
                 "date": str(post.get("date")) if post.get("date") else None,
                 "text": post.get("text", ""),
                 "text_length": len(post.get("text", "")),
-                "channel_username_db": post.get("channel_username"),  # What's stored in DB
+                "channel_username_db": post.get(
+                    "channel_username"
+                ),  # What's stored in DB
                 "channel_id_db": post.get("channel_id"),  # What's stored in DB
                 "user_id_db": post.get("user_id"),  # What's stored in DB
             }
@@ -111,7 +111,7 @@ async def export_channel_posts(user_id: int, channels: list[str], hours: int = 1
         "user_id": user_id,
         "time_window_hours": hours,
         "since": since.isoformat(),
-        "channels": all_posts
+        "channels": all_posts,
     }
 
     with open(output_file, "w", encoding="utf-8") as f:
@@ -142,7 +142,7 @@ async def export_channel_posts(user_id: int, channels: list[str], hours: int = 1
             f.write("=" * 80 + "\n")
             f.write("\n")
 
-            for i, post in enumerate(channel_data['posts'], 1):
+            for i, post in enumerate(channel_data["posts"], 1):
                 f.write(f"\n--- POST {i} ---\n")
                 f.write(f"Message ID: {post['message_id']}\n")
                 f.write(f"Date: {post['date']}\n")
@@ -164,9 +164,9 @@ async def export_channel_posts(user_id: int, channels: list[str], hours: int = 1
     all_channel_usernames = set()
 
     for channel_username, channel_data in all_posts.items():
-        for post in channel_data['posts']:
-            post_channel_id = post.get('channel_id_db')
-            post_channel_username = post.get('channel_username_db')
+        for post in channel_data["posts"]:
+            post_channel_id = post.get("channel_id_db")
+            post_channel_username = post.get("channel_username_db")
 
             if post_channel_id:
                 all_channel_ids.add(post_channel_id)
@@ -175,37 +175,50 @@ async def export_channel_posts(user_id: int, channels: list[str], hours: int = 1
 
     # Check if posts have wrong channel_id or channel_username
     for channel_username, channel_data in all_posts.items():
-        expected_channel_id = channel_data.get('channel_id')
+        expected_channel_id = channel_data.get("channel_id")
         expected_channel_username = channel_username
 
         wrong_posts = []
-        for post in channel_data['posts']:
-            post_channel_id = post.get('channel_id_db')
-            post_channel_username = post.get('channel_username_db')
+        for post in channel_data["posts"]:
+            post_channel_id = post.get("channel_id_db")
+            post_channel_username = post.get("channel_username_db")
 
             if post_channel_id and post_channel_id != expected_channel_id:
-                wrong_posts.append({
-                    'message_id': post['message_id'],
-                    'expected_channel_id': expected_channel_id,
-                    'actual_channel_id': post_channel_id,
-                    'expected_channel_username': expected_channel_username,
-                    'actual_channel_username': post_channel_username,
-                })
-            elif post_channel_username and post_channel_username != expected_channel_username:
-                wrong_posts.append({
-                    'message_id': post['message_id'],
-                    'expected_channel_id': expected_channel_id,
-                    'actual_channel_id': post_channel_id,
-                    'expected_channel_username': expected_channel_username,
-                    'actual_channel_username': post_channel_username,
-                })
+                wrong_posts.append(
+                    {
+                        "message_id": post["message_id"],
+                        "expected_channel_id": expected_channel_id,
+                        "actual_channel_id": post_channel_id,
+                        "expected_channel_username": expected_channel_username,
+                        "actual_channel_username": post_channel_username,
+                    }
+                )
+            elif (
+                post_channel_username
+                and post_channel_username != expected_channel_username
+            ):
+                wrong_posts.append(
+                    {
+                        "message_id": post["message_id"],
+                        "expected_channel_id": expected_channel_id,
+                        "actual_channel_id": post_channel_id,
+                        "expected_channel_username": expected_channel_username,
+                        "actual_channel_username": post_channel_username,
+                    }
+                )
 
         if wrong_posts:
-            print(f"\n⚠️  @{channel_username}: Found {len(wrong_posts)} posts with wrong channel_id/username:")
+            print(
+                f"\n⚠️  @{channel_username}: Found {len(wrong_posts)} posts with wrong channel_id/username:"
+            )
             for wp in wrong_posts[:5]:  # Show first 5
                 print(f"   Message ID {wp['message_id']}:")
-                print(f"      Expected: @{wp['expected_channel_username']} (ID: {wp['expected_channel_id']})")
-                print(f"      Actual: @{wp['actual_channel_username']} (ID: {wp['actual_channel_id']})")
+                print(
+                    f"      Expected: @{wp['expected_channel_username']} (ID: {wp['expected_channel_id']})"
+                )
+                print(
+                    f"      Actual: @{wp['actual_channel_username']} (ID: {wp['actual_channel_id']})"
+                )
             if len(wrong_posts) > 5:
                 print(f"   ... and {len(wrong_posts) - 5} more")
 
@@ -213,9 +226,9 @@ async def export_channel_posts(user_id: int, channels: list[str], hours: int = 1
     channel_ids_by_channel = {}
     for channel_username, channel_data in all_posts.items():
         channel_ids = set()
-        for post in channel_data['posts']:
-            if post.get('channel_id_db'):
-                channel_ids.add(post['channel_id_db'])
+        for post in channel_data["posts"]:
+            if post.get("channel_id_db"):
+                channel_ids.add(post["channel_id_db"])
         if channel_ids:
             channel_ids_by_channel[channel_username] = channel_ids
 
@@ -227,11 +240,17 @@ async def export_channel_posts(user_id: int, channels: list[str], hours: int = 1
                 all_ids[channel_id] = []
             all_ids[channel_id].append(channel_username)
 
-    overlapping = {cid: channels for cid, channels in all_ids.items() if len(channels) > 1}
+    overlapping = {
+        cid: channels for cid, channels in all_ids.items() if len(channels) > 1
+    }
     if overlapping:
-        print(f"\n⚠️  Found {len(overlapping)} channel_ids that appear in multiple channels:")
+        print(
+            f"\n⚠️  Found {len(overlapping)} channel_ids that appear in multiple channels:"
+        )
         for channel_id, channels_list in list(overlapping.items())[:10]:
-            print(f"   Channel ID {channel_id} appears in: {', '.join(f'@{c}' for c in channels_list)}")
+            print(
+                f"   Channel ID {channel_id} appears in: {', '.join(f'@{c}' for c in channels_list)}"
+            )
 
     print("\n" + "=" * 80)
     print("Export complete!")
@@ -243,22 +262,29 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Export channel posts for comparison")
-    parser.add_argument("--user-id", type=int, help="Telegram user ID", default=204047849)
-    parser.add_argument("--hours", type=int, default=168, help="Hours to look back (default: 168 = 7 days)")
+    parser.add_argument(
+        "--user-id", type=int, help="Telegram user ID", default=204047849
+    )
+    parser.add_argument(
+        "--hours",
+        type=int,
+        default=168,
+        help="Hours to look back (default: 168 = 7 days)",
+    )
     parser.add_argument(
         "--channels",
         nargs="+",
         default=["alexgladkovblog", "onaboka", "xor_journal"],
-        help="Channel usernames (default: alexgladkovblog onaboka xor_journal)"
+        help="Channel usernames (default: alexgladkovblog onaboka xor_journal)",
     )
 
     args = parser.parse_args()
 
-    asyncio.run(export_channel_posts(
-        user_id=args.user_id,
-        channels=args.channels,
-        hours=args.hours
-    ))
+    asyncio.run(
+        export_channel_posts(
+            user_id=args.user_id, channels=args.channels, hours=args.hours
+        )
+    )
 
 
 if __name__ == "__main__":

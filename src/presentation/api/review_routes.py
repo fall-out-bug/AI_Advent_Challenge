@@ -132,9 +132,9 @@ def create_review_router(
                 student_id=student_id,
                 assignment_id=assignment_id,
                 new_submission_path=str(new_submission_path),
-                previous_submission_path=str(previous_submission_path)
-                if previous_submission_path
-                else None,
+                previous_submission_path=(
+                    str(previous_submission_path) if previous_submission_path else None
+                ),
                 new_commit=new_commit_value,
                 old_commit=old_commit,
                 logs_zip_path=str(logs_zip_path) if logs_zip_path else None,

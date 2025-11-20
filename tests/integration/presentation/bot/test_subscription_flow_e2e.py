@@ -3,16 +3,17 @@
 Tests full flow from search to subscription with collection.
 """
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from aiogram.fsm.context import FSMContext
+from aiogram.types import Message, User
 
 from src.presentation.bot.handlers.butler_handler import _handle_subscribe_request
 from src.presentation.bot.handlers.channels import (
-    handle_channel_search_confirmation,
     _handle_subscribe_action,
+    handle_channel_search_confirmation,
 )
-from aiogram.types import Message, User
-from aiogram.fsm.context import FSMContext
 
 
 @pytest.fixture
@@ -143,8 +144,8 @@ async def test_subscription_flow_accept_and_collect(mock_message, mock_state):
     """
     # Arrange: Mock subscribe use case
     from src.application.use_cases.subscribe_with_collection import (
-        SubscribeWithCollectionResult,
         SubscribeToChannelWithCollectionUseCase,
+        SubscribeWithCollectionResult,
     )
 
     # Create a mock instance that will be returned

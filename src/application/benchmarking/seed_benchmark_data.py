@@ -293,7 +293,9 @@ class SeedBenchmarkDataUseCase:
                 normalized, since, now, minimum_per_channel
             )
             channel_snapshots[normalized] = snapshot
-        snapshot_path = self._write_snapshot(now, days, tuple(channel_snapshots.values()))
+        snapshot_path = self._write_snapshot(
+            now, days, tuple(channel_snapshots.values())
+        )
         return BenchmarkSeedingResult(
             snapshot_path=str(snapshot_path),
             generated_channels=channel_snapshots,
@@ -366,5 +368,7 @@ class SeedBenchmarkDataUseCase:
             "channels": [snapshot.model_dump() for snapshot in snapshots],
         }
         path = snapshot_dir / "channel_counts.json"
-        path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        path.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
         return path

@@ -33,7 +33,9 @@ class ReviewHomeworkUseCase:
         self._assignment_type = assignment_type
         self._token_budget = token_budget
         self._model_name = model_name
-        self._temp_directory = temp_directory or Path(os.getenv("BUTLER_ARCHIVE_DIR", "/tmp"))
+        self._temp_directory = temp_directory or Path(
+            os.getenv("BUTLER_ARCHIVE_DIR", "/tmp")
+        )
         self._cleanup_timeout = cleanup_timeout
 
     async def execute(self, commit_hash: str) -> HomeworkReviewResult:

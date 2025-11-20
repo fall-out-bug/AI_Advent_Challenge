@@ -8,9 +8,9 @@ import pytest
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from src.infrastructure.clients.llm_client import get_llm_client
+from src.infrastructure.config.settings import get_settings
 from src.infrastructure.database.mongo import get_db
 from src.infrastructure.llm.clients.resilient_client import ResilientLLMClient
-from src.infrastructure.config.settings import get_settings
 
 
 @pytest.fixture(scope="session")

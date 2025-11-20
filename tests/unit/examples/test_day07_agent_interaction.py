@@ -72,12 +72,14 @@ def test_reviewer_agent_reviews_result() -> None:
         "choices": [
             {
                 "message": {
-                    "content": json.dumps({
-                        "score": 0.9,
-                        "issues": ["Minor: add docstring"],
-                        "approval": True,
-                        "feedback": "Good implementation",
-                    }),
+                    "content": json.dumps(
+                        {
+                            "score": 0.9,
+                            "issues": ["Minor: add docstring"],
+                            "approval": True,
+                            "feedback": "Good implementation",
+                        }
+                    ),
                 }
             }
         ]
@@ -124,12 +126,14 @@ def test_orchestrator_executes_and_reviews() -> None:
         "choices": [
             {
                 "message": {
-                    "content": json.dumps({
-                        "score": 0.8,
-                        "issues": [],
-                        "approval": True,
-                        "feedback": "Good",
-                    }),
+                    "content": json.dumps(
+                        {
+                            "score": 0.8,
+                            "issues": [],
+                            "approval": True,
+                            "feedback": "Good",
+                        }
+                    ),
                 }
             }
         ]
@@ -138,11 +142,14 @@ def test_orchestrator_executes_and_reviews() -> None:
     task_agent = TaskAgent(llm_url="http://mock")
     reviewer_agent = ReviewerAgent(llm_url="http://mock")
 
-    with patch.object(task_agent._client, "post", return_value=task_response), \
-         patch.object(reviewer_agent._client, "post", return_value=review_response):
-
+    with (
+        patch.object(task_agent._client, "post", return_value=task_response),
+        patch.object(reviewer_agent._client, "post", return_value=review_response),
+    ):
         orchestrator = AgentOrchestrator(task_agent, reviewer_agent)
-        task_result, review_result = orchestrator.execute_and_review("Write add function")
+        task_result, review_result = orchestrator.execute_and_review(
+            "Write add function"
+        )
 
         assert task_result.task == "Write add function"
         assert "add" in task_result.output

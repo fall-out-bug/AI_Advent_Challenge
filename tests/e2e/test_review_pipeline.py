@@ -19,9 +19,7 @@ sys.path.insert(0, str(shared_path))
 from src.application.use_cases.enqueue_review_task_use_case import (
     EnqueueReviewTaskUseCase,
 )
-from src.application.use_cases.review_submission_use_case import (
-    ReviewSubmissionUseCase,
-)
+from src.application.use_cases.review_submission_use_case import ReviewSubmissionUseCase
 from src.domain.services.diff_analyzer import DiffAnalyzer
 from src.infrastructure.archive.archive_service import ZipArchiveService
 from src.infrastructure.clients.external_api_client import ExternalAPIClient
@@ -30,9 +28,7 @@ from src.infrastructure.config.settings import get_settings
 from src.infrastructure.repositories.homework_review_repository import (
     HomeworkReviewRepository,
 )
-from src.infrastructure.repositories.long_tasks_repository import (
-    LongTasksRepository,
-)
+from src.infrastructure.repositories.long_tasks_repository import LongTasksRepository
 
 # Try to import UnifiedModelClient
 try:

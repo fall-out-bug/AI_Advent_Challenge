@@ -1,8 +1,9 @@
 """Tests for _save_posts_to_db title preservation."""
 
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from src.infrastructure.clients.telegram_utils import _save_posts_to_db
 

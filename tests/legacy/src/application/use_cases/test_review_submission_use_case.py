@@ -270,7 +270,9 @@ def test_handle_log_analysis_error(use_case: ReviewSubmissionUseCase) -> None:
 
 
 @pytest.mark.asyncio
-async def test_publish_via_fallback_handles_optional_score(use_case: ReviewSubmissionUseCase) -> None:
+async def test_publish_via_fallback_handles_optional_score(
+    use_case: ReviewSubmissionUseCase,
+) -> None:
     await use_case._publish_via_fallback(
         assignment_id="hw1",
         student_id="s",

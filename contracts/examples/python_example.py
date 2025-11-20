@@ -3,10 +3,11 @@
 This example demonstrates how to integrate with the Code Review API.
 """
 
-import requests
 import time
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
+import requests
 
 
 class ReviewAPIClient:

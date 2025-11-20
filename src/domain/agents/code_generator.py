@@ -75,9 +75,9 @@ class CodeGeneratorAgent(BaseAgent):
                 task_description=request.task_description,
                 generated_code=generated_code,
                 tests=tests,
-                metadata=metadata.to_dict()
-                if hasattr(metadata, "to_dict")
-                else metadata,
+                metadata=(
+                    metadata.to_dict() if hasattr(metadata, "to_dict") else metadata
+                ),
                 generation_time=datetime.now(),
                 tokens_used=response.get("total_tokens", 0),
             )

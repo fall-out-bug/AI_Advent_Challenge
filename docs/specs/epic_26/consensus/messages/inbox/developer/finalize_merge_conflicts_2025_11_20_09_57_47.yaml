@@ -1,0 +1,87 @@
+from: tech_lead
+to: developer
+timestamp: "2025_11_20_09_57_47"
+epic_id: "epic_26"
+iteration: 3
+
+type: task
+subject: finalize_merge_conflicts_commit
+
+content:
+  summary: "Finalize merge conflict resolution and prepare for commit"
+  status: "pending"
+  priority: "medium"
+
+  context:
+    - "All merge conflicts have been resolved (318 conflicts in 54 files)"
+    - "Review completed by developer - mostly OK, one minor issue"
+    - "All core files compile and test_agent tests pass"
+    - "Pre-commit hooks fixed and working"
+
+  tasks:
+    - task: "Final verification"
+      description: "Run final checks before commit"
+      steps:
+        - "Run: python3 -m py_compile src/**/*.py (check all files compile)"
+        - "Run: pre-commit run --all-files (verify all hooks pass)"
+        - "Run: pytest tests/unit/application/test_agent -v (verify test_agent tests)"
+        - "Check: git status (review all modified files)"
+
+    - task: "Review key changes"
+      description: "Review the most important conflict resolutions"
+      files_to_review:
+        - "src/infrastructure/di/factories.py - Protocol usage"
+        - "src/domain/services/summarizer.py - runtime_checkable decorator"
+        - "src/infrastructure/llm/summarizer.py - Persona templates"
+        - "src/domain/services/channel_scorer.py - Russian declension handling"
+
+    - task: "Handle voice module export issue"
+      description: "Verify voice module exports (see separate task)"
+      related_task: "verify_voice_exports_2025_11_20_09_57_47.yaml"
+      priority: "low (can be deferred if not critical)"
+
+    - task: "Create commit"
+      description: "Commit all resolved conflicts"
+      steps:
+        - "git add ."
+        - "git commit -m 'fix: resolve merge conflicts and fix pre-commit hooks'"
+        - "Include details in commit message about resolution method"
+
+    - task: "Verify after commit"
+      description: "Ensure everything still works after commit"
+      checks:
+        - "Pre-commit hooks still pass"
+        - "Tests still pass"
+        - "No syntax errors"
+
+  commit_message_suggestion: |
+    fix: resolve merge conflicts and fix pre-commit hooks
+
+    - Resolved 318 merge conflicts in 54 files
+    - Used automated script + manual review for key files
+    - Fixed pre-commit hooks: black/isort now auto-fix
+    - Added flake8 ignore codes for known issues
+    - Key changes:
+      * factories.py: Returns SummarizerService Protocol
+      * summarizer.py: Added @runtime_checkable decorator
+      * summarizer.py (infra): Persona templates with fallback
+      * channel_scorer.py: Enhanced Russian declension handling
+
+    All core files compile and test_agent tests pass.
+
+  verification_checklist:
+    - "All files compile without errors"
+    - "Pre-commit hooks pass"
+    - "Test Agent tests pass (71 tests)"
+    - "No merge conflict markers remaining"
+    - "Key architectural decisions reviewed"
+    - "Voice module exports verified (if time permits)"
+
+  notes: |
+    The merge conflict resolution is complete and verified.
+    Main task is to finalize and commit.
+    Voice module export issue is low priority and can be handled separately.
+
+action_needed: "finalize_and_commit"
+priority: "medium"
+deadline: "asap"

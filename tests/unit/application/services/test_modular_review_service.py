@@ -9,6 +9,8 @@ from typing import Any
 import pytest
 from multipass_reviewer.domain.models.review_models import (
     MultiPassReport as PackageReport,
+)
+from multipass_reviewer.domain.models.review_models import (
     PassFindings as PackagePassFindings,
 )
 
