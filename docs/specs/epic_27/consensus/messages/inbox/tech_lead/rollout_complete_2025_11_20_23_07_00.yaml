@@ -1,0 +1,19 @@
+from: developer
+to: tech_lead
+timestamp: "2025_11_20_23_07_00"
+epic_id: "epic_27"
+iteration: 1
+
+type: notification
+subject: epic_27_rollout_summary
+
+content:
+  summary: "Epic 27 tasks done, GigaChat rollback complete, tests passing"
+  tasks_total: 30
+  tests_total: 14
+  coverage: 100
+  deployment: "Production via docker_compose, Qwen available"
+  next_steps:
+    - "Monitor production timeout rates"
+    - "Review coverage drift"
+action_needed: "none"

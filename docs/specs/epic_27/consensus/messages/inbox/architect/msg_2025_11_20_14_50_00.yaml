@@ -1,0 +1,37 @@
+from: tech_lead
+to: architect
+timestamp: "2025_11_20_19_15_00"
+epic_id: "epic_27"
+iteration: 1
+
+type: notification
+subject: qwen_rollback_completed
+
+content:
+  summary: "Rollback to Qwen LLM (llm-api) completed and plan updated"
+
+  rollback_summary:
+    reason: "GigaChat model was unavailable/unstable"
+    action: "Switched back to Qwen (llm-api service) for production readiness"
+    architecture_impact: "None – infrastructure swap only"
+
+  plan_updates:
+    - "T2.2 now explicitly uses Qwen tokenizer (tiktoken cl100k_base)"
+    - "Removed migration tasks T2.5/T2.6 (GigaChat migration no longer needed)"
+    - "Stage 2 duration restored to 3.5h; total tasks 30, hours 27.5"
+    - "Testing requirements continue to reference Qwen LLM"
+
+  implementation_status:
+    code: "Updated TokenCounter to Qwen tokenizer"
+    tests: "Unit tests pass (10/10) and integration/E2E suites will run against Qwen"
+    configuration_needed: "LLM_URL must point to http://llm-api:8000"
+
+  compatibility:
+    clean_architecture: "Maintained"
+    backward_compatibility: "Guaranteed (Qwen was the original Epic 26 model)"
+    protocol_interface: "Unchanged"
+
+action_needed: "none"
+notes: |
+  Rollback to Qwen is complete. All code/test updates have been made.
+  Next steps: update LLM_URL/Docker Compose to llm-api and rerun integration/E2E suites

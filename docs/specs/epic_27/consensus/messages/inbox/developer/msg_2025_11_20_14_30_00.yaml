@@ -1,0 +1,79 @@
+from: tech_lead
+to: developer
+timestamp: "2025_11_20_14_30_00"
+epic_id: "epic_27"
+iteration: 1
+
+type: request
+subject: plan_ready
+
+content:
+  summary: "Implementation plan ready for Epic 27 (Local Test Agent quality on large modules)"
+  total_hours: 24.5
+  stages: 7
+  first_task: "T1.1 - Write unit tests for ChunkingStrategy value object"
+
+  stage_breakdown:
+    - "S1: Domain Layer - Core Entities (3h)"
+    - "S2: Infrastructure Layer - Token Counting (3h)"
+    - "S3: Application Layer - Code Chunking (4h)"
+    - "S4: Infrastructure Layer - Code Summarization (3.5h)"
+    - "S5: Application Layer - Coverage Aggregation (3h)"
+    - "S6: Application Layer - Enhanced Use Case (4h)"
+    - "S7: Integration and E2E Testing (4h)"
+
+  key_principles:
+    - "Test-Driven Development: All tests written before implementation"
+    - "Incremental delivery: Each stage is independently testable and deployable"
+    - "Backward compatibility: Epic 26 functionality preserved throughout"
+    - "Clean Architecture: All layer boundaries respected"
+
+  new_components:
+    domain:
+      - "ChunkingStrategy (value object)"
+      - "CodeChunk (entity)"
+    application:
+      - "CodeChunker (service)"
+      - "CoverageAggregator (service)"
+      - "EnhancedGenerateTestsUseCase (use case)"
+    infrastructure:
+      - "TokenCounter (service)"
+      - "CodeSummarizer (service)"
+
+  testing_strategy:
+    unit_tests: "85% coverage target, pytest, focus on isolated components"
+    integration_tests: "70% coverage target, pytest + real LLM + pytest-cov"
+    e2e_tests: "3 user simulation scenarios in scripts/e2e/epic_27/"
+
+  e2e_scenarios:
+    - "Scenario 1: Medium-sized module - generate tests, verify ≥80% coverage"
+    - "Scenario 2: Compare with Cursor-agent tests - verify comparable coverage"
+    - "Scenario 3: Large package - verify chunking works, no context errors"
+
+  risks_to_watch:
+    - "4000-token limit may be insufficient even with chunking (mitigation: multiple strategies)"
+    - "Summarization may lose context (mitigation: preserve signatures, test thoroughly)"
+    - "Coverage aggregation may be inaccurate (mitigation: deduplication, pytest-cov)"
+    - "Backward compatibility with Epic 26 (mitigation: regression tests after each stage)"
+
+  rollback_plan:
+    triggers:
+      - "Tests fail at any stage"
+      - "Coverage drops below 80% on Epic 26 modules"
+      - "Context window handling fails"
+      - "Performance degradation >50%"
+      - "Clean Architecture violations"
+    procedure: "Stop → Test → Revert → Verify Epic 26 → Document → Notify"
+    time_to_rollback: "< 10 minutes per stage"
+
+action_needed: "begin_implementation_with_stage_1"
+notes: |
+  Plan follows TDD principles with tests written before all implementations.
+  Each stage is independently testable with clear CI gates.
+  E2E user simulation scripts included from the start.
+
+  See artifacts:
+  - plan.json: Complete task breakdown with dependencies
+  - commands.md: All necessary commands for implementation and testing
+
+  Ready to start with Stage 1 (Domain Layer - Core Entities).

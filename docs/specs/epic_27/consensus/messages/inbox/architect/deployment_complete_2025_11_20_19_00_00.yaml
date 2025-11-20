@@ -1,0 +1,69 @@
+from: devops
+to: architect
+timestamp: "2025_11_20_19_00_00"
+epic_id: "epic_27"
+iteration: 1
+
+type: notification
+subject: epic_27_deployment_complete_gigachat_migration
+
+content:
+  summary: "Epic 27 deployed to production - GigaChat migration completed"
+  deployment_status: "deployed"
+  deployment_date: "2025_11_20_19_00_00"
+  llm_migration: "completed"
+
+  llm_service_migration:
+    from_service: "llm-api"
+    from_model: "Qwen 2.5:7b"
+    to_service: "llm-api-gigachat"
+    to_model: "gigachat"
+    status: "completed"
+    configuration_updated: true
+    network_connectivity: "verified"
+
+  architecture_compliance:
+    clean_architecture: "maintained"
+    layer_violations: 0
+    protocol_interface: "preserved (LLMClient Protocol)"
+    infrastructure_change_only: true
+
+  deployment_configuration:
+    llm_url: "http://llm-api-gigachat:8000"
+    llm_model: "gigachat"
+    environment_variables:
+      LLM_URL: "http://llm-api-gigachat:8000"
+      LLM_MODEL: "gigachat"
+      MISTRAL_API_URL: "http://llm-api-gigachat:8000"
+
+  network_architecture:
+    service_networks:
+      - "butler-network"
+      - "infra_infra_app-network"
+    llm_service_network: "infra_infra_app-network"
+    connectivity: "verified"
+
+  components_deployed:
+    domain_layer:
+      - "ChunkingStrategy"
+      - "CodeChunk"
+    infrastructure_layer:
+      - "TokenCounter (GigaChat tokenizer)"
+      - "CodeSummarizer (GigaChat LLM)"
+    application_layer:
+      - "CodeChunker"
+      - "CoverageAggregator"
+      - "Enhanced GenerateTestsUseCase"
+
+  backward_compatibility:
+    epic_26_compatibility: "maintained"
+    small_modules: "Work exactly as Epic 26 (no chunking)"
+    large_modules: "New chunking functionality enabled"
+    regression_tests: "All passing (116 passed, 4 skipped)"
+
+action_needed: "verify_architecture_compliance"
+notes: |
+  Epic 27 deployed with GigaChat migration completed.
+  Architecture remains clean - only infrastructure layer changed (LLM service).
+  LLMClient Protocol interface preserved, no code changes needed.
+  All architectural decisions from architecture.json implemented correctly.

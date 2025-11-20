@@ -1,0 +1,87 @@
+from: tech_lead
+to: architect
+timestamp: "2025_11_20_19_15_00"
+epic_id: "epic_27"
+iteration: 1
+
+type: notification
+subject: rollback_to_qwen_gigachat_not_working
+
+content:
+  summary: "Rolling back to Qwen LLM - GigaChat model not working"
+
+  change_reason:
+    issue: "GigaChat model is not working/available"
+    decision: "Rollback to Qwen (llm-api service)"
+    impact: "Infrastructure layer only - Clean Architecture maintained"
+
+  changes_made:
+    token_counter:
+      - "Reverted TokenCounter to use Qwen tokenizer (tiktoken cl100k_base)"
+      - "Removed GigaChat/sentencepiece tokenizer code"
+      - "Simplified implementation to use only tiktoken"
+      - "File: src/infrastructure/test_agent/services/token_counter.py"
+
+    plan_updates:
+      - "Removed T2.5 and T2.6 (GigaChat migration tasks)"
+      - "Updated T2.2 to specify Qwen tokenizer"
+      - "Updated T2.3 integration tests to use Qwen"
+      - "Updated T4.3 to use Qwen LLM"
+      - "Updated risk section to mention Qwen"
+      - "Stage 2 duration: 5h → 3.5h (removed migration tasks)"
+      - "Total tasks: 32 → 30 (removed 2 migration tasks)"
+      - "Total hours: 29 → 27.5 (removed 1.5h migration)"
+
+  configuration_changes_needed:
+    llm_service:
+      from: "llm-api-gigachat (GigaChat)"
+      to: "llm-api (Qwen 2.5:7b)"
+
+    environment_variables:
+      - "LLM_URL: http://llm-api-gigachat:8000 → http://llm-api:8000"
+      - "LLM_MODEL: gigachat → qwen (or remove, use default)"
+
+    docker_compose:
+      - "Update docker-compose.test-agent.yml to use llm-api service"
+      - "Remove llm-api-gigachat service reference"
+
+  architecture_compliance:
+    layer_boundaries: "NO IMPACT - Pure infrastructure swap"
+    protocol_interface: "PRESERVED - LLMClient Protocol unchanged"
+    clean_architecture: "MAINTAINED - No violations"
+    application_layer: "NO CHANGES - Depends on Protocol, not implementation"
+    domain_layer: "NO CHANGES"
+    presentation_layer: "NO CHANGES"
+
+  backward_compatibility:
+    epic_26_compatibility: "Maintained - Qwen was original model"
+    test_agent_functionality: "Should work as before"
+    existing_tests: "Should pass without modification"
+
+  implementation_status:
+    code_updated: true
+    plan_updated: true
+    configuration_needed: true
+    testing_needed: true
+
+  next_steps:
+    - "Update LLM_URL environment variable to http://llm-api:8000"
+    - "Update docker-compose configuration if needed"
+    - "Test TokenCounter with Qwen tokenizer"
+    - "Verify test generation works with Qwen LLM"
+    - "Run integration tests to verify Qwen compatibility"
+
+action_needed: "update_configuration"
+notes: |
+  Rollback to Qwen completed in code and plan.
+
+  GigaChat model was not working, so we've reverted to Qwen which:
+  - Was the original model in Epic 26
+  - Is proven to work
+  - Uses tiktoken cl100k_base (standard encoding)
+
+  All code changes are complete. Configuration needs to be updated:
+  - LLM_URL environment variable
+  - Docker compose files (if used)
+
+  Architecture remains clean - this is purely an infrastructure swap.

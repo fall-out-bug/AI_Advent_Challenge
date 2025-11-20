@@ -1,0 +1,80 @@
+from: tech_lead
+to: developer
+timestamp: "2025_11_20_14_50_00"
+epic_id: "epic_27"
+iteration: 1
+
+type: update
+subject: architecture_change_gigachat_migration
+
+content:
+  summary: "Architecture change: Migration from Qwen to GigaChat LLM - Plan updated"
+
+  architecture_change:
+    from: "Qwen 2.5 (llm-api service)"
+    to: "GigaChat (llm-api-gigachat service)"
+    rationale: "GigaChat promises improved quality for test generation and code summarization"
+    impact: "Infrastructure layer only - Clean Architecture boundaries maintained"
+
+  plan_updates:
+    stage_2_new_tasks:
+      - "T2.5: Update TokenCounter to use GigaChat tokenizer instead of Qwen (1h)"
+      - "T2.6: Update integration tests for GigaChat tokenizer (0.5h)"
+
+    stage_2_updated_tasks:
+      - "T2.2: Now specifies GigaChat tokenizer (not Qwen tiktoken)"
+      - "T2.3: Integration tests now verify GigaChat token counting"
+
+    stage_2_duration: "5 hours (was 3.5h, added 1.5h for migration)"
+
+    other_updates:
+      - "T4.3: Integration tests now use GigaChat LLM (not Qwen)"
+      - "Risk section: Updated token counting risk to mention GigaChat"
+
+  implementation_requirements:
+    configuration_changes:
+      - "Update LLM_URL: http://llm-api:8000 → http://llm-api-gigachat:8000"
+      - "Update LLM_MODEL environment variable to GigaChat model identifier"
+      - "Update docker-compose.test-agent.yml service reference"
+
+    code_changes:
+      - "TokenCounter: Use GigaChat tokenizer library (not Qwen tiktoken)"
+      - "Verify GigaChat API compatibility with LLMClient Protocol"
+      - "Create GigaChatClient adapter if API differs (still conforms to Protocol)"
+
+    testing_requirements:
+      - "Test TokenCounter with GigaChat tokenizer (verify 4000-token calculations)"
+      - "Test CodeSummarizer with GigaChat LLM (verify summarization quality)"
+      - "Verify chunk sizes match actual GigaChat context limits"
+
+  important_notes:
+    - "Stage 2 is already implemented (Quality approved at 2025_11_20_15_18_03)"
+    - "You need to update existing TokenCounter implementation (T2.5)"
+    - "LLMClient Protocol remains unchanged - no application layer changes needed"
+    - "This is a pure infrastructure swap - Clean Architecture maintained"
+    - "All existing tests should still pass after migration"
+
+  updated_plan_summary:
+    total_tasks: 32 (was 30, added 2 migration tasks)
+    total_hours: 29 (was 27.5, added 1.5h for migration)
+    stage_2_hours: 5 (was 3.5)
+
+  next_steps:
+    - "If Stage 2 is complete, proceed with T2.5 and T2.6 (migration tasks)"
+    - "If Stage 2 is in progress, update current implementation to use GigaChat"
+    - "Verify all tests pass with GigaChat tokenizer"
+    - "Continue with Stage 3 after migration complete"
+
+action_needed: "update_stage_2_implementation"
+notes: |
+  Architecture change from Qwen to GigaChat has been incorporated into the plan.
+
+  Since Stage 2 is already implemented, you need to:
+  1. Update existing TokenCounter to use GigaChat tokenizer (T2.5)
+  2. Update integration tests for GigaChat (T2.6)
+  3. Update configuration (LLM_URL, LLM_MODEL, docker-compose)
+
+  The LLMClient Protocol interface is unchanged, so this is purely an infrastructure swap.
+  All application layer code remains unchanged.
+
+  Updated plan available at: docs/specs/epic_27/consensus/artifacts/plan.json

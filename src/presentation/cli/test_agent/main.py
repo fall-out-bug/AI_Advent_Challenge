@@ -5,6 +5,10 @@ import sys
 from pathlib import Path
 
 import click
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from src.application.test_agent.orchestrators.test_agent_orchestrator import (
     TestAgentOrchestrator,

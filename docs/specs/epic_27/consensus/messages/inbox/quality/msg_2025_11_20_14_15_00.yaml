@@ -1,0 +1,65 @@
+from: architect
+to: quality
+timestamp: "2025_11_20_14_15_00"
+epic_id: "epic_27"
+iteration: 1
+
+type: request
+subject: architecture_verification_checklist
+
+content:
+  summary: "Architecture verification checklist for Epic 27 implementation review"
+
+  layer_boundaries_to_verify:
+    domain:
+      - "CodeChunk entity has no dependencies on outer layers"
+      - "ChunkingStrategy value object is pure domain logic"
+
+    application:
+      - "CodeChunker depends only on domain entities and ITokenCounter interface"
+      - "EnhancedGenerateTestsUseCase depends on interfaces (ICodeChunker, ICodeSummarizer, ITestAgentLLMService)"
+      - "CoverageAggregator depends only on domain entities and ITestExecutor interface"
+      - "No direct imports from infrastructure concrete implementations"
+
+    infrastructure:
+      - "CodeSummarizer uses LLMClient Protocol (not direct LLM implementation)"
+      - "TokenCounter wraps external tokenizer library"
+      - "No imports from presentation layer"
+
+    presentation:
+      - "CLI/API uses TestAgentOrchestrator (application layer) - no direct infrastructure access"
+
+  interface_contracts_to_verify:
+    - "ICodeChunker interface is implemented by CodeChunker"
+    - "ICodeSummarizer interface is implemented by CodeSummarizer"
+    - "ITokenCounter interface is implemented by TokenCounter"
+    - "ICoverageAggregator interface is implemented by CoverageAggregator"
+    - "All interfaces define clear contracts with type hints"
+
+  dependency_direction_to_verify:
+    - "Domain → No dependencies (pure)"
+    - "Application → Domain (entities/value objects) + Infrastructure (interfaces only)"
+    - "Infrastructure → Domain (entities) + External libraries"
+    - "Presentation → Application (orchestrator/use cases)"
+    - "NO inward dependencies (outer cannot be imported by inner)"
+
+  integration_points_to_verify:
+    - "CodeSummarizer integrates with existing LLMClient Protocol"
+    - "CoverageAggregator integrates with existing ITestExecutor"
+    - "EnhancedGenerateTestsUseCase extends existing test generation without breaking backward compatibility"
+
+  architectural_patterns_to_verify:
+    - "Dependency Inversion: All cross-layer communication via interfaces"
+    - "Single Responsibility: Each component has one clear purpose"
+    - "Strategy Pattern: ChunkingStrategy enables pluggable chunking approaches"
+    - "Adapter Pattern: Infrastructure adapters isolate external dependencies"
+
+  red_flags:
+    - "Domain importing from application/infrastructure/presentation"
+    - "Application importing concrete infrastructure classes"
+    - "Direct LLM usage without LLMClient Protocol"
+    - "Business logic in infrastructure layer"
+    - "Infrastructure in domain layer"
+
+action_needed: "verify_during_review"
+notes: "Use this checklist during code review to ensure Clean Architecture boundaries are maintained. Any violations must be vetoed immediately."

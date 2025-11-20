@@ -1,0 +1,299 @@
+{
+  "epic_id": "epic_27",
+  "iteration": 1,
+  "timestamp": "2025_11_20_19_20_00",
+  "components": [
+    {
+      "name": "CodeChunker",
+      "layer": "application",
+      "purpose": "Split large Python modules into semantically meaningful chunks that fit within the 4000-token context window",
+      "interfaces": [
+        {
+          "name": "ICodeChunker",
+          "methods": [
+            "chunk_module(code: str, max_tokens: int) -> List[CodeChunk]",
+            "chunk_package(package_path: str, max_tokens: int) -> List[CodeChunk]"
+          ]
+        }
+      ],
+      "dependencies": ["CodeFile (domain)", "ITokenCounter (infrastructure)"],
+      "location": "src/application/test_agent/services/code_chunker.py"
+    },
+    {
+      "name": "CodeSummarizer",
+      "layer": "infrastructure",
+      "purpose": "Generate summaries of code chunks using LLM to preserve context across sliding windows",
+      "interfaces": [
+        {
+          "name": "ICodeSummarizer",
+          "methods": [
+            "summarize_chunk(code: str) -> str",
+            "summarize_package_structure(files: List[str]) -> str"
+          ]
+        }
+      ],
+      "dependencies": ["LLMClient Protocol (existing)", "CodeFile (domain)"],
+      "location": "src/infrastructure/test_agent/services/code_summarizer.py"
+    },
+    {
+      "name": "TokenCounter",
+      "layer": "infrastructure",
+      "purpose": "Count tokens in code strings to ensure chunks fit within context window",
+      "interfaces": [
+        {
+          "name": "ITokenCounter",
+          "methods": [
+            "count_tokens(text: str) -> int",
+            "estimate_prompt_size(code: str, system_prompt: str) -> int"
+          ]
+        }
+      ],
+      "dependencies": ["tiktoken or similar tokenizer library"],
+      "location": "src/infrastructure/test_agent/services/token_counter.py"
+    },
+    {
+      "name": "EnhancedGenerateTestsUseCase",
+      "layer": "application",
+      "purpose": "Extend existing GenerateTestsUseCase to handle large modules via chunking and sliding windows",
+      "interfaces": [
+        {
+          "name": "IGenerateTestsUseCase",
+          "methods": [
+            "execute(code_file: CodeFile) -> List[TestCase]",
+            "execute_for_large_module(code_file: CodeFile, strategy: ChunkingStrategy) -> List[TestCase]"
+          ]
+        }
+      ],
+      "dependencies": [
+        "TestCase (domain)",
+        "CodeFile (domain)",
+        "ICodeChunker (application)",
+        "ICodeSummarizer (infrastructure)",
+        "ITestAgentLLMService (infrastructure)"
+      ],
+      "location": "src/application/test_agent/use_cases/generate_tests_use_case.py"
+    },
+    {
+      "name": "CoverageAggregator",
+      "layer": "application",
+      "purpose": "Aggregate test coverage across multiple chunks to ensure overall coverage meets ≥80% target",
+      "interfaces": [
+        {
+          "name": "ICoverageAggregator",
+          "methods": [
+            "aggregate_coverage(test_results: List[TestResult]) -> float",
+            "identify_gaps(coverage: float, code_file: CodeFile) -> List[str]"
+          ]
+        }
+      ],
+      "dependencies": [
+        "TestResult (domain)",
+        "CodeFile (domain)",
+        "ITestExecutor (infrastructure)"
+      ],
+      "location": "src/application/test_agent/services/coverage_aggregator.py"
+    },
+    {
+      "name": "ChunkingStrategy",
+      "layer": "domain",
+      "purpose": "Value object representing different strategies for chunking code (function-based, class-based, sliding window)",
+      "interfaces": [],
+      "dependencies": [],
+      "location": "src/domain/test_agent/value_objects/chunking_strategy.py"
+    },
+    {
+      "name": "CodeChunk",
+      "layer": "domain",
+      "purpose": "Domain entity representing a chunk of code with metadata (context, dependencies, location)",
+      "interfaces": [],
+      "dependencies": [],
+      "location": "src/domain/test_agent/entities/code_chunk.py"
+    }
+  ],
+  "boundaries": [
+    {
+      "from_layer": "application",
+      "to_layer": "domain",
+      "allowed": true,
+      "via_interface": "Direct usage of domain entities (CodeFile, TestCase, TestResult, CodeChunk, ChunkingStrategy)"
+    },
+    {
+      "from_layer": "infrastructure",
+      "to_layer": "domain",
+      "allowed": true,
+      "via_interface": "Direct usage of domain entities"
+    },
+    {
+      "from_layer": "application",
+      "to_layer": "infrastructure",
+      "allowed": true,
+      "via_interface": "ICodeSummarizer, ITokenCounter, ITestAgentLLMService, ITestExecutor"
+    },
+    {
+      "from_layer": "presentation",
+      "to_layer": "application",
+      "allowed": true,
+      "via_interface": "TestAgentOrchestrator (existing)"
+    },
+    {
+      "from_layer": "domain",
+      "to_layer": "application",
+      "allowed": false,
+      "violation_type": "inward_dependency"
+    },
+    {
+      "from_layer": "domain",
+      "to_layer": "infrastructure",
+      "allowed": false,
+      "violation_type": "inward_dependency"
+    },
+    {
+      "from_layer": "application",
+      "to_layer": "presentation",
+      "allowed": false,
+      "violation_type": "inward_dependency"
+    }
+  ],
+  "contracts": [
+    {
+      "name": "ICodeChunker",
+      "provider": "CodeChunker (application)",
+      "consumer": "EnhancedGenerateTestsUseCase (application)",
+      "interface": "chunk_module(code: str, max_tokens: int) -> List[CodeChunk]"
+    },
+    {
+      "name": "ICodeSummarizer",
+      "provider": "CodeSummarizer (infrastructure)",
+      "consumer": "EnhancedGenerateTestsUseCase (application)",
+      "interface": "summarize_chunk(code: str) -> str"
+    },
+    {
+      "name": "ITokenCounter",
+      "provider": "TokenCounter (infrastructure)",
+      "consumer": "CodeChunker (application)",
+      "interface": "count_tokens(text: str) -> int"
+    },
+    {
+      "name": "ICoverageAggregator",
+      "provider": "CoverageAggregator (application)",
+      "consumer": "TestAgentOrchestrator (application)",
+      "interface": "aggregate_coverage(test_results: List[TestResult]) -> float"
+    },
+    {
+      "name": "LLMClient Protocol (reused from Epic 26)",
+      "provider": "Qwen LLM service (llm-api)",
+      "consumer": "CodeSummarizer (infrastructure), TestAgentLLMService (infrastructure)",
+      "interface": "generate(prompt: str) -> str",
+      "note": "Using Qwen 2.5:7b (llm-api service) - original Epic 26 model, proven to work"
+    }
+  ],
+  "decisions": [
+    {
+      "decision": "Chunking logic in application layer",
+      "rationale": "Chunking is business logic about how to split code for testing - belongs in application layer as a service, not infrastructure",
+      "alternatives_considered": [
+        "Chunking in infrastructure layer - rejected because it's not an external tool/adapter",
+        "Chunking in domain layer - rejected because it depends on token counting (infrastructure concern)"
+      ],
+      "consequences": [
+        "CodeChunker depends on ITokenCounter interface (infrastructure)",
+        "Enables testing chunking logic independently of token counting implementation"
+      ]
+    },
+    {
+      "decision": "Summarization in infrastructure layer",
+      "rationale": "Summarization uses external LLM service - follows Epic 26 pattern of LLM interactions in infrastructure",
+      "alternatives_considered": [
+        "Summarization in application layer - rejected because it directly uses external LLM service"
+      ],
+      "consequences": [
+        "Reuses existing LLMClient Protocol",
+        "Easy to swap summarization strategies (different prompts, different models)"
+      ]
+    },
+    {
+      "decision": "Use Qwen 2.5:7b (llm-api) as LLM service",
+      "rationale": "Qwen is the proven, working model from Epic 26. GigaChat was attempted but had availability/compatibility issues. Using Qwen maintains LLMClient Protocol interface with no architectural impact - pure infrastructure choice.",
+      "alternatives_considered": [
+        "GigaChat (llm-api-gigachat) - attempted but not working/available, rolled back to Qwen",
+        "Support both models - rejected as premature optimization, can add later if needed"
+      ],
+      "consequences": [
+        "Configuration uses llm-api service URL (http://llm-api:8000)",
+        "Token counting uses Qwen tokenizer (tiktoken cl100k_base - standard encoding)",
+        "TestAgentLLMService and CodeSummarizer continue using LLMClient Protocol (no code changes needed)",
+        "Docker service name is llm-api (proven and working from Epic 26)"
+      ]
+    },
+    {
+      "decision": "Token counting in infrastructure layer",
+      "rationale": "Token counting depends on external library (tiktoken) - infrastructure concern",
+      "alternatives_considered": [
+        "Simple character counting in domain - rejected because tokens != characters, and LLM context limits are in tokens"
+      ],
+      "consequences": [
+        "Can swap tokenizer implementations",
+        "Application layer depends on ITokenCounter interface"
+      ]
+    },
+    {
+      "decision": "Enhance existing GenerateTestsUseCase instead of creating new use case",
+      "rationale": "Core purpose (generate tests) remains the same, chunking is an implementation detail for handling size constraints",
+      "alternatives_considered": [
+        "Create separate GenerateTestsForLargeModulesUseCase - rejected to avoid duplication and maintain single responsibility"
+      ],
+      "consequences": [
+        "Existing use case becomes more complex but remains focused on test generation",
+        "Strategy pattern for chunking enables flexible approaches"
+      ]
+    },
+    {
+      "decision": "CodeChunk and ChunkingStrategy as domain entities/value objects",
+      "rationale": "Chunks represent domain concepts (portions of code under test), strategies represent business decisions about chunking approach",
+      "alternatives_considered": [
+        "Plain dictionaries or tuples - rejected because domain entities provide richer behavior and validation"
+      ],
+      "consequences": [
+        "Domain model is richer and more expressive",
+        "Validation and business rules can live in domain entities"
+      ]
+    },
+    {
+      "decision": "Coverage aggregation in application layer",
+      "rationale": "Aggregating coverage across chunks is orchestration/business logic, not infrastructure concern",
+      "alternatives_considered": [
+        "Coverage aggregation in infrastructure - rejected because it orchestrates business logic, not external tool"
+      ],
+      "consequences": [
+        "Can implement sophisticated gap analysis and coverage strategies",
+        "Separated from test execution mechanics (infrastructure)"
+      ]
+    }
+  ],
+  "risks": [
+    {
+      "risk": "4000-token context window may still be insufficient for complex modules even with chunking",
+      "mitigation": "Implement multiple chunking strategies (function-level, class-level, sliding window) and let orchestrator choose best fit; use summarization to compress context"
+    },
+    {
+      "risk": "Summarization may lose critical context needed for test generation",
+      "mitigation": "Keep full code in chunk, summarize only surrounding context; test summaries to ensure key information (function signatures, dependencies) is preserved"
+    },
+    {
+      "risk": "Coverage aggregation may miss interactions between chunks",
+      "mitigation": "Generate integration tests that span multiple chunks; identify chunk boundaries at logical points (module boundaries, class boundaries)"
+    },
+    {
+      "risk": "Token counting may not match LLM's actual token counting",
+      "mitigation": "Use same tokenizer as target LLM (Qwen - tiktoken cl100k_base encoding); add buffer (e.g., 90% of max) to account for discrepancies. Qwen uses standard tiktoken which is well-tested and proven from Epic 26."
+    },
+    {
+      "risk": "Sliding window strategy may generate redundant or conflicting tests",
+      "mitigation": "Track generated test names/purposes across chunks; implement deduplication in CoverageAggregator"
+    },
+    {
+      "risk": "Enhanced GenerateTestsUseCase may become too complex",
+      "mitigation": "Extract strategy implementations to separate classes; maintain clear separation between chunking, summarization, and test generation concerns"
+    }
+  ]
+}

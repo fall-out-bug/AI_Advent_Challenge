@@ -1,0 +1,51 @@
+context:
+  changed: false
+  description: "Context diagram unchanged - Test Agent still operates within the same system context as Epic 26"
+
+container:
+  changed: false
+  new_containers: []
+  modified_containers: []
+  description: "No new containers - enhancements are within existing Test Agent container"
+
+component:
+  changed: true
+  new_components:
+    - name: "CodeChunker"
+      layer: "application"
+      purpose: "Split large modules into chunks that fit within context window"
+      dependencies: ["ITokenCounter"]
+
+    - name: "CodeSummarizer"
+      layer: "infrastructure"
+      purpose: "Generate summaries of code chunks using LLM"
+      dependencies: ["LLMClient Protocol"]
+
+    - name: "TokenCounter"
+      layer: "infrastructure"
+      purpose: "Count tokens to ensure chunks fit within limits"
+      dependencies: ["tiktoken library"]
+
+    - name: "CoverageAggregator"
+      layer: "application"
+      purpose: "Aggregate coverage across multiple test chunks"
+      dependencies: ["ITestExecutor", "TestResult"]
+
+    - name: "CodeChunk (entity)"
+      layer: "domain"
+      purpose: "Represent a chunk of code with metadata"
+      dependencies: []
+
+    - name: "ChunkingStrategy (value object)"
+      layer: "domain"
+      purpose: "Represent different chunking strategies"
+      dependencies: []
+
+  modified_components:
+    - name: "GenerateTestsUseCase"
+      change: "Enhanced to support large modules via chunking and sliding windows"
+      new_dependencies: ["ICodeChunker", "ICodeSummarizer"]
+      backward_compatible: true
+      note: "Existing functionality preserved, new methods added for large module handling"
+
+  description: "Added 6 new components to support large module handling with chunking, summarization, and coverage aggregation. All new components follow Clean Architecture boundaries from Epic 26."

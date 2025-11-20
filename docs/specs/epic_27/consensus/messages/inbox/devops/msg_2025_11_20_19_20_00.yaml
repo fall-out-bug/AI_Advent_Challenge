@@ -1,0 +1,54 @@
+from: architect
+to: devops
+timestamp: "2025_11_20_19_20_00"
+epic_id: "epic_27"
+iteration: 1
+
+type: request
+subject: rollback_configuration_qwen_service
+
+content:
+  summary: "Configuration update needed: Rollback from llm-api-gigachat to llm-api (Qwen service)"
+
+  configuration_changes:
+    service_reference:
+      from: "llm-api-gigachat"
+      to: "llm-api"
+      model: "Qwen 2.5:7b"
+
+    environment_variables:
+      LLM_URL: "http://llm-api-gigachat:8000 → http://llm-api:8000"
+      LLM_MODEL: "gigachat → qwen2.5:7b (or remove, use default)"
+      MISTRAL_API_URL: "http://llm-api-gigachat:8000 → http://llm-api:8000"
+
+    docker_compose:
+      file: "docker-compose.test-agent.yml"
+      changes:
+        - "Update LLM_URL: http://llm-api:8000"
+        - "Update LLM_MODEL: qwen2.5:7b"
+        - "Update MISTRAL_API_URL: http://llm-api:8000"
+        - "Remove llm-api-gigachat service references (if any)"
+
+  network_requirements:
+    service_networks:
+      - "butler-network"
+      - "infra_infra_app-network"
+    llm_service: "llm-api (existing service, proven from Epic 26)"
+    connectivity: "Verify llm-api service is accessible from test-agent"
+
+  deployment_notes:
+    rollback_reason: "GigaChat model not working/available"
+    qwen_status: "Proven and working from Epic 26"
+    architecture_impact: "NONE - Pure infrastructure swap"
+
+  verification_checklist:
+    - "Verify llm-api service is running and accessible"
+    - "Test connectivity from test-agent container to llm-api:8000"
+    - "Verify health endpoint: http://llm-api:8000/health"
+    - "Test LLM API responses match LLMClient Protocol expectations"
+    - "Verify token counting works with Qwen (tiktoken cl100k_base)"
+
+  concerns: []
+
+action_needed: "update_docker_compose_configuration"
+notes: "Rollback to Qwen service (llm-api). Update docker-compose.test-agent.yml and environment variables to use llm-api instead of llm-api-gigachat. Qwen is proven and working from Epic 26."

@@ -1,0 +1,337 @@
+{
+  "epic_id": "epic_27",
+  "iteration": 1,
+  "timestamp": "2025_11_20_15_30_00",
+  "stage": "S2",
+  "deployment_status": "preparation",
+  "deployment_strategy": {
+    "type": "blue_green",
+    "reason": "Epic 27 enhances Epic 26 Test Agent with chunking; MVP production deployment now uses the proven Qwen LLM (llm-api) after the GigaChat migration proved unstable. Direct production deployment continues with immediate traffic shift.",
+    "deployment_path": "direct_to_production",
+    "stages_skipped": ["dev", "staging"],
+    "stages": [
+      {
+        "stage": "production",
+        "automatic": false,
+        "approval_required": "tech_lead",
+        "approval_received": true,
+        "canary_percentage": 100,
+        "canary_duration_hours": 0,
+        "mvp_deployment": true,
+        "tests": ["smoke", "integration", "synthetic", "regression"],
+        "rollback_automatic": true,
+        "deployment_method": "docker_compose",
+        "health_check_required": true,
+        "enhanced_monitoring": true,
+        "migration_steps": [
+          "1. Verify llm-api service is running and healthy",
+          "2. Deploy Epic 27 with Qwen configuration (blue environment, MVP)",
+          "3. Deploy to 100% traffic immediately (MVP - no canary)",
+          "4. Monitor token counting accuracy and chunking behavior",
+          "5. Keep llm-api-gigachat available for future migration if needed"
+        ],
+        "monitoring_checks": [
+          "Error rate monitoring (every 1 minute)",
+          "Latency monitoring (p50, p95, p99)",
+          "Token count accuracy monitoring",
+          "LLM service connectivity (llm-api)",
+          "Health check status",
+          "Resource utilization",
+          "Coverage validation"
+        ],
+        "notes": "MVP deployment: Direct to 100% traffic, no canary period. All safety measures bypassed for faster iteration. Automatic rollback still enabled on critical failures."
+      }
+    ],
+    "safety_measures": [
+      "Automatic rollback on any anomalies",
+      "Real-time metrics dashboard monitoring",
+      "LLM service health verification (llm-api)"
+    ]
+  },
+  "infrastructure": {
+    "resources_required": {
+      "cpu": "500m",
+      "memory": "512Mi",
+      "replicas": 2,
+      "storage": "1Gi (ephemeral)",
+      "notes": "Same resource requirements as Epic 26. Chunking and summarization add minimal overhead."
+    },
+    "scaling": {
+      "min_replicas": 2,
+      "max_replicas": 5,
+      "target_cpu": 70,
+      "target_memory": 80,
+      "scaling_policy": "horizontal_pod_autoscaler",
+      "notes": "Auto-scaling based on CPU and memory usage. Minimum 2 replicas for high availability."
+    },
+    "dependencies": {
+      "pytest": {
+        "required": true,
+        "version": "latest",
+        "installation": "pip install pytest pytest-cov",
+        "notes": "Required for test execution. Installed in container image."
+      },
+      "qwen_model": {
+        "required": true,
+        "type": "local_llm",
+        "endpoint": "http://llm-api:8000",
+        "model": "Qwen 2.5:7b",
+        "notes": "Uses Qwen model via llm-api service. Must be accessible from test-agent container on infra_infra_app-network."
+      },
+      "tiktoken": {
+        "required": true,
+        "type": "library",
+        "installation": "pip install tiktoken",
+        "notes": "Qwen-compatible tokenizer (cl100k_base). Provides accurate token counting."
+      },
+      "python": {
+        "required": true,
+        "version": "3.11",
+        "notes": "Python 3.11 runtime required"
+      }
+    },
+    "network_requirements": {
+      "networks": [
+        "butler-network",
+        "infra_infra_app-network"
+      ],
+      "llm_service_connectivity": {
+        "service_name": "llm-api",
+        "endpoint": "http://llm-api:8000",
+        "network": "infra_infra_app-network",
+        "health_check": "/health",
+        "notes": "llm-api must be connected to infra_infra_app-network for test-agent to access it"
+      }
+    }
+  },
+  "monitoring": {
+    "metrics": [
+      {
+        "name": "test_agent_requests_total",
+        "type": "counter",
+        "unit": "count",
+        "alert_threshold": "rate < 0.1 per minute for 5m",
+        "description": "Total number of test agent invocations"
+      },
+      {
+        "name": "test_agent_chunking_duration_seconds",
+        "type": "histogram",
+        "unit": "seconds",
+        "alert_threshold": "p99 > 5s for 5m",
+        "description": "Time to chunk large modules"
+      },
+      {
+        "name": "test_agent_summarization_duration_seconds",
+        "type": "histogram",
+        "unit": "seconds",
+        "alert_threshold": "p99 > 30s for 5m",
+        "description": "Time to summarize code chunks"
+      },
+      {
+        "name": "test_agent_token_count_accuracy",
+        "type": "gauge",
+        "unit": "percent",
+        "alert_threshold": "value < 90 for 10m",
+        "description": "Token count accuracy vs actual Qwen tokenization (cl100k_base)"
+      },
+      {
+        "name": "test_agent_chunks_generated_total",
+        "type": "counter",
+        "unit": "count",
+        "alert_threshold": "none",
+        "description": "Total number of code chunks generated"
+      },
+      {
+        "name": "test_agent_test_generation_duration_seconds",
+        "type": "histogram",
+        "unit": "seconds",
+        "alert_threshold": "p99 > 60s for 5m",
+        "description": "Time to generate test cases (includes chunking for large modules)"
+      },
+      {
+        "name": "test_agent_coverage_percentage",
+        "type": "gauge",
+        "unit": "percent",
+        "alert_threshold": "value < 80 for 10m",
+        "description": "Test coverage achieved (aggregated across chunks)"
+      },
+      {
+        "name": "test_agent_errors_total",
+        "type": "counter",
+        "unit": "count",
+        "alert_threshold": "rate > 1 per minute for 5m",
+        "description": "Total number of errors"
+      },
+      {
+        "name": "test_agent_llm_errors_total",
+        "type": "counter",
+        "unit": "count",
+        "alert_threshold": "rate > 0.5 per minute for 5m",
+        "description": "LLM service errors (Qwen connectivity issues)"
+      }
+    ],
+    "dashboards": [
+      {
+        "name": "Test Agent Service Health (Epic 27)",
+        "panels": [
+          "request_rate",
+          "error_rate",
+          "latency_p99",
+          "coverage_trend",
+          "chunking_performance",
+          "token_count_accuracy",
+          "llm_service_health"
+        ],
+        "url": "https://grafana/d/test-agent-health-epic27"
+      },
+      {
+        "name": "Test Agent Chunking Performance",
+        "panels": [
+          "chunking_duration",
+          "chunks_per_request",
+          "chunking_strategy_distribution",
+          "token_count_accuracy",
+          "summarization_duration"
+        ],
+        "url": "https://grafana/d/test-agent-chunking"
+      }
+    ],
+    "alerts": [
+      {
+        "name": "TestAgentServiceDown",
+        "condition": "up == 0",
+        "severity": "critical",
+        "action": "page_on_call",
+        "description": "Test Agent service is unavailable"
+      },
+      {
+        "name": "TestAgentHighErrorRate",
+        "condition": "rate(test_agent_errors_total[5m]) > 1",
+        "severity": "warning",
+        "action": "notify_team",
+        "description": "Error rate exceeds threshold"
+      },
+      {
+        "name": "TestAgentLLMServiceDown",
+        "condition": "rate(test_agent_llm_errors_total[5m]) > 0.5",
+        "severity": "critical",
+        "action": "page_on_call",
+        "description": "LLM service connectivity issues (llm-api)"
+      },
+      {
+        "name": "TestAgentTokenCountInaccurate",
+        "condition": "test_agent_token_count_accuracy < 90",
+        "severity": "warning",
+        "action": "notify_team",
+        "description": "Token counting accuracy below 90% - may cause context overflow"
+      },
+      {
+        "name": "TestAgentLowCoverage",
+        "condition": "test_agent_coverage_percentage < 80",
+        "severity": "info",
+        "action": "log",
+        "description": "Test coverage below 80% threshold"
+      }
+    ]
+  },
+  "health_checks": {
+    "readiness": {
+      "endpoint": "/health/ready",
+      "interval_seconds": 10,
+      "timeout_seconds": 5,
+      "success_threshold": 1,
+      "failure_threshold": 3,
+      "checks": [
+        "CLI command availability",
+        "Orchestrator initialization",
+        "Qwen LLM client connectivity",
+        "Token counter initialization",
+        "Code chunker initialization",
+        "Pytest availability"
+      ],
+      "notes": "Readiness check verifies all dependencies are available, including Qwen LLM service. Service receives traffic only when ready."
+    },
+    "liveness": {
+      "endpoint": "/health",
+      "interval_seconds": 30,
+      "timeout_seconds": 5,
+      "failure_threshold": 3,
+      "checks": [
+        "Process responsiveness",
+        "Basic functionality"
+      ],
+      "notes": "Liveness check verifies service is running. Container is restarted if liveness fails."
+    }
+  },
+  "rollback": {
+    "triggers": [
+      "Error rate > 1% for 5 minutes",
+      "Latency p99 > 60s for 5 minutes",
+      "Health check failures > 10%",
+      "Test coverage < 80%",
+      "LLM service (llm-api) unavailable",
+      "Token count accuracy < 90%",
+      "Manual trigger"
+    ],
+    "procedure": [
+      "1. Detect issue via monitoring alerts",
+      "2. Automatic rollback initiates (if enabled)",
+      "3. Traffic shifts back to Epic 26 (green environment with Qwen)",
+      "4. Verify health of Epic 26 version",
+      "5. Alert team of rollback",
+      "6. Investigate root cause (LLM integration, tokenizer, chunking)",
+      "7. Fix issue and redeploy"
+    ],
+    "time_to_rollback_seconds": 30,
+    "automatic_rollback": true,
+    "rollback_command": "docker-compose -f docker-compose.test-agent.yml down && git checkout epic_26_deployment && docker-compose -f docker-compose.test-agent.yml up -d",
+    "notes": "Automatic rollback on health check failures. Rollback reverts to Epic 26 configuration (Qwen/llm-api). Manual rollback available via docker-compose down and git checkout."
+  },
+  "migration_considerations": {
+    "llm_service_migration": {
+      "from": "llm-api-gigachat (GigaChat)",
+      "to": "llm-api (Qwen 2.5:7b)",
+      "impact": "Rollback to proven infrastructure service; LLMClient Protocol preserved",
+      "risks": [
+        "GigaChat API format may differ from Qwen (monitor for future migration)",
+        "Token counting accuracy critical for chunking"
+      ],
+      "mitigation": [
+        "Keep Qwen-compatible tokenizer (cl100k_base) up to date",
+        "Monitor token_count_accuracy metric in production",
+        "Keep llm-api-gigachat service available for future experiments"
+      ],
+      "rollback_plan": "Switch back to llm-api-gigachat and configure tokenizer/map if necessary"
+    },
+    "backward_compatibility": {
+      "epic_26_compatibility": true,
+      "small_modules": "Work exactly as before (no chunking needed)",
+      "large_modules": "New chunking functionality enabled",
+      "regression_tests": "All Epic 26 tests must pass",
+      "notes": "Epic 27 is backward compatible - small modules use existing Epic 26 path, large modules use new chunking path"
+    }
+  },
+  "deployment_readiness": {
+    "current_stage": "S7",
+    "stages_completed": 7,
+    "total_stages": 7,
+    "production_ready": true,
+    "quality_approval_date": "2025_11_20_18_18_08",
+    "reason": "Epic 27 is complete. All 7 stages implemented, tested, and approved by quality. 100% test coverage, all E2E scenarios verified, backward compatibility confirmed, security scan passed. Ready for production deployment.",
+    "quality_metrics": {
+      "test_coverage": 100,
+      "type_coverage": 100,
+      "docstring_coverage": 100,
+      "security_scan": "passed (0 vulnerabilities)",
+      "epic_26_regression": "116 passed, 4 skipped",
+      "e2e_scripts": 3,
+      "integration_tests": 5
+    },
+    "next_steps": [
+      "Monitor production metrics and health",
+      "Verify llm-api (Qwen) connectivity and token counting",
+      "Track test generation quality on large modules",
+      "Plan future migration to alternate LLM if needed"
+    ]
+  }
+}

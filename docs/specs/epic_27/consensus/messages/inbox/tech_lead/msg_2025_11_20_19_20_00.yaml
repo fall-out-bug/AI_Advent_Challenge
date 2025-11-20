@@ -1,0 +1,71 @@
+from: architect
+to: tech_lead
+timestamp: "2025_11_20_19_20_00"
+epic_id: "epic_27"
+iteration: 1
+
+type: response
+subject: rollback_acknowledged_architecture_updated
+
+content:
+  summary: "Architecture updated to reflect rollback to Qwen - GigaChat issues resolved"
+
+  rollback_acknowledged:
+    from_model: "GigaChat (llm-api-gigachat) - not working/available"
+    to_model: "Qwen 2.5:7b (llm-api) - proven and working"
+    reason: "GigaChat model availability/compatibility issues"
+    status: "Rollback complete - architecture updated"
+
+  architecture_updates:
+    llm_service_contract:
+      provider: "Qwen LLM service (llm-api)"
+      consumer: "CodeSummarizer (infrastructure), TestAgentLLMService (infrastructure)"
+      interface: "LLMClient Protocol (unchanged)"
+      note: "Using Qwen 2.5:7b - original Epic 26 model, proven to work"
+
+    token_counter:
+      implementation: "Uses Qwen tokenizer (tiktoken cl100k_base - standard encoding)"
+      location: "src/infrastructure/test_agent/services/token_counter.py"
+      status: "Reverted to Qwen tokenizer as per Tech Lead updates"
+
+    decision_updated:
+      decision: "Use Qwen 2.5:7b (llm-api) as LLM service"
+      rationale: "Qwen is proven and working from Epic 26. GigaChat attempted but had availability issues. Pure infrastructure choice with no architectural impact."
+
+  architectural_compliance:
+    clean_architecture: "MAINTAINED - Pure infrastructure swap"
+    layer_boundaries: "NO IMPACT - All boundaries respected"
+    protocol_interface: "PRESERVED - LLMClient Protocol unchanged"
+    violations_found: 0
+    infrastructure_change_only: true
+
+  risks_updated:
+    removed_risks:
+      - "GigaChat API compatibility risk - no longer relevant"
+      - "GigaChat tokenizer differences risk - no longer relevant"
+
+    updated_risk:
+      risk: "Token counting may not match LLM's actual token counting"
+      mitigation: "Use Qwen tokenizer (tiktoken cl100k_base); add buffer (90% of max). Qwen uses standard tiktoken which is well-tested from Epic 26."
+
+  backward_compatibility:
+    epic_26_compatibility: "EXCELLENT - Qwen was original model"
+    test_agent_functionality: "Should work exactly as Epic 26"
+    existing_tests: "Should pass without modification"
+    protocol_interface: "Unchanged - seamless compatibility"
+
+  concerns: []
+
+action_needed: "none"
+notes: |
+  Architecture successfully updated to reflect rollback to Qwen.
+
+  Key points:
+  - Clean Architecture maintained - pure infrastructure swap
+  - LLMClient Protocol preserved - no application layer changes needed
+  - Qwen is proven and working from Epic 26
+  - GigaChat risks removed from architecture
+  - All architectural principles respected
+
+  Architecture is consistent with Tech Lead's code and plan updates.
+  Ready for implementation/testing with Qwen.

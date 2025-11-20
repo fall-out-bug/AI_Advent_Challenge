@@ -1,6 +1,6 @@
 services:
   # =============================================
-  # Test Agent CLI Service (Epic 26)
+  # Test Agent CLI Service (Epic 27 - Enhanced with Chunking)
   # =============================================
   test-agent:
     build:
@@ -11,10 +11,10 @@ services:
     env_file:
       - .env
     environment:
-      # LLM Client configuration (uses existing LLM infrastructure)
+      # LLM Client configuration (rollback to Qwen)
       - LLM_URL=${LLM_URL:-http://llm-api:8000}
       - MISTRAL_API_URL=${MISTRAL_API_URL:-http://llm-api:8000}
-      - LLM_MODEL=qwen2.5:7b
+      - LLM_MODEL=${LLM_MODEL:-qwen2.5:7b}
       - PYTHONUNBUFFERED=1
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     volumes:
@@ -49,7 +49,7 @@ services:
       - "service=test-agent"
       - "layer=presentation"
       - "component=test-agent-cli"
-      - "epic=epic_26"
+      - "epic=epic_27"
 
 networks:
   butler-network:

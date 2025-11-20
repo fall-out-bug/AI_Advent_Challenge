@@ -1,0 +1,845 @@
+{
+  "epic_id": "epic_27",
+  "iteration": 1,
+  "timestamp": "2025_11_20_19_15_00",
+  "stages": [
+    {
+      "stage_id": "S1",
+      "name": "Domain Layer - Core Entities",
+      "duration_hours": 3.5,
+      "tasks": [
+        {
+          "task_id": "T1.1",
+          "description": "Write unit tests for ChunkingStrategy value object",
+          "duration_hours": 0.5,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/unit/domain/test_agent/value_objects/test_chunking_strategy.py",
+            "test_cases": [
+              "test_chunking_strategy_creation_with_valid_types",
+              "test_chunking_strategy_function_based_type",
+              "test_chunking_strategy_class_based_type",
+              "test_chunking_strategy_sliding_window_type",
+              "test_chunking_strategy_equality",
+              "test_chunking_strategy_immutability",
+              "test_invalid_strategy_type_raises_error"
+            ]
+          },
+          "dependencies": [],
+          "acceptance_criteria": [
+            "All test cases written with clear AAA structure",
+            "Tests fail initially (red phase)",
+            "Docstrings present for all test functions"
+          ]
+        },
+        {
+          "task_id": "T1.2",
+          "description": "Implement ChunkingStrategy value object",
+          "duration_hours": 0.5,
+          "type": "implementation",
+          "files_to_modify": [
+            "src/domain/test_agent/value_objects/chunking_strategy.py"
+          ],
+          "dependencies": ["T1.1"],
+          "acceptance_criteria": [
+            "All T1.1 tests pass (green phase)",
+            "Type hints at 100%",
+            "Docstrings for class and methods",
+            "PEP 8 compliant",
+            "Supports: function_based, class_based, sliding_window strategies"
+          ]
+        },
+        {
+          "task_id": "T1.3",
+          "description": "Write unit tests for CodeChunk entity",
+          "duration_hours": 1,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/unit/domain/test_agent/entities/test_code_chunk.py",
+            "test_cases": [
+              "test_code_chunk_creation_with_all_fields",
+              "test_code_chunk_with_code_content",
+              "test_code_chunk_with_context_metadata",
+              "test_code_chunk_with_dependencies_list",
+              "test_code_chunk_location_info",
+              "test_code_chunk_to_dict",
+              "test_code_chunk_from_dict",
+              "test_code_chunk_equality",
+              "test_code_chunk_validation_empty_code",
+              "test_code_chunk_validation_invalid_location"
+            ]
+          },
+          "dependencies": ["T1.2"],
+          "acceptance_criteria": [
+            "All test cases written",
+            "Tests cover creation, validation, serialization",
+            "Tests fail initially"
+          ]
+        },
+        {
+          "task_id": "T1.4",
+          "description": "Implement CodeChunk entity",
+          "duration_hours": 1,
+          "type": "implementation",
+          "files_to_modify": [
+            "src/domain/test_agent/entities/code_chunk.py"
+          ],
+          "dependencies": ["T1.3"],
+          "acceptance_criteria": [
+            "All T1.3 tests pass",
+            "Entity includes: code, context, dependencies, location, start_line, end_line",
+            "Validation for required fields",
+            "Type hints 100%",
+            "Docstrings complete"
+          ]
+        },
+        {
+          "task_id": "T1.5",
+          "description": "Run Epic 26 regression tests to verify backward compatibility",
+          "duration_hours": 0.5,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/ (Epic 26 test suite)",
+            "test_cases": [
+              "Run all Epic 26 Test Agent tests",
+              "Verify existing Test Agent CLI commands work",
+              "Verify existing test generation for small modules works"
+            ]
+          },
+          "dependencies": ["T1.4"],
+          "acceptance_criteria": [
+            "All Epic 26 tests pass",
+            "No regressions in existing functionality",
+            "Test Agent CLI works as before"
+          ]
+        }
+      ],
+      "ci_gates": {
+        "test_coverage": 90,
+        "linting": "black --check src/domain/test_agent/",
+        "type_check": "mypy src/domain/test_agent/ --strict",
+        "security_scan": "bandit -r src/domain/test_agent/",
+        "regression_tests": "pytest tests/ -k 'test_agent' -v"
+      }
+    },
+    {
+      "stage_id": "S2",
+      "name": "Infrastructure Layer - Token Counting",
+      "duration_hours": 3.5,
+      "tasks": [
+        {
+          "task_id": "T2.1",
+          "description": "Write unit tests for ITokenCounter interface",
+          "duration_hours": 0.5,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/unit/infrastructure/test_agent/services/test_token_counter.py",
+            "test_cases": [
+              "test_count_tokens_simple_text",
+              "test_count_tokens_python_code",
+              "test_count_tokens_empty_string",
+              "test_count_tokens_unicode_characters",
+              "test_estimate_prompt_size_with_system_prompt",
+              "test_estimate_prompt_size_includes_overhead",
+              "test_token_counter_uses_correct_tokenizer",
+              "test_token_count_consistency",
+              "test_token_counter_no_sensitive_data_in_logs",
+              "test_token_counter_no_data_leakage"
+            ]
+          },
+          "dependencies": ["T1.4"],
+          "acceptance_criteria": [
+            "Tests written for ITokenCounter interface",
+            "Tests cover edge cases (empty, unicode, large code)",
+            "Security tests verify no token leakage",
+            "Tests fail initially"
+          ]
+        },
+        {
+          "task_id": "T2.2",
+          "description": "Implement TokenCounter service with Qwen tokenizer",
+          "duration_hours": 1.5,
+          "type": "implementation",
+          "files_to_modify": [
+            "src/infrastructure/test_agent/services/token_counter.py",
+            "requirements.txt"
+          ],
+          "dependencies": ["T2.1"],
+          "acceptance_criteria": [
+            "All T2.1 tests pass",
+            "Uses tiktoken library with cl100k_base encoding (Qwen-compatible)",
+            "Implements ITokenCounter protocol",
+            "Supports Qwen tokenizer",
+            "Adds 10% buffer for safety",
+            "Type hints 100%"
+          ],
+          "notes": "NOTE: Using Qwen tokenizer (tiktoken cl100k_base) - GigaChat model was not working."
+        },
+        {
+          "task_id": "T2.3",
+          "description": "Write integration tests for TokenCounter with real code samples",
+          "duration_hours": 1,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/integration/infrastructure/test_agent/test_token_counter_integration.py",
+            "test_cases": [
+              "test_count_tokens_real_python_module",
+              "test_count_tokens_matches_qwen_expectations",
+              "test_estimate_prompt_fits_in_4000_token_limit",
+              "test_token_counter_with_large_file"
+            ]
+          },
+          "dependencies": ["T2.2"],
+          "acceptance_criteria": [
+            "Integration tests with real code samples",
+            "Verify token counts are realistic",
+            "Tests pass"
+          ]
+        },
+        {
+          "task_id": "T2.4",
+          "description": "Run Epic 26 regression tests to verify backward compatibility",
+          "duration_hours": 0.5,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/ (Epic 26 test suite)",
+            "test_cases": [
+              "Run all Epic 26 Test Agent tests",
+              "Verify existing Test Agent functionality intact"
+            ]
+          },
+          "dependencies": ["T2.3"],
+          "acceptance_criteria": [
+            "All Epic 26 tests pass",
+            "No regressions in existing functionality"
+          ]
+        }
+      ],
+      "ci_gates": {
+        "test_coverage": 85,
+        "linting": "black --check src/infrastructure/test_agent/",
+        "type_check": "mypy src/infrastructure/test_agent/ --strict",
+        "security_scan": "bandit -r src/infrastructure/test_agent/",
+        "regression_tests": "pytest tests/ -k 'test_agent' -v"
+      }
+    },
+    {
+      "stage_id": "S3",
+      "name": "Application Layer - Code Chunking",
+      "duration_hours": 4.5,
+      "tasks": [
+        {
+          "task_id": "T3.1",
+          "description": "Write unit tests for ICodeChunker interface - function-based strategy",
+          "duration_hours": 1,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/unit/application/test_agent/services/test_code_chunker.py",
+            "test_cases": [
+              "test_chunk_module_single_function",
+              "test_chunk_module_multiple_functions",
+              "test_chunk_module_respects_max_tokens",
+              "test_chunk_module_preserves_imports",
+              "test_chunk_module_preserves_context",
+              "test_chunk_module_function_based_strategy",
+              "test_chunk_package_multiple_files",
+              "test_chunk_package_respects_directory_structure"
+            ]
+          },
+          "dependencies": ["T2.3"],
+          "acceptance_criteria": [
+            "Tests for function-based chunking strategy",
+            "Tests verify token limits respected",
+            "Tests verify context preservation",
+            "Tests fail initially"
+          ]
+        },
+        {
+          "task_id": "T3.2",
+          "description": "Implement CodeChunker with function-based strategy",
+          "duration_hours": 1.5,
+          "type": "implementation",
+          "files_to_modify": [
+            "src/application/test_agent/services/code_chunker.py"
+          ],
+          "dependencies": ["T3.1"],
+          "acceptance_criteria": [
+            "All T3.1 tests pass",
+            "Implements ICodeChunker protocol",
+            "Uses ITokenCounter to enforce limits",
+            "Function-based chunking implemented",
+            "Preserves imports and module-level context",
+            "Returns List[CodeChunk]",
+            "Type hints 100%"
+          ]
+        },
+        {
+          "task_id": "T3.3",
+          "description": "Write tests for class-based and sliding-window strategies",
+          "duration_hours": 1,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/unit/application/test_agent/services/test_code_chunker.py",
+            "test_cases": [
+              "test_chunk_module_class_based_strategy",
+              "test_chunk_module_class_based_preserves_methods",
+              "test_chunk_module_sliding_window_strategy",
+              "test_chunk_module_sliding_window_overlap",
+              "test_chunk_selection_based_on_strategy"
+            ]
+          },
+          "dependencies": ["T3.2"],
+          "acceptance_criteria": [
+            "Tests for class-based strategy",
+            "Tests for sliding-window strategy",
+            "Tests verify strategy selection logic",
+            "Tests fail initially"
+          ]
+        },
+        {
+          "task_id": "T3.4",
+          "description": "Implement class-based and sliding-window chunking strategies",
+          "duration_hours": 0.5,
+          "type": "implementation",
+          "files_to_modify": [
+            "src/application/test_agent/services/code_chunker.py"
+          ],
+          "dependencies": ["T3.3"],
+          "acceptance_criteria": [
+            "All T3.3 tests pass",
+            "Class-based strategy groups methods with class",
+            "Sliding-window strategy with configurable overlap",
+            "Strategy selection logic implemented"
+          ]
+        },
+        {
+          "task_id": "T3.5",
+          "description": "Run Epic 26 regression tests to verify backward compatibility",
+          "duration_hours": 0.5,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/ (Epic 26 test suite)",
+            "test_cases": [
+              "Run all Epic 26 Test Agent tests",
+              "Verify existing Test Agent functionality intact"
+            ]
+          },
+          "dependencies": ["T3.4"],
+          "acceptance_criteria": [
+            "All Epic 26 tests pass",
+            "No regressions in existing functionality"
+          ]
+        }
+      ],
+      "ci_gates": {
+        "test_coverage": 85,
+        "linting": "black --check src/application/test_agent/",
+        "type_check": "mypy src/application/test_agent/ --strict",
+        "security_scan": "bandit -r src/application/test_agent/",
+        "regression_tests": "pytest tests/ -k 'test_agent' -v"
+      }
+    },
+    {
+      "stage_id": "S4",
+      "name": "Infrastructure Layer - Code Summarization",
+      "duration_hours": 4,
+      "tasks": [
+        {
+          "task_id": "T4.1",
+          "description": "Write unit tests for ICodeSummarizer interface",
+          "duration_hours": 1,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/unit/infrastructure/test_agent/services/test_code_summarizer.py",
+            "test_cases": [
+              "test_summarize_chunk_returns_concise_summary",
+              "test_summarize_chunk_preserves_function_signatures",
+              "test_summarize_chunk_preserves_dependencies",
+              "test_summarize_chunk_removes_implementation_details",
+              "test_summarize_package_structure_returns_overview",
+              "test_summarize_package_lists_modules_and_classes"
+            ]
+          },
+          "dependencies": ["T3.4"],
+          "acceptance_criteria": [
+            "Tests for chunk summarization",
+            "Tests verify summary quality (signatures preserved)",
+            "Tests verify summary brevity",
+            "Tests fail initially"
+          ]
+        },
+        {
+          "task_id": "T4.2",
+          "description": "Implement CodeSummarizer using existing LLMClient",
+          "duration_hours": 1.5,
+          "type": "implementation",
+          "files_to_modify": [
+            "src/infrastructure/test_agent/services/code_summarizer.py"
+          ],
+          "dependencies": ["T4.1"],
+          "acceptance_criteria": [
+            "All T4.1 tests pass",
+            "Implements ICodeSummarizer protocol",
+            "Reuses LLMClient Protocol from Epic 26",
+            "Summarization prompt preserves function signatures and dependencies",
+            "Summary is concise (< 30% of original)",
+            "Type hints 100%"
+          ]
+        },
+        {
+          "task_id": "T4.3",
+          "description": "Write integration tests for CodeSummarizer with real LLM",
+          "duration_hours": 1,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/integration/infrastructure/test_agent/test_code_summarizer_integration.py",
+            "test_cases": [
+              "test_summarize_real_python_module",
+              "test_summary_preserves_critical_info",
+              "test_summary_fits_in_token_budget",
+              "test_summarize_package_with_multiple_modules"
+            ]
+          },
+          "dependencies": ["T4.2"],
+          "acceptance_criteria": [
+            "Integration tests with real Qwen LLM",
+            "Verify summaries preserve critical information",
+            "Verify summaries are shorter than originals",
+            "Tests pass"
+          ]
+        },
+        {
+          "task_id": "T4.4",
+          "description": "Run Epic 26 regression tests to verify backward compatibility",
+          "duration_hours": 0.5,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/ (Epic 26 test suite)",
+            "test_cases": [
+              "Run all Epic 26 Test Agent tests",
+              "Verify existing Test Agent functionality intact"
+            ]
+          },
+          "dependencies": ["T4.3"],
+          "acceptance_criteria": [
+            "All Epic 26 tests pass",
+            "No regressions in existing functionality"
+          ]
+        }
+      ],
+      "ci_gates": {
+        "test_coverage": 80,
+        "linting": "black --check src/infrastructure/test_agent/",
+        "type_check": "mypy src/infrastructure/test_agent/ --strict",
+        "security_scan": "bandit -r src/infrastructure/test_agent/",
+        "regression_tests": "pytest tests/ -k 'test_agent' -v"
+      }
+    },
+    {
+      "stage_id": "S5",
+      "name": "Application Layer - Coverage Aggregation",
+      "duration_hours": 3.5,
+      "tasks": [
+        {
+          "task_id": "T5.1",
+          "description": "Write unit tests for ICoverageAggregator interface",
+          "duration_hours": 1,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/unit/application/test_agent/services/test_coverage_aggregator.py",
+            "test_cases": [
+              "test_aggregate_coverage_single_test_result",
+              "test_aggregate_coverage_multiple_test_results",
+              "test_aggregate_coverage_meets_80_percent_target",
+              "test_aggregate_coverage_below_target",
+              "test_identify_gaps_returns_uncovered_lines",
+              "test_identify_gaps_returns_uncovered_functions",
+              "test_deduplication_of_overlapping_tests"
+            ]
+          },
+          "dependencies": ["T4.3"],
+          "acceptance_criteria": [
+            "Tests for coverage aggregation logic",
+            "Tests for gap identification",
+            "Tests for deduplication",
+            "Tests fail initially"
+          ]
+        },
+        {
+          "task_id": "T5.2",
+          "description": "Implement CoverageAggregator service",
+          "duration_hours": 1.5,
+          "type": "implementation",
+          "files_to_modify": [
+            "src/application/test_agent/services/coverage_aggregator.py"
+          ],
+          "dependencies": ["T5.1"],
+          "acceptance_criteria": [
+            "All T5.1 tests pass",
+            "Implements ICoverageAggregator protocol",
+            "Aggregates coverage from List[TestResult]",
+            "Identifies gaps (uncovered lines/functions)",
+            "Deduplicates overlapping tests",
+            "Returns float (percentage coverage)",
+            "Type hints 100%"
+          ]
+        },
+        {
+          "task_id": "T5.3",
+          "description": "Write integration tests for CoverageAggregator with pytest-cov",
+          "duration_hours": 0.5,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/integration/application/test_agent/test_coverage_aggregator_integration.py",
+            "test_cases": [
+              "test_aggregate_coverage_with_real_pytest_results",
+              "test_coverage_aggregator_with_chunked_tests",
+              "test_gap_identification_matches_coverage_report"
+            ]
+          },
+          "dependencies": ["T5.2"],
+          "acceptance_criteria": [
+            "Integration tests with real pytest-cov data",
+            "Verify aggregation matches pytest coverage reports",
+            "Tests pass"
+          ]
+        },
+        {
+          "task_id": "T5.4",
+          "description": "Run Epic 26 regression tests to verify backward compatibility",
+          "duration_hours": 0.5,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/ (Epic 26 test suite)",
+            "test_cases": [
+              "Run all Epic 26 Test Agent tests",
+              "Verify existing Test Agent functionality intact"
+            ]
+          },
+          "dependencies": ["T5.3"],
+          "acceptance_criteria": [
+            "All Epic 26 tests pass",
+            "No regressions in existing functionality"
+          ]
+        }
+      ],
+      "ci_gates": {
+        "test_coverage": 85,
+        "linting": "black --check src/application/test_agent/",
+        "type_check": "mypy src/application/test_agent/ --strict",
+        "security_scan": "bandit -r src/application/test_agent/",
+        "regression_tests": "pytest tests/ -k 'test_agent' -v"
+      }
+    },
+    {
+      "stage_id": "S6",
+      "name": "Application Layer - Enhanced Use Case",
+      "duration_hours": 4.5,
+      "tasks": [
+        {
+          "task_id": "T6.1",
+          "description": "Write unit tests for EnhancedGenerateTestsUseCase - single chunk",
+          "duration_hours": 1,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/unit/application/test_agent/use_cases/test_generate_tests_use_case_enhanced.py",
+            "test_cases": [
+              "test_execute_small_module_no_chunking",
+              "test_execute_returns_list_of_test_cases",
+              "test_execute_uses_existing_llm_service",
+              "test_execute_backward_compatible_with_epic_26"
+            ]
+          },
+          "dependencies": ["T5.3"],
+          "acceptance_criteria": [
+            "Tests for backward compatibility (no chunking needed)",
+            "Tests verify existing Epic 26 behavior preserved",
+            "Tests fail initially"
+          ]
+        },
+        {
+          "task_id": "T6.2",
+          "description": "Write unit tests for EnhancedGenerateTestsUseCase - multiple chunks",
+          "duration_hours": 1,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/unit/application/test_agent/use_cases/test_generate_tests_use_case_enhanced.py",
+            "test_cases": [
+              "test_execute_for_large_module_uses_chunker",
+              "test_execute_for_large_module_uses_summarizer",
+              "test_execute_for_large_module_aggregates_coverage",
+              "test_execute_for_large_module_with_function_strategy",
+              "test_execute_for_large_module_with_class_strategy",
+              "test_execute_for_large_module_with_sliding_window_strategy"
+            ]
+          },
+          "dependencies": ["T6.1"],
+          "acceptance_criteria": [
+            "Tests for large module handling",
+            "Tests verify chunking strategy selection",
+            "Tests verify summarization used for context",
+            "Tests fail initially"
+          ]
+        },
+        {
+          "task_id": "T6.3",
+          "description": "Implement EnhancedGenerateTestsUseCase",
+          "duration_hours": 2,
+          "type": "implementation",
+          "files_to_modify": [
+            "src/application/test_agent/use_cases/generate_tests_use_case.py"
+          ],
+          "dependencies": ["T6.2"],
+          "acceptance_criteria": [
+            "All T6.1 and T6.2 tests pass",
+            "Implements IGenerateTestsUseCase interface",
+            "Backward compatible with Epic 26 (small modules)",
+            "Uses CodeChunker for large modules",
+            "Uses CodeSummarizer for context preservation",
+            "Uses CoverageAggregator to ensure ≥80% coverage",
+            "Selects chunking strategy based on module structure",
+            "Type hints 100%",
+            "Docstrings complete"
+          ]
+        },
+        {
+          "task_id": "T6.4",
+          "description": "Run Epic 26 regression tests to verify backward compatibility",
+          "duration_hours": 0.5,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/ (Epic 26 test suite)",
+            "test_cases": [
+              "Run all Epic 26 Test Agent tests",
+              "Verify existing Test Agent functionality intact",
+              "Verify small modules still work without chunking"
+            ]
+          },
+          "dependencies": ["T6.3"],
+          "acceptance_criteria": [
+            "All Epic 26 tests pass",
+            "No regressions in existing functionality",
+            "Small modules work exactly as before"
+          ]
+        }
+      ],
+      "ci_gates": {
+        "test_coverage": 85,
+        "linting": "black --check src/application/test_agent/",
+        "type_check": "mypy src/application/test_agent/ --strict",
+        "security_scan": "bandit -r src/application/test_agent/",
+        "regression_tests": "pytest tests/ -k 'test_agent' -v"
+      }
+    },
+    {
+      "stage_id": "S7",
+      "name": "Integration and E2E Testing",
+      "duration_hours": 4,
+      "tasks": [
+        {
+          "task_id": "T7.1",
+          "description": "Write integration tests for full workflow - medium module",
+          "duration_hours": 1.5,
+          "type": "test",
+          "test_spec": {
+            "test_file": "tests/integration/application/test_agent/test_full_workflow.py",
+            "test_cases": [
+              "test_generate_tests_for_medium_module_end_to_end",
+              "test_generated_tests_execute_successfully",
+              "test_coverage_reaches_80_percent",
+              "test_generated_tests_follow_project_standards",
+              "test_backward_compatibility_with_epic_26_modules"
+            ]
+          },
+          "dependencies": ["T6.3"],
+          "acceptance_criteria": [
+            "Integration tests for complete workflow",
+            "Tests select real modules from codebase",
+            "Tests run generated tests with pytest",
+            "Tests verify coverage ≥80%",
+            "Tests pass"
+          ]
+        },
+        {
+          "task_id": "T7.2",
+          "description": "Create E2E user simulation script - Scenario 1",
+          "duration_hours": 1,
+          "type": "implementation",
+          "files_to_modify": [
+            "scripts/e2e/epic_27/test_scenario_1_medium_module.py"
+          ],
+          "dependencies": ["T7.1"],
+          "acceptance_criteria": [
+            "Script simulates user pointing CLI to medium-sized module",
+            "Script runs Test Agent",
+            "Script verifies tests are generated and saved",
+            "Script runs pytest on generated tests",
+            "Script verifies coverage ≥80%",
+            "Script includes proper error handling and logging",
+            "Script provides clear failure reporting with actionable messages",
+            "Type hints and docstrings"
+          ]
+        },
+        {
+          "task_id": "T7.3",
+          "description": "Create E2E user simulation script - Scenario 2 (comparison)",
+          "duration_hours": 1,
+          "type": "implementation",
+          "files_to_modify": [
+            "scripts/e2e/epic_27/test_scenario_2_cursor_comparison.py"
+          ],
+          "dependencies": ["T7.2"],
+          "acceptance_criteria": [
+            "Script selects module with existing Cursor-agent tests",
+            "Script runs local Test Agent on same module",
+            "Script runs pytest for both test sets",
+            "Script compares coverage (local should be comparable)",
+            "Script reports comparison results with clear metrics",
+            "Script includes proper error handling and logging",
+            "Script provides clear failure reporting",
+            "Type hints and docstrings"
+          ]
+        },
+        {
+          "task_id": "T7.4",
+          "description": "Create E2E user simulation script - Scenario 3 (large package)",
+          "duration_hours": 0.5,
+          "type": "implementation",
+          "files_to_modify": [
+            "scripts/e2e/epic_27/test_scenario_3_large_package.py"
+          ],
+          "dependencies": ["T7.3"],
+          "acceptance_criteria": [
+            "Script points Test Agent to larger package (multiple modules)",
+            "Script verifies agent processes files in chunks",
+            "Script verifies tests generated across package",
+            "Script verifies no failures due to context limits",
+            "Script verifies meaningful tests for main public APIs",
+            "Script includes proper error handling and logging",
+            "Script provides clear failure reporting with context",
+            "Type hints and docstrings"
+          ]
+        }
+      ],
+      "ci_gates": {
+        "test_coverage": 80,
+        "linting": "black --check scripts/e2e/epic_27/",
+        "type_check": "mypy scripts/e2e/epic_27/ --strict",
+        "e2e_tests": "python scripts/e2e/epic_27/test_scenario_*.py"
+      }
+    }
+  ],
+  "test_strategy": {
+    "unit_tests": {
+      "coverage_target": 85,
+      "framework": "pytest",
+      "focus": "Individual components in isolation (domain entities, services, use cases)"
+    },
+    "integration_tests": {
+      "coverage_target": 70,
+      "framework": "pytest + real LLM + pytest-cov",
+      "focus": "Component interactions (chunker + summarizer + use case)"
+    },
+    "e2e_tests": {
+      "required": true,
+      "reason": "User testing with action simulation required for production validation",
+      "user_action_simulation": true,
+      "scripts_location": "scripts/e2e/epic_27/",
+      "simulation_scenarios": [
+        {
+          "scenario": "Scenario 1: User points Test Agent CLI to medium-sized module",
+          "steps": [
+            "Step 1: User runs CLI command: python -m src.presentation.cli test-agent generate --path src/domain/some_module.py",
+            "Step 2: Test Agent generates tests using enhanced use case",
+            "Step 3: User runs pytest on generated tests",
+            "Step 4: User verifies coverage ≥80% with pytest --cov"
+          ],
+          "expected_result": "Tests generated, execute successfully, coverage ≥80%"
+        },
+        {
+          "scenario": "Scenario 2: User compares local Test Agent with Cursor-agent tests",
+          "steps": [
+            "Step 1: User selects module with existing Cursor tests",
+            "Step 2: User runs local Test Agent on same module",
+            "Step 3: User runs pytest for both test sets",
+            "Step 4: User compares coverage reports"
+          ],
+          "expected_result": "Local agent coverage comparable to Cursor-agent (same order of magnitude)"
+        },
+        {
+          "scenario": "Scenario 3: User points Test Agent to large package (multiple modules)",
+          "steps": [
+            "Step 1: User runs CLI command: python -m src.presentation.cli test-agent generate --path src/domain/large_package/",
+            "Step 2: Test Agent processes files in chunks using sliding window",
+            "Step 3: Test Agent generates tests across all modules",
+            "Step 4: User runs pytest to verify tests work",
+            "Step 5: User verifies no context limit failures in logs"
+          ],
+          "expected_result": "Tests generated for all modules, meaningful coverage, no context errors"
+        }
+      ]
+    }
+  },
+  "rollback_plan": {
+    "trigger_conditions": [
+      "Tests fail (unit, integration, or E2E)",
+      "Coverage drops below 80% on existing Epic 26 modules (regression)",
+      "Context window handling fails on typical modules",
+      "Performance degradation >50% compared to Epic 26",
+      "Clean Architecture boundaries violated"
+    ],
+    "procedure": [
+      "1. Stop implementation at current stage",
+      "2. Run full test suite to identify regression point",
+      "3. Revert git commits to last passing stage",
+      "4. Verify Epic 26 functionality intact with existing tests",
+      "5. Document failure reason and blockers",
+      "6. Notify analyst and architect of blocking issue"
+    ],
+    "time_to_rollback": "< 10 minutes per stage"
+  },
+  "risks": [
+    {
+      "risk": "4000-token context window insufficient even with chunking for very complex modules",
+      "likelihood": "medium",
+      "impact": "high",
+      "mitigation": "Implement multiple chunking strategies (function, class, sliding-window) and let orchestrator auto-select; add aggressive summarization; fail gracefully with clear error message if module truly too large"
+    },
+    {
+      "risk": "Summarization loses critical context (dependencies, type signatures) needed for test generation",
+      "likelihood": "medium",
+      "impact": "high",
+      "mitigation": "Design summarization prompt to explicitly preserve function signatures, class definitions, and import statements; test summaries thoroughly in integration tests; keep full code in current chunk, summarize only surrounding context"
+    },
+    {
+      "risk": "Coverage aggregation inaccurate due to overlapping or conflicting tests from multiple chunks",
+      "likelihood": "medium",
+      "impact": "medium",
+      "mitigation": "Implement deduplication logic in CoverageAggregator; track test names and purposes across chunks; use pytest-cov for accurate line coverage measurement"
+    },
+    {
+      "risk": "Token counting mismatch between tiktoken and actual Qwen LLM causes context overflow",
+      "likelihood": "low",
+      "impact": "medium",
+      "mitigation": "Use Qwen-compatible tokenizer (tiktoken cl100k_base); add 10% safety buffer to token counts; test with real Qwen LLM in integration tests to verify counts are accurate"
+    },
+    {
+      "risk": "Enhanced use case becomes too complex and hard to maintain",
+      "likelihood": "medium",
+      "impact": "low",
+      "mitigation": "Extract chunking strategies to separate classes using Strategy pattern; maintain clear separation of concerns (chunking, summarization, test generation); comprehensive unit tests for each component"
+    },
+    {
+      "risk": "Backward compatibility broken with Epic 26 - existing Test Agent features stop working",
+      "likelihood": "low",
+      "impact": "high",
+      "mitigation": "Keep existing Epic 26 tests in regression suite; run Epic 26 tests after each stage; design enhanced use case to handle small modules without chunking (transparent upgrade)"
+    },
+    {
+      "risk": "Generated tests from chunks don't integrate well (missing cross-module dependencies)",
+      "likelihood": "medium",
+      "impact": "medium",
+      "mitigation": "Include package-level summarization to capture cross-module dependencies; generate integration tests that span multiple chunks; test with real multi-module packages in E2E scenarios"
+    }
+  ]
+}

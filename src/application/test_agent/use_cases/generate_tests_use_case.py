@@ -3,11 +3,15 @@
 import ast
 import os
 import re
-from typing import List
+from typing import List, Optional
 
 from src.domain.test_agent.entities.code_file import CodeFile
 from src.domain.test_agent.entities.test_case import TestCase
+from src.domain.test_agent.interfaces.code_chunker import ICodeChunker
+from src.domain.test_agent.interfaces.code_summarizer import ICodeSummarizer
+from src.domain.test_agent.interfaces.coverage_aggregator import ICoverageAggregator
 from src.domain.test_agent.interfaces.llm_service import ITestAgentLLMService
+from src.domain.test_agent.interfaces.token_counter import ITokenCounter
 from src.domain.test_agent.interfaces.use_cases import IGenerateTestsUseCase
 from src.infrastructure.llm.clients.llm_client import LLMClient
 from src.infrastructure.logging import get_logger
@@ -33,21 +37,35 @@ class GenerateTestsUseCase:
         self,
         llm_service: ITestAgentLLMService,
         llm_client: LLMClient,
+        token_counter: Optional[ITokenCounter] = None,
+        code_chunker: Optional[ICodeChunker] = None,
+        code_summarizer: Optional[ICodeSummarizer] = None,
+        coverage_aggregator: Optional[ICoverageAggregator] = None,
     ) -> None:
         """Initialize use case.
 
         Args:
             llm_service: Test agent LLM service for prompt generation.
             llm_client: LLM client for generating test code.
+            token_counter: Optional token counter for checking module size.
+            code_chunker: Optional code chunker for large modules.
+            code_summarizer: Optional code summarizer for context preservation.
+            coverage_aggregator: Optional coverage aggregator for ensuring coverage.
         """
         self.llm_service = llm_service
         self.llm_client = llm_client
+        self.token_counter = token_counter
+        self.code_chunker = code_chunker
+        self.code_summarizer = code_summarizer
+        self.coverage_aggregator = coverage_aggregator
         self.logger = get_logger("test_agent.generate_tests")
         self.debug_enabled = os.getenv("TEST_AGENT_DEBUG_LLM", "").lower() in (
             "1",
             "true",
             "yes",
         )
+        # Token limit for chunking (4000 tokens with 10% safety buffer = 3600)
+        self.max_tokens_per_chunk = 3600
 
     async def generate_tests(
         self, code_file: CodeFile
@@ -55,11 +73,9 @@ class GenerateTestsUseCase:
         """Generate test cases from code file using multi-pass approach.
 
         Purpose:
-            Uses multi-pass generation for autonomous and universal operation:
-            - Pass 1: Generate initial tests
-            - Pass 2: Validate and clean each test individually
-            - Pass 3: Fix or regenerate if needed
-            - Pass 4: Final validation
+            Generates test cases for code files. For small modules, uses existing
+            Epic 26 logic. For large modules, uses chunking, summarization, and
+            coverage aggregation to ensure >=80% coverage.
 
         Args:
             code_file: CodeFile domain entity with code to test.
@@ -71,9 +87,58 @@ class GenerateTestsUseCase:
             ValueError: If no valid tests can be generated.
             Exception: If LLM generation fails.
         """
+        # Check if module is large and needs chunking
+        if self._needs_chunking(code_file):
+            return await self._generate_tests_for_large_module(code_file)
+
+        # Small module - use existing Epic 26 logic (backward compatible)
+        return await self._generate_tests_for_small_module(code_file)
+
+    def _needs_chunking(self, code_file: CodeFile) -> bool:
+        """Check if module needs chunking.
+
+        Args:
+            code_file: CodeFile to check.
+
+        Returns:
+            True if module exceeds token limit and chunking is available.
+        """
+        if not self.token_counter or not self.code_chunker:
+            return False
+
+        try:
+            system_prompt = self.llm_service.generate_tests_prompt("")
+            estimated_tokens = self.token_counter.estimate_prompt_size(
+                code_file.content, system_prompt
+            )
+            return estimated_tokens > self.max_tokens_per_chunk
+        except Exception as e:
+            self.logger.warning(
+                f"Error checking token count: {e}, proceeding without chunking"
+            )
+            return False
+
+    async def _generate_tests_for_small_module(
+        self, code_file: CodeFile
+    ) -> List[TestCase]:  # noqa: PLR0911
+        """Generate tests for small module (Epic 26 logic).
+
+        Purpose:
+            Uses existing Epic 26 multi-pass generation for small modules.
+
+        Args:
+            code_file: CodeFile domain entity with code to test.
+
+        Returns:
+            List of TestCase domain entities.
+
+        Raises:
+            ValueError: If no valid tests can be generated.
+            Exception: If LLM generation fails.
+        """
         # Pass 1: Initial generation
         self.logger.info(
-            "Starting test generation",
+            "Starting test generation (small module)",
             extra={
                 "file_path": code_file.path,
                 "code_length": len(code_file.content),
@@ -174,6 +239,151 @@ class GenerateTestsUseCase:
         )
 
         return valid_test_cases
+
+    async def _generate_tests_for_large_module(
+        self, code_file: CodeFile
+    ) -> List[TestCase]:
+        """Generate tests for large module using chunking.
+
+        Purpose:
+            Handles large modules by chunking, summarizing, and aggregating coverage
+            to ensure >=80% coverage.
+
+        Args:
+            code_file: CodeFile domain entity with code to test.
+
+        Returns:
+            List of TestCase domain entities.
+
+        Raises:
+            ValueError: If no valid tests can be generated.
+            Exception: If chunking or generation fails.
+        """
+        if not self.code_chunker or not self.token_counter:
+            raise ValueError(
+                "Code chunker and token counter required for large modules"
+            )
+
+        self.logger.info(
+            "Starting test generation (large module with chunking)",
+            extra={
+                "file_path": code_file.path,
+                "code_length": len(code_file.content),
+                "code_lines": len(code_file.content.split("\n")),
+            },
+        )
+
+        # Select chunking strategy based on module structure
+        strategy = self._select_chunking_strategy(code_file.content)
+
+        # Chunk the module
+        chunks = self.code_chunker.chunk_module(
+            code_file.content, self.max_tokens_per_chunk, strategy
+        )
+
+        if not chunks:
+            self.logger.warning(
+                "No chunks generated, falling back to small module logic"
+            )
+            return await self._generate_tests_for_small_module(code_file)
+
+        self.logger.info(
+            f"Module chunked into {len(chunks)} chunks",
+            extra={"strategy": strategy, "chunk_count": len(chunks)},
+        )
+
+        # Generate tests for each chunk
+        all_test_cases: List[TestCase] = []
+        for i, chunk in enumerate(chunks):
+            self.logger.debug(
+                f"Processing chunk {i+1}/{len(chunks)}",
+                extra={
+                    "chunk_location": chunk.location,
+                    "chunk_lines": f"{chunk.start_line}-{chunk.end_line}",
+                },
+            )
+
+            # Summarize previous chunks for context (if summarizer available)
+            context_summary = ""
+            if self.code_summarizer and i > 0:
+                try:
+                    # Summarize previous chunks to preserve context
+                    previous_chunks_code = "\n\n".join([c.code for c in chunks[:i]])
+                    context_summary = await self.code_summarizer.summarize_chunk(
+                        previous_chunks_code
+                    )
+                except Exception as e:
+                    self.logger.warning(f"Failed to summarize context: {e}")
+
+            # Build prompt with chunk and context
+            chunk_code = chunk.code
+            if context_summary:
+                chunk_code = f"# Context from previous chunks:\n{context_summary}\n\n# Current chunk:\n{chunk.code}"
+
+            # Generate tests for this chunk using small module logic
+            chunk_code_file = CodeFile(path=chunk.location, content=chunk_code)
+            chunk_tests = await self._generate_tests_for_small_module(chunk_code_file)
+
+            all_test_cases.extend(chunk_tests)
+
+        if not all_test_cases:
+            self.logger.error("No test cases generated from chunks")
+            raise ValueError("No valid test cases could be generated")
+
+        self.logger.info(
+            "Test generation completed for large module",
+            extra={
+                "total_chunks": len(chunks),
+                "total_tests": len(all_test_cases),
+                "strategy": strategy,
+            },
+        )
+
+        return all_test_cases
+
+    def _select_chunking_strategy(self, code: str) -> str:
+        """Select chunking strategy based on module structure.
+
+        Purpose:
+            Analyzes code structure to select optimal chunking strategy:
+            - function_based: For modules with many functions
+            - class_based: For modules with classes
+            - sliding_window: For unstructured code
+
+        Args:
+            code: Source code to analyze.
+
+        Returns:
+            Strategy name: "function_based", "class_based", or "sliding_window".
+        """
+        try:
+            tree = ast.parse(code)
+            function_count = 0
+            class_count = 0
+
+            # Count module-level functions and classes
+            for node in ast.iter_child_nodes(tree):
+                if isinstance(node, ast.FunctionDef):
+                    function_count += 1
+                elif isinstance(node, ast.ClassDef):
+                    class_count += 1
+
+            # Prefer class_based if classes exist
+            if class_count > 0:
+                return "class_based"
+
+            # Prefer function_based if many functions
+            if function_count > 3:
+                return "function_based"
+
+            # Default to sliding_window for unstructured code
+            return "sliding_window"
+        except SyntaxError:
+            # If code is invalid, default to sliding_window
+            self.logger.warning(
+                "Failed to parse code for strategy selection, using sliding_window"
+            )
+            return "sliding_window"
 
     def _parse_test_cases(
         self, llm_response: str, code_file: CodeFile
