@@ -13,11 +13,8 @@ from src.application.benchmarking.models import (
 )
 from src.application.benchmarking.runner import BenchmarkEvaluationRunner
 
-<<<<<<< HEAD
-=======
 from src.application.benchmarking.seed_benchmark_data import SeedBenchmarkDataUseCase
 
->>>>>>> origin/master
 
 __all__ = [
     "BenchmarkDirection",
@@ -30,8 +27,5 @@ __all__ = [
     "BenchmarkSampleResult",
     "BenchmarkScenarioConfig",
     "BenchmarkEvaluationRunner",
-<<<<<<< HEAD
-=======
     "SeedBenchmarkDataUseCase",
->>>>>>> origin/master
 ]

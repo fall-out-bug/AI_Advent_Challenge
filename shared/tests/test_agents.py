@@ -111,10 +111,6 @@ class TestBaseAgent:
         agent = CodeGeneratorAgent(mock_client)
         stats = agent.get_stats()
 
-<<<<<<< HEAD
-        expected_keys = ["total_requests", "successful_requests", "failed_requests",
-                        "agent_name", "average_response_time", "total_response_time"]
-=======
         expected_keys = [
             "total_requests",
             "successful_requests",
@@ -123,7 +119,6 @@ class TestBaseAgent:
             "average_response_time",
             "total_response_time",
         ]
->>>>>>> origin/master
 
         for key in expected_keys:
             assert key in stats
@@ -181,13 +176,9 @@ class TestCodeGeneratorAgent:
     @pytest.mark.asyncio
     async def test_code_generation_with_error(self, mock_client, agent_request):
         """Test code generation with model error."""
-<<<<<<< HEAD
-        mock_client.make_request = AsyncMock(side_effect=ModelConnectionError("Connection failed"))
-=======
         mock_client.make_request = AsyncMock(
             side_effect=ModelConnectionError("Connection failed")
         )
->>>>>>> origin/master
 
         agent = CodeGeneratorAgent(mock_client, model_name="qwen")
         response = await agent.process(agent_request)
@@ -207,16 +198,9 @@ class TestCodeGeneratorAgent:
     ):
         """Test retry mechanism on transient failures."""
         # First call fails, second succeeds
-<<<<<<< HEAD
-        mock_client.make_request = AsyncMock(side_effect=[
-            ModelConnectionError("Temporary failure"),
-            mock_model_response
-        ])
-=======
         mock_client.make_request = AsyncMock(
             side_effect=[ModelConnectionError("Temporary failure"), mock_model_response]
         )
->>>>>>> origin/master
 
         agent = CodeGeneratorAgent(mock_client, model_name="qwen")
         response = await agent.process(agent_request)
@@ -284,14 +268,10 @@ class TestCodeGeneratorAgent:
         agent = CodeGeneratorAgent(mock_client)
 
         # Test with empty task
-<<<<<<< HEAD
         request = AgentRequest(
             task="",
             context={"language": "python"}
         )
-=======
-        request = AgentRequest(task="", context={"language": "python"})
->>>>>>> origin/master
 
         response = await agent.process(request)
 
@@ -349,17 +329,6 @@ def fibonacci(n):
     @pytest.mark.asyncio
     async def test_code_review_with_error(self, mock_client):
         """Test code review with model error."""
-<<<<<<< HEAD
-        mock_client.make_request = AsyncMock(side_effect=ModelConnectionError("Review failed"))
-
-        agent = CodeReviewerAgent(mock_client, model_name="mistral")
-
-        request = AgentRequest(
-            task="def test():\n    pass",
-            context={"language": "python"}
-        )
-
-=======
         mock_client.make_request = AsyncMock(
             side_effect=ModelConnectionError("Review failed")
         )
@@ -370,7 +339,6 @@ def fibonacci(n):
             task="def test():\n    pass", context={"language": "python"}
         )
 
->>>>>>> origin/master
         response = await agent.process(request)
 
         # Verify error handling
@@ -431,10 +399,6 @@ def fib(n):
 
         assert "def test():" in prompt
         assert "review" in prompt.lower() or "analyze" in prompt.lower()
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/master
 
 
 class TestSchemas:
@@ -620,13 +584,9 @@ class TestAgentIntegration:
     ):
         """Test complete workflow from generation to review."""
         # Setup mock responses
-<<<<<<< HEAD
-        mock_client.make_request = AsyncMock(side_effect=[mock_model_response, mock_review_response])
-=======
         mock_client.make_request = AsyncMock(
             side_effect=[mock_model_response, mock_review_response]
         )
->>>>>>> origin/master
 
         # Create agents
         generator = CodeGeneratorAgent(mock_client, model_name="qwen")

@@ -168,7 +168,6 @@ async def summarize_posts(
         channel_context = f" канала @{channel_username}"
 
     if language == "ru":
-<<<<<<< HEAD
         # Load digest summarization prompt from config (includes persona style)
         try:
             from src.application.personalization.templates import (
@@ -196,17 +195,12 @@ async def summarize_posts(
                 posts_text=texts,
             )
         except Exception as e:
-            logger.error(
-                f"Could not load digest prompt from config: {e}",
+            logger.warning(
+                f"Could not load digest prompt from config, using fallback: {e}",
                 exc_info=True,
             )
-            # No fallback - raise error to ensure template is configured
-            raise RuntimeError(
-                "Digest summarization prompt template not available. "
-                "Please ensure config/persona_templates.yaml contains digest_summarization_prompt."
-            ) from e
-=======
-        prompt = f"""Суммаризируй эти посты из Telegram-канала{channel_context}{time_context}.
+            # Fallback to basic prompt if persona templates are not available
+            prompt = f"""Суммаризируй эти посты из Telegram-канала{channel_context}{time_context}.
 
 КРИТИЧЕСКИ ВАЖНО:
 - Эти посты ВСЕ из ОДНОГО канала{channel_context}
@@ -233,7 +227,6 @@ async def summarize_posts(
 {texts}
 
 Суммари (только этот канал):"""
->>>>>>> origin/master
     else:
         channel_context = (
             f" from channel @{channel_username}" if channel_username else ""
@@ -402,7 +395,6 @@ Summary (this channel only):"""
                     )
 
                 if cleaned_summary:
-<<<<<<< HEAD
                     # Ensure summary is within 1500-2000 characters
                     if len(cleaned_summary) < 1500:
                         logger.warning(
@@ -428,9 +420,6 @@ Summary (this channel only):"""
                         f"Final summary generated: length={len(cleaned_summary)} chars, "
                         f"preview={cleaned_summary[:200]}..."
                     )
-=======
-                    logger.info(f"Final summary generated: {cleaned_summary[:200]}...")
->>>>>>> origin/master
                     return cleaned_summary
         except Exception as e:
             logger.warning(

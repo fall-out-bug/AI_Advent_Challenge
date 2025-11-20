@@ -122,10 +122,6 @@ def _build_pipeline(settings):
 
 
 def _create_mongo_client(url: str, timeout_ms: int) -> MongoClient:
-<<<<<<< HEAD
-    """Create MongoDB client."""
-    sanitized_url = _resolve_mongo_url(url)
-=======
     """Create MongoDB client.
 
     Note: This function is kept for backward compatibility with embedding_index CLI.
@@ -146,7 +142,6 @@ def _create_mongo_client(url: str, timeout_ms: int) -> MongoClient:
     except Exception:
         # Fallback to direct instantiation if factory fails
         pass
->>>>>>> origin/master
     return MongoClient(sanitized_url, serverSelectionTimeoutMS=timeout_ms)
 
 

@@ -11,17 +11,12 @@ from typing import Sequence
 from src.domain.rag import RerankResult, RetrievedChunk
 from src.infrastructure.logging import get_logger
 
-<<<<<<< HEAD
-from src.infrastructure.metrics import rag_metrics
-
-=======
 from src.infrastructure.metrics import (
     rag_fallback_reason_total,
     rag_metrics,
     rag_variance_ratio,
 )
 
->>>>>>> origin/master
 
 
 class LLMRerankerAdapter:
@@ -35,10 +30,7 @@ class LLMRerankerAdapter:
         timeout_seconds: int = 3,
         temperature: float = 0.5,
         max_tokens: int = 256,
-<<<<<<< HEAD
-=======
         seed: int | None = None,
->>>>>>> origin/master
     ) -> None:
         """Initialise adapter with client and configuration."""
         self._llm_client = llm_client
@@ -46,10 +38,7 @@ class LLMRerankerAdapter:
         self._temperature = temperature
         self._max_tokens = max_tokens
         self._logger = get_logger(__name__)
-<<<<<<< HEAD
-=======
         self._seed = seed
->>>>>>> origin/master
 
     async def rerank(
         self,
@@ -61,15 +50,12 @@ class LLMRerankerAdapter:
         if not selected:
             raise ValueError("chunks cannot be empty for reranking.")
 
-<<<<<<< HEAD
-=======
         if self._seed is not None:
             self._logger.debug(
                 "rag_rerank_seed",
                 extra={"seed": self._seed},
             )
 
->>>>>>> origin/master
         prompt = self._build_prompt(query=query, chunks=selected)
         start_time = time.perf_counter()
         try:
@@ -193,13 +179,10 @@ class LLMRerankerAdapter:
 
     def _record_fallback(self, reason: str) -> None:
         rag_metrics.rag_reranker_fallback_total.labels(reason=reason).inc()
-<<<<<<< HEAD
-=======
         try:
             rag_fallback_reason_total.labels(reason=reason).inc()
         except Exception:  # pragma: no cover - best-effort metric
             pass
->>>>>>> origin/master
 
     def _record_score_delta(
         self,
@@ -215,11 +198,6 @@ class LLMRerankerAdapter:
         values = list(rerank_scores.values())
         if len(values) < 2:
             rag_metrics.rag_rerank_score_variance.observe(0.0)
-<<<<<<< HEAD
-            return
-        variance = pvariance(values)
-        rag_metrics.rag_rerank_score_variance.observe(variance)
-=======
             try:
                 rag_variance_ratio.labels(window="current").set(0.0)
             except Exception:  # pragma: no cover - best-effort metric
@@ -231,7 +209,6 @@ class LLMRerankerAdapter:
             rag_variance_ratio.labels(window="current").set(variance)
         except Exception:  # pragma: no cover
             pass
->>>>>>> origin/master
 
 
 def _load_prompt() -> str:

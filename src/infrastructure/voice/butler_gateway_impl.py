@@ -1,27 +1,17 @@
 """Butler gateway implementation.
 
 Purpose:
-<<<<<<< HEAD
-    Implements ButlerGateway protocol by wrapping ButlerOrchestrator
-=======
     Implements ButlerGateway Protocol by wrapping ButlerOrchestrator
->>>>>>> origin/master
     for routing confirmed voice commands to Butler pipeline.
 """
 
 from __future__ import annotations
 
-<<<<<<< HEAD
-from src.domain.agents.butler_orchestrator import ButlerOrchestrator
-from src.domain.interfaces.voice import ButlerGateway
-
-=======
 from typing import Optional
 
 from src.domain.agents.butler_orchestrator import ButlerOrchestrator
 from src.domain.interfaces import ButlerGateway
 
->>>>>>> origin/master
 from src.infrastructure.logging import get_logger
 
 logger = get_logger("voice.butler_gateway_impl")
@@ -31,11 +21,7 @@ class ButlerGatewayImpl:
     """Butler gateway implementation wrapping ButlerOrchestrator.
 
     Purpose:
-<<<<<<< HEAD
-        Adapts ButlerOrchestrator.handle_user_message() to ButlerGateway protocol
-=======
         Adapts ButlerOrchestrator.handle_user_message() to ButlerGateway Protocol
->>>>>>> origin/master
         for voice command routing. Enables Clean Architecture by decoupling
         voice use cases from concrete orchestrator implementation.
 
@@ -68,12 +54,9 @@ class ButlerGatewayImpl:
         Returns:
             Response text from Butler orchestrator to send to user.
 
-<<<<<<< HEAD
         Raises:
             RuntimeError: If routing fails.
 
-=======
->>>>>>> origin/master
         Example:
             >>> gateway = ButlerGatewayImpl(orchestrator)
             >>> response = await gateway.handle_user_message(
@@ -120,12 +103,5 @@ class ButlerGatewayImpl:
                     "session_id": session_id,
                     "error": str(e),
                 },
-<<<<<<< HEAD
-                exc_info=True,
-            )
-            raise RuntimeError(f"Butler gateway error: {str(e)}") from e
-=======
             )
             raise
-
->>>>>>> origin/master

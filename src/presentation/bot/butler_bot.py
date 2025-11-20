@@ -4,13 +4,10 @@ from __future__ import annotations
 
 import asyncio
 
-<<<<<<< HEAD
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from typing import Any
-=======
->>>>>>> origin/master
 
 from aiogram import Bot, Dispatcher, Router
 from aiogram.filters import Command
@@ -28,12 +25,9 @@ from src.presentation.bot.orchestrator import ButlerOrchestrator
 
 logger = get_logger("butler_bot")
 
-<<<<<<< HEAD
-=======
 # Voice handler will be set up asynchronously
 _voice_handler_initialized = False
 
->>>>>>> origin/master
 
 class ButlerBot:
     """Telegram bot using ButlerOrchestrator for message processing.
@@ -60,19 +54,12 @@ class ButlerBot:
         self.dp = Dispatcher(storage=self.storage)
         self.router = Router()
         self.orchestrator = orchestrator
-<<<<<<< HEAD
-        self._personalized_reply_use_case = None
-        self._setup_handlers()
-        self.dp.include_router(self.router)
-
-=======
         self._setup_handlers()
         self.dp.include_router(self.router)
 
         # Voice handler will be set up asynchronously in setup_voice_handler()
         # This is done to allow async initialization of use cases
 
->>>>>>> origin/master
         # Initialize metrics server
         self.metrics_server = MetricsServer()
         self._metrics = get_butler_metrics()
@@ -98,7 +85,6 @@ class ButlerBot:
             channels.router._parent_router = None
         self.dp.include_router(channels.router)
 
-<<<<<<< HEAD
         # Setup personalization if enabled
         personalized_reply_use_case = self._create_personalization_use_cases()
 
@@ -111,13 +97,6 @@ class ButlerBot:
 
         # Store for voice handler setup
         self._personalized_reply_use_case = personalized_reply_use_case
-=======
-        # Include butler handler for natural language processing
-        butler_router = setup_butler_handler(self.orchestrator)
-        self.dp.include_router(butler_router)
-
-        # Voice handler will be set up asynchronously via setup_voice_handler()
->>>>>>> origin/master
 
     async def cmd_start(self, message: Message) -> None:
         """Handle /start command."""
@@ -156,7 +135,6 @@ class ButlerBot:
             )
             await message.answer("❌ Sorry, I couldn't load the menu. Please try again.")
 
-<<<<<<< HEAD
     def _create_personalization_use_cases(self) -> "Optional[Any]":
         """Create personalization use cases if enabled.
 
@@ -198,8 +176,6 @@ class ButlerBot:
             )
             return None
 
-=======
->>>>>>> origin/master
     async def setup_voice_handler(self) -> None:
         """Setup voice handler asynchronously.
 
@@ -212,12 +188,8 @@ class ButlerBot:
             >>> bot = ButlerBot(token, orchestrator)
             >>> await bot.setup_voice_handler()
         """
-<<<<<<< HEAD
-        if getattr(self, "_voice_handler_initialized", False):
-=======
         global _voice_handler_initialized
         if _voice_handler_initialized:
->>>>>>> origin/master
             logger.debug("Voice handler already initialized")
             return
 
@@ -231,29 +203,19 @@ class ButlerBot:
                 bot=self.bot,
             )
 
-<<<<<<< HEAD
             # Create personalization use cases if enabled
             personalized_reply_use_case = await self._setup_personalization()
 
-=======
->>>>>>> origin/master
             # Setup and register voice handler
             voice_router = setup_voice_handler(
                 process_use_case=process_uc,
                 confirmation_use_case=confirmation_uc,
-<<<<<<< HEAD
                 personalized_reply_use_case=personalized_reply_use_case,
-=======
->>>>>>> origin/master
             )
             self.dp.include_router(voice_router)
 
             logger.info("Voice handler initialized and registered")
-<<<<<<< HEAD
-            self._voice_handler_initialized = True
-=======
             _voice_handler_initialized = True
->>>>>>> origin/master
 
         except Exception as e:
             logger.error(
@@ -261,7 +223,6 @@ class ButlerBot:
                 "Bot will continue without voice support.",
                 exc_info=True,
             )
-<<<<<<< HEAD
             # Don't raise - bot should work without voice support
 
     async def _setup_personalization(self) -> "Optional[Any]":
@@ -326,16 +287,6 @@ class ButlerBot:
             )
             return None
 
-=======
-            # Log specific error details for debugging
-            import traceback
-            logger.debug(
-                "Voice handler initialization traceback",
-                extra={"traceback": traceback.format_exc()},
-            )
-            # Don't raise - bot should work without voice support
-
->>>>>>> origin/master
     async def run(self) -> None:
         """Start the bot polling loop with graceful shutdown."""
         try:
@@ -408,13 +359,6 @@ def create_dispatcher() -> Dispatcher:
 async def main() -> None:  # pragma: no cover - manual run helper
     import os
 
-<<<<<<< HEAD
-    from src.presentation.bot.factory import create_butler_orchestrator
-
-    token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-    if not token:
-        raise RuntimeError("TELEGRAM_BOT_TOKEN is required")
-=======
     from src.infrastructure.config.settings import get_settings
     from src.presentation.bot.factory import create_butler_orchestrator
 
@@ -436,7 +380,6 @@ async def main() -> None:  # pragma: no cover - manual run helper
             "TELEGRAM_BOT_TOKEN is required. "
             "Set it in environment variable or .env file."
         )
->>>>>>> origin/master
 
     # Create orchestrator using factory
     orchestrator = await create_butler_orchestrator()
@@ -448,7 +391,3 @@ async def main() -> None:  # pragma: no cover - manual run helper
 
 if __name__ == "__main__":  # pragma: no cover
     asyncio.run(main())
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/master

@@ -1,14 +1,5 @@
 """Tests for PostRepository with hybrid deduplication (message_id + content_hash)."""
 
-<<<<<<< HEAD
-import asyncio
-import hashlib
-import os
-from datetime import datetime, timedelta
-
-import pytest
-
-=======
 import hashlib
 from datetime import datetime, timedelta
 
@@ -17,12 +8,10 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from src.infrastructure.repositories.post_repository import PostRepository
 
->>>>>>> origin/master
 
 pytestmark = pytest.mark.asyncio
 
 
-<<<<<<< HEAD
 @pytest.fixture(scope="module")
 def event_loop():
     """Create event loop for async tests."""
@@ -54,23 +43,6 @@ async def repo():
     # Cleanup after
     await db.posts.delete_many({})
     await close_client()
-=======
-@pytest.fixture
-async def repo(mongodb_database_async: AsyncIOMotorDatabase):
-    """Create PostRepository instance with per-test database.
-
-    Args:
-        mongodb_database_async: Per-test async MongoDB database fixture.
-
-    Returns:
-        PostRepository: Repository instance using per-test database.
-    """
-    repository = PostRepository(mongodb_database_async)
-    # Cleanup before each test (per-test DB is already isolated)
-    await mongodb_database_async.posts.delete_many({})
-    yield repository
-    # Cleanup happens automatically via mongodb_database_async fixture
->>>>>>> origin/master
 
 
 def _create_content_hash(text: str, channel_username: str) -> str:
@@ -226,16 +198,10 @@ async def test_get_posts_by_user_subscriptions_filters_correctly(repo):
     await repo.save_post(post3)
 
     # Mock channels collection - user 1 subscribes to channel1
-<<<<<<< HEAD
-    from src.infrastructure.database.mongo import get_db
-
-    db = await get_db()
-=======
     # Use the same database as the repository (from repo fixture)
     from motor.motor_asyncio import AsyncIOMotorDatabase
 
     db: AsyncIOMotorDatabase = repo._db
->>>>>>> origin/master
     await db.channels.insert_one(
         {"user_id": 1, "channel_username": "channel1", "active": True}
     )
@@ -365,16 +331,10 @@ async def test_get_posts_by_user_subscriptions_time_filtering(repo):
     await repo.save_post(new_post)
 
     # Mock channels collection
-<<<<<<< HEAD
-    from src.infrastructure.database.mongo import get_db
-
-    db = await get_db()
-=======
     # Use the same database as the repository (from repo fixture)
     from motor.motor_asyncio import AsyncIOMotorDatabase
 
     db: AsyncIOMotorDatabase = repo._db
->>>>>>> origin/master
     await db.channels.insert_one(
         {"user_id": 1, "channel_username": "channel1", "active": True}
     )

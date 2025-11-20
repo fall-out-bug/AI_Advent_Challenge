@@ -44,16 +44,11 @@ def _build_pipeline() -> Tuple[CompareRagAnswersUseCase, RagRerankConfig]:
     settings = get_settings()
     rag_config = load_rag_rerank_config()
 
-<<<<<<< HEAD
-    # MongoDB connection
-    mongo_client = MongoClient(settings.mongodb_url)
-=======
     # MongoDB connection (using DI-based factory)
     from src.infrastructure.database.mongo_client_factory import MongoClientFactory
 
     factory = MongoClientFactory(settings)
     mongo_client = factory.create_sync_client(use_test_url=False)
->>>>>>> origin/master
     database = mongo_client[settings.embedding_mongo_database]
     chunk_collection = database[settings.embedding_mongo_chunks_collection]
     document_collection = database[settings.embedding_mongo_documents_collection]
@@ -84,20 +79,14 @@ def _build_pipeline() -> Tuple[CompareRagAnswersUseCase, RagRerankConfig]:
     )
 
     reranker_llm_config = rag_config.reranker.llm
-<<<<<<< HEAD
-=======
     reranker_seed = rag_config.reranker.seed
->>>>>>> origin/master
     reranker_client = ResilientLLMClient(url=settings.llm_url or _DEFAULT_LLM_URL)
     reranker_adapter = LLMRerankerAdapter(
         llm_client=reranker_client,
         timeout_seconds=reranker_llm_config.timeout_seconds,
         temperature=reranker_llm_config.temperature,
         max_tokens=reranker_llm_config.max_tokens,
-<<<<<<< HEAD
-=======
         seed=reranker_seed,
->>>>>>> origin/master
     )
 
     # Retrieval service
