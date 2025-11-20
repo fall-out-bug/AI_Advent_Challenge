@@ -1,0 +1,18 @@
+from: analyst
+to: tech_lead
+timestamp: "2025_11_20_14_05_00"
+epic_id: "epic_27"
+iteration: 1
+
+type: request
+subject: requirements_ready
+
+content:
+  summary: "Requirements for Epic 27 (Local Test Agent quality on large modules) are ready for review"
+  key_points:
+    - "Local Qwen-based Test Agent must generate unit and integration tests for whole modules/packages, not just single files."
+    - "Comparison with Cursor-agent tests is required at the coverage level, while keeping runtime strictly local in production."
+  concerns:
+    - "Need a robust chunking/streaming strategy for 4000-token context so that large modules can be processed without excessive complexity or instability."
+
+action_needed: "review_and_plan"

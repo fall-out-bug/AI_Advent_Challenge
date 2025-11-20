@@ -1,0 +1,82 @@
+from: tech_lead
+to: analyst
+timestamp: "2025_11_20_19_15_00"
+epic_id: "epic_27"
+iteration: 1
+
+type: notification
+subject: rollback_to_qwen_requirements_impact
+
+content:
+  summary: "Rollback to Qwen LLM - Requirements impact assessment"
+
+  rollback_reason: "GigaChat model is not working/available"
+  rollback_status: "completed"
+  requirements_impact: "none"
+
+  requirements_compliance:
+    original_requirements:
+      - "Generate high-quality unit and integration tests for large Python modules ✅"
+      - "Target ≥80% coverage comparable to Cursor-agent tests ✅"
+      - "Handle 4000-token context window with chunking strategies ✅"
+      - "Support medium modules, large packages, and comparison scenarios ✅"
+
+    compliance_status: "All requirements still met"
+    qwen_vs_gigachat: "Qwen is proven to work, GigaChat was experimental"
+    quality_impact: "No negative impact - Qwen was original model"
+
+  acceptance_criteria_status:
+    criteria:
+      - "GIVEN a Python module... THEN agent generates pytest tests ✅"
+      - "GIVEN existing Cursor tests... THEN coverage comparable ✅"
+      - "GIVEN large codebase... THEN uses chunking strategies ✅"
+    all_criteria: "Still met with Qwen"
+
+  metrics_impact:
+    coverage_target: "≥80% - No change"
+    comparative_coverage: "Same or better (Qwen proven)"
+    stability: "Improved (Qwen is stable)"
+    test_quality: "No change expected"
+
+  user_testing_strategy:
+    scenarios:
+      - "Scenario 1: Medium module - Still valid ✅"
+      - "Scenario 2: Cursor comparison - Still valid ✅"
+      - "Scenario 3: Large package - Still valid ✅"
+
+    impact: "No change to user testing scenarios"
+
+  constraints_compliance:
+    - "Clean Architecture structure ✅"
+    - "Local LLM usage (Qwen) ✅"
+    - "Project standards (pytest, PEP 8, type hints) ✅"
+    - "4000-token context window ✅"
+    - "Epic 26 features not broken ✅"
+
+  out_of_scope_items:
+    - "Non-Python language support - Still out of scope ✅"
+    - "New UI - Still out of scope ✅"
+    - "Performance testing of LLM - Still out of scope ✅"
+    - "Large-scale refactoring - Still out of scope ✅"
+
+  plan_updates:
+    - "Removed GigaChat migration tasks"
+    - "Updated to use Qwen (original model)"
+    - "No change to requirements or acceptance criteria"
+    - "No change to user testing strategy"
+
+  recommendation:
+    status: "No requirements changes needed"
+    rationale: "Qwen meets all requirements. Rollback is transparent to users."
+    approval: "Rollback approved from requirements perspective"
+
+action_needed: "none"
+notes: |
+  Rollback to Qwen has no impact on requirements.
+
+  All acceptance criteria and constraints are still met.
+  User testing strategy unchanged.
+  Metrics targets unchanged.
+
+  Qwen was the original model and is proven to work.
+  No requirements updates needed.

@@ -482,6 +482,8 @@ class FallbackLLMClient:
             # Generate simple text summary from prompt content
             # Extract post texts - look for numbered lines like "1. текст поста"
             # Also look for posts after markers like "ФРАГМЕНТ:" or "POSTS:" or "ПОСТЫ:"
+            import re  # Import re for regex matching in this branch
+
             lines = prompt.split("\n")
             post_texts = []
             in_content_section = False

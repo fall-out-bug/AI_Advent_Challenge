@@ -1,0 +1,84 @@
+from: architect
+to: developer
+timestamp: "2025_11_20_14_45_00"
+epic_id: "epic_27"
+iteration: 1
+
+type: request
+subject: llm_model_change_implementation_gigachat
+
+content:
+  summary: "Architecture updated: Switch from Qwen to GigaChat for LLM operations"
+
+  change_overview:
+    model_change: "Qwen (llm-api) → GigaChat (llm-api-gigachat)"
+    architectural_impact: "NONE - Pure infrastructure swap, Protocol preserved"
+    code_impact: "MINIMAL - TokenCounter and configuration only"
+
+  implementation_changes_required:
+    token_counter:
+      component: "TokenCounter (Stage 2 - infrastructure)"
+      current_state: "Uses Qwen/tiktoken tokenizer"
+      required_change: "Update to use GigaChat tokenizer library"
+      location: "src/infrastructure/test_agent/services/token_counter.py"
+      note: "Verify token counting accuracy matches GigaChat's actual tokenization. Test with real code samples to ensure 4000-token context window calculations are correct."
+
+    configuration:
+      files_to_update:
+        - "docker-compose.test-agent.yml: LLM_URL → http://llm-api-gigachat:8000"
+        - "docker-compose.test-agent.yml: LLM_MODEL → [GigaChat model identifier]"
+        - "src/infrastructure/config/settings.py: llm_url default (if needed)"
+      environment_variables:
+        LLM_URL: "http://llm-api-gigachat:8000"
+        LLM_MODEL: "[GigaChat model identifier]"
+
+    llm_client_verification:
+      component: "CodeSummarizer, TestAgentLLMService"
+      action: "Verify compatibility"
+      note: "If GigaChat API differs from Qwen, may need GigaChatClient adapter. Should still conform to LLMClient Protocol. Test generate() and batch_generate() methods."
+
+  testing_requirements:
+    token_counting:
+      - "Test TokenCounter with GigaChat tokenizer"
+      - "Verify 4000-token chunk calculations are accurate"
+      - "Test with various code samples (small, medium, large modules)"
+      - "Add buffer (90% of max) to account for tokenizer discrepancies"
+
+    llm_integration:
+      - "Test CodeSummarizer with GigaChat LLM"
+      - "Verify summaries preserve critical context (function signatures, dependencies)"
+      - "Test TestAgentLLMService with GigaChat"
+      - "Verify generated tests are high quality"
+
+    compatibility:
+      - "Verify GigaChat API responses match LLMClient Protocol expectations"
+      - "Test error handling and retry logic"
+      - "Verify batch_generate() works correctly"
+
+  clean_architecture_compliance:
+    domain_layer: "NO CHANGES - Remains pure"
+    application_layer: "NO CHANGES - Depends on Protocol, not implementation"
+    infrastructure_layer: "MINOR CHANGES - TokenCounter tokenizer, LLM service URL"
+    presentation_layer: "NO CHANGES"
+    protocol_interface: "PRESERVED - LLMClient Protocol unchanged"
+
+  risks_and_mitigations:
+    risk_1:
+      description: "GigaChat tokenizer may give different counts than Qwen"
+      mitigation: "Use GigaChat's official tokenizer. Test thoroughly. Add buffer (90% of max tokens)"
+    risk_2:
+      description: "GigaChat API format may differ"
+      mitigation: "Create GigaChatClient adapter if needed. Must conform to LLMClient Protocol. Test compatibility."
+    risk_3:
+      description: "Context window calculations may be inaccurate"
+      mitigation: "Test with real code samples. Verify chunks fit within 4000-token limit. Adjust buffer if needed"
+
+  backward_compatibility:
+    protocol: "Maintained - LLMClient Protocol unchanged"
+    application_code: "No changes needed - uses Protocol, not concrete implementation"
+    tests: "Update TokenCounter tests to use GigaChat tokenizer"
+
+  concerns: []
+
+action_needed: "update_token_counter_and_configuration"
+notes: "This change maintains Clean Architecture - it's a pure infrastructure swap. Update TokenCounter to use GigaChat tokenizer and configuration to point to llm-api-gigachat. Verify LLMClient Protocol compatibility. All existing application code continues to work unchanged."

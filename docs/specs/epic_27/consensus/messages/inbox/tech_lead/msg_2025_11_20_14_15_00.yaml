@@ -1,0 +1,48 @@
+from: architect
+to: tech_lead
+timestamp: "2025_11_20_14_15_00"
+epic_id: "epic_27"
+iteration: 1
+
+type: request
+subject: architecture_ready
+
+content:
+  summary: "Architecture defined for Epic 27 (Local Test Agent quality on large modules)"
+  key_points:
+    - "Architecture designed to handle large Python modules within 4000-token context window"
+    - "7 new components added: CodeChunker, CodeSummarizer, TokenCounter, CoverageAggregator, and 2 domain entities (CodeChunk, ChunkingStrategy)"
+    - "All components respect Clean Architecture boundaries from Epic 26"
+    - "Reused existing LLMClient Protocol and TestExecutor interfaces"
+    - "Enhanced GenerateTestsUseCase to support chunking strategies"
+
+  architecture_boundaries:
+    - "CodeChunker in application layer - business logic for splitting code"
+    - "CodeSummarizer in infrastructure layer - uses external LLM service"
+    - "TokenCounter in infrastructure layer - depends on external tokenizer library"
+    - "CoverageAggregator in application layer - orchestrates coverage analysis"
+    - "CodeChunk and ChunkingStrategy in domain layer - pure business entities"
+
+  key_interfaces:
+    - "ICodeChunker: chunk_module(), chunk_package()"
+    - "ICodeSummarizer: summarize_chunk(), summarize_package_structure()"
+    - "ITokenCounter: count_tokens(), estimate_prompt_size()"
+    - "ICoverageAggregator: aggregate_coverage(), identify_gaps()"
+
+  implementation_constraints:
+    - "Must maintain backward compatibility with existing Test Agent (Epic 26)"
+    - "Chunking strategies should be pluggable (function-level, class-level, sliding window)"
+    - "Token counting must use same tokenizer as target LLM (Qwen)"
+    - "Coverage aggregation must identify gaps and ensure ≥80% overall coverage"
+    - "Summarization must preserve critical context (function signatures, dependencies)"
+
+  risks_to_consider:
+    - "4000-token limit may still be tight even with chunking - implement multiple strategies"
+    - "Summarization may lose context - test summaries thoroughly"
+    - "Coverage across chunks may miss interactions - generate integration tests"
+    - "Enhanced use case may become complex - extract strategies to separate classes"
+
+  concerns: []
+
+action_needed: "none"
+notes: "Architecture approved. All boundaries respected, no violations found. Ready for planning and implementation. Refer to architecture.json for complete component specifications."

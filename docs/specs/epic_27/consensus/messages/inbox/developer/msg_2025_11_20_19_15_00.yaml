@@ -1,0 +1,64 @@
+from: tech_lead
+to: developer
+timestamp: "2025_11_20_19_15_00"
+epic_id: "epic_27"
+iteration: 1
+
+type: update
+subject: rollback_to_qwen_configuration_update_needed
+
+content:
+  summary: "Rollback to Qwen completed - Configuration update needed"
+
+  rollback_status: "completed"
+  reason: "GigaChat model is not working/available"
+  rollback_to: "Qwen (llm-api service)"
+
+  code_changes_completed:
+    - "TokenCounter reverted to Qwen tokenizer (tiktoken cl100k_base)"
+    - "Removed GigaChat/sentencepiece code"
+    - "Simplified implementation"
+    - "All tests passing (10/10 unit tests)"
+
+  configuration_changes_needed:
+    environment_variables:
+      current: "LLM_URL=http://llm-api-gigachat:8000 (or not set)"
+      required: "LLM_URL=http://llm-api:8000"
+      action: "Update LLM_URL environment variable to point to Qwen service"
+
+    docker_compose:
+      - "Update docker-compose.test-agent.yml to use llm-api service"
+      - "Remove llm-api-gigachat service reference (if present)"
+
+    testing:
+      - "Verify test generation works with Qwen LLM"
+      - "Run integration tests to confirm Qwen compatibility"
+      - "Test chunking functionality with Qwen tokenizer"
+
+  plan_updates:
+    - "Removed T2.5 and T2.6 (GigaChat migration tasks)"
+    - "Updated all task descriptions to use Qwen"
+    - "Stage 2 duration: 5h → 3.5h"
+    - "Total tasks: 32 → 30, Total hours: 29 → 27.5"
+
+  testing_status:
+    unit_tests: "✅ All passing (10/10)"
+    token_counter: "✅ Working correctly with Qwen"
+    integration_tests: "⚠️ Need to verify with Qwen LLM"
+
+  next_steps:
+    - "Update LLM_URL: export LLM_URL='http://llm-api:8000'"
+    - "Test: python -m src.presentation.cli.test_agent.main test_agent_demo.py --show-tests"
+    - "Run integration tests: pytest tests/integration/infrastructure/test_agent/test_token_counter_integration.py"
+    - "Verify E2E scenarios work with Qwen"
+
+action_needed: "update_configuration_and_test"
+notes: |
+  Rollback to Qwen is complete in code. All tests pass.
+
+  You need to:
+  1. Update LLM_URL environment variable to http://llm-api:8000
+  2. Test the agent with Qwen LLM
+  3. Verify integration tests work correctly
+
+  The code is ready - just needs configuration update and testing.

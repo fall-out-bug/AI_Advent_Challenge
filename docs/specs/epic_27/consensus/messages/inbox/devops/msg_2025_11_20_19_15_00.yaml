@@ -1,0 +1,72 @@
+from: tech_lead
+to: devops
+timestamp: "2025_11_20_19_15_00"
+epic_id: "epic_27"
+iteration: 1
+
+type: notification
+subject: rollback_to_qwen_deployment_configuration_update
+
+content:
+  summary: "Rollback to Qwen LLM - Deployment configuration needs update"
+
+  rollback_reason: "GigaChat model is not working/available"
+  rollback_status: "code_complete"
+  configuration_status: "needs_update"
+
+  deployment_changes_needed:
+    llm_service:
+      from: "llm-api-gigachat (GigaChat)"
+      to: "llm-api (Qwen 2.5:7b)"
+
+    environment_variables:
+      - "LLM_URL: http://llm-api-gigachat:8000 → http://llm-api:8000"
+      - "LLM_MODEL: gigachat → qwen (or remove, use default)"
+
+    docker_compose:
+      file: "docker-compose.test-agent.yml"
+      changes:
+        - "Update service reference from llm-api-gigachat to llm-api"
+        - "Update network configuration if needed"
+        - "Remove llm-api-gigachat service (if present)"
+
+    kubernetes_config:
+      - "Update LLM_URL in ConfigMap/Secrets"
+      - "Update service endpoint references"
+      - "Verify llm-api service is available"
+
+  code_changes_completed:
+    - "TokenCounter reverted to Qwen tokenizer"
+    - "All GigaChat-specific code removed"
+    - "All unit tests passing"
+
+  verification_steps:
+    - "Verify llm-api service is running and accessible"
+    - "Test: curl http://llm-api:8000/health (if available)"
+    - "Update LLM_URL in deployment configuration"
+    - "Redeploy test-agent service if needed"
+    - "Verify test generation works with Qwen"
+
+  rollback_impact:
+    service_availability: "Should improve - Qwen is proven stable"
+    performance: "No change expected"
+    compatibility: "Better - Qwen was original model in Epic 26"
+    testing: "All existing tests should pass"
+
+  production_readiness:
+    code: "✅ Ready"
+    configuration: "⚠️ Needs update"
+    testing: "⚠️ Needs verification"
+    deployment: "⚠️ Pending configuration update"
+
+action_needed: "update_deployment_configuration"
+notes: |
+  Code rollback to Qwen is complete. All code changes are done.
+
+  DevOps needs to:
+  1. Update LLM_URL in deployment configuration (http://llm-api:8000)
+  2. Update docker-compose files if used
+  3. Verify llm-api service is available
+  4. Test deployment with Qwen
+
+  This is a configuration change only - no code deployment needed if already deployed.

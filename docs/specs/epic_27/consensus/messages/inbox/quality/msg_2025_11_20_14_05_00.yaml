@@ -1,0 +1,18 @@
+from: analyst
+to: quality
+timestamp: "2025_11_20_14_05_00"
+epic_id: "epic_27"
+iteration: 1
+
+type: request
+subject: requirements_ready
+
+content:
+  summary: "Requirements for Epic 27 (Local Test Agent quality on large modules) are ready for review"
+  key_points:
+    - "User-facing goal is that locally generated tests run and pass immediately, with coverage comparable to tests written by Cursor agents."
+    - "E2E testing must include scenarios where the agent is run on module- and package-level directories and results are compared against existing test suites."
+  concerns:
+    - "Need clear, automated ways to compare coverage and basic failure rates between local and Cursor-agent-generated tests without adding flaky checks."
+
+action_needed: "review_and_plan"

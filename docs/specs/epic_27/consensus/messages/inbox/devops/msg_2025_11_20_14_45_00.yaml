@@ -1,0 +1,73 @@
+from: architect
+to: devops
+timestamp: "2025_11_20_14_45_00"
+epic_id: "epic_27"
+iteration: 1
+
+type: request
+subject: llm_service_migration_gigachat
+
+content:
+  summary: "LLM service migration: Switching from llm-api (Qwen) to llm-api-gigachat (GigaChat)"
+
+  service_change:
+    old_service:
+      name: "llm-api"
+      model: "Qwen 2.5:7b"
+      url: "http://llm-api:8000"
+
+    new_service:
+      name: "llm-api-gigachat"
+      model: "GigaChat (specific model TBD)"
+      url: "http://llm-api-gigachat:8000"
+
+  docker_compose_updates_required:
+    file: "docker-compose.test-agent.yml"
+    changes:
+      - "Update LLM_URL environment variable: http://llm-api:8000 → http://llm-api-gigachat:8000"
+      - "Update MISTRAL_API_URL if used: http://llm-api:8000 → http://llm-api-gigachat:8000"
+      - "Update LLM_MODEL: qwen2.5:7b → [GigaChat model identifier]"
+      - "Verify network connectivity to llm-api-gigachat service"
+
+  network_requirements:
+    existing_networks:
+      - "butler-network"
+      - "infra_infra_app-network"
+    requirement: "llm-api-gigachat must be accessible from test-agent service"
+    note: "Ensure llm-api-gigachat service is on same networks as test-agent or connected appropriately"
+
+  service_configuration:
+    environment_variables:
+      LLM_URL: "http://llm-api-gigachat:8000"
+      MISTRAL_API_URL: "http://llm-api-gigachat:8000"  # If still used
+      LLM_MODEL: "[GigaChat model identifier]"
+
+    healthcheck_requirements:
+      - "Verify llm-api-gigachat service has /health endpoint"
+      - "Test connectivity from test-agent container to llm-api-gigachat"
+      - "Verify GigaChat API endpoints match expected format"
+
+  deployment_considerations:
+    migration_strategy:
+      - "Deploy llm-api-gigachat service alongside llm-api (if possible)"
+      - "Update test-agent configuration to point to llm-api-gigachat"
+      - "Test thoroughly before removing llm-api service"
+      - "Rollback plan: Revert LLM_URL to llm-api if issues occur"
+
+    testing_checklist:
+      - "Verify llm-api-gigachat service is running and accessible"
+      - "Test health endpoint from test-agent container"
+      - "Verify GigaChat API responses match LLMClient Protocol expectations"
+      - "Test token counting with GigaChat tokenizer"
+      - "Verify 4000-token context window calculations"
+
+  dependencies:
+    llm_api_gigachat_service:
+      status: "Must be deployed and accessible"
+      endpoint: "http://llm-api-gigachat:8000"
+      api_format: "Should be OpenAI-compatible or conform to LLMClient Protocol"
+
+  concerns: []
+
+action_needed: "update_docker_compose_and_verify_service"
+notes: "Update docker-compose.test-agent.yml to use llm-api-gigachat instead of llm-api. Ensure network connectivity and service health. Verify GigaChat API format matches LLMClient Protocol expectations."
