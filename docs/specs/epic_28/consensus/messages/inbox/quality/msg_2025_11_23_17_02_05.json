@@ -1,0 +1,30 @@
+{
+  "header": {
+    "id": "msg_2025_11_23_17_02_05",
+    "from": "tech_lead",
+    "to": "quality",
+    "epic_id": "epic_28",
+    "iteration": 1,
+    "type": "response"
+  },
+  "body": {
+    "subject": "Plan.json обновлён - добавлены security tests и performance gates",
+    "summary": "Обновил plan.json согласно замечаниям quality review: добавлены явные security tests (ws8_t2), явные performance test gates (ws8_t3), явное покрытие всех 12 AC тестами (acceptance_criteria_test_coverage). Уточнение: plan.json - это план реализации, а не реализация. implementation.json будет создан developer'ом после реализации кода согласно plan.json.",
+    "key_points": [
+      "Добавлен ws8_t2: Security tests для input sanitization (Telegram messages, voice transcripts, CLI commands), проверка отсутствия external SaaS dependencies",
+      "Добавлен ws8_t3: Performance tests с явными CI gates (memory < 150ms, intent < 5s, multi-step < 30s)",
+      "Добавлен acceptance_criteria_test_coverage: явное покрытие всех 12 AC тестами с указанием test_location и test_type",
+      "Обновлены ci_gates: добавлены явные команды для security tests, performance tests, layer boundary validation",
+      "Уточнение: plan.json - это план (planning phase), а не реализация. Согласно consensus_architecture.json::iteration_flow, planning phase создаёт plan.json, а implementation phase создаёт implementation.json",
+      "Developer начнёт реализацию согласно plan.json, после чего создаст implementation.json с code_refs и test_evidence"
+    ],
+    "concerns": [
+      "Quality review был проведён на этапе planning, когда код ещё не реализован - это нормально для consensus workflow",
+      "implementation.json будет создан developer'ом после реализации всех 18 задач согласно plan.json",
+      "test_evidence будет предоставлен после написания тестов developer'ом",
+      "Security tests и performance tests теперь явно определены в plan.json (ws8_t2, ws8_t3)",
+      "Все 12 AC теперь явно покрыты тестами в acceptance_criteria_test_coverage"
+    ],
+    "action_needed": "Провести повторный review plan.json после обновления. После того как developer реализует код и создаст implementation.json, провести полный quality review с проверкой test_evidence (coverage >= 80%), security tests, performance tests, layer boundary validation."
+  }
+}

@@ -1,0 +1,664 @@
+{
+  "epic_id": "epic_28",
+  "iteration": 1,
+  "timestamp": "2025_01_27_12_00_00",
+  "components": [
+    {
+      "name": "Intent",
+      "layer": "domain",
+      "purpose": "Value object representing user intent classification result (concierge, research, build, review, ops) with confidence score",
+      "interfaces": [],
+      "dependencies": [],
+      "location": "src/domain/god_agent/value_objects/intent.py"
+    },
+    {
+      "name": "TaskPlan",
+      "layer": "domain",
+      "purpose": "Domain entity representing a multi-step task plan as a DAG with dependencies, acceptance criteria, and rollback instructions",
+      "interfaces": [],
+      "dependencies": ["TaskStep (domain)"],
+      "location": "src/domain/god_agent/entities/task_plan.py"
+    },
+    {
+      "name": "TaskStep",
+      "layer": "domain",
+      "purpose": "Domain entity representing a single step in a task plan with skill assignment, status, and acceptance gates",
+      "interfaces": [],
+      "dependencies": ["Skill (domain)"],
+      "location": "src/domain/god_agent/entities/task_step.py"
+    },
+    {
+      "name": "Skill",
+      "layer": "domain",
+      "purpose": "Value object representing a skill capability (concierge, research, builder, reviewer, ops) with input/output contracts",
+      "interfaces": [],
+      "dependencies": [],
+      "location": "src/domain/god_agent/value_objects/skill.py"
+    },
+    {
+      "name": "SkillResult",
+      "layer": "domain",
+      "purpose": "Domain entity representing the result of skill execution with status, output, errors, and metadata",
+      "interfaces": [],
+      "dependencies": [],
+      "location": "src/domain/god_agent/entities/skill_result.py"
+    },
+    {
+      "name": "MemorySnapshot",
+      "layer": "domain",
+      "purpose": "Domain entity aggregating user profile, conversation summary, RAG hits, and artifact references for context",
+      "interfaces": [],
+      "dependencies": ["UserProfile (domain.personalization)", "MemorySlice (domain.personalization)"],
+      "location": "src/domain/god_agent/entities/memory_snapshot.py"
+    },
+    {
+      "name": "SafetyViolation",
+      "layer": "domain",
+      "purpose": "Domain entity representing a safety/guardrail violation (scope expansion, layer violation, security risk) tied to veto rules",
+      "interfaces": [],
+      "dependencies": [],
+      "location": "src/domain/god_agent/entities/safety_violation.py"
+    },
+    {
+      "name": "GodAgentProfile",
+      "layer": "domain",
+      "purpose": "Domain entity extending UserProfile with God Agent specific preferences (preferred skills, permissions, language)",
+      "interfaces": [],
+      "dependencies": ["UserProfile (domain.personalization)"],
+      "location": "src/domain/god_agent/entities/god_agent_profile.py"
+    },
+    {
+      "name": "IntentRouterService",
+      "layer": "application",
+      "purpose": "Service for classifying user requests into intents (concierge, research, build, review, ops) using hybrid approach (keywords + embeddings + memory)",
+      "interfaces": [
+        {
+          "name": "IIntentRouterService",
+          "methods": [
+            "route_intent(user_message: str, memory_snapshot: MemorySnapshot) -> Intent",
+            "get_confidence(intent: Intent) -> float"
+          ]
+        }
+      ],
+      "dependencies": [
+        "Intent (domain)",
+        "MemorySnapshot (domain)",
+        "IIntentClassifier (domain.interfaces)",
+        "IEmbeddingGateway (domain.embedding_index)"
+      ],
+      "location": "src/application/god_agent/services/intent_router_service.py"
+    },
+    {
+      "name": "PlanCompilerService",
+      "layer": "application",
+      "purpose": "Service for converting (Intent, MemorySnapshot) into a TaskPlan DAG with step templates, skill assignments, and acceptance criteria",
+      "interfaces": [
+        {
+          "name": "IPlanCompilerService",
+          "methods": [
+            "compile_plan(intent: Intent, memory_snapshot: MemorySnapshot) -> TaskPlan",
+            "validate_plan(task_plan: TaskPlan) -> bool"
+          ]
+        }
+      ],
+      "dependencies": [
+        "Intent (domain)",
+        "TaskPlan (domain)",
+        "TaskStep (domain)",
+        "MemorySnapshot (domain)",
+        "LLMClient Protocol (infrastructure)"
+      ],
+      "location": "src/application/god_agent/services/plan_compiler_service.py"
+    },
+    {
+      "name": "GodAgentOrchestrator",
+      "layer": "application",
+      "purpose": "Main orchestrator executing TaskPlan steps sequentially/parallel, publishing events, and managing pause/resume/cancel",
+      "interfaces": [
+        {
+          "name": "IGodAgentOrchestrator",
+          "methods": [
+            "execute_plan(task_plan: TaskPlan, memory_snapshot: MemorySnapshot) -> SkillResult",
+            "pause_task(task_id: str) -> bool",
+            "resume_task(task_id: str) -> bool",
+            "cancel_task(task_id: str) -> bool"
+          ]
+        }
+      ],
+      "dependencies": [
+        "TaskPlan (domain)",
+        "TaskStep (domain)",
+        "SkillResult (domain)",
+        "MemorySnapshot (domain)",
+        "ISkillAdapter (domain.interfaces)",
+        "IConsensusBridge (application)",
+        "IEventPublisher (domain.interfaces)"
+      ],
+      "location": "src/application/god_agent/orchestrators/god_agent_orchestrator.py"
+    },
+    {
+      "name": "ConsensusBridge",
+      "layer": "application",
+      "purpose": "Service for invoking multi-agent consensus workflow (Analyst/Architect/Tech Lead) when plan steps require validation, following docs/roles/consensus_architecture.json",
+      "interfaces": [
+        {
+          "name": "IConsensusBridge",
+          "methods": [
+            "request_consensus(step: TaskStep, context: dict) -> ConsensusResult",
+            "check_veto_status(step_id: str) -> Optional[SafetyViolation]"
+          ]
+        }
+      ],
+      "dependencies": [
+        "TaskStep (domain)",
+        "SafetyViolation (domain)",
+        "ConsensusResult (domain)",
+        "File system (docs/specs/epic_28/consensus/)"
+      ],
+      "location": "src/application/god_agent/services/consensus_bridge.py"
+    },
+    {
+      "name": "MemoryFabricService",
+      "layer": "application",
+      "purpose": "Service for aggregating user profile, conversation summary, RAG hits, and artifacts into MemorySnapshot with TTL/compaction",
+      "interfaces": [
+        {
+          "name": "IMemoryFabricService",
+          "methods": [
+            "get_memory_snapshot(user_id: str) -> MemorySnapshot",
+            "update_memory(user_id: str, event: UserMemoryEvent) -> None",
+            "compress_memory(user_id: str) -> None"
+          ]
+        }
+      ],
+      "dependencies": [
+        "MemorySnapshot (domain)",
+        "UserProfile (domain.personalization)",
+        "MemorySlice (domain.personalization)",
+        "IUserProfileRepository (domain.interfaces)",
+        "IUserMemoryRepository (domain.interfaces)",
+        "IEmbeddingGateway (domain.embedding_index)"
+      ],
+      "location": "src/application/god_agent/services/memory_fabric_service.py"
+    },
+    {
+      "name": "ConciergeSkillAdapter",
+      "layer": "infrastructure",
+      "purpose": "Adapter wrapping existing personalized Butler flow (Day 25) as a skill for concierge interactions",
+      "interfaces": [
+        {
+          "name": "ISkillAdapter",
+          "methods": [
+            "execute(input: dict, memory_snapshot: MemorySnapshot) -> SkillResult",
+            "get_skill_id() -> str"
+          ]
+        }
+      ],
+      "dependencies": [
+        "SkillResult (domain)",
+        "MemorySnapshot (domain)",
+        "PersonalizedReplyUseCase (application.personalization)"
+      ],
+      "location": "src/infrastructure/god_agent/adapters/concierge_skill_adapter.py"
+    },
+    {
+      "name": "ResearchSkillAdapter",
+      "layer": "infrastructure",
+      "purpose": "Adapter wrapping existing RAG pipeline (Days 20-22) as a skill for research/QA with citations",
+      "interfaces": [
+        {
+          "name": "ISkillAdapter",
+          "methods": [
+            "execute(input: dict, memory_snapshot: MemorySnapshot) -> SkillResult",
+            "get_skill_id() -> str"
+          ]
+        }
+      ],
+      "dependencies": [
+        "SkillResult (domain)",
+        "MemorySnapshot (domain)",
+        "CompareRagAnswersUseCase (application.rag)",
+        "IEmbeddingGateway (domain.embedding_index)"
+      ],
+      "location": "src/infrastructure/god_agent/adapters/research_skill_adapter.py"
+    },
+    {
+      "name": "BuilderSkillAdapter",
+      "layer": "infrastructure",
+      "purpose": "Adapter wrapping existing code generation use cases (Day 13, Day 26) as a skill for building code",
+      "interfaces": [
+        {
+          "name": "ISkillAdapter",
+          "methods": [
+            "execute(input: dict, memory_snapshot: MemorySnapshot) -> SkillResult",
+            "get_skill_id() -> str"
+          ]
+        }
+      ],
+      "dependencies": [
+        "SkillResult (domain)",
+        "MemorySnapshot (domain)",
+        "GenerateCodeUseCase (application.test_agent)",
+        "GenerateTestsUseCase (application.test_agent)"
+      ],
+      "location": "src/infrastructure/god_agent/adapters/builder_skill_adapter.py"
+    },
+    {
+      "name": "ReviewerSkillAdapter",
+      "layer": "infrastructure",
+      "purpose": "Adapter wrapping existing multi-pass reviewer (Day 14, Day 17) as a skill for code review",
+      "interfaces": [
+        {
+          "name": "ISkillAdapter",
+          "methods": [
+            "execute(input: dict, memory_snapshot: MemorySnapshot) -> SkillResult",
+            "get_skill_id() -> str"
+          ]
+        }
+      ],
+      "dependencies": [
+        "SkillResult (domain)",
+        "MemorySnapshot (domain)",
+        "ReviewHomeworkUseCase (application.use_cases)",
+        "ModularReviewService (application.services)"
+      ],
+      "location": "src/infrastructure/god_agent/adapters/reviewer_skill_adapter.py"
+    },
+    {
+      "name": "OpsSkillAdapter",
+      "layer": "infrastructure",
+      "purpose": "Adapter wrapping existing ops capabilities (Days 23-24, shared infra) as a skill for deployment, metrics, and operations",
+      "interfaces": [
+        {
+          "name": "ISkillAdapter",
+          "methods": [
+            "execute(input: dict, memory_snapshot: MemorySnapshot) -> SkillResult",
+            "get_skill_id() -> str"
+          ]
+        }
+      ],
+      "dependencies": [
+        "SkillResult (domain)",
+        "MemorySnapshot (domain)",
+        "Prometheus client (infrastructure.monitoring)",
+        "Shared infra scripts (scripts/infra/)"
+      ],
+      "location": "src/infrastructure/god_agent/adapters/ops_skill_adapter.py"
+    },
+    {
+      "name": "GodAgentMemoryRepository",
+      "layer": "infrastructure",
+      "purpose": "Repository adapter extending Day 25 memory repositories with task timeline and artifact references",
+      "interfaces": [
+        {
+          "name": "IGodAgentMemoryRepository",
+          "methods": [
+            "save_task_timeline(user_id: str, task_id: str, timeline: dict) -> None",
+            "get_task_timeline(user_id: str, task_id: str) -> Optional[dict]",
+            "save_artifact_ref(user_id: str, artifact_type: str, ref: str) -> None"
+          ]
+        }
+      ],
+      "dependencies": [
+        "UserMemoryRepository (infrastructure.personalization)",
+        "MongoDB client (infrastructure.database)"
+      ],
+      "location": "src/infrastructure/god_agent/repositories/god_agent_memory_repository.py"
+    },
+    {
+      "name": "VoicePipelineAdapter",
+      "layer": "infrastructure",
+      "purpose": "Adapter wrapping Day 24 Whisper STT pipeline for voice transcription",
+      "interfaces": [
+        {
+          "name": "IVoicePipelineAdapter",
+          "methods": [
+            "transcribe_voice(audio_data: bytes) -> str",
+            "is_voice_message(message: dict) -> bool"
+          ]
+        }
+      ],
+      "dependencies": [
+        "ProcessVoiceCommandUseCase (application.voice)",
+        "Whisper STT service (infrastructure.stt)"
+      ],
+      "location": "src/infrastructure/god_agent/adapters/voice_pipeline_adapter.py"
+    },
+    {
+      "name": "GodAgentTelegramHandler",
+      "layer": "presentation",
+      "purpose": "Telegram bot handler routing all text/voice messages through GodAgentOrchestrator (extends existing Butler bot)",
+      "interfaces": [],
+      "dependencies": [
+        "IGodAgentOrchestrator (application)",
+        "IVoicePipelineAdapter (infrastructure)",
+        "Telegram bot framework (presentation.bot)"
+      ],
+      "location": "src/presentation/bot/handlers/god_agent_handler.py"
+    },
+    {
+      "name": "GodAgentCLI",
+      "layer": "presentation",
+      "purpose": "Optional CLI wrapper for debugging/admin (non-user facing) that mirrors Telegram conversations",
+      "interfaces": [],
+      "dependencies": [
+        "IGodAgentOrchestrator (application)",
+        "CLI framework (presentation.cli)"
+      ],
+      "location": "src/presentation/cli/god_agent/main.py"
+    },
+    {
+      "name": "GodAgentMetrics",
+      "layer": "infrastructure",
+      "purpose": "Prometheus metrics exporter for God Agent observability (tasks_total, plan_duration_seconds, veto_total, skill_latency_seconds)",
+      "interfaces": [],
+      "dependencies": [
+        "Prometheus client (infrastructure.monitoring)",
+        "Structured logger (infrastructure.logging)"
+      ],
+      "location": "src/infrastructure/god_agent/metrics/god_agent_metrics.py"
+    }
+  ],
+  "boundaries": [
+    {
+      "from_layer": "presentation",
+      "to_layer": "application",
+      "allowed": true,
+      "via_interface": "IGodAgentOrchestrator orchestrates workflow"
+    },
+    {
+      "from_layer": "application",
+      "to_layer": "domain",
+      "allowed": true,
+      "via_interface": "Direct dependency on domain entities (Intent, TaskPlan, TaskStep, Skill, SkillResult, MemorySnapshot, SafetyViolation)"
+    },
+    {
+      "from_layer": "application",
+      "to_layer": "infrastructure",
+      "allowed": true,
+      "via_interface": "ISkillAdapter, IUserProfileRepository, IUserMemoryRepository, IEmbeddingGateway, LLMClient Protocol (dependency inversion)"
+    },
+    {
+      "from_layer": "infrastructure",
+      "to_layer": "domain",
+      "allowed": true,
+      "via_interface": "Infrastructure adapters depend on domain entities"
+    },
+    {
+      "from_layer": "infrastructure",
+      "to_layer": "application",
+      "allowed": true,
+      "via_interface": "Skill adapters call existing use cases (PersonalizedReplyUseCase, CompareRagAnswersUseCase, GenerateCodeUseCase, ReviewHomeworkUseCase) - reusing application layer"
+    },
+    {
+      "from_layer": "domain",
+      "to_layer": "application",
+      "allowed": false,
+      "violation_type": "inward_dependency"
+    },
+    {
+      "from_layer": "domain",
+      "to_layer": "infrastructure",
+      "allowed": false,
+      "violation_type": "inward_dependency"
+    },
+    {
+      "from_layer": "application",
+      "to_layer": "presentation",
+      "allowed": false,
+      "violation_type": "inward_dependency"
+    }
+  ],
+  "contracts": [
+    {
+      "name": "IIntentRouterService",
+      "provider": "IntentRouterService (application)",
+      "consumer": "GodAgentOrchestrator (application)",
+      "interface": "route_intent(user_message: str, memory_snapshot: MemorySnapshot) -> Intent"
+    },
+    {
+      "name": "IPlanCompilerService",
+      "provider": "PlanCompilerService (application)",
+      "consumer": "GodAgentOrchestrator (application)",
+      "interface": "compile_plan(intent: Intent, memory_snapshot: MemorySnapshot) -> TaskPlan"
+    },
+    {
+      "name": "ISkillAdapter",
+      "provider": "ConciergeSkillAdapter, ResearchSkillAdapter, BuilderSkillAdapter, ReviewerSkillAdapter, OpsSkillAdapter (infrastructure)",
+      "consumer": "GodAgentOrchestrator (application)",
+      "interface": "execute(input: dict, memory_snapshot: MemorySnapshot) -> SkillResult, get_skill_id() -> str"
+    },
+    {
+      "name": "IMemoryFabricService",
+      "provider": "MemoryFabricService (application)",
+      "consumer": "GodAgentOrchestrator, IntentRouterService, PlanCompilerService (application)",
+      "interface": "get_memory_snapshot(user_id: str) -> MemorySnapshot"
+    },
+    {
+      "name": "IConsensusBridge",
+      "provider": "ConsensusBridge (application)",
+      "consumer": "GodAgentOrchestrator (application)",
+      "interface": "request_consensus(step: TaskStep, context: dict) -> ConsensusResult"
+    },
+    {
+      "name": "PersonalizedReplyUseCase (reused from Day 25)",
+      "provider": "PersonalizedReplyUseCase (application.personalization)",
+      "consumer": "ConciergeSkillAdapter (infrastructure)",
+      "interface": "execute(input: PersonalizedReplyInput) -> PersonalizedReplyOutput"
+    },
+    {
+      "name": "CompareRagAnswersUseCase (reused from Days 20-22)",
+      "provider": "CompareRagAnswersUseCase (application.rag)",
+      "consumer": "ResearchSkillAdapter (infrastructure)",
+      "interface": "execute(query: Query, filter_config: FilterConfig) -> ComparisonResult"
+    },
+    {
+      "name": "GenerateCodeUseCase (reused from Day 26)",
+      "provider": "GenerateCodeUseCase (application.test_agent)",
+      "consumer": "BuilderSkillAdapter (infrastructure)",
+      "interface": "generate_code(requirements: str, test_cases: list[TestCase]) -> CodeFile"
+    },
+    {
+      "name": "ReviewHomeworkUseCase (reused from Day 14/17)",
+      "provider": "ReviewHomeworkUseCase (application.use_cases)",
+      "consumer": "ReviewerSkillAdapter (infrastructure)",
+      "interface": "execute(commit_hash: str) -> HomeworkReviewResult"
+    },
+    {
+      "name": "LLMClient Protocol (reused from existing infrastructure)",
+      "provider": "Qwen/Claude LLM clients (infrastructure.llm.clients)",
+      "consumer": "PlanCompilerService, IntentRouterService (application)",
+      "interface": "generate(prompt: str) -> str, batch_generate(prompts: list[str]) -> list[str]"
+    },
+    {
+      "name": "IUserProfileRepository (reused from Day 25)",
+      "provider": "UserProfileRepository (infrastructure.personalization)",
+      "consumer": "MemoryFabricService (application)",
+      "interface": "get_profile(user_id: str) -> Optional[UserProfile], save_profile(profile: UserProfile) -> None"
+    },
+    {
+      "name": "IUserMemoryRepository (reused from Day 25)",
+      "provider": "UserMemoryRepository (infrastructure.personalization)",
+      "consumer": "MemoryFabricService (application)",
+      "interface": "get_memory_slice(user_id: str, max_events: int) -> MemorySlice, add_event(event: UserMemoryEvent) -> None"
+    },
+    {
+      "name": "IEmbeddingGateway (reused from Days 20-22)",
+      "provider": "EmbeddingGateway (infrastructure.embedding_index)",
+      "consumer": "IntentRouterService, ResearchSkillAdapter, MemoryFabricService (application/infrastructure)",
+      "interface": "embed_query(text: str) -> list[float], search(query_embedding: list[float], top_k: int) -> list[Chunk]"
+    },
+    {
+      "name": "IVoicePipelineAdapter",
+      "provider": "VoicePipelineAdapter (infrastructure)",
+      "consumer": "GodAgentTelegramHandler (presentation)",
+      "interface": "transcribe_voice(audio_data: bytes) -> str"
+    }
+  ],
+  "decisions": [
+    {
+      "decision": "God Agent as application layer orchestrator",
+      "rationale": "GodAgentOrchestrator coordinates multiple services (intent routing, planning, skill execution) - fits application layer pattern. Follows same pattern as TestAgentOrchestrator from Epic 26.",
+      "alternatives_considered": [
+        "Infrastructure layer (rejected - contains business logic and orchestration)",
+        "Domain layer (rejected - depends on external services and use cases)"
+      ],
+      "consequences": [
+        "GodAgentOrchestrator coordinates use cases and services",
+        "Skills are infrastructure adapters that call existing use cases",
+        "Maintains Clean Architecture boundaries"
+      ]
+    },
+    {
+      "decision": "Skills as infrastructure adapters wrapping existing use cases",
+      "rationale": "Skills are adapters that translate God Agent requests into calls to existing use cases (PersonalizedReplyUseCase, CompareRagAnswersUseCase, etc.). This reuses Day 1-27 capabilities without duplicating code or violating layer boundaries.",
+      "alternatives_considered": [
+        "Skills in application layer (rejected - would duplicate existing use cases)",
+        "Skills in domain layer (rejected - skills depend on infrastructure and application services)"
+      ],
+      "consequences": [
+        "Skills call existing use cases through application layer",
+        "No code duplication - reuses Day 1-27 implementations",
+        "Easy to add new skills by creating new adapters"
+      ]
+    },
+    {
+      "decision": "Memory Fabric in application layer aggregating domain entities",
+      "rationale": "MemoryFabricService orchestrates aggregation of user profile, memory events, RAG hits, and artifacts. This is business logic about how to combine context - belongs in application layer.",
+      "alternatives_considered": [
+        "Memory Fabric in infrastructure (rejected - contains business logic about context assembly)",
+        "Memory Fabric in domain (rejected - depends on repositories and external services)"
+      ],
+      "consequences": [
+        "MemoryFabricService depends on domain repositories via interfaces",
+        "Can implement sophisticated compression and TTL policies",
+        "Separated from storage mechanics (infrastructure)"
+      ]
+    },
+    {
+      "decision": "Consensus Bridge in application layer using file-based workflow",
+      "rationale": "ConsensusBridge invokes multi-agent workflow by creating files in docs/specs/epic_28/consensus/ following docs/roles/consensus_architecture.json schema. This is orchestration logic - belongs in application layer.",
+      "alternatives_considered": [
+        "Consensus Bridge in infrastructure (rejected - contains business logic about when to trigger consensus)",
+        "Direct agent calls (rejected - violates consensus workflow contract)"
+      ],
+      "consequences": [
+        "ConsensusBridge follows existing consensus_architecture.json schema",
+        "Async workflow - God Agent waits for verdict",
+        "Respects veto rules and escalation flows"
+      ]
+    },
+    {
+      "decision": "Intent Router uses hybrid approach (keywords + embeddings + memory)",
+      "rationale": "Intent routing combines rule-based keywords, embedding similarity, and memory context. This hybrid approach balances accuracy and performance. Reuses existing IntentClassifier from domain.intent.",
+      "alternatives_considered": [
+        "Pure LLM-based routing (rejected - too slow for <5s target, higher token cost)",
+        "Pure rule-based (rejected - not flexible enough for natural language)"
+      ],
+      "consequences": [
+        "Fast routing with <150ms memory retrieval",
+        "Falls back to concierge if confidence < threshold",
+        "Reuses existing intent classification infrastructure"
+      ]
+    },
+    {
+      "decision": "Plan Compiler uses LLM for DAG generation",
+      "rationale": "Converting natural language intent into structured task plan DAG requires understanding dependencies and acceptance criteria. LLM is appropriate for this task. Respects token budgets from role prompts.",
+      "alternatives_considered": [
+        "Template-based planning (rejected - not flexible enough for complex requests)",
+        "Rule-based planning (rejected - cannot handle novel task combinations)"
+      ],
+      "consequences": [
+        "PlanCompilerService depends on LLMClient Protocol",
+        "Must respect token budgets (2500 tokens per epic from role prompts)",
+        "Can generate complex multi-step plans with dependencies"
+      ]
+    },
+    {
+      "decision": "Domain entities for Intent, TaskPlan, TaskStep, Skill, SkillResult, MemorySnapshot, SafetyViolation",
+      "rationale": "Core business concepts - intents, task plans, skills, and safety violations are domain entities. They represent the God Agent's understanding of work and constraints.",
+      "alternatives_considered": [
+        "DTOs only (rejected - loses domain semantics and business rules)",
+        "Infrastructure models (rejected - violates Clean Architecture)"
+      ],
+      "consequences": [
+        "Rich domain model with business logic",
+        "Entities can be used across layers",
+        "Validation and business rules live in domain entities"
+      ]
+    },
+    {
+      "decision": "Telegram handler extends existing Butler bot",
+      "rationale": "GodAgentTelegramHandler routes all messages through GodAgentOrchestrator but reuses existing Butler bot infrastructure (FSM, handlers, middleware). No need to rebuild Telegram integration.",
+      "alternatives_considered": [
+        "New Telegram bot (rejected - duplicates existing infrastructure)",
+        "Replace Butler bot (rejected - breaks existing functionality)"
+      ],
+      "consequences": [
+        "All user interactions go through God Agent",
+        "Reuses existing Telegram bot framework",
+        "Voice messages handled via existing Day 24 pipeline"
+      ]
+    },
+    {
+      "decision": "Observability via Prometheus metrics and structured logs",
+      "rationale": "God Agent must export metrics (god_agent_tasks_total, plan_duration_seconds, veto_total, skill_latency_seconds) and structured logs with task_id, skill_id, plan_step. Reuses existing observability infrastructure from Day 23.",
+      "alternatives_considered": [
+        "Custom metrics system (rejected - duplicates Day 23 infrastructure)",
+        "No observability (rejected - violates AC6 and G4)"
+      ],
+      "consequences": [
+        "GodAgentMetrics exports Prometheus metrics",
+        "Structured logs include context (task_id, skill_id, plan_step)",
+        "Grafana dashboards can visualize God Agent performance"
+      ]
+    },
+    {
+      "decision": "Reuse existing subsystems without modification",
+      "rationale": "Epic 28 consolidates Days 1-27 capabilities. Skills call existing use cases (PersonalizedReplyUseCase, CompareRagAnswersUseCase, etc.) without modifying them. This maintains stability and reusability.",
+      "alternatives_considered": [
+        "Refactor existing use cases (rejected - breaks existing functionality, violates scope)",
+        "Duplicate functionality (rejected - violates DRY, increases maintenance)"
+      ],
+      "consequences": [
+        "Skills are thin adapters wrapping existing use cases",
+        "No changes to Day 1-27 implementations",
+        "Easy to test - can reuse existing test fixtures"
+      ]
+    }
+  ],
+  "risks": [
+    {
+      "risk": "Plan Compiler may generate invalid or infinite task plans",
+      "mitigation": "Hard cap on plan depth (max 10 steps), watchdog timers per step (max 30s per step), validation in PlanCompilerService.validate_plan()"
+    },
+    {
+      "risk": "Skills may diverge from underlying subsystems causing regressions",
+      "mitigation": "Skill adapters call existing use cases directly; unit tests reuse prior fixtures; integration tests cover skill → use case → result flow"
+    },
+    {
+      "risk": "Memory Fabric may bloat causing token and storage issues",
+      "mitigation": "Summary compression + TTL policies (compress when >50 events, keep 20 after compression), max context events (20), MemoryFabricService.compress_memory()"
+    },
+    {
+      "risk": "Consensus Bridge integration may stall flows causing latency",
+      "mitigation": "Async queue + notifications; only critical steps trigger full consensus; timeout after 5 minutes; fallback to manual escalation"
+    },
+    {
+      "risk": "Intent Router confidence threshold may misclassify requests",
+      "mitigation": "Fallback to concierge if confidence < 0.6; allow user to override intent; log misclassifications for tuning"
+    },
+    {
+      "risk": "God Agent orchestrator may become too complex",
+      "mitigation": "Extract strategy implementations to separate classes; maintain clear separation between routing, planning, and execution concerns; follow TestAgentOrchestrator pattern from Epic 26"
+    },
+    {
+      "risk": "Layer violations if skills bypass application layer",
+      "mitigation": "Skills MUST call existing use cases, not infrastructure directly; architecture validation in code review; automated layer boundary checks"
+    },
+    {
+      "risk": "Token budget exceeded in Plan Compiler or Consensus Bridge",
+      "mitigation": "Respect token budgets from role prompts (2500 tokens per epic); compress memory before planning; use streaming for long responses"
+    }
+  ]
+}

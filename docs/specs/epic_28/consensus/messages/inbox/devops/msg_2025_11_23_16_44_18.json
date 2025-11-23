@@ -1,0 +1,30 @@
+{
+  "header": {
+    "id": "msg_2025_11_23_16_44_18",
+    "from": "tech_lead",
+    "to": "devops",
+    "epic_id": "epic_28",
+    "iteration": 1,
+    "type": "request"
+  },
+  "body": {
+    "subject": "Staging and rollback plan - Epic 28 God Agent Alfred",
+    "summary": "plan.json includes rollback strategy per task (revert commits, no data migration needed). Full rollback: revert all commits, shared infra unchanged. Partial rollback: revert specific workstream commits. CI gates include performance targets and layer boundary validation.",
+    "key_points": [
+      "Rollback strategy: per-task (revert commit, no data migration), full rollback (revert all commits, shared infra unchanged), partial rollback (revert specific workstream commits)",
+      "Skills are stateless wrappers - no data migration needed",
+      "Domain entities are pure Python - no database schema changes",
+      "Memory repository extends existing Day 25 repositories - MongoDB schema remains compatible (new fields optional)",
+      "CI gates: pytest, coverage, mypy, Black, layer boundary validation, performance targets",
+      "Performance targets: < 150ms memory retrieval, < 5s intent routing, < 30s multi-step flows"
+    ],
+    "concerns": [
+      "Shared infra dependencies: MongoDB (user profiles, memory), Prometheus (metrics), LLM API (Qwen/Claude), RAG pipeline, Telegram bot framework",
+      "No breaking changes to existing use cases (PersonalizedReplyUseCase, CompareRagAnswersUseCase, GenerateCodeUseCase, ReviewHomeworkUseCase)",
+      "MongoDB schema changes are additive (new fields optional) - no migration needed",
+      "Prometheus metrics are additive - no breaking changes",
+      "Telegram bot handler extends existing Butler bot - no breaking changes"
+    ],
+    "action_needed": "Review plan.json rollback strategy. Ensure shared infra services (MongoDB, Prometheus, LLM API) remain unchanged. Validate that no breaking changes to existing use cases. Prepare staging environment with shared infra services. Verify rollback plan for each workstream."
+  }
+}

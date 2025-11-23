@@ -1,0 +1,30 @@
+{
+  "header": {
+    "id": "msg_2025_11_23_16_30_45",
+    "from": "analyst",
+    "to": "tech_lead",
+    "epic_id": "epic_28",
+    "iteration": 1,
+    "type": "request"
+  },
+  "body": {
+    "subject": "Requirements ready for planning - Epic 28 God Agent Alfred",
+    "summary": "Requirements.json prepared for Epic 28. Need implementation plan sequencing workstreams: domain contracts, memory fabric, intent routing, skill adapters, consensus bridge, presentation integration, observability.",
+    "key_points": [
+      "7 workstreams identified: Domain & Contracts, Memory Fabric + Persona Merge, Intent Routing & Planner, Skill Adapters (5 skills), Consensus Bridge + Safety, Presentation & Voice, Observability & QA",
+      "Acceptance criteria require smoke tests covering at least one flow per skill",
+      "Performance targets: < 5s for concierge, < 30s for multi-step flows, < 150ms memory retrieval",
+      "Token budgets from role prompts must be respected by planner",
+      "Reuse existing test fixtures and use cases; skill adapters should call existing application layer services",
+      "Pet project context: owner will manually test and provide feedback; no automated simulation scripts"
+    ],
+    "concerns": [
+      "Plan depth: need hard cap on plan depth + watchdog timers to prevent runaway tasks",
+      "Skill drift: ensure adapters call existing use cases to avoid regressions",
+      "Memory bloat: need summary compression + TTL policies to stay within token budgets",
+      "Consensus latency: async queue + notifications required; only critical steps trigger full consensus",
+      "Test coverage: minimum 80% required per project rules; unit + integration + smoke tests needed"
+    ],
+    "action_needed": "Read requirements.json and architecture.json (once available), then emit plan.json with workstream sequencing, ETA estimates, risk mitigations, and testing strategy. Ensure test coverage ≥ 0.6 for auto-approval."
+  }
+}

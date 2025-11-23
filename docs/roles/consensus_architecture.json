@@ -1,0 +1,399 @@
+{
+  "meta": {
+    "version": "3.0",
+    "max_iterations": 3,
+    "auto_escalate": true,
+    "decision_threshold": 0.65,
+    "notes": [
+      "All consensus data is JSON to minimize tokens.",
+      "Single source of truth for role coordination."
+    ]
+  },
+  "paths": {
+    "epic": "docs/specs/{epic}/epic_{epic}.md",
+    "state": "docs/specs/{epic}/consensus/state.json",
+    "decision_log": "docs/specs/{epic}/consensus/decision_log.jsonl",
+    "artifacts": "docs/specs/{epic}/consensus/artifacts",
+    "message_inbox": "docs/specs/{epic}/consensus/messages/inbox/{agent}",
+    "message_format": "msg_{timestamp}.json"
+  },
+  "roles": {
+    "analyst": {
+      "mission": "Ensure measurable business value with minimal scope.",
+      "veto": ["scope_expansion", "untestable_requirement", "no_business_value"],
+      "artifact": "requirements.json"
+    },
+    "architect": {
+      "mission": "Maintain Clean Architecture boundaries.",
+      "veto": ["layer_violation", "security_risk"],
+      "artifact": "architecture.json"
+    },
+    "tech_lead": {
+      "mission": "Sequence implementation with realistic plans.",
+      "veto": ["untestable_requirement", "insufficient_plan"],
+      "artifact": "plan.json"
+    },
+    "developer": {
+      "mission": "Describe implementation steps and risks.",
+      "veto": ["execution_blocker"],
+      "artifact": "implementation.json"
+    },
+    "quality": {
+      "mission": "Guarantee testability and quality gates.",
+      "veto": ["security_issue", "missing_tests"],
+      "artifact": "review.json"
+    },
+    "devops": {
+      "mission": "Own deployment, rollback, and observability.",
+      "veto": ["no_rollback_plan", "runtime_risk"],
+      "artifact": "deployment.json"
+    }
+  },
+  "iteration_flow": [
+    {
+      "phase": "requirements",
+      "owner": "analyst",
+      "steps": [
+        "read(epic.md)",
+        "read(messages/analyst/*.json)",
+        "emit(requirements.json)",
+        "notify(architect,tech_lead,quality)"
+      ],
+      "autonomy": {
+        "auto_approve": "roi_hours < 0.5 AND no_architecture_change",
+        "auto_reject": "missing_acceptance_criteria"
+      }
+    },
+    {
+      "phase": "architecture",
+      "owner": "architect",
+      "steps": [
+        "read(requirements.json)",
+        "validate(layer_boundaries)",
+        "emit(architecture.json)",
+        "notify(tech_lead,quality)"
+      ],
+      "autonomy": {
+        "auto_reject": "layer_violation OR missing_slo",
+        "auto_escalate": "critical_security_issue"
+      }
+    },
+    {
+      "phase": "planning",
+      "owner": "tech_lead",
+      "steps": [
+        "read(requirements.json)",
+        "read(architecture.json)",
+        "emit(plan.json)",
+        "notify(developer,quality)"
+      ],
+      "autonomy": {
+        "auto_reject": "test_coverage < 0.6",
+        "auto_escalate": "iteration = 3 AND no_tests_defined"
+      }
+    },
+    {
+      "phase": "implementation",
+      "owner": "developer",
+      "steps": [
+        "read(plan.json)",
+        "emit(implementation.json)",
+        "notify(quality,devops)"
+      ]
+    },
+    {
+      "phase": "quality",
+      "owner": "quality",
+      "steps": [
+        "read(requirements.json)",
+        "read(plan.json)",
+        "read(implementation.json)",
+        "emit(review.json)",
+        "notify(devops)"
+      ],
+      "autonomy": {
+        "auto_reject": "no_user_tests OR security_gap"
+      }
+    },
+    {
+      "phase": "deployment",
+      "owner": "devops",
+      "steps": [
+        "read(review.json)",
+        "emit(deployment.json)",
+        "finalize(decision_log)"
+      ],
+      "autonomy": {
+        "auto_escalate": "production_down_risk"
+      }
+    }
+  ],
+  "artifacts": {
+    "requirements": {
+      "file": "requirements.json",
+      "schema": {
+        "epic_id": "string",
+        "iteration": "int",
+        "user_story": "string<=200",
+        "acceptance_criteria": ["string"],
+        "user_testing_strategy": {
+          "e2e_required": "bool",
+          "user_action_simulation": "bool",
+          "simulation_scripts_location": "string",
+          "scenarios": ["string"]
+        },
+        "out_of_scope": ["string"],
+        "metrics": {
+          "technical_metrics": ["string"],
+          "customer_estimates": ["string"]
+        },
+        "constraints": ["string"]
+      }
+    },
+    "architecture": {
+      "file": "architecture.json",
+      "schema": {
+        "layers": [
+          "domain",
+          "application",
+          "infrastructure",
+          "presentation"
+        ],
+        "components": [
+          {"name": "string", "layer": "string", "contracts": ["string"]}
+        ],
+        "decisions": ["string"],
+        "constraints": ["string"]
+      }
+    },
+    "plan": {
+      "file": "plan.json",
+      "schema": {
+        "work_streams": [
+          {"id": "string", "owner": "string", "eta_hours": "float"}
+        ],
+        "risks": [
+          {"id": "string", "mitigation": "string"}
+        ],
+        "testing": ["string"]
+      }
+    },
+    "implementation": {
+      "file": "implementation.json",
+      "schema": {
+        "tasks": [
+          {"id": "string", "description": "string"}
+        ],
+        "dependencies": ["string"],
+        "code_refs": ["string"]
+      }
+    },
+    "review": {
+      "file": "review.json",
+      "schema": {
+        "verdict": "approve|veto",
+        "issues": [
+          {"severity": "string", "summary": "string"}
+        ],
+        "coverage": {
+          "unit": "float",
+          "integration": "float"
+        },
+        "release_gate": "bool"
+      }
+    },
+    "deployment": {
+      "file": "deployment.json",
+      "schema": {
+        "plan": ["string"],
+        "rollback": ["string"],
+        "monitoring": ["string"]
+      }
+    }
+  },
+  "message_schema": {
+    "file_name": "msg_{timestamp}.json",
+    "fields": {
+      "header": {
+        "id": "string",
+        "from": "agent",
+        "to": "agent",
+        "epic_id": "string",
+        "iteration": "int",
+        "type": "request|response|veto|ack"
+      },
+      "body": {
+        "subject": "string",
+        "summary": "string",
+        "key_points": ["string"],
+        "concerns": ["string"],
+        "action_needed": "string"
+      }
+    }
+  },
+  "decision_log": {
+    "file": "decision_log.jsonl",
+    "entry": {
+      "timestamp": "YYYY_MM_DD_HH_MM_SS",
+      "agent": "string",
+      "decision": "propose|approve|veto|escalate",
+      "epic_id": "string",
+      "iteration": "int",
+      "previous_artifacts": ["string"],
+      "details": {
+        "status": "string",
+        "changes_from_previous": "string"
+      }
+    }
+  },
+  "veto_rules": {
+    "layer_violation": {
+      "authority": "architect",
+      "override": "never",
+      "resolution": "refactor_required"
+    },
+    "untestable_requirement": {
+      "authority": "tech_lead",
+      "override": "analyst_with_justification",
+      "resolution": "clarify_or_split"
+    },
+    "no_business_value": {
+      "authority": "analyst",
+      "override": "never",
+      "resolution": "reject_feature"
+    },
+    "security_issue": {
+      "authority": "quality",
+      "override": "never",
+      "resolution": "fix_required"
+    },
+    "no_rollback_plan": {
+      "authority": "devops",
+      "override": "never",
+      "resolution": "add_rollback"
+    }
+  },
+  "automation": {
+    "auto_approve": [
+      "roi_hours < 0.5 AND no_architecture_change",
+      "bug_fix AND test_coverage > 0.9",
+      "documentation_only"
+    ],
+    "auto_reject": [
+      "layer_violation",
+      "test_coverage < 0.6",
+      "no_acceptance_criteria"
+    ],
+    "auto_escalate": [
+      "iteration = 3 AND consensus = false",
+      "critical_security_issue",
+      "production_down_risk"
+    ]
+  },
+  "voting": {
+    "formula": "consensus = sum(weighted_votes)/sum(weights) >= 0.65",
+    "weights": {
+      "requirements": {
+        "analyst": 0.4,
+        "architect": 0.3,
+        "tech_lead": 0.2,
+        "quality": 0.1
+      },
+      "architecture": {
+        "architect": 0.5,
+        "tech_lead": 0.2,
+        "analyst": 0.2,
+        "quality": 0.1
+      },
+      "implementation": {
+        "tech_lead": 0.3,
+        "developer": 0.3,
+        "quality": 0.3,
+        "architect": 0.1
+      },
+      "deployment": {
+        "devops": 0.4,
+        "quality": 0.3,
+        "tech_lead": 0.2,
+        "developer": 0.1
+      }
+    }
+  },
+  "metrics": {
+    "per_epic": [
+      "consensus_iterations",
+      "veto_count",
+      "auto_approvals",
+      "escalations",
+      "resolution_minutes"
+    ],
+    "per_agent": [
+      "veto_frequency",
+      "agreement_rate",
+      "escalation_triggers"
+    ],
+    "patterns": [
+      "common_conflicts",
+      "bottlenecks",
+      "successful_patterns"
+    ]
+  },
+  "escalation": {
+    "triggers": [
+      "max_iterations_reached",
+      "veto_deadlock",
+      "critical_conflict",
+      "time_constraint"
+    ],
+    "package": {
+      "summary": {
+        "conflict": "string",
+        "positions": [
+          {"agent": "string", "stance": "string"}
+        ],
+        "impact_hours": "float"
+      },
+      "options": [
+        {
+          "id": "A",
+          "description": "string",
+          "pros": ["string"],
+          "cons": ["string"],
+          "risk": "string"
+        },
+        {
+          "id": "B",
+          "description": "string",
+          "pros": ["string"],
+          "cons": ["string"],
+          "risk": "string"
+        },
+        {
+          "id": "defer",
+          "description": "string",
+          "impact": "string"
+        }
+      ],
+      "decision": {
+        "choose": "A|B|defer",
+        "override": "agent",
+        "modify": "string"
+      }
+    }
+  },
+  "learning_loop": {
+    "track": [
+      "decision_type",
+      "consensus_time_minutes",
+      "outcome_quality",
+      "human_override"
+    ],
+    "adjust_weights_every": 10,
+    "adjustment_limit": 0.05,
+    "pattern_detection": [
+      "repeated_conflicts",
+      "new_auto_rules",
+      "veto_matrix_updates"
+    ]
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "epic_id": "epic_28",
+  "iteration": 1,
+  "user_story": "As a pet project owner, I want a unified God Agent 'Alfred' that consolidates all capabilities from Days 1-27 into a single personal assistant persona, so I can interact naturally via Telegram (text + voice) and have it autonomously plan, execute, and report multi-step work using existing skills (RAG, Butler, reviewer, ops) with full observability.",
+  "acceptance_criteria": [
+    "AC1: Single entrypoint 'Alfred' inside Telegram (text + voice) handles 100% of user interactions through Butler/Telegram bot",
+    "AC2: Intent Router classifies user requests and dispatches to appropriate execution mode (concierge, research, build, review, ops) with confidence scoring",
+    "AC3: Task Graph Planner breaks requests into ordered steps (plan, research, build, review, deploy) with explicit acceptance checks",
+    "AC4: Skill Graph wraps existing subsystems as skills: Butler/concierge, Research/RAG, Builder, Reviewer, Ops/Deploy",
+    "AC5: Memory Fabric merges user profile, interaction memory, and artifact timeline with <150ms retrieval latency",
+    "AC6: Observability exports Prometheus metrics: god_agent_tasks_total, god_agent_plan_duration_seconds, god_agent_veto_total, god_agent_skill_latency_seconds",
+    "AC7: Safety guardrails enforce veto rules from consensus_architecture.json with automatic escalation",
+    "AC8: Consensus Bridge invokes multi-agent workflow when plan steps require validation",
+    "AC9: Domain layer contains contracts for Intent, TaskPlan, TaskStep, Skill, SkillResult, MemorySnapshot, SafetyViolation",
+    "AC10: Application layer exposes IntentRouterService, PlanCompilerService, GodAgentOrchestrator with pause/resume/cancel",
+    "AC11: Infrastructure layer provides adapters for persona/memory repositories, RAG client, MCP/reviewer tools, voice pipeline, Telegram bot",
+    "AC12: Smoke tests cover at least one flow per skill (concierge greetings, research with citations, code change + review, ops check)"
+  ],
+  "user_testing_strategy": {
+    "e2e_required": true,
+    "user_action_simulation": false,
+    "simulation_scripts_location": "N/A - manual testing by project owner",
+    "scenarios": [
+      "Owner sends text message to Telegram bot → Alfred routes to concierge skill → receives personalized response",
+      "Owner asks research question → Alfred routes to RAG skill → returns answer with citations",
+      "Owner requests code change → Alfred plans task graph → executes builder skill → triggers reviewer → reports results",
+      "Owner sends voice message → Whisper transcription → Alfred processes → responds via text",
+      "Owner requests ops check → Alfred routes to ops skill → fetches metrics → reports status",
+      "Owner triggers multi-step flow → Alfred creates plan → executes steps sequentially/parallel → reports progress",
+      "Owner tests consensus bridge → Alfred detects critical step → invokes multi-agent workflow → waits for verdict"
+    ]
+  },
+  "out_of_scope": [
+    "New LLM features outside existing stack (rely on local Qwen/Claude endpoints)",
+    "Cloud SaaS dependencies (stick to shared infra)",
+    "Production mobile apps (Telegram + CLI/voice are enough)",
+    "Background jobs and scheduled digests (Should, not Must)",
+    "Plugin/skill registry with declarative config (Should, not Must)",
+    "Operator CLI/TUI for debugging (Should, not Must)"
+  ],
+  "metrics": {
+    "technical_metrics": [
+      "G1: 100% of user interactions go through Butler/Telegram bot",
+      "G2: ≥3 task types (concierge/research/builder/reviewer) run without manual glue",
+      "G3: Persona + working memory retrieved in <150ms and referenced in responses",
+      "G4: Prometheus exports new god_agent_* metrics; veto/escalation flow wired",
+      "Response target < 5s for concierge tasks, < 30s for multi-step flows",
+      "Planner respects token budgets defined in role prompts"
+    ],
+    "customer_estimates": [
+      "User satisfaction: measured via direct feedback from project owner during manual testing",
+      "Autonomous task completion rate: percentage of requests successfully completed without manual intervention",
+      "Time saved: reduction in manual steps required to accomplish multi-step tasks (qualitative assessment)",
+      "Engagement: frequency and variety of interactions with Alfred (qualitative)"
+    ]
+  },
+  "constraints": [
+    "Security/Compliance: stay local (Mongo, Prometheus, Qwen). No external SaaS",
+    "Infra/Performance: reuse docs/operational/shared_infra.md service matrix",
+    "Architecture: maintain Clean Architecture boundaries (domain → application → infrastructure → presentation)",
+    "Scope: keep scope tied to approved epic objectives; scope will be refined based on owner feedback during implementation",
+    "Testing: owner will manually test and provide feedback; no automated simulation scripts required"
+  ]
+}

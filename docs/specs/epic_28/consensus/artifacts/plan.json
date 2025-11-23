@@ -1,0 +1,434 @@
+{
+  "epic_id": "epic_28",
+  "iteration": 1,
+  "timestamp": "2025_01_27_14_00_00",
+  "work_streams": [
+    {
+      "id": "ws1",
+      "name": "Domain & Contracts",
+      "owner": "developer",
+      "eta_hours": 3.5,
+      "tasks": [
+        {
+          "id": "ws1_t1",
+          "name": "Create domain value objects: Intent, Skill",
+          "eta_hours": 1.5,
+          "dependencies": [],
+          "test_spec": "Unit tests for Intent (confidence validation, type enum), Skill (input/output contract validation). Coverage target: 90%.",
+          "ci_gates": ["pytest tests/unit/domain/god_agent/test_intent.py", "pytest tests/unit/domain/god_agent/test_skill.py", "coverage >= 0.9"],
+          "rollback": "Revert commit, no data migration needed (pure domain objects)",
+          "acceptance_criteria": ["Intent validates confidence in [0.0, 1.0]", "Skill validates input/output contracts", "All tests pass with 90%+ coverage"]
+        },
+        {
+          "id": "ws1_t2",
+          "name": "Create domain entities: TaskPlan, TaskStep, SkillResult, MemorySnapshot, SafetyViolation, GodAgentProfile",
+          "eta_hours": 2.0,
+          "dependencies": ["ws1_t1"],
+          "test_spec": "Unit tests for all entities: TaskPlan (DAG validation, max depth 10), TaskStep (status transitions, acceptance gates), SkillResult (status/error handling), MemorySnapshot (compression logic), SafetyViolation (veto rule mapping), GodAgentProfile (preferences validation). Coverage target: 85%.",
+          "ci_gates": ["pytest tests/unit/domain/god_agent/", "coverage >= 0.85", "mypy src/domain/god_agent/"],
+          "rollback": "Revert commit, no data migration needed",
+          "acceptance_criteria": ["TaskPlan enforces max 10 steps", "TaskStep validates skill assignment", "All entities have type hints and docstrings", "All tests pass"]
+        }
+      ]
+    },
+    {
+      "id": "ws2",
+      "name": "Memory Fabric + Persona Merge",
+      "owner": "developer",
+      "eta_hours": 3.0,
+      "tasks": [
+        {
+          "id": "ws2_t1",
+          "name": "Extend GodAgentMemoryRepository with task timeline and artifact references",
+          "eta_hours": 2.0,
+          "dependencies": ["ws1_t2"],
+          "test_spec": "Integration tests: save/get task timeline, save/get artifact refs, MongoDB persistence. Unit tests for repository interface. Coverage target: 80%.",
+          "ci_gates": ["pytest tests/integration/infrastructure/god_agent/test_memory_repository.py", "pytest tests/unit/infrastructure/god_agent/test_memory_repository.py", "coverage >= 0.8"],
+          "rollback": "Revert commit, MongoDB schema remains compatible (new fields optional)",
+          "acceptance_criteria": ["Repository saves/retrieves task timeline", "Repository saves/retrieves artifact references", "Integration tests pass with MongoDB", "No breaking changes to existing UserMemoryRepository"]
+        },
+        {
+          "id": "ws2_t2",
+          "name": "Implement MemoryFabricService: aggregate profile, memory, RAG hits, artifacts",
+          "eta_hours": 3.0,
+          "dependencies": ["ws2_t1"],
+          "test_spec": "Unit tests: get_memory_snapshot (aggregation logic), update_memory (event handling), compress_memory (TTL/compression when >50 events, keep 20). Integration tests: <150ms retrieval latency. Coverage target: 80%.",
+          "ci_gates": ["pytest tests/unit/application/god_agent/test_memory_fabric_service.py", "pytest tests/integration/application/god_agent/test_memory_fabric_service.py", "coverage >= 0.8", "latency < 150ms in integration tests"],
+          "rollback": "Revert commit, service is stateless (no data corruption risk)",
+          "acceptance_criteria": ["MemoryFabricService aggregates all sources into MemorySnapshot", "Compression triggers when >50 events, keeps 20", "Retrieval latency < 150ms", "All tests pass"]
+        }
+      ]
+    },
+    {
+      "id": "ws3",
+      "name": "Intent Routing & Planner",
+      "owner": "developer",
+      "eta_hours": 4.0,
+      "tasks": [
+        {
+          "id": "ws3_t1",
+          "name": "Implement IntentRouterService: hybrid routing (keywords + embeddings + memory)",
+          "eta_hours": 3.0,
+          "dependencies": ["ws2_t2"],
+          "test_spec": "Unit tests: route_intent (classification logic, confidence scoring), get_confidence (threshold validation). Integration tests: fallback to concierge when confidence < 0.6, <5s response time. Coverage target: 80%.",
+          "ci_gates": ["pytest tests/unit/application/god_agent/test_intent_router_service.py", "pytest tests/integration/application/god_agent/test_intent_router_service.py", "coverage >= 0.8", "response_time < 5s"],
+          "rollback": "Revert commit, service is stateless",
+          "acceptance_criteria": ["IntentRouterService classifies 5 intent types (concierge, research, build, review, ops)", "Falls back to concierge when confidence < 0.6", "Response time < 5s", "All tests pass"]
+        },
+        {
+          "id": "ws3_t2",
+          "name": "Implement PlanCompilerService: convert Intent+MemorySnapshot to TaskPlan DAG",
+          "eta_hours": 3.5,
+          "dependencies": ["ws3_t1"],
+          "test_spec": "Unit tests: compile_plan (DAG generation, max 10 steps), validate_plan (dependency cycles, acceptance gates). Integration tests: LLM integration (respects 2500 token budget), watchdog timer (max 30s per step). Coverage target: 75%.",
+          "ci_gates": ["pytest tests/unit/application/god_agent/test_plan_compiler_service.py", "pytest tests/integration/application/god_agent/test_plan_compiler_service.py", "coverage >= 0.75", "token_budget <= 2500"],
+          "rollback": "Revert commit, service is stateless",
+          "acceptance_criteria": ["PlanCompilerService generates TaskPlan DAG", "Enforces max 10 steps, max 30s per step", "Respects 2500 token budget", "All tests pass"]
+        }
+      ]
+    },
+    {
+      "id": "ws4",
+      "name": "Skill Adapters",
+      "owner": "developer",
+      "eta_hours": 8.0,
+      "tasks": [
+        {
+          "id": "ws4_t1",
+          "name": "Implement ConciergeSkillAdapter: wrap PersonalizedReplyUseCase",
+          "eta_hours": 1.5,
+          "dependencies": ["ws3_t1"],
+          "test_spec": "Unit tests: execute (calls PersonalizedReplyUseCase), get_skill_id. Integration tests: end-to-end concierge flow (text message → personalized response). Reuse existing PersonalizedReplyUseCase test fixtures. Coverage target: 80%.",
+          "ci_gates": ["pytest tests/unit/infrastructure/god_agent/test_concierge_skill_adapter.py", "pytest tests/integration/infrastructure/god_agent/test_concierge_skill_adapter.py", "coverage >= 0.8"],
+          "rollback": "Revert commit, adapter is stateless wrapper",
+          "acceptance_criteria": ["ConciergeSkillAdapter calls PersonalizedReplyUseCase", "Returns SkillResult with personalized response", "Integration test passes", "No changes to PersonalizedReplyUseCase"]
+        },
+        {
+          "id": "ws4_t2",
+          "name": "Implement ResearchSkillAdapter: wrap CompareRagAnswersUseCase",
+          "eta_hours": 2.0,
+          "dependencies": ["ws3_t1"],
+          "test_spec": "Unit tests: execute (calls CompareRagAnswersUseCase with citations), get_skill_id. Integration tests: end-to-end research flow (query → RAG answer with citations). Reuse existing CompareRagAnswersUseCase test fixtures. Coverage target: 80%.",
+          "ci_gates": ["pytest tests/unit/infrastructure/god_agent/test_research_skill_adapter.py", "pytest tests/integration/infrastructure/god_agent/test_research_skill_adapter.py", "coverage >= 0.8"],
+          "rollback": "Revert commit, adapter is stateless wrapper",
+          "acceptance_criteria": ["ResearchSkillAdapter calls CompareRagAnswersUseCase", "Returns SkillResult with citations", "Integration test passes", "No changes to CompareRagAnswersUseCase"]
+        },
+        {
+          "id": "ws4_t3",
+          "name": "Implement BuilderSkillAdapter: wrap GenerateCodeUseCase + GenerateTestsUseCase",
+          "eta_hours": 2.5,
+          "dependencies": ["ws3_t1"],
+          "test_spec": "Unit tests: execute (calls GenerateCodeUseCase + GenerateTestsUseCase), get_skill_id. Integration tests: end-to-end builder flow (requirements → code + tests). Reuse existing GenerateCodeUseCase test fixtures. Coverage target: 80%.",
+          "ci_gates": ["pytest tests/unit/infrastructure/god_agent/test_builder_skill_adapter.py", "pytest tests/integration/infrastructure/god_agent/test_builder_skill_adapter.py", "coverage >= 0.8"],
+          "rollback": "Revert commit, adapter is stateless wrapper",
+          "acceptance_criteria": ["BuilderSkillAdapter calls GenerateCodeUseCase + GenerateTestsUseCase", "Returns SkillResult with generated code", "Integration test passes", "No changes to existing use cases"]
+        },
+        {
+          "id": "ws4_t4",
+          "name": "Implement ReviewerSkillAdapter: wrap ReviewHomeworkUseCase + ModularReviewService",
+          "eta_hours": 2.0,
+          "dependencies": ["ws3_t1"],
+          "test_spec": "Unit tests: execute (calls ReviewHomeworkUseCase), get_skill_id. Integration tests: end-to-end reviewer flow (commit hash → review result). Reuse existing ReviewHomeworkUseCase test fixtures. Coverage target: 80%.",
+          "ci_gates": ["pytest tests/unit/infrastructure/god_agent/test_reviewer_skill_adapter.py", "pytest tests/integration/infrastructure/god_agent/test_reviewer_skill_adapter.py", "coverage >= 0.8"],
+          "rollback": "Revert commit, adapter is stateless wrapper",
+          "acceptance_criteria": ["ReviewerSkillAdapter calls ReviewHomeworkUseCase", "Returns SkillResult with review", "Integration test passes", "No changes to existing use cases"]
+        },
+        {
+          "id": "ws4_t5",
+          "name": "Implement OpsSkillAdapter: wrap shared infra scripts + Prometheus client",
+          "eta_hours": 2.0,
+          "dependencies": ["ws3_t1"],
+          "test_spec": "Unit tests: execute (calls Prometheus client, runs infra scripts), get_skill_id. Integration tests: end-to-end ops flow (ops check → metrics/status). Mock Prometheus for unit tests. Coverage target: 75%.",
+          "ci_gates": ["pytest tests/unit/infrastructure/god_agent/test_ops_skill_adapter.py", "pytest tests/integration/infrastructure/god_agent/test_ops_skill_adapter.py", "coverage >= 0.75"],
+          "rollback": "Revert commit, adapter is stateless wrapper",
+          "acceptance_criteria": ["OpsSkillAdapter fetches Prometheus metrics", "Runs shared infra scripts", "Returns SkillResult with ops status", "Integration test passes"]
+        }
+      ]
+    },
+    {
+      "id": "ws5",
+      "name": "Consensus Bridge + Safety",
+      "owner": "developer",
+      "eta_hours": 3.5,
+      "tasks": [
+        {
+          "id": "ws5_t1",
+          "name": "Implement ConsensusBridge: file-based multi-agent workflow",
+          "eta_hours": 3.0,
+          "dependencies": ["ws3_t2"],
+          "test_spec": "Unit tests: request_consensus (creates files in docs/specs/epic_28/consensus/), check_veto_status (reads decision_log.jsonl). Integration tests: async workflow (timeout after 5 minutes), veto detection. Coverage target: 75%.",
+          "ci_gates": ["pytest tests/unit/application/god_agent/test_consensus_bridge.py", "pytest tests/integration/application/god_agent/test_consensus_bridge.py", "coverage >= 0.75"],
+          "rollback": "Revert commit, consensus files remain (no data corruption)",
+          "acceptance_criteria": ["ConsensusBridge creates files following consensus_architecture.json schema", "Detects veto status from decision_log.jsonl", "Timeout after 5 minutes", "All tests pass"]
+        },
+        {
+          "id": "ws5_t2",
+          "name": "Implement SafetyViolation detection: enforce veto rules from consensus_architecture.json",
+          "eta_hours": 1.5,
+          "dependencies": ["ws5_t1"],
+          "test_spec": "Unit tests: SafetyViolation creation (maps veto rules: untestable_requirement, impossible_staging, missing_rollback_plan, task_over_4h, undefined_dependencies). Integration tests: SafetyViolation triggers ConsensusBridge. Coverage target: 80%.",
+          "ci_gates": ["pytest tests/unit/domain/god_agent/test_safety_violation.py", "pytest tests/integration/application/god_agent/test_safety_violation.py", "coverage >= 0.8"],
+          "rollback": "Revert commit, safety checks are stateless",
+          "acceptance_criteria": ["SafetyViolation maps all veto rules from consensus_architecture.json", "Triggers ConsensusBridge when detected", "All tests pass"]
+        }
+      ]
+    },
+    {
+      "id": "ws6",
+      "name": "God Agent Orchestrator",
+      "owner": "developer",
+      "eta_hours": 4.0,
+      "tasks": [
+        {
+          "id": "ws6_t1",
+          "name": "Implement GodAgentOrchestrator: execute TaskPlan, manage pause/resume/cancel",
+          "eta_hours": 3.5,
+          "dependencies": ["ws4_t1", "ws4_t2", "ws4_t3", "ws4_t4", "ws4_t5", "ws5_t1"],
+          "test_spec": "Unit tests: execute_plan (sequential/parallel execution), pause_task, resume_task, cancel_task. Integration tests: full orchestration flow (intent → plan → execution → result), event publishing (TASK_STARTED, STEP_DONE, VETO_RAISED). Coverage target: 75%.",
+          "ci_gates": ["pytest tests/unit/application/god_agent/test_god_agent_orchestrator.py", "pytest tests/integration/application/god_agent/test_god_agent_orchestrator.py", "coverage >= 0.75"],
+          "rollback": "Revert commit, orchestrator state is in-memory (no persistence)",
+          "acceptance_criteria": ["GodAgentOrchestrator executes TaskPlan steps", "Supports pause/resume/cancel", "Publishes events (TASK_STARTED, STEP_DONE, VETO_RAISED)", "Integration test passes"]
+        },
+        {
+          "id": "ws6_t2",
+          "name": "Wire ConsensusBridge into GodAgentOrchestrator: trigger on critical steps",
+          "eta_hours": 1.5,
+          "dependencies": ["ws6_t1"],
+          "test_spec": "Integration tests: orchestrator detects critical step → triggers ConsensusBridge → waits for verdict. Coverage target: 75%.",
+          "ci_gates": ["pytest tests/integration/application/god_agent/test_orchestrator_consensus_integration.py", "coverage >= 0.75"],
+          "rollback": "Revert commit, integration is stateless",
+          "acceptance_criteria": ["Orchestrator triggers ConsensusBridge on critical steps", "Waits for consensus verdict", "Integration test passes"]
+        }
+      ]
+    },
+    {
+      "id": "ws7",
+      "name": "Presentation & Voice",
+      "owner": "developer",
+      "eta_hours": 3.5,
+      "tasks": [
+        {
+          "id": "ws7_t1",
+          "name": "Implement GodAgentTelegramHandler: route all messages through GodAgentOrchestrator",
+          "eta_hours": 2.5,
+          "dependencies": ["ws6_t2"],
+          "test_spec": "Unit tests: message routing (text/voice), orchestrator integration. Integration tests: end-to-end Telegram flow (text message → orchestrator → response). Reuse existing Telegram bot test fixtures. Coverage target: 75%.",
+          "ci_gates": ["pytest tests/unit/presentation/bot/handlers/test_god_agent_handler.py", "pytest tests/integration/presentation/bot/handlers/test_god_agent_handler.py", "coverage >= 0.75"],
+          "rollback": "Revert commit, handler is stateless (no breaking changes to Butler bot)",
+          "acceptance_criteria": ["GodAgentTelegramHandler routes all messages through orchestrator", "Extends existing Butler bot without breaking changes", "Integration test passes"]
+        },
+        {
+          "id": "ws7_t2",
+          "name": "Integrate VoicePipelineAdapter: voice transcription → orchestrator",
+          "eta_hours": 2.0,
+          "dependencies": ["ws7_t1"],
+          "test_spec": "Unit tests: VoicePipelineAdapter integration (transcribe_voice, is_voice_message). Integration tests: end-to-end voice flow (voice message → transcription → orchestrator → response). Reuse existing Day 24 voice test fixtures. Coverage target: 75%.",
+          "ci_gates": ["pytest tests/unit/infrastructure/god_agent/test_voice_pipeline_adapter.py", "pytest tests/integration/presentation/bot/handlers/test_voice_integration.py", "coverage >= 0.75"],
+          "rollback": "Revert commit, voice integration is optional (no breaking changes)",
+          "acceptance_criteria": ["VoicePipelineAdapter transcribes voice messages", "Voice messages route through orchestrator", "Integration test passes"]
+        }
+      ]
+    },
+    {
+      "id": "ws8",
+      "name": "Observability & QA",
+      "owner": "developer",
+      "eta_hours": 4.5,
+      "tasks": [
+        {
+          "id": "ws8_t1",
+          "name": "Implement GodAgentMetrics: Prometheus metrics exporter",
+          "eta_hours": 2.0,
+          "dependencies": ["ws6_t2"],
+          "test_spec": "Unit tests: metrics registration (god_agent_tasks_total, god_agent_plan_duration_seconds, god_agent_veto_total, god_agent_skill_latency_seconds). Integration tests: metrics exported to Prometheus, structured logs include task_id/skill_id/plan_step. Coverage target: 80%.",
+          "ci_gates": ["pytest tests/unit/infrastructure/god_agent/test_god_agent_metrics.py", "pytest tests/integration/infrastructure/god_agent/test_god_agent_metrics.py", "coverage >= 0.8"],
+          "rollback": "Revert commit, metrics are additive (no breaking changes)",
+          "acceptance_criteria": ["GodAgentMetrics exports all 4 metrics", "Structured logs include context (task_id, skill_id, plan_step)", "Integration test passes with Prometheus"]
+        },
+        {
+          "id": "ws8_t2",
+          "name": "Security tests: input sanitization for all entry points",
+          "eta_hours": 2.0,
+          "dependencies": ["ws7_t2"],
+          "test_spec": "Security tests: input sanitization for Telegram messages (SQL injection, XSS, path traversal), voice transcripts (malicious audio, command injection), CLI commands (command injection, path traversal). Test that all inputs are sanitized before processing. Validate no external SaaS dependencies (all data stays local). Coverage target: 80%.",
+          "ci_gates": ["pytest tests/security/god_agent/test_input_sanitization.py", "pytest tests/security/god_agent/test_no_external_saas.py", "coverage >= 0.8", "all security tests pass"],
+          "rollback": "Revert commit, security tests are non-breaking",
+          "acceptance_criteria": ["Security tests for Telegram message sanitization pass", "Security tests for voice transcript sanitization pass", "Security tests for CLI command sanitization pass", "No external SaaS dependencies detected", "All data stays local (MongoDB, Prometheus, Qwen)"]
+        },
+        {
+          "id": "ws8_t3",
+          "name": "Performance tests: explicit gates for all performance targets",
+          "eta_hours": 1.5,
+          "dependencies": ["ws8_t1"],
+          "test_spec": "Performance tests with explicit thresholds: memory retrieval < 150ms (AC5), intent routing < 5s (AC2), multi-step flows < 30s (plan.json requirement). Use pytest-benchmark or custom timing. Fail CI if thresholds exceeded. Coverage target: performance tests pass.",
+          "ci_gates": ["pytest tests/performance/god_agent/test_memory_retrieval.py --benchmark-only --benchmark-max-time=0.15", "pytest tests/performance/god_agent/test_intent_routing.py --benchmark-only --benchmark-max-time=5.0", "pytest tests/performance/god_agent/test_multi_step_flows.py --benchmark-only --benchmark-max-time=30.0", "all performance tests pass"],
+          "rollback": "Revert commit, performance tests are non-breaking",
+          "acceptance_criteria": ["Memory retrieval performance test passes (< 150ms)", "Intent routing performance test passes (< 5s)", "Multi-step flows performance test passes (< 30s)", "All performance gates pass in CI"]
+        },
+        {
+          "id": "ws8_t4",
+          "name": "Smoke tests: one flow per skill (concierge, research, builder, reviewer, ops)",
+          "eta_hours": 2.5,
+          "dependencies": ["ws8_t2", "ws8_t3"],
+          "test_spec": "Smoke tests: concierge greetings, research with citations, code change + review, ops check. Each test covers end-to-end flow from Telegram message → orchestrator → skill → response. Coverage target: smoke tests pass.",
+          "ci_gates": ["pytest tests/e2e/god_agent/test_smoke_flows.py", "all smoke tests pass"],
+          "rollback": "Revert commit, smoke tests are non-breaking",
+          "acceptance_criteria": ["Smoke test for concierge skill passes", "Smoke test for research skill passes", "Smoke test for builder skill passes", "Smoke test for reviewer skill passes", "Smoke test for ops skill passes"]
+        }
+      ]
+    }
+  ],
+  "risks": [
+    {
+      "id": "r1",
+      "risk": "Plan Compiler generates invalid or infinite task plans",
+      "mitigation": "Hard cap on plan depth (max 10 steps) in TaskPlan entity, watchdog timers per step (max 30s) in PlanCompilerService, validation in PlanCompilerService.validate_plan()",
+      "owner": "developer",
+      "workstream": "ws3"
+    },
+    {
+      "id": "r2",
+      "risk": "Skills diverge from underlying subsystems causing regressions",
+      "mitigation": "Skill adapters call existing use cases directly (no infrastructure bypass), unit tests reuse prior fixtures, integration tests cover skill → use case → result flow",
+      "owner": "developer",
+      "workstream": "ws4"
+    },
+    {
+      "id": "r3",
+      "risk": "Memory Fabric bloat causing token and storage issues",
+      "mitigation": "Summary compression + TTL policies (compress when >50 events, keep 20 after compression) in MemoryFabricService.compress_memory(), max context events (20)",
+      "owner": "developer",
+      "workstream": "ws2"
+    },
+    {
+      "id": "r4",
+      "risk": "Consensus Bridge integration stalls flows causing latency",
+      "mitigation": "Async queue + notifications in ConsensusBridge, only critical steps trigger full consensus, timeout after 5 minutes, fallback to manual escalation",
+      "owner": "developer",
+      "workstream": "ws5"
+    },
+    {
+      "id": "r5",
+      "risk": "Intent Router confidence threshold misclassifies requests",
+      "mitigation": "Fallback to concierge if confidence < 0.6 in IntentRouterService, allow user to override intent, log misclassifications for tuning",
+      "owner": "developer",
+      "workstream": "ws3"
+    },
+    {
+      "id": "r6",
+      "risk": "Token budget exceeded in Plan Compiler or Consensus Bridge",
+      "mitigation": "Respect token budgets from role prompts (2500 tokens per epic) in PlanCompilerService, compress memory before planning, use streaming for long responses",
+      "owner": "developer",
+      "workstream": "ws3"
+    },
+    {
+      "id": "r7",
+      "risk": "Layer violations if skills bypass application layer",
+      "mitigation": "Skills MUST call existing use cases (not infrastructure directly), architecture validation in code review, automated layer boundary checks in CI",
+      "owner": "quality",
+      "workstream": "ws4"
+    }
+  ],
+  "testing": [
+    "Unit tests: all domain entities, value objects, services, adapters (coverage target: 80%+)",
+    "Integration tests: memory repository (MongoDB), intent router (LLM), plan compiler (LLM), skill adapters (use cases), orchestrator (full flow), consensus bridge (file system), metrics (Prometheus)",
+    "Smoke tests: one end-to-end flow per skill (concierge, research, builder, reviewer, ops)",
+    "Performance tests: memory retrieval < 150ms, intent routing < 5s, multi-step flows < 30s",
+    "Architecture tests: layer boundary validation (no inward dependencies), skill adapters call application layer use cases"
+  ],
+  "dependencies": {
+    "external": [
+      "MongoDB (shared infra): user profiles, memory, task timelines",
+      "Prometheus (shared infra): metrics export",
+      "LLM API (Qwen/Claude): intent routing, plan compilation",
+      "RAG pipeline (Days 20-22): research skill",
+      "Telegram bot framework: presentation layer"
+    ],
+    "internal": [
+      "PersonalizedReplyUseCase (Day 25): concierge skill",
+      "CompareRagAnswersUseCase (Days 20-22): research skill",
+      "GenerateCodeUseCase + GenerateTestsUseCase (Day 26): builder skill",
+      "ReviewHomeworkUseCase (Day 14/17): reviewer skill",
+      "UserProfileRepository + UserMemoryRepository (Day 25): memory fabric",
+      "Voice pipeline (Day 24): voice transcription"
+    ]
+  },
+  "rollback_strategy": {
+    "per_stage": "Each task includes rollback plan (revert commit, no data migration needed for most tasks)",
+    "full_rollback": "Revert all commits, shared infra remains unchanged (no breaking changes to existing use cases)",
+    "partial_rollback": "Revert specific workstream commits, maintain compatibility with existing subsystems"
+  },
+  "ci_gates": [
+    "All unit tests pass (coverage >= 0.75-0.9 per task)",
+    "All integration tests pass",
+    "All smoke tests pass (pytest tests/e2e/god_agent/test_smoke_flows.py)",
+    "All security tests pass (pytest tests/security/god_agent/)",
+    "All performance tests pass (pytest tests/performance/god_agent/ --benchmark-only)",
+    "MyPy type checking passes (mypy src/domain/god_agent/ src/application/god_agent/ src/infrastructure/god_agent/ src/presentation/bot/handlers/god_agent_handler.py)",
+    "Black formatting passes (black --check src/domain/god_agent/ src/application/god_agent/ src/infrastructure/god_agent/ src/presentation/bot/handlers/god_agent_handler.py)",
+    "Layer boundary validation (no inward dependencies): pytest tests/architecture/test_layer_boundaries.py",
+    "Performance targets met: memory retrieval < 150ms (pytest tests/performance/god_agent/test_memory_retrieval.py --benchmark-max-time=0.15), intent routing < 5s (pytest tests/performance/god_agent/test_intent_routing.py --benchmark-max-time=5.0), multi-step flows < 30s (pytest tests/performance/god_agent/test_multi_step_flows.py --benchmark-max-time=30.0)"
+  ],
+  "acceptance_criteria_test_coverage": {
+    "AC1": {
+      "test_location": "tests/integration/presentation/bot/handlers/test_god_agent_handler.py",
+      "test_type": "integration",
+      "description": "Telegram message → orchestrator → response flow"
+    },
+    "AC2": {
+      "test_location": "tests/integration/application/god_agent/test_intent_router_service.py",
+      "test_type": "integration",
+      "description": "Intent classification with confidence scoring"
+    },
+    "AC3": {
+      "test_location": "tests/integration/application/god_agent/test_plan_compiler_service.py",
+      "test_type": "integration",
+      "description": "TaskPlan DAG generation with acceptance checks"
+    },
+    "AC4": {
+      "test_location": "tests/integration/infrastructure/god_agent/test_*_skill_adapter.py",
+      "test_type": "integration",
+      "description": "All 5 skill adapters (concierge, research, builder, reviewer, ops)"
+    },
+    "AC5": {
+      "test_location": "tests/performance/god_agent/test_memory_retrieval.py",
+      "test_type": "performance",
+      "description": "Memory retrieval < 150ms"
+    },
+    "AC6": {
+      "test_location": "tests/integration/infrastructure/god_agent/test_god_agent_metrics.py",
+      "test_type": "integration",
+      "description": "Prometheus metrics export"
+    },
+    "AC7": {
+      "test_location": "tests/integration/application/god_agent/test_safety_violation.py",
+      "test_type": "integration",
+      "description": "Veto rules enforcement"
+    },
+    "AC8": {
+      "test_location": "tests/integration/application/god_agent/test_consensus_bridge.py",
+      "test_type": "integration",
+      "description": "Consensus workflow invocation"
+    },
+    "AC9": {
+      "test_location": "tests/unit/domain/god_agent/",
+      "test_type": "unit",
+      "description": "All domain entities (Intent, TaskPlan, TaskStep, Skill, SkillResult, MemorySnapshot, SafetyViolation, GodAgentProfile)"
+    },
+    "AC10": {
+      "test_location": "tests/unit/application/god_agent/",
+      "test_type": "unit",
+      "description": "All application services (IntentRouterService, PlanCompilerService, GodAgentOrchestrator, ConsensusBridge, MemoryFabricService)"
+    },
+    "AC11": {
+      "test_location": "tests/unit/infrastructure/god_agent/",
+      "test_type": "unit",
+      "description": "All infrastructure adapters (5 skill adapters, GodAgentMemoryRepository, VoicePipelineAdapter, GodAgentMetrics)"
+    },
+    "AC12": {
+      "test_location": "tests/e2e/god_agent/test_smoke_flows.py",
+      "test_type": "smoke",
+      "description": "One flow per skill (concierge, research, builder, reviewer, ops)"
+    }
+  }
+}
