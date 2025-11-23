@@ -37,7 +37,13 @@ class ComplexityAdapter:
     def _basic_analysis(self, code: str, detailed: bool) -> Dict[str, Any]:
         """Basic analysis without radon."""
         lines = code.splitlines()
-        loc = len([l for l in lines if l.strip() and not l.strip().startswith("#")])
+        loc = len(
+            [
+                line
+                for line in lines
+                if line.strip() and not line.strip().startswith("#")
+            ]
+        )
 
         # Estimate complexity based on control flow keywords
         control_flow = ["if", "elif", "else", "for", "while", "try", "except"]
@@ -71,7 +77,13 @@ class ComplexityAdapter:
 
             # Lines of code (excluding comments)
             lines = code.splitlines()
-            loc = len([l for l in lines if l.strip() and not l.strip().startswith("#")])
+            loc = len(
+                [
+                    line
+                    for line in lines
+                    if line.strip() and not line.strip().startswith("#")
+                ]
+            )
 
             # Generate recommendations
             recommendations = self._generate_recommendations(max_cc, loc, mi_score)

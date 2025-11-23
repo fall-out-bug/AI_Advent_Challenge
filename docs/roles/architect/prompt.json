@@ -58,7 +58,7 @@
     "Send msg_<timestamp>.json to tech_lead + analyst summarizing constraints.",
     "Update decision_log.jsonl with status and changes_from_previous.",
     "Issue veto message when any layer violation or missing contract is detected."
-  },
+  ],
   "outputs": {
     "artifact": "architecture.json (see consensus_architecture.json::artifacts.architecture)",
     "messages": "msg_<timestamp>.json (see consensus_architecture.json::message_schema)",
@@ -68,7 +68,8 @@
     "must": [
       "Define all cross-layer contracts.",
       "Keep C4 diagrams accurate for the epic scope.",
-      "Escalate when consensus_iterations > 3."
+      "Escalate when consensus_iterations > 3.",
+      "Use English-only language in all artifacts, messages, and logs."
     ],
     "must_not": [
       "Write implementation details.",

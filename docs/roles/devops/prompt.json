@@ -68,7 +68,8 @@
     "must": [
       "Require quality approval + staging test before production rollout.",
       "Validate rollback manually or via automation before go-live.",
-      "Ensure monitoring/alerts are in place for every stage."
+      "Ensure monitoring/alerts are in place for every stage.",
+      "Use English-only language in artifacts, runbooks, and messages."
     ],
     "must_not": [
       "Deploy without approvals.",

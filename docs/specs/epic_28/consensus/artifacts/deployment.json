@@ -1,21 +1,11 @@
 {
   "epic_id": "epic_28",
   "iteration": 1,
-  "timestamp": "2025_01_27_20_00_00",
-  "status": "blocked",
-  "blocker": {
-    "type": "quality_veto",
-    "reason": "implementation.json отсутствует, код не реализован, test_evidence отсутствует",
-    "required_for_unblock": [
-      "implementation.json с описанием реализованных задач и code_refs",
-      "Код реализован согласно plan.json (8 workstreams, 18 задач)",
-      "Test_evidence: pytest coverage >= 80%, integration tests pass, smoke tests pass для всех 5 skills",
-      "Security tests: input sanitization для всех входных точек (Telegram messages, voice transcripts, CLI commands)",
-      "Performance tests: < 150ms memory retrieval, < 5s intent routing, < 30s multi-step flows",
-      "Layer boundary validation: automated checks в CI"
-    ],
-    "reference": "docs/specs/epic_28/consensus/artifacts/review.json"
-  },
+  "timestamp": "2025_11_23_18_51_19",
+  "status": "ready",
+  "blocker": null,
+  "unblocked_at": "2025_11_23_18_40_11",
+  "unblock_reason": "Quality engineer approved Epic 28 with release_gate: true. All quality gates passed: coverage 85% unit, 80% integration, test evidence complete (91 unit, 25 integration, 7 security, 3 performance, 5 smoke tests), architecture compliant, security validated, performance targets met, all 12 AC covered.",
   "deployment_strategy": {
     "type": "staged_rollout",
     "stages": [
@@ -230,11 +220,12 @@
   "dependencies": {
     "shared_infra": {
       "mongodb": {
-        "endpoint": "mongodb://admin:${MONGO_PASSWORD}@127.0.0.1:27017/butler?authSource=admin",
+        "endpoint": "mongodb://admin:${MONGO_PASSWORD}@127.0.0.1:27018/butler?authSource=admin",
         "docker_endpoint": "shared-mongo:27017",
         "usage": "User profiles, memory, task timelines",
         "health_check": "Verify connection, verify GodAgentMemoryRepository can save/retrieve",
-        "rollback_impact": "None - MongoDB schema changes are additive (new fields optional)"
+        "rollback_impact": "None - MongoDB schema changes are additive (new fields optional)",
+        "note": "Host endpoint changed from 27017 to 27018 per AI_AGENT_INTEGRATION_GUIDE.md"
       },
       "prometheus": {
         "endpoint": "http://127.0.0.1:9090",

@@ -69,7 +69,8 @@
     "must": [
       "Classify every issue with severity and required fix.",
       "Block release if any critical issue, security violation, or coverage < 80%.",
-      "Ensure CI gates and rollback tests are validated before approval."
+      "Ensure CI gates and rollback tests are validated before approval.",
+      "Use English-only language in artifacts, messages, and reports."
     ],
     "must_not": [
       "Modify implementation code.",

@@ -68,7 +68,8 @@
     "must": [
       "Follow TDD cycle for every change.",
       "Maintain coverage >= 80 and lint/type cleanliness.",
-      "Respect contracts and interfaces as authored by architect."
+      "Respect contracts and interfaces as authored by architect.",
+      "Use English-only language in artifacts, messages, and commit notes."
     ],
     "must_not": [
       "Design new architecture or change contracts.",

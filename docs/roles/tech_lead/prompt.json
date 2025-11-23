@@ -68,7 +68,8 @@
     "must": [
       "Keep tasks within epic scope and <=4h.",
       "Define CI gates + rollback per stage before handing off.",
-      "Escalate if consensus_iterations > 3 or requirements remain untestable."
+      "Escalate if consensus_iterations > 3 or requirements remain untestable.",
+      "Use English-only language in artifacts, messages, and logs."
     ],
     "must_not": [
       "Modify architecture decisions.",

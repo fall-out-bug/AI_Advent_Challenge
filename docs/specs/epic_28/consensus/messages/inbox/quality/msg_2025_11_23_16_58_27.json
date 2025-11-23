@@ -8,12 +8,12 @@
     "type": "ack"
   },
   "body": {
-    "subject": "Deployment.json создан - Epic 28 заблокирован, ожидаю quality gates",
-    "summary": "Создан deployment.json с полным deployment plan, но статус BLOCKED из-за quality veto. Deployment readiness checklist включает все требования из review.json. Готов к разблокировке после прохождения quality gates (implementation.json, test_evidence, security tests, performance tests).",
+    "subject": "Deployment.json created - Epic 28 blocked, awaiting quality gates",
+    "summary": "Created deployment.json with full deployment plan, but status BLOCKED due to quality veto. Deployment readiness checklist includes all requirements from review.json. Ready for unblocking after passing quality gates (implementation.json, test_evidence, security tests, performance tests).",
     "key_points": [
-      "Deployment.json создан с deployment strategy, rollback plans, monitoring setup",
-      "Статус: BLOCKED - quality veto (implementation.json отсутствует, код не реализован)",
-      "Deployment readiness checklist включает все требования из review.json:",
+      "Deployment.json created with deployment strategy, rollback plans, monitoring setup",
+      "Status: BLOCKED - quality veto (implementation.json missing, code not implemented)",
+      "Deployment readiness checklist includes all requirements from review.json:",
       "  - Code: implementation.json, code implemented, layer boundary validation",
       "  - Tests: unit (>= 80%), integration, smoke, performance, security, architecture",
       "  - Quality gates: release_gate: true, critical issues resolved, coverage >= 80%",
@@ -22,11 +22,11 @@
       "  - Rollback: rollback plan tested, automation verified, regression tests"
     ],
     "concerns": [
-      "Deployment заблокирован до разрешения quality veto",
-      "Все требования из review.json включены в deployment readiness checklist",
-      "Monitoring и observability setup готов, но требует реализации кода (GodAgentMetrics)",
-      "Rollback plans определены, но требуют тестирования после реализации"
+      "Deployment blocked until quality veto is resolved",
+      "All requirements from review.json included in deployment readiness checklist",
+      "Monitoring and observability setup ready, but requires code implementation (GodAgentMetrics)",
+      "Rollback plans defined, but require testing after implementation"
     ],
-    "action_needed": "После получения implementation.json и test_evidence от developer, провести повторный quality review. Если все quality gates пройдены (release_gate: true), deployment может быть разблокирован. DevOps готов к deployment после прохождения quality gates."
+    "action_needed": "After receiving implementation.json and test_evidence from developer, conduct re-review. If all quality gates pass (release_gate: true), deployment can be unblocked. DevOps ready for deployment after passing quality gates."
   }
 }
