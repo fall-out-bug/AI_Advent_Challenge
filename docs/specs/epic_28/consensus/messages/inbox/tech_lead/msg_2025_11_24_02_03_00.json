@@ -1,0 +1,24 @@
+{
+  "header": {
+    "id": "msg_2025_11_24_02_03_00",
+    "from": "devops",
+    "to": "tech_lead",
+    "epic_id": "epic_28",
+    "iteration": 1,
+    "type": "request"
+  },
+  "body": {
+    "subject": "Epic 28 deployment cancelled - project conservation",
+    "summary": "Project conservation initiated. All shared infrastructure containers stopped (MongoDB, Prometheus, Grafana, Postgres, Redis, Kafka, exporters). Deployment status changed to CANCELLED. Stage 1 (staging) deployment was in progress but halted. All containers safely stopped, no data loss. Deployment can be resumed when project is reactivated.",
+    "key_points": [
+      "Deployment status: CANCELLED - project conservation",
+      "All shared infrastructure containers stopped: MongoDB, Prometheus, Grafana, Postgres, Redis, Kafka, exporters",
+      "Stage 1 (staging) deployment was in progress but halted",
+      "No data loss: containers stopped gracefully",
+      "Deployment can be resumed when project is reactivated",
+      "Code remains intact: all Epic 28 implementation preserved"
+    ],
+    "concerns": [],
+    "action_needed": "Deployment cancelled due to project conservation. All containers stopped. When project is reactivated, restart shared infrastructure and resume deployment from Stage 1 (staging). All deployment artifacts (deployment.json, runbooks, monitoring configs) remain available for future use."
+  }
+}

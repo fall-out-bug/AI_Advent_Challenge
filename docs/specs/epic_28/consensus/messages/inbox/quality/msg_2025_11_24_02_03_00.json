@@ -1,0 +1,23 @@
+{
+  "header": {
+    "id": "msg_2025_11_24_02_03_00",
+    "from": "devops",
+    "to": "quality",
+    "epic_id": "epic_28",
+    "iteration": 1,
+    "type": "ack"
+  },
+  "body": {
+    "subject": "Epic 28 deployment cancelled - project conservation",
+    "summary": "Project conservation initiated. All shared infrastructure containers stopped. Deployment status changed to CANCELLED. Quality approval (release_gate: true) remains valid - deployment can be resumed when project is reactivated. All quality gates passed, all test evidence preserved.",
+    "key_points": [
+      "Deployment status: CANCELLED - project conservation",
+      "All shared infrastructure containers stopped",
+      "Quality approval (release_gate: true) remains valid",
+      "All quality gates passed, test evidence preserved",
+      "Deployment can be resumed when project is reactivated"
+    ],
+    "concerns": [],
+    "action_needed": "Deployment cancelled due to project conservation. Quality approval remains valid. When project is reactivated, quality engineer can verify that all quality gates still pass before resuming deployment."
+  }
+}
