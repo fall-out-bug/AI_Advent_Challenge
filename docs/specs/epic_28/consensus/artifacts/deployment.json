@@ -1,0 +1,341 @@
+{
+  "epic_id": "epic_28",
+  "iteration": 1,
+  "timestamp": "2025_11_23_18_51_19",
+  "status": "ready",
+  "blocker": null,
+  "unblocked_at": "2025_11_23_18_40_11",
+  "unblock_reason": "Quality engineer approved Epic 28 with release_gate: true. All quality gates passed: coverage 85% unit, 80% integration, test evidence complete (91 unit, 25 integration, 7 security, 3 performance, 5 smoke tests), architecture compliant, security validated, performance targets met, all 12 AC covered.",
+  "deployment_strategy": {
+    "type": "staged_rollout",
+    "stages": [
+      {
+        "name": "staging",
+        "description": "Deploy to staging environment with shared infra services",
+        "validation": [
+          "All smoke tests pass (concierge, research, builder, reviewer, ops)",
+          "Performance targets met (< 150ms memory, < 5s intent, < 30s multi-step)",
+          "Prometheus metrics exported (god_agent_tasks_total, god_agent_plan_duration_seconds, god_agent_veto_total, god_agent_skill_latency_seconds)",
+          "Health checks pass for all dependencies (MongoDB, Prometheus, LLM API, RAG pipeline)",
+          "Layer boundary validation passes (no inward dependencies)",
+          "Security tests pass (input sanitization)"
+        ],
+        "rollback_trigger": "Error rate > 1% OR latency p99 > 30s OR health check failures > 10% OR veto raised"
+      },
+      {
+        "name": "production_canary",
+        "description": "Deploy to production with 10% traffic (1 replica), gradually increase to 100%",
+        "validation": [
+          "Staging validation passed",
+          "Canary metrics within normal range for 2 hours",
+          "No veto/escalation events",
+          "User acceptance testing passed (owner manual testing)"
+        ],
+        "rollback_trigger": "Error rate > 0.5% OR latency p99 > 30s OR health check failures > 5% OR veto raised OR user feedback negative"
+      },
+      {
+        "name": "production_full",
+        "description": "Full production deployment (100% traffic)",
+        "validation": [
+          "Canary validation passed",
+          "Full traffic metrics within normal range for 4 hours",
+          "No incidents or escalations",
+          "All observability dashboards healthy"
+        ],
+        "rollback_trigger": "Error rate > 0.2% OR latency p99 > 30s OR critical alert OR veto raised"
+      }
+    ]
+  },
+  "rollback": {
+    "per_stage": "Each task includes rollback plan (revert commit, no data migration needed for most tasks)",
+    "full_rollback": [
+      "Stop all God Agent services: docker-compose down (if deployed via Docker)",
+      "Revert all commits: git revert <epic_28_commits>",
+      "Verify shared infra unchanged: MongoDB, Prometheus, LLM API remain operational",
+      "Verify no breaking changes to existing use cases: PersonalizedReplyUseCase, CompareRagAnswersUseCase, GenerateCodeUseCase, ReviewHomeworkUseCase",
+      "Run regression tests: ensure Day 1-27 functionality intact",
+      "Monitor metrics return to baseline"
+    ],
+    "partial_rollback": [
+      "Revert specific workstream commits: git revert <workstream_commits>",
+      "Maintain compatibility with existing subsystems",
+      "Verify affected skills still functional",
+      "Run integration tests for unaffected workstreams"
+    ],
+    "automatic_rollback_triggers": [
+      "Error rate > 1% for 5 minutes",
+      "Latency p99 > 30s for 5 minutes",
+      "Health check failures > 10%",
+      "Veto raised by consensus workflow",
+      "Critical alert from Prometheus (god_agent_veto_total increasing, god_agent_skill_latency_seconds > 30s)"
+    ]
+  },
+  "monitoring": {
+    "metrics": [
+      {
+        "name": "god_agent_tasks_total",
+        "type": "counter",
+        "description": "Total number of God Agent tasks executed",
+        "labels": ["skill_id", "status"],
+        "alert_threshold": "Error rate > 1% (status=error / total > 0.01)"
+      },
+      {
+        "name": "god_agent_plan_duration_seconds",
+        "type": "histogram",
+        "description": "Duration of task plan compilation and execution",
+        "labels": ["plan_type"],
+        "alert_threshold": "p99 > 30s"
+      },
+      {
+        "name": "god_agent_veto_total",
+        "type": "counter",
+        "description": "Total number of veto events raised",
+        "labels": ["veto_type", "step_id"],
+        "alert_threshold": "Any veto raised (critical)"
+      },
+      {
+        "name": "god_agent_skill_latency_seconds",
+        "type": "histogram",
+        "description": "Latency per skill execution",
+        "labels": ["skill_id"],
+        "alert_threshold": "p99 > 30s for any skill"
+      },
+      {
+        "name": "god_agent_memory_retrieval_seconds",
+        "type": "histogram",
+        "description": "Memory snapshot retrieval latency",
+        "labels": [],
+        "alert_threshold": "p99 > 150ms (AC5 requirement)"
+      },
+      {
+        "name": "god_agent_intent_routing_seconds",
+        "type": "histogram",
+        "description": "Intent routing latency",
+        "labels": ["intent_type"],
+        "alert_threshold": "p99 > 5s (AC2 requirement)"
+      }
+    ],
+    "dashboards": [
+      {
+        "name": "God Agent Health",
+        "location": "grafana/dashboards/god-agent-health.json",
+        "metrics": ["god_agent_tasks_total", "god_agent_plan_duration_seconds", "god_agent_veto_total"],
+        "description": "Overall God Agent service health and task execution"
+      },
+      {
+        "name": "God Agent Skills Performance",
+        "location": "grafana/dashboards/god-agent-skills.json",
+        "metrics": ["god_agent_skill_latency_seconds", "god_agent_tasks_total"],
+        "description": "Performance metrics per skill (concierge, research, builder, reviewer, ops)"
+      },
+      {
+        "name": "God Agent Memory & Intent",
+        "location": "grafana/dashboards/god-agent-memory-intent.json",
+        "metrics": ["god_agent_memory_retrieval_seconds", "god_agent_intent_routing_seconds"],
+        "description": "Memory retrieval and intent routing performance (AC5, AC2 requirements)"
+      }
+    ],
+    "alerts": [
+      {
+        "name": "GodAgentServiceDown",
+        "severity": "critical",
+        "condition": "god_agent_tasks_total == 0 for 5 minutes",
+        "action": "Page on-call engineer, check service logs, verify dependencies (MongoDB, Prometheus, LLM API)"
+      },
+      {
+        "name": "GodAgentHighErrorRate",
+        "severity": "warning",
+        "condition": "rate(god_agent_tasks_total{status=\"error\"}[5m]) / rate(god_agent_tasks_total[5m]) > 0.01",
+        "action": "Check logs for error patterns, verify skill adapters, check use case dependencies"
+      },
+      {
+        "name": "GodAgentSlowPlanCompilation",
+        "severity": "warning",
+        "condition": "histogram_quantile(0.99, god_agent_plan_duration_seconds) > 30",
+        "action": "Check PlanCompilerService logs, verify LLM API latency, check token budget usage"
+      },
+      {
+        "name": "GodAgentVetoRaised",
+        "severity": "critical",
+        "condition": "increase(god_agent_veto_total[5m]) > 0",
+        "action": "Immediately block deployment, check decision_log.jsonl, escalate to tech_lead/quality, review SafetyViolation details"
+      },
+      {
+        "name": "GodAgentSkillSlow",
+        "severity": "warning",
+        "condition": "histogram_quantile(0.99, god_agent_skill_latency_seconds) > 30",
+        "action": "Check specific skill adapter logs, verify underlying use case performance, check dependencies"
+      },
+      {
+        "name": "GodAgentMemorySlow",
+        "severity": "info",
+        "condition": "histogram_quantile(0.99, god_agent_memory_retrieval_seconds) > 150",
+        "action": "Check MemoryFabricService logs, verify MongoDB performance, check memory compression logic"
+      },
+      {
+        "name": "GodAgentIntentRoutingSlow",
+        "severity": "warning",
+        "condition": "histogram_quantile(0.99, god_agent_intent_routing_seconds) > 5",
+        "action": "Check IntentRouterService logs, verify embedding gateway performance, check LLM API latency"
+      }
+    ],
+    "logs": {
+      "structured_fields": ["task_id", "skill_id", "plan_step", "user_id", "intent_type", "veto_type"],
+      "log_levels": {
+        "DEBUG": "Detailed task execution steps, plan compilation details",
+        "INFO": "Task started/completed, skill execution, intent routing",
+        "WARNING": "Low confidence intent routing, memory compression triggered, performance degradation",
+        "ERROR": "Skill execution failures, plan compilation errors, veto raised",
+        "CRITICAL": "Service unavailable, consensus bridge timeout, critical safety violation"
+      },
+      "log_locations": [
+        "Container logs: docker logs god-agent (if deployed via Docker)",
+        "Application logs: app=god-agent component=orchestrator|router|planner|skill",
+        "Loki: stream=\"god-agent\" task_id=* skill_id=*"
+      ]
+    },
+    "health_checks": [
+      {
+        "endpoint": "/health/ready",
+        "description": "Readiness probe: checks all dependencies (MongoDB, Prometheus, LLM API, RAG pipeline)",
+        "checks": [
+          "MongoDB connection: verify GodAgentMemoryRepository can connect",
+          "Prometheus client: verify metrics can be exported",
+          "LLM API: verify IntentRouterService and PlanCompilerService can call LLM",
+          "RAG pipeline: verify ResearchSkillAdapter can call CompareRagAnswersUseCase",
+          "All skill adapters: verify they can instantiate and call use cases"
+        ],
+        "timeout": "5s",
+        "interval": "30s"
+      },
+      {
+        "endpoint": "/health/live",
+        "description": "Liveness probe: checks service is running",
+        "checks": ["Service process running", "No critical errors in last 60s"],
+        "timeout": "2s",
+        "interval": "10s"
+      }
+    ]
+  },
+  "dependencies": {
+    "shared_infra": {
+      "mongodb": {
+        "endpoint": "mongodb://admin:${MONGO_PASSWORD}@127.0.0.1:27018/butler?authSource=admin",
+        "docker_endpoint": "shared-mongo:27017",
+        "usage": "User profiles, memory, task timelines",
+        "health_check": "Verify connection, verify GodAgentMemoryRepository can save/retrieve",
+        "rollback_impact": "None - MongoDB schema changes are additive (new fields optional)",
+        "note": "Host endpoint changed from 27017 to 27018 per AI_AGENT_INTEGRATION_GUIDE.md"
+      },
+      "prometheus": {
+        "endpoint": "http://127.0.0.1:9090",
+        "docker_endpoint": "shared-prometheus:9090",
+        "usage": "Metrics export (god_agent_* metrics)",
+        "health_check": "Verify /-/ready endpoint, verify metrics can be scraped",
+        "rollback_impact": "None - metrics are additive, no breaking changes"
+      },
+      "llm_api": {
+        "endpoint": "http://127.0.0.1:8000",
+        "docker_endpoint": "llm-api:8000",
+        "usage": "Intent routing, plan compilation",
+        "health_check": "Verify /health endpoint, verify LLM calls succeed",
+        "rollback_impact": "None - LLM API is external service, no changes"
+      },
+      "rag_pipeline": {
+        "endpoint": "N/A - internal use case",
+        "usage": "Research skill (CompareRagAnswersUseCase)",
+        "health_check": "Verify ResearchSkillAdapter can call CompareRagAnswersUseCase",
+        "rollback_impact": "None - reuses existing use case"
+      },
+      "telegram_bot": {
+        "endpoint": "N/A - internal handler",
+        "usage": "GodAgentTelegramHandler extends existing Butler bot",
+        "health_check": "Verify Telegram bot can receive messages, verify GodAgentTelegramHandler routes to orchestrator",
+        "rollback_impact": "None - extends existing bot, no breaking changes"
+      }
+    },
+    "internal_use_cases": {
+      "PersonalizedReplyUseCase": {
+        "location": "src/application/personalization/use_cases/personalized_reply_use_case.py",
+        "usage": "ConciergeSkillAdapter",
+        "rollback_impact": "None - no changes to use case"
+      },
+      "CompareRagAnswersUseCase": {
+        "location": "src/application/rag/use_cases/compare_rag_answers_use_case.py",
+        "usage": "ResearchSkillAdapter",
+        "rollback_impact": "None - no changes to use case"
+      },
+      "GenerateCodeUseCase": {
+        "location": "src/application/test_agent/use_cases/generate_code_use_case.py",
+        "usage": "BuilderSkillAdapter",
+        "rollback_impact": "None - no changes to use case"
+      },
+      "GenerateTestsUseCase": {
+        "location": "src/application/test_agent/use_cases/generate_tests_use_case.py",
+        "usage": "BuilderSkillAdapter",
+        "rollback_impact": "None - no changes to use case"
+      },
+      "ReviewHomeworkUseCase": {
+        "location": "src/application/use_cases/review_homework_use_case.py",
+        "usage": "ReviewerSkillAdapter",
+        "rollback_impact": "None - no changes to use case"
+      }
+    }
+  },
+  "runbook_reference": "docs/specs/epic_28/consensus/artifacts/runbook.md",
+  "deployment_readiness_checklist": {
+    "code": [
+      "implementation.json created with all 18 tasks and code_refs",
+      "All code implemented according to plan.json (8 workstreams)",
+      "Layer boundary validation passes (no inward dependencies)",
+      "All imports follow Clean Architecture (domain → application → infrastructure → presentation)"
+    ],
+    "tests": [
+      "Unit tests: coverage >= 80% (target 75-90% per task)",
+      "Integration tests: MongoDB, LLM, Prometheus, skill adapters",
+      "Smoke tests: one flow per skill (concierge, research, builder, reviewer, ops)",
+      "Performance tests: < 150ms memory, < 5s intent, < 30s multi-step",
+      "Security tests: input sanitization for all entry points",
+      "Architecture tests: layer boundary validation in CI"
+    ],
+    "quality_gates": [
+      "Quality review approved (release_gate: true)",
+      "All critical issues resolved",
+      "Test coverage >= 80%",
+      "Security tests pass",
+      "Performance targets met"
+    ],
+    "infrastructure": [
+      "Shared infra services running (MongoDB, Prometheus, LLM API, RAG pipeline)",
+      "Network connectivity verified (infra_infra_app-network if Docker)",
+      "Health checks implemented (/health/ready, /health/live)",
+      "Prometheus metrics exporter implemented (GodAgentMetrics)",
+      "Structured logging configured (task_id, skill_id, plan_step)"
+    ],
+    "observability": [
+      "Prometheus metrics registered (god_agent_tasks_total, god_agent_plan_duration_seconds, god_agent_veto_total, god_agent_skill_latency_seconds)",
+      "Grafana dashboards created (god-agent-health.json, god-agent-skills.json, god-agent-memory-intent.json)",
+      "Prometheus alerts configured (GodAgentServiceDown, GodAgentHighErrorRate, GodAgentVetoRaised, etc.)",
+      "Loki log aggregation configured (stream=\"god-agent\")",
+      "Runbook created (docs/specs/epic_28/consensus/artifacts/runbook.md)"
+    ],
+    "rollback": [
+      "Rollback plan tested (per-task, full, partial)",
+      "Rollback automation verified (triggers, procedures)",
+      "Regression tests pass (Day 1-27 functionality intact)",
+      "Shared infra unchanged (MongoDB, Prometheus, LLM API)"
+    ]
+  },
+  "notes": [
+    "Deployment is BLOCKED until quality veto is resolved. See blocker.required_for_unblock for requirements.",
+    "All skills are stateless adapters wrapping existing use cases - no data migration needed.",
+    "Domain entities are pure Python - no database schema changes.",
+    "Memory repository extends Day 25 repositories - MongoDB schema remains compatible (new fields optional).",
+    "Telegram bot handler extends existing Butler bot - no breaking changes.",
+    "Prometheus metrics are additive - no breaking changes to existing metrics.",
+    "Reuse shared infra playbook (docs/operational/shared_infra.md) for service matrix and validation commands.",
+    "Follow consensus_architecture.json veto rules - any veto automatically blocks deployment.",
+    "Performance targets are hard requirements (AC5: < 150ms memory, AC2: < 5s intent, plan.json: < 30s multi-step).",
+    "Security tests must validate input sanitization for all entry points (Telegram messages, voice transcripts, CLI commands)."
+  ]
+}

@@ -3,7 +3,7 @@
 ## Service Matrix
 | Service | Host Endpoint | Docker Endpoint | Notes |
 |---------|---------------|-----------------|-------|
-| MongoDB | `mongodb://admin:${MONGO_PASSWORD}@127.0.0.1:27017/butler?authSource=admin` | `shared-mongo:27017` | Credentials from `~/work/infra/.env.infra`. |
+| MongoDB | `mongodb://admin:${MONGO_PASSWORD}@127.0.0.1:27018/butler?authSource=admin` | `shared-mongo:27017` | Credentials from `~/work/infra/.env.infra`. Host port changed to 27018 per AI_AGENT_INTEGRATION_GUIDE.md. |
 | Prometheus | `http://127.0.0.1:9090` | `shared-prometheus:9090` | Readiness at `/-/ready`, metrics at `/metrics`. |
 | LLM API (Qwen) | `http://127.0.0.1:8000` | `llm-api:8000` | OpenAI-compatible `/v1/chat/completions`. |
 | Grafana | `http://127.0.0.1:3000` | `grafana:3000` | Login `admin`, password from `.env.infra`. |
@@ -22,7 +22,7 @@ For repository commands:
 ```bash
 cd ~/studies/AI_Challenge
 export $(grep -v '^#' ~/work/infra/.env.infra | xargs)
-export MONGODB_URL="mongodb://${MONGO_USER}:${MONGO_PASSWORD}@127.0.0.1:27017/butler?authSource=admin"
+export MONGODB_URL="mongodb://${MONGO_USER}:${MONGO_PASSWORD}@127.0.0.1:27018/butler?authSource=admin"
 export TEST_MONGODB_URL="$MONGODB_URL"
 export LLM_URL=http://127.0.0.1:8000
 export LLM_MODEL=qwen

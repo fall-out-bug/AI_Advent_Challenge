@@ -3,6 +3,9 @@
 ## Overview
 Token-optimized antagonistic agent system with structured communication, automated consensus, and comprehensive observability.
 
+> Canonical data contracts now live in `docs/roles/consensus_architecture.json`.
+> Use that JSON schema when wiring prompts, storage, or tooling.
+
 ## Key Improvements
 
 ### 1. Token Optimization
@@ -241,7 +244,7 @@ solution:
 
 ## Support
 
-- **Documentation**: `docs/roles/*_v2.yaml`
+- **Documentation**: `docs/roles/README.md`, `docs/roles/consensus_architecture.json`
 - **Metrics**: http://grafana:3000/dashboard/agents
 - **Logs**: `kubectl logs -f agent-system`
 - **Escalation**: Create issue with label `agent-v2`

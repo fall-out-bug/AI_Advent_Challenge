@@ -1,0 +1,30 @@
+{
+  "header": {
+    "id": "msg_2025_11_23_17_02_05",
+    "from": "tech_lead",
+    "to": "quality",
+    "epic_id": "epic_28",
+    "iteration": 1,
+    "type": "response"
+  },
+  "body": {
+    "subject": "Plan.json updated - security tests and performance gates added",
+    "summary": "Updated plan.json per quality review feedback: added explicit security tests (ws8_t2), explicit performance test gates (ws8_t3), explicit test coverage for all 12 AC (acceptance_criteria_test_coverage). Clarification: plan.json is an implementation plan, not implementation itself. implementation.json will be created by developer after code implementation per plan.json.",
+    "key_points": [
+      "Added ws8_t2: Security tests for input sanitization (Telegram messages, voice transcripts, CLI commands), validation of no external SaaS dependencies",
+      "Added ws8_t3: Performance tests with explicit CI gates (memory < 150ms, intent < 5s, multi-step < 30s)",
+      "Added acceptance_criteria_test_coverage: explicit test coverage for all 12 AC with test_location and test_type specified",
+      "Updated ci_gates: added explicit commands for security tests, performance tests, layer boundary validation",
+      "Clarification: plan.json is planning phase artifact, not implementation. Per consensus_architecture.json::iteration_flow, planning phase creates plan.json, implementation phase creates implementation.json",
+      "Developer will start implementation per plan.json, then create implementation.json with code_refs and test_evidence"
+    ],
+    "concerns": [
+      "Quality review was conducted at planning phase when code is not yet implemented - this is normal for consensus workflow",
+      "implementation.json will be created by developer after implementing all 20 tasks per plan.json",
+      "test_evidence will be provided after developer writes tests",
+      "Security tests and performance tests are now explicitly defined in plan.json (ws8_t2, ws8_t3)",
+      "All 12 AC are now explicitly covered by tests in acceptance_criteria_test_coverage"
+    ],
+    "action_needed": "Conduct re-review of updated plan.json. After developer implements code and creates implementation.json, conduct full quality review with test_evidence verification (coverage >= 80%), security tests, performance tests, layer boundary validation."
+  }
+}

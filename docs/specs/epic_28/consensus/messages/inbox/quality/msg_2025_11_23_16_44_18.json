@@ -1,0 +1,30 @@
+{
+  "header": {
+    "id": "msg_2025_11_23_16_44_18",
+    "from": "tech_lead",
+    "to": "quality",
+    "epic_id": "epic_28",
+    "iteration": 1,
+    "type": "request"
+  },
+  "body": {
+    "subject": "Test strategy and quality gates - Epic 28 God Agent Alfred",
+    "summary": "plan.json includes test specs for all 18 tasks: unit tests (75-90% coverage), integration tests (MongoDB, LLM, Prometheus), smoke tests (one flow per skill), performance tests (< 150ms memory, < 5s intent, < 30s multi-step), architecture tests (layer boundaries).",
+    "key_points": [
+      "Test coverage targets: 75-90% per task (domain entities: 85-90%, services: 75-80%, adapters: 75-80%)",
+      "Integration tests: memory repository (MongoDB), intent router (LLM), plan compiler (LLM), skill adapters (use cases), orchestrator (full flow), consensus bridge (file system), metrics (Prometheus)",
+      "Smoke tests: one end-to-end flow per skill (concierge greetings, research with citations, code change + review, ops check)",
+      "Performance tests: memory retrieval < 150ms, intent routing < 5s, multi-step flows < 30s",
+      "Architecture tests: layer boundary validation (no inward dependencies), skill adapters call application layer use cases",
+      "CI gates: pytest, coverage, mypy, Black, layer boundary validation, performance targets"
+    ],
+    "concerns": [
+      "Skill adapters must call existing use cases (not infrastructure directly) - automated layer boundary checks required",
+      "Test coverage must be >= 0.6 for auto-approval (per consensus_architecture.json)",
+      "Performance targets must be met in integration tests (not just unit tests)",
+      "Smoke tests must cover all 5 skills end-to-end (Telegram message → orchestrator → skill → response)",
+      "Architecture tests must validate no inward dependencies (domain → application/infrastructure, application → presentation)"
+    ],
+    "action_needed": "Review plan.json test specs. Ensure test coverage >= 0.6 for auto-approval. Validate that skill adapters call application layer use cases (not infrastructure directly). Review integration test coverage for all external dependencies (MongoDB, LLM, Prometheus). Verify smoke tests cover all 5 skills."
+  }
+}

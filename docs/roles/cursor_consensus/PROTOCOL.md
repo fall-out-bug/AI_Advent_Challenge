@@ -9,11 +9,11 @@ This protocol enables consensus between Cursor agents using shared files, with m
 workspace/
 ├── consensus/
 │   ├── current/
-│   │   ├── epic.yaml          # Current epic definition
-│   │   ├── state.yaml         # Current consensus state
+│   │   ├── epic.json          # Current epic definition
+│   │   ├── state.json         # Current consensus state
 │   │   └── decision_log.jsonl # Decision history (append-only)
 │   ├── messages/
-│   │   ├── inbox/             # Incoming messages from agents
+│   │   ├── inbox/             # Incoming messages (msg_*.json)
 │   │   │   ├── analyst/
 │   │   │   ├── architect/
 │   │   │   ├── tech_lead/
@@ -34,84 +34,104 @@ workspace/
 
 ### Step 1: Initialize Epic
 User creates initial epic file:
-```yaml
-# consensus/current/epic.yaml
-epic_id: EP-001
-title: "Add health check endpoint"
-status: requirements_gathering
-iteration: 1
-max_iterations: 3
+```json
+// consensus/current/epic.json
+{
+  "epic_id": "EP-001",
+  "title": "Add health check endpoint",
+  "status": "requirements_gathering",
+  "iteration": 1,
+  "max_iterations": 3
+}
 ```
 
 ### Step 2: Agent Reads State
 Each agent starts by reading:
-1. `consensus/current/epic.yaml` - Current task
-2. `consensus/current/state.yaml` - Current consensus state
+1. `consensus/current/epic.json` - Current task
+2. `consensus/current/state.json` - Current consensus state
 3. `consensus/messages/inbox/[agent]/` - Messages for them
 4. `consensus/artifacts/` - Other agents' outputs
 
 ### Step 3: Agent Writes Response
 Agent writes to their designated locations:
 1. `consensus/artifacts/[output].json` - Their main deliverable
-2. `consensus/messages/inbox/[target]/msg_[timestamp].yaml` - Messages to other agents
+2. `consensus/messages/inbox/[target]/msg_[timestamp].json` - Messages to other agents
 3. `consensus/current/decision_log.jsonl` - Log their decision
 
 ### Step 4: User Updates State
 After each agent run, user updates:
-```yaml
-# consensus/current/state.yaml
-iteration: 1
-phase: requirements
-agents_completed:
-  - analyst: approved
-  - architect: pending
-  - tech_lead: pending
-consensus_status: in_progress
-conflicts: []
+```json
+// consensus/current/state.json
+{
+  "iteration": 1,
+  "phase": "requirements",
+  "agents_completed": {
+    "analyst": "approved",
+    "architect": "pending",
+    "tech_lead": "pending"
+  },
+  "consensus_status": "in_progress",
+  "conflicts": []
+}
 ```
 
 ## Message Format
 
 ### Agent-to-Agent Message
-```yaml
-# consensus/messages/inbox/architect/msg_001.yaml
-from: analyst
-to: architect
-timestamp: 2024-11-19T10:30:00Z
-epic_id: EP-001
-iteration: 1
-
-type: request  # request|response|veto|approve
-subject: requirements_ready
-
-content:
-  requirements_id: REQ-001
-  summary: "Health check endpoint needed"
-  concerns:
-    - "Must not impact existing endpoints"
-    - "Should follow REST conventions"
-
-action_needed: review_and_design_architecture
+```json
+// consensus/messages/inbox/architect/msg_001.json
+{
+  "header": {
+    "id": "msg-001",
+    "from": "analyst",
+    "to": "architect",
+    "timestamp": "2024-11-19T10:30:00Z",
+    "epic_id": "EP-001",
+    "iteration": 1,
+    "type": "request"
+  },
+  "body": {
+    "subject": "requirements_ready",
+    "summary": "Health check endpoint needed",
+    "key_points": [
+      "User story: uptime visibility",
+      "ROI: 2 hours implementation"
+    ],
+    "concerns": [
+      "Must not impact existing endpoints",
+      "Should follow REST conventions"
+    ],
+    "action_needed": "review_and_design_architecture"
+  }
+}
 ```
 
 ### Veto Message
-```yaml
-# consensus/messages/inbox/analyst/msg_002.yaml
-from: architect
-to: analyst
-timestamp: 2024-11-19T10:45:00Z
-epic_id: EP-001
-iteration: 1
-
-type: veto
-subject: layer_violation
-
-content:
-  violation: "Health check in domain layer"
-  requirement: "Move to infrastructure layer"
-  blocking: true
-
-action_needed: revise_requirements
+```json
+// consensus/messages/inbox/analyst/msg_002.json
+{
+  "header": {
+    "id": "msg-002",
+    "from": "architect",
+    "to": "analyst",
+    "timestamp": "2024-11-19T10:45:00Z",
+    "epic_id": "EP-001",
+    "iteration": 1,
+    "type": "veto"
+  },
+  "body": {
+    "subject": "layer_violation",
+    "summary": "Health check proposed inside domain layer",
+    "key_points": [
+      "Infrastructure boundary must expose health endpoint",
+      "Domain layer must remain pure"
+    ],
+    "concerns": [
+      "Breaks Clean Architecture isolation"
+    ],
+    "action_needed": "revise_requirements"
+  }
+}
 ```
 
 ## Decision Log Format
@@ -126,10 +146,15 @@ action_needed: revise_requirements
 ### 1. Start New Epic
 ```bash
 # Create epic file
-echo "epic_id: EP-001
-title: 'Your epic title'
-status: requirements_gathering
-iteration: 1" > consensus/current/epic.yaml
+cat <<'EOF' > consensus/current/epic.json
+{
+  "epic_id": "EP-001",
+  "title": "Your epic title",
+  "status": "requirements_gathering",
+  "iteration": 1,
+  "max_iterations": 3
+}
+EOF
 
 # Clear previous artifacts
 rm -f consensus/artifacts/*
@@ -139,9 +164,9 @@ rm -f consensus/messages/inbox/*/*
 ### 2. Run Analyst Agent
 Open Cursor Chat #1:
 ```
-@analyst Look at consensus/current/epic.yaml and create requirements.
+@analyst Look at consensus/current/epic.json and create requirements.
 Write output to consensus/artifacts/requirements.json
-Send any messages to consensus/messages/inbox/[agent]/
+Send any messages to consensus/messages/inbox/[agent]/ as msg_<timestamp>.json
 Log decision to consensus/current/decision_log.jsonl
 ```
 
@@ -165,7 +190,9 @@ grep "approve" consensus/current/decision_log.jsonl | wc -l
 If conflicts exist, run iteration 2:
 ```bash
 # Update state for iteration 2
-echo "iteration: 2" >> consensus/current/state.yaml
+tmp=$(mktemp)
+jq '.iteration = 2' consensus/current/state.json > "$tmp"
+mv "$tmp" consensus/current/state.json
 
 # Re-run conflicting agents with context of vetoes
 ```
@@ -174,10 +201,10 @@ echo "iteration: 2" >> consensus/current/state.yaml
 
 ### Analyst Template
 ```markdown
-You are the ANALYST agent. Your epic is in consensus/current/epic.yaml.
+You are the ANALYST agent. Your epic is in consensus/current/epic.json.
 
 1. Read the epic definition
-2. Check consensus/messages/inbox/analyst/ for any feedback
+2. Check consensus/messages/inbox/analyst/ for any feedback (msg_*.json files)
 3. Create requirements in consensus/artifacts/requirements.json:
    - user_story (max 200 chars)
    - acceptance_criteria (list)
@@ -229,10 +256,10 @@ Never compromise on Clean Architecture.
 ### Check Current State
 ```bash
 # See current iteration and phase
-cat consensus/current/state.yaml
+jq '{iteration, phase}' consensus/current/state.json
 
 # Count messages pending
-find consensus/messages/inbox -name "*.yaml" | wc -l
+find consensus/messages/inbox -name "*.json" | wc -l
 
 # View recent decisions
 tail -5 consensus/current/decision_log.jsonl | jq '.'
@@ -241,10 +268,12 @@ tail -5 consensus/current/decision_log.jsonl | jq '.'
 ### Move to Next Phase
 ```bash
 # Archive processed messages
-mv consensus/messages/inbox/*/*.yaml consensus/messages/processed/
+mv consensus/messages/inbox/*/*.json consensus/messages/processed/
 
 # Increment iteration
-sed -i 's/iteration: 1/iteration: 2/' consensus/current/epic.yaml
+tmp=$(mktemp)
+jq '.iteration += 1' consensus/current/epic.json > "$tmp"
+mv "$tmp" consensus/current/epic.json
 ```
 
 ### Reset for New Epic
@@ -255,19 +284,27 @@ mv consensus/current/* consensus/archive/EP-001/
 mv consensus/artifacts/* consensus/archive/EP-001/
 
 # Start fresh
-echo "epic_id: EP-002" > consensus/current/epic.yaml
+cat <<'EOF' > consensus/current/epic.json
+{
+  "epic_id": "EP-002",
+  "title": "Next epic title",
+  "status": "requirements_gathering",
+  "iteration": 1,
+  "max_iterations": 3
+}
+EOF
 ```
 
 ## Example Consensus Flow
 
 ### Iteration 1
-1. User: Creates epic.yaml
+1. User: Creates epic.json
 2. User: Runs Analyst → requirements.json
 3. User: Runs Architect → VETO (layer violation)
 4. User: Checks messages, sees veto
 
 ### Iteration 2
-1. User: Updates epic.yaml (iteration: 2)
+1. User: Updates epic.json (iteration: 2)
 2. User: Runs Analyst with veto context → revised requirements
 3. User: Runs Architect → architecture.json (approved)
 4. User: Runs Tech Lead → plan.json
@@ -288,13 +325,32 @@ echo "epic_id: EP-002" > consensus/current/epic.yaml
 2. **Agent Shortcuts**: Create aliases
    ```bash
    alias run-analyst="cursor --chat 'Load analyst role from docs/roles/analyst/'"
-   alias check-consensus="cat consensus/current/state.yaml"
+   alias check-consensus="jq '{iteration,phase,consensus_status}' consensus/current/state.json"
    ```
 
 3. **Message Templates**: Pre-create message templates
    ```bash
    # Create veto template
-   cp templates/veto.yaml consensus/messages/inbox/analyst/
+   cat <<'EOF' > consensus/messages/inbox/analyst/veto_template.json
+   {
+     "header": {
+       "id": "msg-template",
+       "from": "architect",
+       "to": "analyst",
+       "epic_id": "",
+       "iteration": 0,
+       "type": "veto",
+       "timestamp": ""
+     },
+     "body": {
+       "subject": "layer_violation",
+       "summary": "",
+       "key_points": [],
+       "concerns": [],
+       "action_needed": "revise_requirements"
+     }
+   }
+   EOF
    ```
 
 4. **Batch Operations**: Run related agents together
@@ -310,14 +366,14 @@ echo "epic_id: EP-002" > consensus/current/epic.yaml
 # consensus_status.sh
 
 echo "=== CONSENSUS STATUS ==="
-echo "Epic: $(grep epic_id consensus/current/epic.yaml)"
-echo "Iteration: $(grep iteration consensus/current/epic.yaml)"
+echo "Epic: $(jq -r '.epic_id' consensus/current/epic.json)"
+echo "Iteration: $(jq -r '.iteration' consensus/current/epic.json)"
 echo ""
 echo "Decisions:"
 tail -3 consensus/current/decision_log.jsonl | jq -r '"\(.agent): \(.decision)"'
 echo ""
 echo "Pending Messages:"
-find consensus/messages/inbox -name "*.yaml" -exec basename {} \; | head -5
+find consensus/messages/inbox -name "*.json" -exec basename {} \; | head -5
 ```
 
 ## Success Metrics

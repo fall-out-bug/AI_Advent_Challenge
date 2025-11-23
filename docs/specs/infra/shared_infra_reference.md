@@ -8,9 +8,9 @@ stable endpoints without browsing the external guide.
 
 | Service  | Host Endpoint        | Docker Endpoint            | Credentials / Notes |
 |----------|----------------------|----------------------------|----------------------|
-| Postgres | `127.0.0.1:5432`     | `shared-postgres:5432`     | user `checker_user`, password `PG_PASSWORD` from `.env.infra` |
-| MongoDB  | `127.0.0.1:27017`    | `shared-mongo:27017`       | user `admin`, password `MONGO_PASSWORD` |
-| Redis    | `127.0.0.1:6379`     | `shared-redis:6379`        | password `REDIS_PASSWORD` (legacy setups may keep it empty) |
+| Postgres | `127.0.0.1:15432`    | `shared-postgres:5432`     | user `checker_user`, password `PG_PASSWORD` from `.env.infra` |
+| MongoDB  | `127.0.0.1:27018`    | `shared-mongo:27017`       | user `admin`, password `MONGO_PASSWORD` |
+| Redis    | `127.0.0.1:16379`    | `shared-redis:6379`        | password `REDIS_PASSWORD` (legacy setups may keep it empty) |
 | Kafka    | `127.0.0.1:29092`    | `shared-kafka:9092`        | PLAINTEXT cluster, no auth |
 
 Projects running inside Docker should join the external network

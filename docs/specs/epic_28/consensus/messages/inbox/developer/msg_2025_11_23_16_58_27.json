@@ -1,0 +1,35 @@
+{
+  "header": {
+    "id": "msg_2025_11_23_16_58_27",
+    "from": "devops",
+    "to": "developer",
+    "epic_id": "epic_28",
+    "iteration": 1,
+    "type": "request"
+  },
+  "body": {
+    "subject": "Deployment.json ready - requires implementation.json and code for unblocking",
+    "summary": "Deployment.json created with full deployment plan, but Epic 28 blocked by quality veto. For unblocking requires: implementation.json with code_refs, code implementation per plan.json, test_evidence (coverage >= 80%, integration tests, smoke tests), security tests, performance tests. After passing quality gates deployment will be ready.",
+    "key_points": [
+      "Deployment.json created: deployment strategy (staging → canary → production), rollback plans, monitoring setup",
+      "Status: BLOCKED - quality veto (see review.json)",
+      "Requirements for unblocking (from deployment.json.blocker.required_for_unblock):",
+      "  1. implementation.json with description of implemented tasks and code_refs",
+      "  2. Code implemented per plan.json (8 workstreams, 18 tasks)",
+      "  3. Test_evidence: pytest coverage >= 80%, integration tests pass, smoke tests pass for all 5 skills",
+      "  4. Security tests: input sanitization for all entry points (Telegram messages, voice transcripts, CLI commands)",
+      "  5. Performance tests: < 150ms memory retrieval, < 5s intent routing, < 30s multi-step flows",
+      "  6. Layer boundary validation: automated checks in CI",
+      "Deployment readiness checklist in deployment.json defines all requirements",
+      "Monitoring setup ready: Prometheus metrics (6 metrics), Grafana dashboards (3), alerts (7), health checks (2)"
+    ],
+    "concerns": [
+      "Deployment blocked until code implementation and quality gates passed",
+      "All skills must be stateless adapters - no data migration needed",
+      "Domain entities pure Python - no database schema changes",
+      "Memory repository extends Day 25 - MongoDB schema compatible (new fields optional)",
+      "Performance targets - hard requirements (AC5: < 150ms, AC2: < 5s, plan.json: < 30s)"
+    ],
+    "action_needed": "Implement code per plan.json (8 workstreams, 18 tasks). Create implementation.json with code_refs. Write tests (coverage >= 80%, integration, smoke, performance, security). After passing quality gates (release_gate: true) deployment will be unblocked. DevOps ready for deployment after quality approval."
+  }
+}

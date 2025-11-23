@@ -1,0 +1,30 @@
+{
+  "header": {
+    "id": "msg_2025_11_23_16_44_18",
+    "from": "tech_lead",
+    "to": "developer",
+    "epic_id": "epic_28",
+    "iteration": 1,
+    "type": "request"
+  },
+  "body": {
+    "subject": "Implementation plan ready - Epic 28 God Agent Alfred",
+    "summary": "plan.json emitted with 8 workstreams, 18 tasks (all <= 4h), test specs, CI gates, and rollback plans. Tasks sequenced: Domain & Contracts → Memory Fabric → Intent Routing & Planner → Skill Adapters → Consensus Bridge → Orchestrator → Presentation → Observability.",
+    "key_points": [
+      "8 workstreams: Domain & Contracts (3.5h), Memory Fabric (3h), Intent Routing & Planner (4h), Skill Adapters (8h), Consensus Bridge (3.5h), Orchestrator (4h), Presentation (3.5h), Observability (3h)",
+      "18 tasks total, all <= 4h: largest task is 3.5h (PlanCompilerService, GodAgentOrchestrator)",
+      "Skills are thin adapters wrapping existing use cases: ConciergeSkillAdapter → PersonalizedReplyUseCase, ResearchSkillAdapter → CompareRagAnswersUseCase, BuilderSkillAdapter → GenerateCodeUseCase, ReviewerSkillAdapter → ReviewHomeworkUseCase, OpsSkillAdapter → Prometheus + infra scripts",
+      "Test coverage targets: 75-90% per task, smoke tests for all 5 skills",
+      "CI gates: pytest, coverage, mypy, Black, layer boundary validation, performance targets",
+      "Rollback: revert commits, no data migration needed (skills are stateless wrappers, domain entities are pure Python)"
+    ],
+    "concerns": [
+      "Skill adapters MUST call existing use cases through application layer (no infrastructure bypass) - architecture validation in code review",
+      "PlanCompilerService must respect 2500 token budget from role prompts",
+      "MemoryFabricService must compress when >50 events, keep 20 after compression",
+      "ConsensusBridge timeout after 5 minutes, async queue required",
+      "Performance targets: < 150ms memory retrieval, < 5s intent routing, < 30s multi-step flows"
+    ],
+    "action_needed": "Read plan.json and start implementation. Begin with ws1 (Domain & Contracts) as it has no dependencies. Each task includes test_spec, ci_gates, rollback plan, and acceptance_criteria. Ensure test coverage >= 0.75-0.9 per task. Reuse existing test fixtures for skill adapters."
+  }
+}

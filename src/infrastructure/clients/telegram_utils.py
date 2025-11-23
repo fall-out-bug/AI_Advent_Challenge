@@ -966,7 +966,6 @@ async def search_channels_by_name(query: str, limit: int = 5) -> List[dict]:
                 async for dialog in client.get_dialogs(limit=1000):
                     if not dialog.chat:
                         continue
-                    from pyrogram.enums import ChatType
 
                     chat_type = dialog.chat.type
                     if chat_type not in (ChatType.CHANNEL, ChatType.SUPERGROUP):
